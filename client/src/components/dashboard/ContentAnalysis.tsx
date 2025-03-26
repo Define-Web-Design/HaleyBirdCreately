@@ -29,14 +29,16 @@ export default function ContentAnalysis({ contentId }: ContentAnalysisProps) {
   const { data: analysis, isLoading, error } = useQuery({
     queryKey: ['content-analysis', contentId], 
     queryFn: async () => {
-      const response = await fetch(`/api/content/analyze`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contentId })
-      });
-      if (!response.ok) {
-        throw new Error('Failed to analyze content');
-      }
+      try {
+        const response = await fetch(`/api/content/analyze`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contentId })
+        });
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Failed to analyze content');
+        }
       return response.json() as Promise<ContentAnalysis>;
     }
   });

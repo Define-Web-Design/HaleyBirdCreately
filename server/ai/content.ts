@@ -10,6 +10,7 @@ interface ContentAnalysis {
   bestTimeToPost?: string;
   contentScore?: number;
   imageInsights?: string;
+  visualScore?: number;
 }
 
 interface MoodBoardImage {
@@ -27,19 +28,19 @@ async function analyzeImage(imageUrl: string): Promise<string> {
       console.warn("OpenAI API key not configured. Using placeholder for image analysis.");
       return "Image analysis not available (OpenAI API key not configured)";
     }
-    
+
     // In a production environment, we would fetch the image as base64
     // For now, we'll use the OpenAI text API to simulate image analysis
     const prompt = `
       Analyze this image URL: ${imageUrl}
-      
+
       Provide visual insights about this image that could help a content creator optimize it for social media,
       including color palette, composition, focal points, and potential audience appeal.
     `;
-    
+
     // In a real implementation with image data:
     // return await openai.analyzeImage(base64Image, prompt);
-    
+
     // Text-based simulation for development:
     const result = await openai.generateText(prompt, { temperature: 0.5, maxTokens: 300 });
     return result || "No insights available for this image";
@@ -72,19 +73,19 @@ export async function analyzeContent(content: Content): Promise<ContentAnalysis>
         contentScore: Math.floor(Math.random() * 20) + 60, // 60-80 range
       };
     }
-    
+
     const prompt = `
       Analyze this social media content:
-      
+
       Title: ${content.title}
       Description: ${content.description || 'No description'}
       Platform: ${content.platform || 'Not specified'}
       Status: ${content.status}
       Image: ${content.imageUrl ? 'Yes' : 'No'}
-      
+
       Provide comprehensive analysis for content optimization and performance prediction.
     `;
-    
+
     const systemPrompt = `
       You are an expert social media content analyst specializing in visual and textual content optimization.
       Analyze the content holistically and return a detailed JSON response with:
@@ -98,21 +99,27 @@ export async function analyzeContent(content: Content): Promise<ContentAnalysis>
         "contentScore": number 0-100 for overall quality
       }
     `;
-    
+
     const analysis = await openai.generateJsonResponse<ContentAnalysis>(prompt, systemPrompt, { 
       temperature: 0.4,
       maxTokens: 500
     });
-    
+
     // Enhance analysis with image-specific insights if image present
     if (content.imageUrl) {
-      const imageAnalysis = await analyzeImage(content.imageUrl);
+      const imageAnalysis = await analyzeImage(content.imageUrl, {
+        visualElements: true,
+        brandAlignment: true,
+        audienceImpact: true,
+        suggestionType: 'detailed'
+      });
       return {
         ...analysis,
-        imageInsights: imageAnalysis
+        imageInsights: imageAnalysis,
+        visualScore: imageAnalysis.score
       };
     }
-    
+
     return analysis;
   } catch (error) {
     console.error("Error analyzing content:", error);
@@ -144,18 +151,18 @@ export async function generateCaption(
       const platform = content.platform?.toLowerCase() || "social";
       return `Check out my latest ${content.title || "content"}! Let me know what you think in the comments below. #${platform} #content #creative`;
     }
-    
+
     const prompt = `
       Generate a social media caption for this content:
-      
+
       Title: ${content.title}
       Description: ${content.description || 'No description'}
       Platform: ${content.platform || 'Not specified'}
-      
+
       The caption should be ${length} in length and have a ${tone} tone.
       Include appropriate hashtags at the end.
     `;
-    
+
     const caption = await openai.generateText(prompt, { temperature: 0.7 });
     return caption || `Check out my latest ${content.title || "content"}! #content`;
   } catch (error) {
@@ -186,7 +193,7 @@ export async function createMoodBoard(
         `https://picsum.photos/seed/${Date.now()}/400/300`,
         `https://picsum.photos/seed/${userId}/400/300`
       ];
-      
+
       return {
         userId,
         title,
@@ -195,19 +202,19 @@ export async function createMoodBoard(
         tags: keywords,
       };
     }
-    
+
     const prompt = `
       Create a mood board for a social media content creator with the following details:
-      
+
       Title: ${title}
       Description: ${description || 'No description'}
       Theme: ${theme}
       Keywords: ${keywords.join(', ') || 'None provided'}
-      
+
       Provide a JSON response with an array of image recommendations including URLs and descriptions.
       These images should be freely usable stock photos that match the theme and evoke the right mood.
     `;
-    
+
     const systemPrompt = `
       You are an expert visual designer and mood board creator. Create a mood board by recommending
       5 stock photos from free sources like Unsplash, along with descriptions of each image.
@@ -218,17 +225,17 @@ export async function createMoodBoard(
         ]
       }
     `;
-    
+
     // Get AI-generated mood board images
     const result = await openai.generateJsonResponse<{ images: MoodBoardImage[] }>(
       prompt, 
       systemPrompt, 
       { temperature: 0.7 }
     );
-    
+
     // Extract URLs for storage
     const imageUrls = result.images.map(img => img.url);
-    
+
     // Create the mood board object
     const moodBoard: InsertMoodBoard = {
       userId,
@@ -237,11 +244,11 @@ export async function createMoodBoard(
       images: imageUrls,
       tags: keywords,
     };
-    
+
     return moodBoard;
   } catch (error) {
     console.error("Error creating mood board:", error);
-    
+
     // Fallback to generic images in case of error
     const images = [
       "https://picsum.photos/seed/mood1/400/300",
@@ -249,7 +256,7 @@ export async function createMoodBoard(
       "https://picsum.photos/seed/mood3/400/300",
       "https://picsum.photos/seed/mood4/400/300"
     ];
-    
+
     return {
       userId,
       title,
@@ -280,15 +287,15 @@ export async function generateContentIdeas(
         `Why ${theme} matters for your audience`
       ].slice(0, count);
     }
-    
+
     // Use new OpenAI function to generate content ideas
     const prompt = `Generate ${count} creative content ideas for ${platform} about "${theme}". 
                    Make these ideas specific, attention-grabbing, and tailored to ${platform}'s audience.`;
-    
+
     const systemPrompt = `You are a professional content strategist who understands what performs well on different social media platforms. 
                          Provide engaging, platform-specific content ideas that will resonate with the audience. 
                          Return a JSON array of strings with each idea.`;
-    
+
     const ideas = await openai.generateJsonResponse<string[]>(prompt, systemPrompt, { temperature: 0.9 });
     return ideas || [];
   } catch (error) {
@@ -314,7 +321,7 @@ export async function suggestPostingTimes(
         { day: "Friday", time: "5:00 PM", confidence: 85 }
       ];
     }
-    
+
     return await openai.suggestPostingTimes(platform, userEngagementData);
   } catch (error) {
     console.error("Error suggesting posting times:", error);

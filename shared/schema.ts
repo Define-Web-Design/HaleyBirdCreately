@@ -118,3 +118,28 @@ export type MoodBoard = typeof moodBoards.$inferSelect;
 
 export type InsertAnalyticsData = z.infer<typeof insertAnalyticsDataSchema>;
 export type AnalyticsData = typeof analyticsData.$inferSelect;
+
+// Apple Photos Integration
+export interface ApplePhotoMetadata {
+  createdAt: string;
+  format: string;
+  width: number;
+  height: number;
+  location?: {
+    latitude: number;
+    longitude: number;
+  };
+}
+
+export interface ApplePhoto {
+  id: string;
+  url: string;
+  metadata: ApplePhotoMetadata;
+  tags?: string[];
+}
+
+export interface PhotoImportResponse {
+  success: boolean;
+  photos: ApplePhoto[];
+  errors?: string[];
+}
