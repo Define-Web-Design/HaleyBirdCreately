@@ -27,15 +27,13 @@ const Sidebar = () => {
         <ul>
           {MENU_ITEMS.map((item) => (
             <li key={item.path} className="px-2 mt-1 first:mt-0">
-              <Link href={item.path}>
-                <a className={`flex items-center px-4 py-3 rounded-lg ${
+              <Link href={item.path} className={`flex items-center px-4 py-3 rounded-lg ${
                   location === item.path 
                   ? 'text-primary bg-orange-50 dark:bg-gray-800' 
                   : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
                 }`}>
-                  <i className={`${item.icon} w-5 mr-3`}></i>
-                  <span>{item.name}</span>
-                </a>
+                <i className={`${item.icon} w-5 mr-3`}></i>
+                <span>{item.name}</span>
               </Link>
             </li>
           ))}
@@ -50,11 +48,9 @@ const Sidebar = () => {
         <ul>
           {SMART_TOOLS.map((tool) => (
             <li key={tool.path} className="px-2 mt-1 first:mt-0">
-              <Link href={tool.path}>
-                <a className="flex items-center px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">
-                  <i className={`${tool.icon} w-5 mr-3`}></i>
-                  <span>{tool.name}</span>
-                </a>
+              <Link href={tool.path} className="flex items-center px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">
+                <i className={`${tool.icon} w-5 mr-3`}></i>
+                <span>{tool.name}</span>
               </Link>
             </li>
           ))}
