@@ -21,7 +21,7 @@ interface MoodBoardImage {
 /**
  * Analyzes an image to extract visual insights
  */
-async function analyzeImage(imageUrl: string): Promise<string> {
+async function analyzeImage(imageUrl: string, options?: any): Promise<string> {
   try {
     // Check if OpenAI is configured
     if (!openai.isConfigured) {
@@ -107,16 +107,10 @@ export async function analyzeContent(content: Content): Promise<ContentAnalysis>
 
     // Enhance analysis with image-specific insights if image present
     if (content.imageUrl) {
-      const imageAnalysis = await analyzeImage(content.imageUrl, {
-        visualElements: true,
-        brandAlignment: true,
-        audienceImpact: true,
-        suggestionType: 'detailed'
-      });
+      const imageAnalysis = await analyzeImage(content.imageUrl);
       return {
         ...analysis,
-        imageInsights: imageAnalysis,
-        visualScore: imageAnalysis.score
+        imageInsights: imageAnalysis
       };
     }
 

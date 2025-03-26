@@ -35,11 +35,17 @@ export default function ContentAnalysis({ contentId }: ContentAnalysisProps) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ contentId })
         });
+        
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(errorData.message || 'Failed to analyze content');
         }
-      return response.json() as Promise<ContentAnalysis>;
+        
+        return response.json() as Promise<ContentAnalysis>;
+      } catch (err) {
+        console.error('Error analyzing content:', err);
+        throw err;
+      }
     }
   });
 

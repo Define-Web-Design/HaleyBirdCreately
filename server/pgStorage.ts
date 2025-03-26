@@ -1,5 +1,5 @@
 import { db } from './db';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { 
   users, type User, type InsertUser,
   content, type Content, type InsertContent,
@@ -33,16 +33,20 @@ export class PgStorage implements IStorage {
   async getContentByUserId(userId: number): Promise<Content[]> {
     return await db.select()
       .from(content)
-      .where(eq(content.userId, userId))
-      .where(eq(content.status, 'Draft'))
+      .where(and(
+        eq(content.userId, userId),
+        eq(content.status, 'Draft')
+      ))
       .orderBy(content.createdAt);
   }
   
   async getArchivedContentByUserId(userId: number): Promise<Content[]> {
     return await db.select()
       .from(content)
-      .where(eq(content.userId, userId))
-      .where(eq(content.status, 'Posted'))
+      .where(and(
+        eq(content.userId, userId),
+        eq(content.status, 'Posted')
+      ))
       .orderBy(content.createdAt);
   }
   
@@ -78,10 +82,13 @@ export class PgStorage implements IStorage {
   
   // Analytics methods
   async getAnalyticsByUserId(userId: number, period: string): Promise<AnalyticsData | undefined> {
-    const result = await db.select()
+    const result = await db
+      .select()
       .from(analyticsData)
-      .where(eq(analyticsData.userId, userId))
-      .where(eq(analyticsData.period, period));
+      .where(and(
+        eq(analyticsData.userId, userId),
+        eq(analyticsData.period, period)
+      ));
     
     return result[0];
   }
