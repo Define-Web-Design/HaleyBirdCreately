@@ -61,7 +61,12 @@ export class MemStorage implements IStorage {
       email: "creator@example.com",
       avatar: "https://i.pravatar.cc/150?u=demo_user",
       role: "creator",
-      createdAt: new Date()
+      phone: null,
+      resetToken: null,
+      resetTokenExpiry: null,
+      lastLogin: null,
+      createdAt: new Date(),
+      updatedAt: new Date()
     };
     this.users.set(mockUser.id, mockUser);
     
@@ -163,9 +168,14 @@ export class MemStorage implements IStorage {
       ...insertUser, 
       id,
       createdAt: new Date(),
+      updatedAt: new Date(),
       // Ensure required fields have proper types
       avatar: insertUser.avatar || null,
-      role: insertUser.role || null
+      role: insertUser.role || null,
+      phone: insertUser.phone || null,
+      resetToken: null,
+      resetTokenExpiry: null,
+      lastLogin: new Date()
     };
     this.users.set(id, user);
     return user;

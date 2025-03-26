@@ -34,6 +34,9 @@ const Sidebar = () => {
                 }`}>
                 <i className={`${item.icon} w-5 mr-3`}></i>
                 <span>{item.name}</span>
+                {item.isNew && (
+                  <span className="ml-2 px-1.5 py-0.5 text-xs font-medium text-white bg-primary rounded-full">New</span>
+                )}
               </Link>
             </li>
           ))}

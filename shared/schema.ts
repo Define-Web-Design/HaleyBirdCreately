@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, jsonb, varchar } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -11,7 +11,19 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   avatar: text("avatar"),
   role: text("role").default("creator"),
+  phone: varchar("phone", { length: 20 }),
+  resetToken: text("reset_token"),
+  resetTokenExpiry: timestamp("reset_token_expiry"),
+  lastLogin: timestamp("last_login"),
   createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Session table for authentication
+export const sessions = pgTable("sessions", {
+  sid: varchar("sid", { length: 255 }).primaryKey(),
+  sess: jsonb("sess").notNull(),
+  expire: timestamp("expire", { withTimezone: true }).notNull(),
 });
 
 // Content table to store social media content
@@ -63,6 +75,7 @@ export const insertUserSchema = createInsertSchema(users).pick({
   email: true,
   avatar: true,
   role: true,
+  phone: true,
 });
 
 export const insertContentSchema = createInsertSchema(content).pick({

@@ -2,11 +2,15 @@ import OpenAI from "openai";
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const MODEL = "gpt-4o";
+const VISION_MODEL = "gpt-4o"; // Model with vision capabilities
 
 // Initialize OpenAI client with API key from environment variables
 const openai = new OpenAI({ 
-  apiKey: process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY_ENV_VAR || "demo_key"
+  apiKey: process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY_ENV_VAR
 });
+
+// Check if API key is valid
+const isConfigured = !!process.env.OPENAI_API_KEY || !!process.env.OPENAI_API_KEY_ENV_VAR;
 
 /**
  * Generates a response using OpenAI's chat completions API
@@ -89,8 +93,147 @@ export async function analyzeImage(base64Image: string, prompt: string): Promise
   }
 }
 
+/**
+ * Generate content ideas based on a theme or topic
+ */
+export async function generateContentIdeas(
+  topic: string,
+  platform: string,
+  count: number = 5
+): Promise<string[]> {
+  if (!isConfigured) {
+    console.warn("OpenAI API key not configured. Using placeholder response.");
+    return Array(count).fill("Sample content idea (OpenAI API key not configured)");
+  }
+
+  try {
+    const prompt = `Generate ${count} creative content ideas for ${platform} about "${topic}". Make these ideas specific, attention-grabbing, and tailored to ${platform}'s audience. Format as a JSON array of strings.`;
+    
+    const systemPrompt = `You are a professional content strategist who understands what performs well on different social media platforms. Provide engaging, platform-specific content ideas that will resonate with the audience. Return ONLY a JSON array of strings without any explanation or additional text.`;
+    
+    const response = await generateJsonResponse<string[]>(prompt, systemPrompt, { temperature: 0.9 });
+    return response;
+  } catch (error) {
+    console.error("Error generating content ideas:", error);
+    return Array(count).fill("Could not generate ideas. Please try again later.");
+  }
+}
+
+/**
+ * Create a caption for an image that's optimized for a particular platform
+ */
+export async function generateCaption(
+  imageDescription: string,
+  platform: string,
+  tone: string = "casual",
+  includeHashtags: boolean = true
+): Promise<string> {
+  if (!isConfigured) {
+    console.warn("OpenAI API key not configured. Using placeholder response.");
+    return "Sample caption (OpenAI API key not configured)";
+  }
+
+  try {
+    const prompt = `Create a ${tone} caption for ${platform} for an image that shows: "${imageDescription}". ${includeHashtags ? 'Include relevant hashtags at the end.' : 'Do not include hashtags.'}`;
+    
+    const systemPrompt = `You are a social media expert who creates engaging captions that drive engagement. Your captions should match the specified tone and platform conventions. Keep captions concise and appropriate for the platform.`;
+    
+    const caption = await generateText(prompt, { temperature: 0.7 });
+    return caption || "Could not generate caption. Please try again.";
+  } catch (error) {
+    console.error("Error generating caption:", error);
+    return "Could not generate caption. Please try again later.";
+  }
+}
+
+/**
+ * Analyze content performance and provide recommendations
+ */
+export async function analyzeContentPerformance(
+  content: string,
+  engagement: number,
+  platform: string
+): Promise<{
+  insights: string[];
+  recommendations: string[];
+  audienceMatch: number;
+}> {
+  if (!isConfigured) {
+    console.warn("OpenAI API key not configured. Using placeholder response.");
+    return {
+      insights: ["Placeholder insight (OpenAI API key not configured)"],
+      recommendations: ["Placeholder recommendation (OpenAI API key not configured)"],
+      audienceMatch: 50
+    };
+  }
+
+  try {
+    const prompt = `Analyze this ${platform} content: "${content}". It received ${engagement} engagements. Provide insights on why it performed this way and recommendations for improvement. Rate how well it matches the typical ${platform} audience on a scale of 0-100.`;
+    
+    const systemPrompt = `You are a data-driven content analyst who understands social media performance metrics. Analyze the content objectively and provide actionable recommendations based on platform-specific best practices. Return a JSON object with these keys: "insights" (array of strings), "recommendations" (array of strings), and "audienceMatch" (number between 0-100).`;
+    
+    const analysis = await generateJsonResponse<{
+      insights: string[];
+      recommendations: string[];
+      audienceMatch: number;
+    }>(prompt, systemPrompt);
+    
+    return analysis;
+  } catch (error) {
+    console.error("Error analyzing content performance:", error);
+    return {
+      insights: ["Could not analyze content. Please try again later."],
+      recommendations: ["Could not generate recommendations. Please try again later."],
+      audienceMatch: 50
+    };
+  }
+}
+
+/**
+ * Suggest best times to post based on analytics and platform
+ */
+export async function suggestPostingTimes(
+  platform: string,
+  pastPerformance: { day: string; time: string; engagement: number }[] = []
+): Promise<{ day: string; time: string; confidence: number }[]> {
+  if (!isConfigured) {
+    console.warn("OpenAI API key not configured. Using placeholder response.");
+    return [
+      { day: "Monday", time: "9:00 AM", confidence: 75 },
+      { day: "Wednesday", time: "12:00 PM", confidence: 80 },
+      { day: "Friday", time: "5:00 PM", confidence: 85 }
+    ];
+  }
+
+  try {
+    const pastPerformanceText = pastPerformance.length > 0 
+      ? `Based on past performance data: ${JSON.stringify(pastPerformance)}`
+      : "Without past performance data";
+    
+    const prompt = `${pastPerformanceText}, suggest the best 3 times to post on ${platform} for maximum engagement. Consider typical user behavior on this platform.`;
+    
+    const systemPrompt = `You are a social media analytics expert who understands optimal posting times for different platforms. Analyze any provided past performance data and combine it with your knowledge of general platform trends. Return a JSON array of objects with these keys: "day" (string), "time" (string in format "X:XX AM/PM"), and "confidence" (number between 0-100).`;
+    
+    const suggestions = await generateJsonResponse<{ day: string; time: string; confidence: number }[]>(prompt, systemPrompt);
+    
+    return suggestions;
+  } catch (error) {
+    console.error("Error suggesting posting times:", error);
+    return [
+      { day: "Monday", time: "9:00 AM", confidence: 60 },
+      { day: "Wednesday", time: "12:00 PM", confidence: 60 },
+      { day: "Friday", time: "5:00 PM", confidence: 60 }
+    ];
+  }
+}
+
 export default {
+  isConfigured,
   generateText,
   generateJsonResponse,
-  analyzeImage
+  analyzeImage,
+  generateContentIdeas,
+  generateCaption,
+  analyzeContentPerformance,
+  suggestPostingTimes
 };

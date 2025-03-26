@@ -114,30 +114,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post(`${apiPrefix}/mood-boards`, async (req: Request, res: Response) => {
     try {
       const { title, description, theme, keywords } = req.body;
-
-  // Apple Photos Integration
-  app.post(`${apiPrefix}/photos/import`, async (req: Request, res: Response) => {
-    try {
-      const { photoIds } = req.body;
-      const userId = 1; // Mock user ID
-      
-      // In a real implementation, this would handle Apple Photos API integration
-      // For now, we'll mock the response
-      const importedPhotos = photoIds.map((id: string) => ({
-        id,
-        url: `https://mock-apple-photos.com/${id}`,
-        metadata: {
-          createdAt: new Date().toISOString(),
-          format: 'image/jpeg'
-        }
-      }));
-      
-      res.json({ success: true, photos: importedPhotos });
-    } catch (error: any) {
-      res.status(500).json({ message: error.message });
-    }
-  });
-
       const userId = 1; // Mock user ID
       
       if (!title || !theme) {
@@ -150,6 +126,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(savedMoodBoard);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Apple Photos Integration
+  app.post(`${apiPrefix}/photos/import`, async (req: Request, res: Response) => {
+    try {
+      const { photoIds } = req.body;
+      
+      if (!photoIds || !Array.isArray(photoIds) || photoIds.length === 0) {
+        return res.status(400).json({ 
+          success: false,
+          message: "Valid photoIds array is required" 
+        });
+      }
+      
+      const userId = 1; // Mock user ID
+      
+      // In a real implementation, this would handle Apple Photos API integration
+      // For now, we'll return mock data for demonstration
+      const importedPhotos = photoIds.map((id, index) => ({
+        id,
+        url: index % 2 === 0 
+          ? 'https://images.unsplash.com/photo-1682687218147-9806132dc697'
+          : 'https://images.unsplash.com/photo-1682687982501-1e58ab814714',
+        metadata: {
+          createdAt: new Date().toISOString(),
+          format: 'jpeg'
+        }
+      }));
+      
+      res.json({ 
+        success: true, 
+        photos: importedPhotos 
+      });
+    } catch (error: any) {
+      res.status(500).json({ 
+        success: false,
+        message: error.message 
+      });
     }
   });
 

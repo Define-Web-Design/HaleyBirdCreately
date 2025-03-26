@@ -9,6 +9,7 @@ import ContentCalendar from "./pages/content-calendar";
 import Analytics from "./pages/analytics";
 import MoodBoards from "./pages/mood-boards";
 import ContentVault from "./pages/content-vault";
+import ApplePhotos from "./pages/apple-photos";
 import NotFound from "./pages/not-found";
 
 function Router() {
@@ -21,6 +22,7 @@ function Router() {
         <Route path="/analytics" component={Analytics} />
         <Route path="/mood-boards" component={MoodBoards} />
         <Route path="/content-vault" component={ContentVault} />
+        <Route path="/apple-photos" component={ApplePhotos} />
         <Route component={NotFound} />
       </Switch>
     </AppShell>

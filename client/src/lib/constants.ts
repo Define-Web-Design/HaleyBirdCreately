@@ -41,6 +41,12 @@ export const MENU_ITEMS = [
     path: "/content-vault",
     icon: "fas fa-archive",
   },
+  {
+    name: "Apple Photos",
+    path: "/apple-photos",
+    icon: "fas fa-camera",
+    isNew: true,
+  },
 ];
 
 export const SMART_TOOLS = [
