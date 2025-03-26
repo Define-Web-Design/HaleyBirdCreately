@@ -1,7 +1,13 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { analyzeContent, generateCaption, createMoodBoard } from "./ai/content";
+import { 
+  analyzeContent, 
+  generateCaption, 
+  createMoodBoard, 
+  generateContentIdeas, 
+  suggestPostingTimes 
+} from "./ai/content";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // API routes prefix
@@ -163,6 +169,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       res.status(500).json({ 
         success: false,
+        message: error.message 
+      });
+    }
+  });
+
+  // Content idea generation
+  app.post(`${apiPrefix}/content/ideas`, async (req: Request, res: Response) => {
+    try {
+      const { theme, platform = "social media", count = 5 } = req.body;
+      
+      if (!theme) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Theme is required" 
+        });
+      }
+      
+      const ideas = await generateContentIdeas(theme, platform, count);
+      
+      res.json({ 
+        success: true, 
+        ideas 
+      });
+    } catch (error: any) {
+      res.status(500).json({ 
+        success: false, 
+        message: error.message 
+      });
+    }
+  });
+
+  // Posting time suggestions
+  app.post(`${apiPrefix}/content/posting-times`, async (req: Request, res: Response) => {
+    try {
+      const { platform, engagementData = [] } = req.body;
+      
+      if (!platform) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Platform is required" 
+        });
+      }
+      
+      const times = await suggestPostingTimes(platform, engagementData);
+      
+      res.json({ 
+        success: true, 
+        times 
+      });
+    } catch (error: any) {
+      res.status(500).json({ 
+        success: false, 
         message: error.message 
       });
     }

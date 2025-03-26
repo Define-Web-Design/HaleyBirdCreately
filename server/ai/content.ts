@@ -260,8 +260,76 @@ export async function createMoodBoard(
   }
 }
 
+/**
+ * Generate content ideas based on a theme
+ */
+export async function generateContentIdeas(
+  theme: string,
+  platform: string = "social media",
+  count: number = 5
+): Promise<string[]> {
+  try {
+    // Check if OpenAI is configured
+    if (!openai.isConfigured) {
+      console.warn("OpenAI API key not configured. Using placeholder for content ideas.");
+      return [
+        `${theme} inspiration for your next post`,
+        `How to incorporate ${theme} into your daily routine`,
+        `The best ${theme} tips for beginners`,
+        `${theme} trends to watch in 2025`,
+        `Why ${theme} matters for your audience`
+      ].slice(0, count);
+    }
+    
+    // Use new OpenAI function to generate content ideas
+    const prompt = `Generate ${count} creative content ideas for ${platform} about "${theme}". 
+                   Make these ideas specific, attention-grabbing, and tailored to ${platform}'s audience.`;
+    
+    const systemPrompt = `You are a professional content strategist who understands what performs well on different social media platforms. 
+                         Provide engaging, platform-specific content ideas that will resonate with the audience. 
+                         Return a JSON array of strings with each idea.`;
+    
+    const ideas = await openai.generateJsonResponse<string[]>(prompt, systemPrompt, { temperature: 0.9 });
+    return ideas || [];
+  } catch (error) {
+    console.error("Error generating content ideas:", error);
+    return Array(count).fill("Could not generate ideas. Please try again later.");
+  }
+}
+
+/**
+ * Suggests optimal posting times based on platform
+ */
+export async function suggestPostingTimes(
+  platform: string,
+  userEngagementData: any[] = []
+): Promise<{ day: string; time: string; confidence: number }[]> {
+  try {
+    // Check if OpenAI is configured
+    if (!openai.isConfigured) {
+      console.warn("OpenAI API key not configured. Using placeholder for posting times.");
+      return [
+        { day: "Monday", time: "9:00 AM", confidence: 75 },
+        { day: "Wednesday", time: "12:00 PM", confidence: 80 },
+        { day: "Friday", time: "5:00 PM", confidence: 85 }
+      ];
+    }
+    
+    return await openai.suggestPostingTimes(platform, userEngagementData);
+  } catch (error) {
+    console.error("Error suggesting posting times:", error);
+    return [
+      { day: "Monday", time: "9:00 AM", confidence: 60 },
+      { day: "Wednesday", time: "12:00 PM", confidence: 60 },
+      { day: "Friday", time: "5:00 PM", confidence: 60 }
+    ];
+  }
+}
+
 export default {
   analyzeContent,
   generateCaption,
-  createMoodBoard
+  createMoodBoard,
+  generateContentIdeas,
+  suggestPostingTimes
 };

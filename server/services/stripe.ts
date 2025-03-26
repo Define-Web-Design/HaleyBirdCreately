@@ -6,7 +6,7 @@ let stripe: Stripe | null = null;
 
 if (stripeSecretKey) {
   stripe = new Stripe(stripeSecretKey, {
-    apiVersion: '2023-10-16', // Use the latest API version
+    apiVersion: '2025-02-24.acacia', // Use the latest API version available
   });
 } else {
   console.warn('Stripe API key not provided. Payment functionality will be disabled.');
