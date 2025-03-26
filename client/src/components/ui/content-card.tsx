@@ -81,9 +81,11 @@ const ContentCard = ({ content, onEdit, onShare, onEnhance }: ContentCardProps) 
         
         {/* Status badge */}
         <div className="absolute top-3 right-3">
-          <span className="bg-white/90 dark:bg-gray-900/90 text-xs px-2 py-1 rounded-full text-gray-700 dark:text-gray-300">
-            <i className={`${getPlatformIcon(content.platform)} mr-1`}></i> {content.status}
-          </span>
+          {content.platform && (
+            <span className="bg-white/90 dark:bg-gray-900/90 text-xs px-2 py-1 rounded-full text-gray-700 dark:text-gray-300">
+              <i className={`${getPlatformIcon(content.platform)} mr-1`}></i> {content.status}
+            </span>
+          )}
         </div>
       </div>
       

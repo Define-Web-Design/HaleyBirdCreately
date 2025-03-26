@@ -67,13 +67,73 @@ export const SMART_TOOLS = [
   },
 ];
 
-// Social media platforms
-export const PLATFORMS = [
-  { name: "Instagram", icon: "fab fa-instagram", color: "text-pink-600" },
-  { name: "TikTok", icon: "fab fa-tiktok", color: "text-black dark:text-white" },
-  { name: "Pinterest", icon: "fab fa-pinterest", color: "text-red-600" },
-  { name: "Twitter", icon: "fab fa-twitter", color: "text-blue-400" },
+// Social media platforms with integration status
+export interface Platform {
+  name: string;
+  icon: string;
+  color: string;
+  type: 'photo_video' | 'video' | 'photo' | 'text_photo_video' | 'blog';
+  authUrl: string;
+}
+
+export const PLATFORMS: Platform[] = [
+  { 
+    name: "Instagram",
+    icon: "fab fa-instagram",
+    color: "text-pink-600",
+    type: "photo_video",
+    authUrl: "/api/auth/instagram"
+  },
+  { 
+    name: "X",
+    icon: "fab fa-x-twitter",
+    color: "text-slate-800",
+    type: "text_photo_video",
+    authUrl: "/api/auth/twitter"
+  },
+  { 
+    name: "Facebook",
+    icon: "fab fa-facebook",
+    color: "text-blue-600",
+    type: "text_photo_video",
+    authUrl: "/api/auth/facebook"
+  },
+  { 
+    name: "LinkedIn",
+    icon: "fab fa-linkedin",
+    color: "text-blue-700",
+    type: "text_photo_video",
+    authUrl: "/api/auth/linkedin"
+  },
+  { 
+    name: "Medium",
+    icon: "fab fa-medium",
+    color: "text-slate-800",
+    type: "blog",
+    authUrl: "/api/auth/medium"
+  }
 ];
+
+// Hook to get integrated platforms
+export const useIntegratedPlatforms = () => {
+  //This needs to be implemented with a proper query library like react-query or swr.  This is a placeholder.
+  const [integratedPlatforms, setIntegratedPlatforms] = React.useState<Platform[]>([]);
+  React.useEffect(() => {
+    const fetchIntegrations = async () => {
+      try {
+        const response = await fetch('/api/user/integrations');
+        if (!response.ok) throw new Error('Failed to fetch integrations');
+        const data = await response.json();
+        setIntegratedPlatforms(data);
+      } catch (error) {
+        console.error("Error fetching integrations:", error);
+      }
+    };
+    fetchIntegrations();
+  }, []);
+  return integratedPlatforms;
+};
+
 
 // Status types for content
 export const CONTENT_STATUS = {
