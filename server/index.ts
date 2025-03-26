@@ -56,10 +56,9 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // Use a random available port between 3000-9000 to avoid conflicts
-  // This serves both the API and the client
-  const port = process.env.PORT ? parseInt(process.env.PORT) : 
-               Math.floor(Math.random() * (9000 - 3000) + 3000);
+  // Try to use port 5000 first, as that's what Replit expects
+  // Fall back to a random port only if 5000 is unavailable
+  const port = process.env.PORT ? parseInt(process.env.PORT) : 5000;
   server.listen({
     port,
     host: "0.0.0.0",

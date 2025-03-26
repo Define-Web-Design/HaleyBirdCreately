@@ -162,7 +162,10 @@ export class MemStorage implements IStorage {
     const user: User = { 
       ...insertUser, 
       id,
-      createdAt: new Date()
+      createdAt: new Date(),
+      // Ensure required fields have proper types
+      avatar: insertUser.avatar || null,
+      role: insertUser.role || null
     };
     this.users.set(id, user);
     return user;
@@ -188,10 +191,15 @@ export class MemStorage implements IStorage {
     const content: Content = {
       ...insertContent,
       id,
+      description: insertContent.description || null,
+      imageUrl: insertContent.imageUrl || null,
+      platform: insertContent.platform || null,
       engagement: 0,
       aiSentiment: 0,
       aiPrediction: 0,
+      tags: insertContent.tags || null,
       createdAt: new Date(),
+      scheduledFor: insertContent.scheduledFor || null,
       postedAt: null
     };
     this.contents.set(id, content);
@@ -209,6 +217,9 @@ export class MemStorage implements IStorage {
     const moodBoard: MoodBoard = {
       ...insertMoodBoard,
       id,
+      description: insertMoodBoard.description || null,
+      tags: insertMoodBoard.tags || null,
+      images: insertMoodBoard.images || null,
       createdAt: new Date()
     };
     this.moodBoards.set(id, moodBoard);
@@ -226,6 +237,10 @@ export class MemStorage implements IStorage {
     const data: AnalyticsData = {
       ...insertData,
       id,
+      engagementRate: insertData.engagementRate || null,
+      growthRate: insertData.growthRate || null,
+      topPerforming: insertData.topPerforming || null,
+      predictions: insertData.predictions || null,
       date: new Date()
     };
     this.analyticsData.set(id, data);
