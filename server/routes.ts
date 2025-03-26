@@ -114,6 +114,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post(`${apiPrefix}/mood-boards`, async (req: Request, res: Response) => {
     try {
       const { title, description, theme, keywords } = req.body;
+
+  // Apple Photos Integration
+  app.post(`${apiPrefix}/photos/import`, async (req: Request, res: Response) => {
+    try {
+      const { photoIds } = req.body;
+      const userId = 1; // Mock user ID
+      
+      // In a real implementation, this would handle Apple Photos API integration
+      // For now, we'll mock the response
+      const importedPhotos = photoIds.map((id: string) => ({
+        id,
+        url: `https://mock-apple-photos.com/${id}`,
+        metadata: {
+          createdAt: new Date().toISOString(),
+          format: 'image/jpeg'
+        }
+      }));
+      
+      res.json({ success: true, photos: importedPhotos });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
       const userId = 1; // Mock user ID
       
       if (!title || !theme) {

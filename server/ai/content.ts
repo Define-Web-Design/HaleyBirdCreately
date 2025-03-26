@@ -25,23 +25,40 @@ export async function analyzeContent(content: Content): Promise<ContentAnalysis>
     Description: ${content.description || 'No description'}
     Platform: ${content.platform || 'Not specified'}
     Status: ${content.status}
+    Image: ${content.imageUrl ? 'Yes' : 'No'}
     
-    Provide detailed analysis including sentiment score, engagement prediction,
-    audience match, suggested tags, and improvement suggestions.
+    Provide comprehensive analysis for content optimization and performance prediction.
   `;
   
   const systemPrompt = `
-    You are an expert social media content analyst. Analyze the given content and return a JSON response with the following structure:
+    You are an expert social media content analyst specializing in visual and textual content optimization.
+    Analyze the content holistically and return a detailed JSON response with:
     {
-      "sentiment": number between 0-100,
-      "engagementPrediction": number between 0-100,
-      "audienceMatch": number between 0-100,
-      "tags": array of string tags relevant to the content,
-      "improvementSuggestions": array of string suggestions for improvement
+      "sentiment": number 0-100 representing emotional impact,
+      "engagementPrediction": number 0-100 based on historical patterns,
+      "audienceMatch": number 0-100 for target demographic fit,
+      "tags": array of relevant hashtags and keywords,
+      "improvementSuggestions": array of actionable improvements,
+      "bestTimeToPost": string suggesting optimal posting time,
+      "contentScore": number 0-100 for overall quality
     }
   `;
   
-  return await openai.generateJsonResponse<ContentAnalysis>(prompt, systemPrompt, { temperature: 0.3 });
+  const analysis = await openai.generateJsonResponse<ContentAnalysis>(prompt, systemPrompt, { 
+    temperature: 0.4,
+    max_tokens: 500
+  });
+  
+  // Enhance analysis with image-specific insights if image present
+  if (content.imageUrl) {
+    const imageAnalysis = await analyzeImage(content.imageUrl);
+    return {
+      ...analysis,
+      imageInsights: imageAnalysis
+    };
+  }
+  
+  return analysis;
 }
 
 /**
