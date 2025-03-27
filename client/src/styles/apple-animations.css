@@ -1,0 +1,156 @@
+
+/* Apple-inspired animation library */
+
+/* Subtle button press effect */
+.apple-press {
+  transform-origin: center;
+  transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), 
+              filter 0.15s ease-in-out;
+}
+
+.apple-press:active {
+  transform: scale(0.97);
+  filter: brightness(0.95);
+}
+
+/* Gentle hover lift effect */
+.apple-lift {
+  transition: transform 0.3s cubic-bezier(0.2, 0, 0, 1.4),
+              box-shadow 0.3s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.apple-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Content reveal animation */
+.apple-reveal {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.6s ease-out, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.apple-reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Staggered children reveal */
+.apple-reveal-children > * {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.5s ease-out, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.apple-reveal-children.visible > * {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.apple-reveal-children.visible > *:nth-child(1) { transition-delay: 0.05s; }
+.apple-reveal-children.visible > *:nth-child(2) { transition-delay: 0.1s; }
+.apple-reveal-children.visible > *:nth-child(3) { transition-delay: 0.15s; }
+.apple-reveal-children.visible > *:nth-child(4) { transition-delay: 0.2s; }
+.apple-reveal-children.visible > *:nth-child(5) { transition-delay: 0.25s; }
+.apple-reveal-children.visible > *:nth-child(6) { transition-delay: 0.3s; }
+
+/* Subtle pulse animation for notifications or highlights */
+@keyframes apple-pulse {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(var(--primary), 0.4); }
+  70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(var(--primary), 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(var(--primary), 0); }
+}
+
+.apple-pulse {
+  animation: apple-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Subtle ring focus effect */
+.apple-focus-ring {
+  position: relative;
+}
+
+.apple-focus-ring:focus-visible::after {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  right: -3px;
+  bottom: -3px;
+  border-radius: calc(var(--radius) + 2px);
+  border: 2px solid hsla(var(--primary), 0.5);
+  animation: apple-focus-ring 1.5s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+@keyframes apple-focus-ring {
+  from { opacity: 0.5; }
+  to { opacity: 1; }
+}
+
+/* Frosted glass effect */
+.apple-frosted {
+  background-color: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px) saturate(180%);
+}
+
+.dark .apple-frosted {
+  background-color: rgba(30, 30, 30, 0.7);
+}
+
+/* Subtle gradient hover effect */
+.apple-gradient-hover {
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.apple-gradient-hover::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    120deg,
+    hsla(var(--primary), 0.7),
+    hsla(var(--secondary), 0.7),
+    hsla(var(--accent), 0.7)
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.apple-gradient-hover:hover::before {
+  opacity: 1;
+}
+
+/* Subtle shimmer effect for loading states */
+@keyframes apple-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.apple-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0),
+    rgba(255, 255, 255, 0.2),
+    rgba(255, 255, 255, 0)
+  );
+  background-size: 200% 100%;
+  animation: apple-shimmer 1.5s infinite;
+}
+
+.dark .apple-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0),
+    rgba(255, 255, 255, 0.1),
+    rgba(0, 0, 0, 0)
+  );
+  background-size: 200% 100%;
+}

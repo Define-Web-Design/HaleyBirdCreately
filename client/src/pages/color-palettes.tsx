@@ -483,7 +483,7 @@ const ColorPalettesPage = () => {
                         )}
                       </div>
                       <div className="flex justify-between items-center mt-2">
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="outline" className="text-xs apple-press">
                           Used {palette.usageCount} {palette.usageCount === 1 ? 'time' : 'times'}
                         </Badge>
                         <div className="flex space-x-1">
@@ -492,6 +492,7 @@ const ColorPalettesPage = () => {
                             size="icon"
                             onClick={() => downloadPalette(palette)}
                             title="Download palette"
+                            className="apple-press apple-focus-ring"
                           >
                             <Download className="h-4 w-4" />
                           </Button>
