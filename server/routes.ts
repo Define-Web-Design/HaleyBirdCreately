@@ -13,24 +13,24 @@ import { generateMoodPalette, generateAIPalette } from "./services/paletteGenera
 export async function registerRoutes(app: Express): Promise<Server> {
   // API routes prefix
   const apiPrefix = "/api";
-  
+
   // User routes
   app.get(`${apiPrefix}/user`, async (req: Request, res: Response) => {
     try {
       // This would check session authentication in a real app
       const userId = 1; // Mock user ID
       const user = await storage.getUser(userId);
-      
+
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
-      
+
       res.json(user);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
   });
-  
+
   // Content routes
   app.get(`${apiPrefix}/content`, async (req: Request, res: Response) => {
     try {
@@ -41,7 +41,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: error.message });
     }
   });
-  
+
   app.get(`${apiPrefix}/content/archived`, async (req: Request, res: Response) => {
     try {
       const userId = 1; // Mock user ID
@@ -51,62 +51,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: error.message });
     }
   });
-  
+
   app.post(`${apiPrefix}/content/analyze`, async (req: Request, res: Response) => {
     try {
       const { contentId } = req.body;
-      
+
       if (!contentId) {
         return res.status(400).json({ message: "Content ID is required" });
       }
-      
+
       const content = await storage.getContentById(contentId);
-      
+
       if (!content) {
         return res.status(404).json({ message: "Content not found" });
       }
-      
+
       const analysis = await analyzeContent(content);
       res.json(analysis);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
   });
-  
+
   app.post(`${apiPrefix}/content/caption`, async (req: Request, res: Response) => {
     try {
       const { contentId, tone, length } = req.body;
-      
+
       if (!contentId) {
         return res.status(400).json({ message: "Content ID is required" });
       }
-      
+
       const content = await storage.getContentById(contentId);
-      
+
       if (!content) {
         return res.status(404).json({ message: "Content not found" });
       }
-      
+
       const caption = await generateCaption(content, tone, length);
       res.json({ caption });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
   });
-  
+
   // Analytics routes
   app.get(`${apiPrefix}/analytics`, async (req: Request, res: Response) => {
     try {
       const userId = 1; // Mock user ID
       const period = req.query.period || "30days";
-      
+
       const analytics = await storage.getAnalyticsByUserId(userId, period as string);
       res.json(analytics);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
   });
-  
+
   // Mood board routes
   app.get(`${apiPrefix}/mood-boards`, async (req: Request, res: Response) => {
     try {
@@ -117,19 +117,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: error.message });
     }
   });
-  
+
   app.post(`${apiPrefix}/mood-boards`, async (req: Request, res: Response) => {
     try {
       const { title, description, theme, keywords } = req.body;
       const userId = 1; // Mock user ID
-      
+
       if (!title || !theme) {
         return res.status(400).json({ message: "Title and theme are required" });
       }
-      
+
       const moodBoard = await createMoodBoard(userId, title, description, theme, keywords);
       const savedMoodBoard = await storage.createMoodBoard(moodBoard);
-      
+
       res.status(201).json(savedMoodBoard);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
@@ -140,16 +140,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post(`${apiPrefix}/photos/import`, async (req: Request, res: Response) => {
     try {
       const { photoIds } = req.body;
-      
+
       if (!photoIds || !Array.isArray(photoIds) || photoIds.length === 0) {
         return res.status(400).json({ 
           success: false,
           message: "Valid photoIds array is required" 
         });
       }
-      
+
       const userId = 1; // Mock user ID
-      
+
       // In a real implementation, this would handle Apple Photos API integration
       // For now, we'll return mock data for demonstration
       const importedPhotos = photoIds.map((id, index) => ({
@@ -162,7 +162,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           format: 'jpeg'
         }
       }));
-      
+
       res.json({ 
         success: true, 
         photos: importedPhotos 
@@ -179,16 +179,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post(`${apiPrefix}/content/ideas`, async (req: Request, res: Response) => {
     try {
       const { theme, platform = "social media", count = 5 } = req.body;
-      
+
       if (!theme) {
         return res.status(400).json({ 
           success: false, 
           message: "Theme is required" 
         });
       }
-      
+
       const ideas = await generateContentIdeas(theme, platform, count);
-      
+
       res.json({ 
         success: true, 
         ideas 
@@ -205,16 +205,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post(`${apiPrefix}/content/posting-times`, async (req: Request, res: Response) => {
     try {
       const { platform, engagementData = [] } = req.body;
-      
+
       if (!platform) {
         return res.status(400).json({ 
           success: false, 
           message: "Platform is required" 
         });
       }
-      
+
       const times = await suggestPostingTimes(platform, engagementData);
-      
+
       res.json({ 
         success: true, 
         times 
@@ -228,44 +228,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Creative Symbiosis Framework Routes
-  
+
   // Get user's evolution points
   app.get(`${apiPrefix}/evolution-points`, async (req: Request, res: Response) => {
     try {
       // This would check session authentication in a real app
       const userId = 1; // Mock user ID
-      
+
       // Refresh the creative energy points first (simulate time passing)
       const points = await storage.refreshCreativeEnergyPoints(userId);
-      
+
       if (!points) {
         return res.status(404).json({ message: "Evolution points not found" });
       }
-      
+
       res.json(points);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
   });
-  
+
   // Add evolution points for completing creative activities
   app.post(`${apiPrefix}/evolution-points/earn`, async (req: Request, res: Response) => {
     try {
       const { pointsToAdd, activityType } = req.body;
       const userId = 1; // Mock user ID
-      
+
       if (!pointsToAdd || !activityType) {
         return res.status(400).json({ 
           message: "Points to add and activity type are required" 
         });
       }
-      
+
       // Validate points amount (prevent abuse)
       const validPoints = Math.min(Math.abs(parseInt(pointsToAdd)), 50);
-      
+
       // Update evolution points
       const updatedPoints = await storage.updateEvolutionPoints(userId, validPoints);
-      
+
       // Track this activity in user engagement
       await storage.trackUserEngagement({
         userId,
@@ -276,7 +276,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           timestamp: new Date().toISOString()
         })
       });
-      
+
       res.json({
         success: true,
         points: updatedPoints,
@@ -287,167 +287,167 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: error.message });
     }
   });
-  
+
   // Track user engagement
   app.post(`${apiPrefix}/user-engagement`, async (req: Request, res: Response) => {
     try {
       const { engagementType, engagementDetails } = req.body;
       const userId = 1; // Mock user ID
-      
+
       if (!engagementType) {
         return res.status(400).json({ message: "Engagement type is required" });
       }
-      
+
       const engagement = await storage.trackUserEngagement({
         userId,
         engagementType,
         engagementDetails: engagementDetails || {},
         points: 5 // Default points for engagement
       });
-      
+
       res.json(engagement);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
   });
-  
+
   // Get user capabilities
   app.get(`${apiPrefix}/user-capabilities`, async (req: Request, res: Response) => {
     try {
       const userId = 1; // Mock user ID
-      
+
       const capabilities = await storage.getUserCapabilitiesByUserId(userId);
-      
+
       res.json(capabilities);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
   });
-  
+
   // Unlock a new capability
   app.post(`${apiPrefix}/user-capabilities`, async (req: Request, res: Response) => {
     try {
       const { capabilityName } = req.body;
       const userId = 1; // Mock user ID
-      
+
       if (!capabilityName) {
         return res.status(400).json({ message: "Capability name is required" });
       }
-      
+
       const capability = await storage.unlockUserCapability({
         userId,
         capabilityName,
         isUnlocked: true,
         level: 1
       });
-      
+
       res.json(capability);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
   });
-  
+
   // Upgrade a capability level
   app.put(`${apiPrefix}/user-capabilities/:capabilityName`, async (req: Request, res: Response) => {
     try {
       const { capabilityName } = req.params;
       const userId = 1; // Mock user ID
-      
+
       const updatedCapability = await storage.upgradeCapabilityLevel(userId, capabilityName);
-      
+
       res.json(updatedCapability);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
   });
-  
+
   // Get creative history
   app.get(`${apiPrefix}/creative-history/:period`, async (req: Request, res: Response) => {
     try {
       const { period } = req.params;
       const userId = 1; // Mock user ID
-      
+
       if (!period) {
         return res.status(400).json({ message: "Period is required" });
       }
-      
+
       const history = await storage.getCreativeHistoryByUserIdAndPeriod(userId, period);
-      
+
       if (!history) {
         return res.status(404).json({ message: "Creative history not found" });
       }
-      
+
       res.json(history);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
   });
-  
+
   // Update creative history
   app.put(`${apiPrefix}/creative-history/:period`, async (req: Request, res: Response) => {
     try {
       const { period } = req.params;
       const updates = req.body;
       const userId = 1; // Mock user ID
-      
+
       if (!period) {
         return res.status(400).json({ message: "Period is required" });
       }
-      
+
       const history = await storage.updateCreativeHistory(userId, period, updates);
-      
+
       res.json(history);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
   });
-  
+
   // Color Palette routes
-  
+
   // Get all color palettes for a user
   app.get(`${apiPrefix}/color-palettes`, async (req: Request, res: Response) => {
     try {
       const userId = 1; // Mock user ID
-      
+
       const palettes = await storage.getColorPalettesByUserId(userId);
-      
+
       res.json(palettes);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
   });
-  
+
   // Get a specific color palette by ID
   app.get(`${apiPrefix}/color-palettes/:id`, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      
+
       if (!id) {
         return res.status(400).json({ message: "Palette ID is required" });
       }
-      
+
       const palette = await storage.getColorPaletteById(parseInt(id));
-      
+
       if (!palette) {
         return res.status(404).json({ message: "Color palette not found" });
       }
-      
+
       res.json(palette);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
   });
-  
+
   // Create a new color palette
   app.post(`${apiPrefix}/color-palettes`, async (req: Request, res: Response) => {
     try {
       const userId = 1; // Mock user ID
       const { name, mood, colors, tags, isFavorite } = req.body;
-      
+
       if (!name || !mood || !colors) {
         return res.status(400).json({ message: "Name, mood, and colors are required" });
       }
-      
+
       const palette = await storage.createColorPalette({
         userId,
         name,
@@ -456,79 +456,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
         tags,
         isFavorite
       });
-      
+
       res.status(201).json(palette);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
   });
-  
+
   // Update a color palette
   app.put(`${apiPrefix}/color-palettes/:id`, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const updates = req.body;
-      
+
       if (!id) {
         return res.status(400).json({ message: "Palette ID is required" });
       }
-      
+
       const palette = await storage.updateColorPalette(parseInt(id), updates);
-      
+
       res.json(palette);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
   });
-  
+
   // Increment usage count for a color palette
   app.post(`${apiPrefix}/color-palettes/:id/increment-usage`, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      
+
       if (!id) {
         return res.status(400).json({ message: "Palette ID is required" });
       }
-      
+
       const palette = await storage.incrementColorPaletteUsage(parseInt(id));
-      
+
       res.json(palette);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
   });
-  
+
   // Get color palettes by mood
   app.get(`${apiPrefix}/color-palettes/by-mood/:mood`, async (req: Request, res: Response) => {
     try {
       const { mood } = req.params;
-      
+
       if (!mood) {
         return res.status(400).json({ message: "Mood is required" });
       }
-      
+
       const palettes = await storage.getColorPalettesByMood(mood);
-      
+
       res.json(palettes);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
   });
-  
+
   // Generate a mood-based color palette using AI
   app.post(`${apiPrefix}/color-palettes/generate`, async (req: Request, res: Response) => {
     try {
       const { mood, description, colorCount } = req.body;
-      
+
       if (!mood) {
         return res.status(400).json({ 
           success: false, 
           message: "Mood is required" 
         });
       }
-      
+
       const generatedPalette = await generateAIPalette(description || mood);
-      
+
       res.json({
         success: true,
         palette: generatedPalette
@@ -541,53 +541,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-  
+
   // Mood Capsules Routes
-  
+
   // Get mood capsules for current user
   app.get(`${apiPrefix}/mood-capsules`, async (req: Request, res: Response) => {
     try {
       const userId = 1; // Mock user ID
-      
+
       const capsules = await storage.getMoodCapsulesByUserId(userId);
-      
+
       res.json(capsules);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
   });
-  
+
   // Get a specific mood capsule by ID
   app.get(`${apiPrefix}/mood-capsules/:id`, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      
+
       if (!id) {
         return res.status(400).json({ message: "Capsule ID is required" });
       }
-      
+
       const capsule = await storage.getMoodCapsuleById(parseInt(id));
-      
+
       if (!capsule) {
         return res.status(404).json({ message: "Mood capsule not found" });
       }
-      
+
       res.json(capsule);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
   });
-  
+
   // Create a new mood capsule
   app.post(`${apiPrefix}/mood-capsules`, async (req: Request, res: Response) => {
     try {
       const userId = 1; // Mock user ID
       const { name, description, emotionalTone, contentIds, tags } = req.body;
-      
+
       if (!name || !emotionalTone || !contentIds) {
         return res.status(400).json({ message: "Name, emotional tone, and content IDs are required" });
       }
-      
+
       // Create the mood capsule
       const capsule = await storage.createMoodCapsule({
         userId,
@@ -596,117 +596,117 @@ export async function registerRoutes(app: Express): Promise<Server> {
         emotionalTone,
         contentIds
       });
-      
+
       res.status(201).json(capsule);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
   });
-  
+
   // Update a mood capsule
   app.put(`${apiPrefix}/mood-capsules/:id`, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const updates = req.body;
-      
+
       if (!id) {
         return res.status(400).json({ message: "Capsule ID is required" });
       }
-      
+
       const capsule = await storage.updateMoodCapsule(parseInt(id), updates);
-      
+
       res.json(capsule);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
   });
-  
+
   // Delete a mood capsule
   app.delete(`${apiPrefix}/mood-capsules/:id`, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      
+
       if (!id) {
         return res.status(400).json({ message: "Capsule ID is required" });
       }
-      
+
       const success = await storage.deleteMoodCapsule(parseInt(id));
-      
+
       if (!success) {
         return res.status(404).json({ message: "Mood capsule not found or could not be deleted" });
       }
-      
+
       res.json({ success: true, message: "Mood capsule deleted successfully" });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
   });
-  
+
   // Archive a mood capsule
   app.post(`${apiPrefix}/mood-capsules/:id/archive`, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      
+
       if (!id) {
         return res.status(400).json({ message: "Capsule ID is required" });
       }
-      
+
       const capsule = await storage.archiveMoodCapsule(parseInt(id));
-      
+
       res.json(capsule);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
   });
-  
+
   // Content Sentiment Routes
-  
+
   // Get content sentiment by content ID
   app.get(`${apiPrefix}/content-sentiment/:contentId`, async (req: Request, res: Response) => {
     try {
       const { contentId } = req.params;
-      
+
       if (!contentId) {
         return res.status(400).json({ message: "Content ID is required" });
       }
-      
+
       const sentiment = await storage.getContentSentimentById(parseInt(contentId));
-      
+
       if (!sentiment) {
         return res.status(404).json({ message: "Content sentiment not found" });
       }
-      
+
       res.json(sentiment);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
   });
-  
+
   // Get all content sentiments for a user
   app.get(`${apiPrefix}/content-sentiment`, async (req: Request, res: Response) => {
     try {
       const userId = 1; // Mock user ID
-      
+
       const sentiments = await storage.getContentSentimentsByUserId(userId);
-      
+
       res.json(sentiments);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
   });
-  
+
   // Analyze content sentiment for multiple content items
   app.post(`${apiPrefix}/content-sentiment/analyze`, async (req: Request, res: Response) => {
     try {
       const { contentIds } = req.body;
-      
+
       if (!contentIds || !Array.isArray(contentIds) || contentIds.length === 0) {
         return res.status(400).json({ message: "Valid contentIds array is required" });
       }
-      
+
       // Call AI service to analyze content sentiment
       const sentiments = await storage.analyzeContentSentiment(contentIds);
-      
+
       res.json({
         success: true,
         sentiments
@@ -719,26 +719,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-  
+
   // Generate caption for mood capsule
   app.post(`${apiPrefix}/mood-capsules/generate-caption`, async (req: Request, res: Response) => {
     try {
       const { contentIds, emotionalTone, captionTone } = req.body;
-      
+
       if (!contentIds || !Array.isArray(contentIds) || contentIds.length === 0 || !emotionalTone) {
         return res.status(400).json({ 
           success: false, 
           message: "Valid contentIds array and emotionalTone are required" 
         });
       }
-      
+
       // Generate caption using AI
       const caption = await storage.generateCaptionForMoodCapsule(
         contentIds,
         emotionalTone,
         captionTone || 'natural'
       );
-      
+
       res.json({
         success: true,
         caption
@@ -751,33 +751,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-  
+
   // Auto-create mood capsules from content
   app.post(`${apiPrefix}/mood-capsules/auto-create`, async (req: Request, res: Response) => {
     try {
       const { contentIds, userId = 1, minGroupSize = 2, captionTone = 'balanced' } = req.body;
-      
+
       if (!contentIds || !Array.isArray(contentIds) || contentIds.length === 0) {
         return res.status(400).json({ 
           success: false, 
           message: "Valid contentIds array is required" 
         });
       }
-      
+
       // To track progress for large content sets
       const totalItems = contentIds.length;
       let processedItems = 0;
-      
+
       // Step 1: Analyze the content sentiment with more depth
       console.log(`Analyzing sentiment for ${totalItems} content items...`);
       const sentiments = await storage.analyzeContentSentiment(contentIds);
       processedItems = sentiments.length;
       console.log(`Sentiment analysis complete: ${processedItems}/${totalItems} items processed`);
-      
+
       // Step 2: Group content by dominant emotion with enhanced logic
       const emotionGroups: Record<string, number[]> = {};
       const emotionIntensities: Record<string, number> = {};
-      
+
       // First pass: Collect emotions and their average intensities
       sentiments.forEach(sentiment => {
         if (sentiment.dominantEmotion) {
@@ -789,22 +789,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
           emotionIntensities[sentiment.dominantEmotion] += sentiment.emotionIntensity || 0;
         }
       });
-      
+
       // Calculate average intensity for each emotion group
       Object.keys(emotionIntensities).forEach(emotion => {
         if (emotionGroups[emotion].length > 0) {
           emotionIntensities[emotion] = emotionIntensities[emotion] / emotionGroups[emotion].length;
         }
       });
-      
+
       // Filter small groups and merge them into most compatible larger groups
       const primaryEmotions = Object.keys(emotionGroups)
         .filter(emotion => emotionGroups[emotion].length >= minGroupSize)
         .sort((a, b) => emotionGroups[b].length - emotionGroups[a].length);
-      
+
       const smallGroups = Object.keys(emotionGroups)
         .filter(emotion => emotionGroups[emotion].length < minGroupSize);
-      
+
       // If we have small groups, try to reassign them
       smallGroups.forEach(smallEmotion => {
         if (primaryEmotions.length === 0) {
@@ -814,25 +814,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
           return;
         }
-        
+
         // Reassign to closest primary emotion
         const contentIdsToReassign = emotionGroups[smallEmotion];
         let targetEmotion = primaryEmotions[0]; // Default to largest group
-        
+
         // For advanced implementations: use emotional similarity to find best match
         // For now, we'll just add to the largest group
-        
+
         // Add to target emotion group
         emotionGroups[targetEmotion] = [...emotionGroups[targetEmotion], ...contentIdsToReassign];
-        
+
         // Remove small group
         delete emotionGroups[smallEmotion];
       });
-      
+
       // Step 3: Create improved mood capsules for each emotion group
       const createdCapsules = [];
       console.log(`Creating mood capsules for ${Object.keys(emotionGroups).length} emotion groups...`);
-      
+
       for (const [emotion, ids] of Object.entries(emotionGroups)) {
         if (ids.length > 0) {
           try {
@@ -840,11 +840,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const emotionName = emotion.charAt(0).toUpperCase() + emotion.slice(1);
             const sizeSuffix = ids.length > 5 ? "Collection" : "Moments";
             const capsuleName = `${emotionName} ${sizeSuffix}`;
-            
+
             // Generate a caption with the preferred tone
             console.log(`Generating caption for "${capsuleName}" with ${ids.length} items...`);
             const caption = await storage.generateCaptionForMoodCapsule(ids, emotion, captionTone);
-            
+
             // Create thumbnail URL from first content if available
             let thumbnailUrl = "";
             if (ids.length > 0) {
@@ -853,7 +853,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 thumbnailUrl = firstContent.imageUrl;
               }
             }
-            
+
             // Create the mood capsule with enhanced metadata
             const capsule = await storage.createMoodCapsule({
               userId,
@@ -864,7 +864,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               thumbnailUrl,
               captionTone
             });
-            
+
             createdCapsules.push(capsule);
             console.log(`Created mood capsule: "${capsuleName}" with ${ids.length} items`);
           } catch (groupError) {
@@ -873,7 +873,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
       }
-      
+
       // Step 4: Return detailed response with analytics
       const analytics = {
         totalContentItems: totalItems,
@@ -885,7 +885,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           )
         )
       };
-      
+
       res.status(201).json({
         success: true,
         capsules: createdCapsules,
