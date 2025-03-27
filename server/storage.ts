@@ -8,7 +8,10 @@ import {
   userEngagement, type UserEngagement, type InsertUserEngagement,
   evolutionPoints, type EvolutionPoints, type InsertEvolutionPoints,
   userCapabilities, type UserCapabilities, type InsertUserCapabilities,
-  creativeHistory, type CreativeHistory, type InsertCreativeHistory
+  creativeHistory, type CreativeHistory, type InsertCreativeHistory,
+  
+  // Color Palette types
+  colorPalettes, type ColorPalette, type InsertColorPalette
 } from "@shared/schema";
 
 export interface IStorage {
@@ -52,6 +55,14 @@ export interface IStorage {
   getCreativeHistoryByUserIdAndPeriod(userId: number, period: string): Promise<CreativeHistory | undefined>;
   createCreativeHistory(history: InsertCreativeHistory): Promise<CreativeHistory>;
   updateCreativeHistory(userId: number, period: string, updates: Partial<InsertCreativeHistory>): Promise<CreativeHistory>;
+  
+  // Color Palette methods
+  getColorPalettesByUserId(userId: number): Promise<ColorPalette[]>;
+  getColorPaletteById(id: number): Promise<ColorPalette | undefined>;
+  createColorPalette(palette: InsertColorPalette): Promise<ColorPalette>;
+  updateColorPalette(id: number, updates: Partial<InsertColorPalette>): Promise<ColorPalette>;
+  incrementColorPaletteUsage(id: number): Promise<ColorPalette>;
+  getColorPalettesByMood(mood: string): Promise<ColorPalette[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -65,6 +76,7 @@ export class MemStorage implements IStorage {
   private evolutionPointsData: Map<number, EvolutionPoints> = new Map();
   private userCapabilitiesData: Map<number, UserCapabilities> = new Map();
   private creativeHistoryData: Map<number, CreativeHistory> = new Map();
+  private colorPalettesData: Map<number, ColorPalette> = new Map();
   
   private currentUserId: number;
   private currentContentId: number;
@@ -74,6 +86,7 @@ export class MemStorage implements IStorage {
   private currentEvolutionPointsId: number = 1;
   private currentCapabilityId: number = 1;
   private currentCreativeHistoryId: number = 1;
+  private currentColorPaletteId: number = 1;
 
   constructor() {
     this.users = new Map();
@@ -86,6 +99,7 @@ export class MemStorage implements IStorage {
     this.evolutionPointsData = new Map();
     this.userCapabilitiesData = new Map();
     this.creativeHistoryData = new Map();
+    this.colorPalettesData = new Map();
     
     this.currentUserId = 1;
     this.currentContentId = 1;
@@ -95,6 +109,7 @@ export class MemStorage implements IStorage {
     this.currentEvolutionPointsId = 1;
     this.currentCapabilityId = 1;
     this.currentCreativeHistoryId = 1;
+    this.currentColorPaletteId = 1;
     
     // Initialize with mock data
     this.initializeMockData();
@@ -279,6 +294,32 @@ export class MemStorage implements IStorage {
         createdAt: new Date(Date.now() - i * 30 * 24 * 60 * 60 * 1000)
       };
       this.creativeHistoryData.set(history.id, history);
+    }
+    
+    // Create mock color palettes
+    const moods = ["happy", "calm", "energetic", "melancholic", "professional"];
+    const colorSets = [
+      ["#FF6B6B", "#4ECDC4", "#1A535C", "#FF9F1C", "#F7FFF7"], // happy
+      ["#8AA8B0", "#A8DADC", "#E0FBFC", "#457B9D", "#1D3557"], // calm
+      ["#EF476F", "#FFD166", "#06D6A0", "#118AB2", "#073B4C"], // energetic
+      ["#2B2D42", "#8D99AE", "#EDF2F4", "#D90429", "#457B9D"], // melancholic
+      ["#194B7E", "#314E6F", "#547AA5", "#C2DBF5", "#E2EBF4"]  // professional
+    ];
+    
+    for (let i = 0; i < moods.length; i++) {
+      const colorPalette: ColorPalette = {
+        id: this.currentColorPaletteId++,
+        userId: mockUser.id,
+        name: `${moods[i].charAt(0).toUpperCase() + moods[i].slice(1)} Palette`,
+        mood: moods[i],
+        colors: colorSets[i],
+        tags: [moods[i], "palette", i % 2 === 0 ? "vibrant" : "subtle"],
+        isFavorite: i < 2, // First two are favorites
+        usageCount: Math.floor(Math.random() * 10),
+        createdAt: new Date(Date.now() - i * 5 * 24 * 60 * 60 * 1000),
+        updatedAt: new Date(Date.now() - i * 3 * 24 * 60 * 60 * 1000)
+      };
+      this.colorPalettesData.set(colorPalette.id, colorPalette);
     }
   }
 
@@ -616,6 +657,78 @@ export class MemStorage implements IStorage {
     this.creativeHistoryData.set(history.id, updatedHistory);
     
     return updatedHistory;
+  }
+  
+  // Color Palette methods
+  async getColorPalettesByUserId(userId: number): Promise<ColorPalette[]> {
+    return Array.from(this.colorPalettesData.values())
+      .filter(palette => palette.userId === userId);
+  }
+  
+  async getColorPaletteById(id: number): Promise<ColorPalette | undefined> {
+    return this.colorPalettesData.get(id);
+  }
+  
+  async createColorPalette(palette: InsertColorPalette): Promise<ColorPalette> {
+    const id = this.currentColorPaletteId++;
+    const colorPalette: ColorPalette = {
+      ...palette,
+      id,
+      colors: palette.colors || [],
+      tags: palette.tags || [],
+      isFavorite: palette.isFavorite || false,
+      usageCount: 0,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.colorPalettesData.set(id, colorPalette);
+    return colorPalette;
+  }
+  
+  async updateColorPalette(id: number, updates: Partial<InsertColorPalette>): Promise<ColorPalette> {
+    const palette = await this.getColorPaletteById(id);
+    
+    if (!palette) {
+      throw new Error(`Color palette with id ${id} not found`);
+    }
+    
+    const updatedPalette: ColorPalette = {
+      ...palette,
+      ...updates,
+      // Keep the original fields
+      id: palette.id,
+      userId: palette.userId,
+      usageCount: palette.usageCount,
+      createdAt: palette.createdAt,
+      updatedAt: new Date()
+    };
+    
+    this.colorPalettesData.set(id, updatedPalette);
+    
+    return updatedPalette;
+  }
+  
+  async incrementColorPaletteUsage(id: number): Promise<ColorPalette> {
+    const palette = await this.getColorPaletteById(id);
+    
+    if (!palette) {
+      throw new Error(`Color palette with id ${id} not found`);
+    }
+    
+    const updatedPalette: ColorPalette = {
+      ...palette,
+      usageCount: palette.usageCount + 1,
+      updatedAt: new Date()
+    };
+    
+    this.colorPalettesData.set(id, updatedPalette);
+    
+    return updatedPalette;
+  }
+  
+  async getColorPalettesByMood(mood: string): Promise<ColorPalette[]> {
+    return Array.from(this.colorPalettesData.values())
+      .filter(palette => palette.mood.toLowerCase() === mood.toLowerCase());
   }
 }
 

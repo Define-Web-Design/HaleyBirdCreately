@@ -267,3 +267,29 @@ export type UserCapabilities = typeof userCapabilities.$inferSelect;
 
 export type InsertCreativeHistory = z.infer<typeof insertCreativeHistorySchema>;
 export type CreativeHistory = typeof creativeHistory.$inferSelect;
+
+// Color Palettes table for mood-based color generation
+export const colorPalettes = pgTable("color_palettes", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  name: text("name").notNull(),
+  mood: text("mood").notNull(), // happy, calm, energetic, etc.
+  colors: text("colors").array(), // Array of hex color codes
+  tags: text("tags").array(),
+  isFavorite: boolean("is_favorite").default(false),
+  usageCount: integer("usage_count").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertColorPaletteSchema = createInsertSchema(colorPalettes).pick({
+  userId: true,
+  name: true,
+  mood: true,
+  colors: true,
+  tags: true,
+  isFavorite: true,
+});
+
+export type InsertColorPalette = z.infer<typeof insertColorPaletteSchema>;
+export type ColorPalette = typeof colorPalettes.$inferSelect;
