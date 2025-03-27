@@ -1,0 +1,91 @@
+**Comprehensive App Audit and UI/UX Analysis**
+
+**Prompter to Use:**  
+Please use the **Creative Debugger** prompter. This role specializes in thoroughly auditing and debugging applications—both visually and functionally—by identifying errors, inefficiencies, and missing elements. While you may also reference insights from the Platform Perfectionist (for design consistency) and the Workflow Architect (for flow efficiency), begin the audit work as the Creative Debugger.
+
+---
+
+**Message to the Team:**
+
+Hi team,
+
+We need to conduct a comprehensive audit of our entire application across both web and mobile platforms. The goal is to ensure our app meets the highest standards of design, technical functionality, and accessibility while eliminating any inefficiencies or missing components. Please review and address the following points in detail:
+
+### **1. Top Navigation Bar Adjustments**
+
+- **Notification Icon:**
+  - **Remove Duplicates:** Currently, there are two notification icons and two separate blue buttons. Remove any duplicate icons immediately.
+  - **Proper Alignment:** Ensure there is only one blue notifications icon that is properly aligned and placed in sync with other elements. The icon should not appear as a floating or isolated element; instead, it must blend seamlessly with adjacent components.
+
+- **Profile Button:**
+  - **Redesign & Functionality:** The profile circle must be resized and converted into an interactive button. This should trigger a drop-down menu that grants access to profile-related actions (Profile, Settings, Log Out, etc.).
+  - **Consistent Styling:** The styling of the profile button should match the notifications icon in terms of color, shape, and spacing to maintain a cohesive look across the top bar.
+
+### **2. Comprehensive Link & Button Audit**
+
+- **Interactive Elements:**
+  - Verify that every info icon, view button, and linked button is both visible and correctly connected to their corresponding pages or actions.
+  - Ensure that sorting tools, modals, and quick-view screens are fully implemented and made accessible in a logical and intuitive manner.
+  - For elements requiring extended interactions, decide whether a quick view (via modal overlay) is sufficient or if dedicated pages (acting as a content canvas) are necessary—without causing analysis paralysis.
+
+- **Navigation & Page Access:**
+  - Confirm that every call-to-action (buttons within pages or modals) correctly navigates to the intended destination.
+  - Scrutinize all navigation flows to identify any orphaned pages, dead-end links, or missing breadcrumbs.
+  - **Accessibility Details:** All ARIA labels and screen reader texts (using a `.visually-hidden` class) must be implemented properly—these should be available for assistive technologies but hidden from the general view to prevent visual clutter.
+
+### **3. Full-Scope UI/UX Analysis**
+
+- **Design Consistency & Responsiveness:**
+  - Audit all page layouts ensuring that typography, color schemes, and spacing meet our global theme standards.
+  - Test responsiveness across multiple devices (desktop, tablet, mobile) using tools like Chrome DevTools’ responsive mode. Ensure that components adapt elegantly to various screen sizes.
+  - Evaluate all micro-interactions (hover animations, button feedback, transitions) to ensure they are smooth and enhance overall engagement.
+
+- **Dynamic Elements & Data Flow:**
+  - Verify that dynamic components (modals, quick menus, filters) update in real time and are capable of handling large datasets efficiently.
+  - Confirm that any user settings or preferences (such as applied filters or accessibility toggles) persist as users navigate through different pages.
+
+- **Accessibility & Advanced Modes:**
+  - **Screen Reader & ARIA:** Ensure every interactive element includes descriptive ARIA labels and hidden texts (using a `.visually-hidden` CSS class) compliant with ADA standards.
+  - **Advanced Accessibility:** Verify that additional accessibility options (high contrast mode, multiple colorblind-friendly modes including Protanopia, Deuteranopia, Tritanopia, text-to-speech, and customizable cursors) are implemented, toggled correctly, and remain unobtrusive.
+  - **Keyboard Navigation:** Confirm that the entire interface can be navigated solely with a keyboard.
+
+### **4. Additional Considerations & Future Enhancements**
+
+- **Audit for Missing Elements:**
+  - Identify any missing features, such as absent call-to-action buttons, missing navigation links, breadcrumbs, or landing pages that users reference but do not exist.
+  - Check if any additional UI enhancements are needed such as integrating a sidebar shortcut to the Mood Capsules Dashboard or implementing drag-and-drop modular widgets to prepare for future expansion.
+
+- **Consistency, Efficiency & Scalability:**
+  - The overall user experience must balance richness in functionality with clarity—ensuring the interface is intuitive and not overloaded. Every button, link, and modal must be contextually linked while maintaining a streamlined appearance.
+  - Document every finding with code snippets, screenshots, or screen recordings. Provide a prioritized list for fixes categorized as critical, major, and minor.
+  - Outline a strategy for iterative testing and continuous improvement based on user feedback and performance metrics.
+
+### **5. Reporting & Documentation**
+
+- **Documentation:**
+  - Create a detailed report listing all identified errors, inefficiencies, missing elements, and potential UI improvements.
+  - Include relevant code snippets and visual evidence (e.g., screenshots or video recordings) for any problematic issues.
+  - Present a clear plan for iterative enhancements, ensuring that future updates improve both functionality and user experience without adding clutter.
+
+- **Action Plan:**
+  - Once the audit is complete, please provide a summary of findings along with recommendations for immediate fixes and long-term enhancements.
+
+---
+
+**Action Required:**  
+Please begin this comprehensive audit as soon as possible. Ensure the full scope covers technical, visual, interactive, and accessibility aspects of our application. Confirm when the audit is complete and detail all the necessary steps for implementation of the fixes and enhancements discussed here.
+
+Let's aim to deliver an impeccable, modern, intuitive user experience across every device. If further details or clarification are needed during the audit, document them and incorporate them into our iterative improvement plan.
+
+Thank you for your continued attention to these details and for helping us create a flawless product!
+
+---
+
+**Final Note:**  
+Always use the **Creative Debugger** prompter as your baseline for this audit while incorporating perspectives from the Platform Perfectionist and Workflow Architect as needed. This approach will ensure nothing is missed—even potential issues we might not have explicitly mentioned.
+
+---
+
+Copy and paste this complete message into your Replit environment, then initiate the audit process accordingly. If you need further guidance or additional refinements, please let me know.
+
+🚀✨
