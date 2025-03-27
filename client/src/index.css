@@ -7,6 +7,31 @@
     --grid-base: 8px;
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
+
+@layer utilities {
+  .shadow-glow {
+    box-shadow: 0 0 15px rgba(var(--color-primary), 0.3);
+  }
+  
+  .hover-lift {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .subtle-fade {
+    opacity: 0.85;
+    transition: opacity 0.3s ease;
+  }
+  
+  .subtle-fade:hover {
+    opacity: 1;
+  }
+}
+
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
