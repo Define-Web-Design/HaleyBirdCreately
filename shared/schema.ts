@@ -106,6 +106,20 @@ export const insertAnalyticsDataSchema = createInsertSchema(analyticsData).pick(
   predictions: true,
 });
 
+// Platform integrations table
+export const platformIntegrations = pgTable("platform_integrations", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  platform: text("platform").notNull(),
+  accessToken: text("access_token"),
+  refreshToken: text("refresh_token"),
+  tokenExpiry: timestamp("token_expiry"),
+  meta: jsonb("meta"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Export types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -118,6 +132,26 @@ export type MoodBoard = typeof moodBoards.$inferSelect;
 
 export type InsertAnalyticsData = z.infer<typeof insertAnalyticsDataSchema>;
 export type AnalyticsData = typeof analyticsData.$inferSelect;
+
+export type PlatformIntegration = typeof platformIntegrations.$inferSelect;
+
+export interface SocialPlatformCapabilities {
+  maxImageSize?: number;
+  maxVideoLength?: number;
+  maxCharacters?: number;
+  supportedMediaTypes: ('photo' | 'video' | 'text' | 'article')[];
+  requiresAuthentication: boolean;
+  supportsScheduling: boolean;
+  supportsAnalytics: boolean;
+}
+
+export interface PlatformSettings {
+  name: string;
+  icon: string;
+  color: string;
+  capabilities: SocialPlatformCapabilities;
+  authUrl: string;
+}
 
 // Apple Photos Integration
 export interface ApplePhotoMetadata {
