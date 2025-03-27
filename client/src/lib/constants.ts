@@ -54,6 +54,12 @@ export const MENU_ITEMS = [
     icon: "fas fa-seedling",
     isNew: true,
   },
+  {
+    name: "Color Palettes",
+    path: "/color-palettes",
+    icon: "fas fa-swatchbook",
+    isNew: true,
+  },
 ];
 
 export const SMART_TOOLS = [

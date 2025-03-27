@@ -14,6 +14,7 @@ import { Separator } from '@/components/ui/separator';
 import { Avatar } from '@/components/ui/avatar';
 import { Trash2, Heart, Edit, Copy, Star, Download, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { type QueryClient } from '@tanstack/react-query';
 
 // Define the ColorPalette type
 interface ColorPalette {
@@ -58,13 +59,18 @@ const ColorPalettesPage = () => {
   // Query to fetch color palettes
   const { data: colorPalettes, isLoading } = useQuery({
     queryKey: ['/api/color-palettes'],
-    queryFn: () => apiRequest<ColorPalette[]>('/api/color-palettes')
+    // Remove the generic type parameter
+    queryFn: () => apiRequest('/api/color-palettes')
   });
 
   // Mutation to create a new color palette
   const createPaletteMutation = useMutation({
     mutationFn: (palette: Omit<ColorPalette, 'id' | 'userId' | 'usageCount' | 'createdAt' | 'updatedAt'>) => 
-      apiRequest('/api/color-palettes', { method: 'POST', body: JSON.stringify(palette) }),
+      // Fix the types by separating object parameters
+      apiRequest('/api/color-palettes', {
+        method: 'POST',
+        body: JSON.stringify(palette)
+      } as RequestInit),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/color-palettes'] });
       setIsCreateDialogOpen(false);
@@ -86,10 +92,10 @@ const ColorPalettesPage = () => {
   // Mutation to toggle favorite status
   const toggleFavoriteMutation = useMutation({
     mutationFn: ({ id, isFavorite }: { id: number, isFavorite: boolean }) => 
-      apiRequest(`/api/color-palettes/${id}`, { 
-        method: 'PUT', 
-        body: JSON.stringify({ isFavorite }) 
-      }),
+      apiRequest(`/api/color-palettes/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ isFavorite })
+      } as RequestInit),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/color-palettes'] });
     }
@@ -98,7 +104,9 @@ const ColorPalettesPage = () => {
   // Mutation to increment usage count
   const incrementUsageMutation = useMutation({
     mutationFn: (id: number) => 
-      apiRequest(`/api/color-palettes/${id}/increment-usage`, { method: 'POST' }),
+      apiRequest(`/api/color-palettes/${id}/increment-usage`, {
+        method: 'POST'
+      } as RequestInit),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/color-palettes'] });
     }
@@ -155,17 +163,17 @@ const ColorPalettesPage = () => {
 
   // Helper function to filter palettes based on active tab
   const getFilteredPalettes = () => {
-    if (!colorPalettes) return [];
+    if (!colorPalettes || !Array.isArray(colorPalettes)) return [];
     
     switch (activeTab) {
       case 'favorites':
-        return colorPalettes.filter(palette => palette.isFavorite);
+        return colorPalettes.filter((palette: ColorPalette) => palette.isFavorite);
       case 'happy':
       case 'calm':
       case 'energetic':
       case 'melancholic':
       case 'professional':
-        return colorPalettes.filter(palette => palette.mood === activeTab);
+        return colorPalettes.filter((palette: ColorPalette) => palette.mood === activeTab);
       default:
         return colorPalettes;
     }

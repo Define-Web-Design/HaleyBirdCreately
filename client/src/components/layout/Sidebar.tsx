@@ -1,5 +1,13 @@
 import { Link, useLocation } from 'wouter';
 import { MENU_ITEMS, SMART_TOOLS } from '@/lib/constants';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Sidebar = () => {
   const [location] = useLocation();
@@ -62,36 +70,36 @@ const Sidebar = () => {
       
       {/* User Profile */}
       <div className="p-4 border-t border-gray-200 dark:border-gray-800 mt-auto">
-        <DropdownMenu>
-          <DropdownMenuTrigger className="flex items-center w-full">
-            <img 
-              src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=120&h=120&q=80" 
-              alt="User avatar" 
-              className="h-8 w-8 rounded-full object-cover mr-3"
-            />
-            <div className="flex-1">
-              <p className="text-sm font-medium text-left">Sophia Chen</p>
-            </div>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
-            <DropdownMenuItem asChild>
-              <Link href="/profile">Profile Settings</Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href="/profile#accessibility">Accessibility</Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href="/profile#integrations">Integrations</Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              Sign out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Creator</p>
-          </div>
+        <div className="flex items-center">
+          <DropdownMenu>
+            <DropdownMenuTrigger className="flex items-center w-full">
+              <img 
+                src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=120&h=120&q=80" 
+                alt="User avatar" 
+                className="h-8 w-8 rounded-full object-cover mr-3"
+              />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-left">Sophia Chen</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Creator</p>
+              </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuItem asChild>
+                <Link href="/profile">Profile Settings</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/profile#accessibility">Accessibility</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/profile#integrations">Integrations</Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>
+                Sign out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <button className="ml-auto text-gray-500 hover:text-primary dark:text-gray-400 dark:hover:text-primary">
             <i className="fas fa-cog"></i>
           </button>
