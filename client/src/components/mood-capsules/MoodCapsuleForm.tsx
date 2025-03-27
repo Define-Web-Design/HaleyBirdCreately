@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import type { MoodCapsule } from '@/lib/types';
+import type { MoodCapsule, ContentItem } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -40,7 +40,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-// Remove MultiSelect import as we're not using it yet
+import { MultiSelect } from '@/components/ui/multi-select';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -58,7 +58,7 @@ const moodCapsuleSchema = z.object({
   description: z.string().optional(),
   emotionalTone: z.string().min(1, 'Emotional tone is required'),
   captionTone: z.string().optional(),
-  contentIds: z.array(z.number()).optional(),
+  contentIds: z.array(z.number()).min(1, 'Select at least one content item'),
   thumbnailUrl: z.string().url().optional().or(z.literal('')),
 });
 
@@ -259,25 +259,34 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Emotional Tone</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select the primary emotion" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {emotionalTones.map((tone) => (
-                          <SelectItem key={tone.value} value={tone.value}>
-                            {tone.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <div className="w-full">
+                        <Controller
+                          name="emotionalTone"
+                          control={form.control}
+                          render={({ field: { onChange, value } }) => {
+                            // Emotional Tone is a string in the schema, convert to array for MultiSelect
+                            // and back to comma-separated string for storage
+                            const selectedValues = value ? value.split(',') : [];
+                            
+                            return (
+                              <MultiSelect
+                                options={emotionalTones}
+                                selected={selectedValues}
+                                onChange={(selected) => {
+                                  // Store as comma-separated string
+                                  onChange(selected.join(','));
+                                }}
+                                placeholder="Select emotional tones..."
+                                className="w-full"
+                              />
+                            );
+                          }}
+                        />
+                      </div>
+                    </FormControl>
                     <FormDescription>
-                      The dominant emotional tone of this content group
+                      Select one or more emotional tones for this content group
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -361,15 +370,34 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
                   <FormItem>
                     <FormLabel>Select Content</FormLabel>
                     <FormControl>
-                      <div>
-                        {/* This would need a proper multi-select component implementation */}
-                        <div className="border rounded-md p-2 bg-muted/20">
-                          <p className="text-sm text-muted-foreground mb-2">Selected {field.value?.length || 0} items</p>
-                          {/* Example implementation - actual component needed */}
-                          <p className="text-xs text-muted-foreground italic">
-                            Note: Multi-select component will be integrated here
-                          </p>
-                        </div>
+                      <div className="w-full">
+                        <Controller
+                          name="contentIds"
+                          control={form.control}
+                          render={({ field: { onChange, value } }) => {
+                            // Map the array of numbers to array of strings (required for MultiSelect)
+                            const selectedValues = (value || []).map(id => id.toString());
+                            
+                            // Convert contentItems to expected MultiSelect options format
+                            const contentOptions = (contentItems as ContentItem[]).map(item => ({
+                              label: item.title,
+                              value: item.id.toString(),
+                            }));
+                            
+                            return (
+                              <MultiSelect
+                                options={contentOptions}
+                                selected={selectedValues}
+                                onChange={(selected) => {
+                                  // Convert back to array of numbers for form state
+                                  onChange(selected.map(id => parseInt(id, 10)));
+                                }}
+                                placeholder="Select content items..."
+                                className="w-full"
+                              />
+                            );
+                          }}
+                        />
                       </div>
                     </FormControl>
                     <FormDescription>
