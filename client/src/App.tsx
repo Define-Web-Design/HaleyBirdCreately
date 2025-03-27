@@ -13,6 +13,8 @@ import ApplePhotos from "./pages/apple-photos";
 import CreativeSymbiosis from "./pages/creative-symbiosis";
 import ColorPalettes from "./pages/color-palettes";
 import NotFound from "./pages/not-found";
+import Profile from './components/profile/Profile'; // Added import for Profile component
+
 
 function Router() {
   return (
@@ -27,6 +29,7 @@ function Router() {
         <Route path="/apple-photos" component={ApplePhotos} />
         <Route path="/creative-symbiosis" component={CreativeSymbiosis} />
         <Route path="/color-palettes" component={ColorPalettes} />
+        <Route path="/profile" component={Profile} /> {/* Added route for Profile */}
         <Route component={NotFound} />
       </Switch>
     </AppShell>
