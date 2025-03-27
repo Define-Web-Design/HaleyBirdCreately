@@ -248,6 +248,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Add evolution points for completing creative activities
+  app.post(`${apiPrefix}/evolution-points/earn`, async (req: Request, res: Response) => {
+    try {
+      const { pointsToAdd, activityType } = req.body;
+      const userId = 1; // Mock user ID
+      
+      if (!pointsToAdd || !activityType) {
+        return res.status(400).json({ 
+          message: "Points to add and activity type are required" 
+        });
+      }
+      
+      // Validate points amount (prevent abuse)
+      const validPoints = Math.min(Math.abs(parseInt(pointsToAdd)), 50);
+      
+      // Update evolution points
+      const updatedPoints = await storage.updateEvolutionPoints(userId, validPoints);
+      
+      // Track this activity in user engagement
+      await storage.trackUserEngagement({
+        userId,
+        engagementType: 'points_earned',
+        engagementDetails: JSON.stringify({
+          points: validPoints,
+          activityType,
+          timestamp: new Date().toISOString()
+        })
+      });
+      
+      res.json({
+        success: true,
+        points: updatedPoints,
+        pointsAdded: validPoints,
+        activityType
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
   // Track user engagement
   app.post(`${apiPrefix}/user-engagement`, async (req: Request, res: Response) => {
     try {

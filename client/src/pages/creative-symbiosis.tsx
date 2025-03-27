@@ -1,4 +1,6 @@
 import CreativeSymbiosisSection from '@/components/dashboard/CreativeSymbiosis';
+import AICapabilities from '@/components/dashboard/AICapabilities';
+import { Separator } from '@/components/ui/separator';
 
 export default function CreativeSymbiosisPage() {
   return (
@@ -8,6 +10,10 @@ export default function CreativeSymbiosisPage() {
       </div>
       
       <CreativeSymbiosisSection />
+      
+      <Separator className="my-8" />
+      
+      <AICapabilities />
     </div>
   );
 }

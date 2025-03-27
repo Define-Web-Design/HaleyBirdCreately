@@ -27,7 +27,11 @@ interface UserCapability {
   expiresAt?: string;
 }
 
-export function EvolutionProgressCard() {
+interface CardProps {
+  className?: string;
+}
+
+export function EvolutionProgressCard({ className }: CardProps) {
   const queryClient = useQueryClient();
   
   const { data: evolutionPoints, isLoading } = useQuery<EvolutionPoints>({
@@ -69,7 +73,7 @@ export function EvolutionProgressCard() {
   // If no data, show a message
   if (!evolutionPoints) {
     return (
-      <Card className="col-span-2">
+      <Card className={`col-span-2 ${className}`}>
         <CardHeader>
           <CardTitle>Creative Evolution</CardTitle>
           <CardDescription>Your creative journey starts here</CardDescription>
@@ -151,7 +155,7 @@ export function EvolutionProgressCard() {
   ];
 
   return (
-    <Card className="col-span-2 overflow-hidden">
+    <Card className={`col-span-2 overflow-hidden ${className}`}>
       {/* Add top border with gradient based on tier */}
       <div className={`h-1.5 w-full bg-gradient-to-r ${tierStyles.gradient}`}></div>
       
@@ -289,7 +293,7 @@ export function EvolutionProgressCard() {
   );
 }
 
-export function CreativeHistoryCard() {
+export function CreativeHistoryCard({ className }: CardProps) {
   const { data: creativeHistory, isLoading } = useQuery({
     queryKey: ['/api/creative-history/monthly'],
     enabled: true,
@@ -382,7 +386,7 @@ export function CreativeHistoryCard() {
   
   if (isLoading) {
     return (
-      <Card>
+      <Card className={className}>
         <CardHeader>
           <CardTitle className="skeleton h-7 w-40"></CardTitle>
           <CardDescription className="skeleton h-5 w-56"></CardDescription>
@@ -402,7 +406,7 @@ export function CreativeHistoryCard() {
   }
 
   return (
-    <Card className="overflow-hidden">
+    <Card className={`overflow-hidden ${className}`}>
       <div className="h-1.5 w-full bg-gradient-to-r from-green-400 to-emerald-600"></div>
       <CardHeader>
         <div className="flex justify-between items-center">
@@ -482,7 +486,7 @@ export function CreativeHistoryCard() {
   );
 }
 
-export function CapabilitiesCard() {
+export function CapabilitiesCard({ className }: CardProps) {
   const queryClient = useQueryClient();
   
   const { data: capabilities = [] } = useQuery<UserCapability[]>({
@@ -603,7 +607,7 @@ export function CapabilitiesCard() {
   };
 
   return (
-    <Card className="overflow-hidden">
+    <Card className={`overflow-hidden ${className}`}>
       <div className="h-1.5 w-full bg-gradient-to-r from-blue-400 to-violet-500"></div>
       <CardHeader>
         <CardTitle>AI Capabilities</CardTitle>
@@ -725,6 +729,12 @@ export default function CreativeSymbiosisSection() {
   const { data: evolutionPoints } = useQuery<EvolutionPoints>({
     queryKey: ['/api/evolution-points'],
     enabled: true,
+  });
+  
+  // Get stats for the creative journey metrics from API (using mock data for now)
+  const { data: userEngagement } = useQuery({
+    queryKey: ['/api/user-engagement'],
+    enabled: false, // Disable until implemented
   });
   
   // Mock stats for the creative journey metrics
@@ -849,9 +859,15 @@ export default function CreativeSymbiosisSection() {
 
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          <EvolutionProgressCard className="h-full" />
-          <CapabilitiesCard className="h-full" />
-          <CreativeHistoryCard className="h-full" />
+          <div className="h-full">
+            <EvolutionProgressCard className="h-full" />
+          </div>
+          <div className="h-full">
+            <CapabilitiesCard className="h-full" />
+          </div>
+          <div className="h-full">
+            <CreativeHistoryCard className="h-full" />
+          </div>
         </div>
       </div>
 
