@@ -40,7 +40,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { MultiSelect } from '@/components/ui/multi-select';
+// Remove MultiSelect import as we're not using it yet
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -190,6 +190,7 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
     setIsGeneratingCaption(true);
     
     try {
+      // Explicitly type the response
       const response = await apiRequest<{ success: boolean; caption: string }>({
         url: '/api/mood-capsules/generate-caption',
         method: 'POST',
