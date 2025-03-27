@@ -26,7 +26,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
           )}
           {children}
         </div>
-        {rightSection !== null && (
+        {rightSection && (
           <div className="flex items-center gap-2">
             {rightSection}
           </div>
