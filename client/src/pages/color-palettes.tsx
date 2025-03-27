@@ -12,7 +12,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Heart, Edit, Download, Plus } from 'lucide-react';
+import { Heart, Edit, Download, Plus, Sparkles } from 'lucide-react';
+import PaletteGenerator from '@/components/color-palettes/PaletteGenerator';
 import { cn } from '@/lib/utils';
 
 // Define the ColorPalette type

@@ -36,18 +36,29 @@ export async function generateText(prompt: string, options?: { temperature?: num
  */
 export async function generateJsonResponse<T>(
   prompt: string, 
-  systemPrompt: string,
+  systemPromptOrOptions?: string | { temperature?: number, maxTokens?: number },
   options?: { temperature?: number, maxTokens?: number }
 ): Promise<T> {
   try {
+    // Handle different parameter formats
+    let systemPrompt = "You are a helpful assistant that returns JSON data based on the user's request.";
+    let resolvedOptions = options;
+
+    // Check if second param is a system prompt or options
+    if (typeof systemPromptOrOptions === 'string') {
+      systemPrompt = systemPromptOrOptions;
+    } else if (systemPromptOrOptions && typeof systemPromptOrOptions === 'object') {
+      resolvedOptions = systemPromptOrOptions;
+    }
+
     const response = await openai.chat.completions.create({
       model: MODEL,
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: prompt }
       ],
-      temperature: options?.temperature || 0.7,
-      max_tokens: options?.maxTokens || 1000,
+      temperature: resolvedOptions?.temperature || 0.7,
+      max_tokens: resolvedOptions?.maxTokens || 1000,
       response_format: { type: "json_object" }
     });
 
@@ -227,6 +238,58 @@ export async function suggestPostingTimes(
   }
 }
 
+/**
+ * Generate a color palette based on mood and description
+ */
+export async function generateColorPalette(
+  mood: string,
+  description?: string,
+  count: number = 5
+): Promise<{ colors: string[], explanation: string }> {
+  if (!isConfigured) {
+    console.warn("OpenAI API key not configured. Using placeholder response.");
+    return {
+      colors: ["#FFD166", "#06D6A0", "#118AB2", "#EF476F", "#073B4C"],
+      explanation: "A balanced color palette (OpenAI API key not configured)"
+    };
+  }
+
+  try {
+    const moodDesc = description ? `${mood} mood and this description: "${description}"` : `${mood} mood`;
+    const prompt = `Generate a cohesive color palette of ${count} colors that represents a ${moodDesc}. The colors should work well together and convey the right emotional tone.`;
+    
+    const systemPrompt = `You are a professional color theory expert and designer who creates perfect color palettes based on moods and emotions. 
+    Return a JSON object with these keys: 
+    "colors" (array of exactly ${count} hex color codes like "#RRGGBB"), and 
+    "explanation" (a brief description of the palette and how it relates to the requested mood).
+    Ensure all colors work well together, have good contrast ratios when appropriate, and truly capture the essence of the requested mood.`;
+    
+    const palette = await generateJsonResponse<{
+      colors: string[],
+      explanation: string
+    }>(prompt, systemPrompt, { temperature: 0.7 });
+    
+    // Ensure we have the right number of colors
+    if (palette.colors.length !== count) {
+      const defaultColors = ["#FFD166", "#06D6A0", "#118AB2", "#EF476F", "#073B4C"];
+      palette.colors = palette.colors.slice(0, count);
+      
+      // If we still don't have enough, add some default colors
+      while (palette.colors.length < count) {
+        palette.colors.push(defaultColors[palette.colors.length % defaultColors.length]);
+      }
+    }
+    
+    return palette;
+  } catch (error) {
+    console.error("Error generating color palette:", error);
+    return {
+      colors: ["#FFD166", "#06D6A0", "#118AB2", "#EF476F", "#073B4C"],
+      explanation: "Could not generate a palette. Please try again later."
+    };
+  }
+}
+
 export default {
   isConfigured,
   generateText,
@@ -235,5 +298,6 @@ export default {
   generateContentIdeas,
   generateCaption,
   analyzeContentPerformance,
-  suggestPostingTimes
+  suggestPostingTimes,
+  generateColorPalette
 };

@@ -8,6 +8,7 @@ import {
   generateContentIdeas, 
   suggestPostingTimes 
 } from "./ai/content";
+import { generateMoodPalette } from "./services/paletteGenerator";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // API routes prefix
@@ -471,6 +472,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(palettes);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Generate a mood-based color palette using AI
+  app.post(`${apiPrefix}/color-palettes/generate`, async (req: Request, res: Response) => {
+    try {
+      const { mood, description, colorCount } = req.body;
+      
+      if (!mood) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Mood is required" 
+        });
+      }
+      
+      const generatedPalette = await generateMoodPalette({
+        mood,
+        description,
+        colorCount: colorCount || 5,
+        includeNames: true
+      });
+      
+      res.json({
+        success: true,
+        palette: generatedPalette
+      });
+    } catch (error: any) {
+      console.error('Error generating palette:', error);
+      res.status(500).json({ 
+        success: false,
+        message: error.message || 'Failed to generate color palette'
+      });
     }
   });
 
