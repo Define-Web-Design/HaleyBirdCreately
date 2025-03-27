@@ -1,5 +1,9 @@
 import { Link, useLocation } from 'wouter';
 import { MENU_ITEMS, SMART_TOOLS } from '@/lib/constants';
+import { useTheme } from '@/lib/hooks/use-theme';
+import { useState } from 'react';
+import { Sun, Moon, ZoomIn, ZoomOut, Eye, ChevronUp, ChevronDown } from 'lucide-react';
+import { Switch } from "@/components/ui/switch";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,8 +13,26 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const Sidebar = () => {
+interface SidebarProps {
+  fontSize?: number;
+  setFontSize?: (size: number) => void;
+  highContrast?: boolean;
+  setHighContrast?: (contrast: boolean) => void;
+}
+
+const Sidebar = ({ 
+  fontSize = 16, 
+  setFontSize = () => {}, 
+  highContrast = false, 
+  setHighContrast = () => {} 
+}: SidebarProps) => {
   const [location] = useLocation();
+  const { isDark, toggleTheme } = useTheme();
+  const [accessibilityExpanded, setAccessibilityExpanded] = useState(false);
+
+  const toggleAccessibility = () => {
+    setAccessibilityExpanded(!accessibilityExpanded);
+  };
 
   return (
     <div className="flex flex-col w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 shadow-sm h-full">
@@ -68,41 +90,126 @@ const Sidebar = () => {
         </ul>
       </nav>
       
-      {/* User Profile */}
-      <div className="p-4 border-t border-gray-200 dark:border-gray-800 mt-auto">
-        <div className="flex items-center">
-          <DropdownMenu>
-            <DropdownMenuTrigger className="flex items-center w-full">
-              <img 
-                src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=120&h=120&q=80" 
-                alt="User avatar" 
-                className="h-8 w-8 rounded-full object-cover mr-3"
-              />
-              <div className="flex-1">
-                <p className="text-sm font-medium text-left">Sophia Chen</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Creator</p>
-              </div>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
-              <DropdownMenuItem asChild>
-                <Link href="/profile">Profile Settings</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/profile#accessibility">Accessibility</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/profile#integrations">Integrations</Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                Sign out
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <button className="ml-auto text-gray-500 hover:text-primary dark:text-gray-400 dark:hover:text-primary">
-            <i className="fas fa-cog"></i>
+      {/* User Profile & Accessibility Tools */}
+      <div className="border-t border-gray-200 dark:border-gray-800 mt-auto">
+        {/* User Profile */}
+        <div className="p-4">
+          <div className="flex items-center">
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center w-full">
+                <img 
+                  src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=120&h=120&q=80" 
+                  alt="User avatar" 
+                  className="h-8 w-8 rounded-full object-cover mr-3"
+                />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-left">Sophia Chen</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Creator</p>
+                </div>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuItem asChild>
+                  <Link href="/profile">Profile Settings</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/profile#accessibility">Accessibility</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/profile#integrations">Integrations</Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                  Sign out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <button className="ml-auto text-gray-500 hover:text-primary dark:text-gray-400 dark:hover:text-primary">
+              <i className="fas fa-cog"></i>
+            </button>
+          </div>
+        </div>
+        
+        {/* Accessibility Tools Section */}
+        <div className="px-4 pb-4">
+          <button 
+            onClick={toggleAccessibility}
+            className="flex items-center justify-between w-full py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary transition-colors"
+          >
+            <span>Accessibility Tools</span>
+            {accessibilityExpanded ? (
+              <ChevronUp className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
           </button>
+          
+          {accessibilityExpanded && (
+            <div className="mt-2 space-y-3 pl-2 border-l-2 border-gray-200 dark:border-gray-700">
+              {/* Day/Night Toggle */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <div className="relative">
+                    <Sun className={`h-4 w-4 absolute transition-all duration-300 ${!isDark 
+                      ? 'text-primary opacity-100 scale-100 translate-y-0' 
+                      : 'text-gray-400 opacity-0 scale-95 -translate-y-1'}`} 
+                    />
+                    <Moon className={`h-4 w-4 transition-all duration-300 ${isDark 
+                      ? 'text-primary opacity-100 scale-100 translate-y-0' 
+                      : 'text-gray-400 opacity-0 scale-95 translate-y-1'}`} 
+                    />
+                  </div>
+                  <span className="text-sm">{isDark ? 'Dark' : 'Light'} Mode</span>
+                </div>
+                <Switch 
+                  checked={isDark}
+                  onCheckedChange={toggleTheme}
+                  aria-label="Toggle theme"
+                  id="theme-toggle"
+                  className="data-[state=checked]:bg-primary/90 data-[state=unchecked]:bg-slate-200 dark:data-[state=unchecked]:bg-slate-700"
+                />
+              </div>
+              
+              {/* Text Size Controls */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <ZoomIn className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                  <span className="text-sm">Text Size</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <button 
+                    onClick={() => setFontSize(Math.max(fontSize - 2, 12))}
+                    className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400"
+                    aria-label="Decrease text size"
+                  >
+                    <ZoomOut className="h-3.5 w-3.5" />
+                  </button>
+                  <span className="text-xs mx-1">{fontSize}px</span>
+                  <button 
+                    onClick={() => setFontSize(Math.min(fontSize + 2, 24))}
+                    className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400"
+                    aria-label="Increase text size"
+                  >
+                    <ZoomIn className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+              
+              {/* High Contrast Toggle */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Eye className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                  <span className="text-sm">High Contrast</span>
+                </div>
+                <Switch 
+                  checked={highContrast}
+                  onCheckedChange={setHighContrast}
+                  aria-label="Toggle high contrast"
+                  className="data-[state=checked]:bg-primary/90 data-[state=unchecked]:bg-slate-200 dark:data-[state=unchecked]:bg-slate-700"
+                />
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
