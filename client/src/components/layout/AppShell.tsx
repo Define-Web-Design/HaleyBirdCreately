@@ -58,14 +58,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         
         {/* Accessibility controls */}
         <div className="fixed top-4 right-4 flex gap-2 z-20">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={toggleTheme}
-            aria-label="Toggle theme"
-          >
-            {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-          </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="opacity-70 hover:opacity-100">
