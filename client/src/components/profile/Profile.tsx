@@ -52,10 +52,40 @@ export default function Profile() {
 
       <Card>
         <CardHeader>
+          <CardTitle>Creative History</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {creativeHistory?.map((item, index) => (
+              <div key={index} className="flex items-center justify-between p-2 border rounded">
+                <div>
+                  <h4 className="font-medium">{item.title}</h4>
+                  <p className="text-sm text-gray-500">{item.date}</p>
+                </div>
+                <span className="text-sm font-medium text-primary">
+                  +{item.pointsEarned} points
+                </span>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>Platform Integrations</CardTitle>
         </CardHeader>
         <CardContent>
-          {/* Integration settings will go here */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <span>Connect Social Media</span>
+              <Button variant="outline">Connect</Button>
+            </div>
+            <div className="flex items-center justify-between">
+              <span>AI Model Preferences</span>
+              <Button variant="outline">Configure</Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>
