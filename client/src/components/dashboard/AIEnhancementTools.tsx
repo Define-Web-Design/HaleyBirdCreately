@@ -1,3 +1,4 @@
+import { Link } from 'wouter';
 import ToolCard from '@/components/ui/tool-card';
 import { ENHANCEMENT_TOOLS } from '@/lib/constants';
 import { ToolCard as ToolCardType } from '@/lib/types';
@@ -20,9 +21,9 @@ const AIEnhancementTools = ({ onToolSelect }: AIEnhancementToolsProps) => {
     <section className="mb-8 animate-slide-up" style={{ animationDelay: '0.3s' }}>
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-['SF_Pro_Display'] font-semibold">AI Enhancement Tools</h2>
-        <button className="text-sm text-primary hover:text-primary/80 transition-colors">
+        <Link href="/ai-enhancement" className="text-sm text-primary hover:text-primary/80 transition-colors">
           View All <i className="fas fa-chevron-right ml-1"></i>
-        </button>
+        </Link>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

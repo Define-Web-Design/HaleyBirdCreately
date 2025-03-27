@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import AppShell from "./components/layout/AppShell";
 import Dashboard from "./pages/dashboard";
 import ContentLibrary from "./pages/content-library";
+import ContentDetail from "./pages/content-detail";
 import ContentCalendar from "./pages/content-calendar";
 import Analytics from "./pages/analytics";
 import MoodBoards from "./pages/mood-boards";
@@ -23,6 +24,7 @@ function Router() {
       <Switch>
         <Route path="/" component={Dashboard} />
         <Route path="/content-library" component={ContentLibrary} />
+        <Route path="/content/:id" component={ContentDetail} />
         <Route path="/content-calendar" component={ContentCalendar} />
         <Route path="/analytics" component={Analytics} />
         <Route path="/mood-boards" component={MoodBoards} />

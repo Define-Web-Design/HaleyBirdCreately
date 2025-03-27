@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'wouter';
 import ContentCard from '@/components/ui/content-card';
 import { ContentItem } from '@/lib/types';
 import { TIME_PERIODS } from '@/lib/constants';
@@ -26,7 +27,12 @@ const ContentLibrary = ({
     return (
       <section className="mb-8 animate-slide-up opacity-75" style={{ animationDelay: '0.2s' }}>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-['SF_Pro_Display'] font-semibold">Recent Content</h2>
+          <div className="flex items-center">
+            <h2 className="text-xl font-['SF_Pro_Display'] font-semibold">Recent Content</h2>
+            <Link href="/library" className="ml-2 text-sm text-primary hover:text-primary/80 transition-colors">
+              View All <i className="fas fa-chevron-right ml-1"></i>
+            </Link>
+          </div>
           <div className="flex space-x-2">
             <div className="h-10 w-32 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
             <div className="h-10 w-32 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
@@ -113,7 +119,12 @@ const ContentLibrary = ({
   return (
     <section className="mb-8 animate-slide-up" style={{ animationDelay: '0.2s' }}>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-['SF_Pro_Display'] font-semibold">Recent Content</h2>
+        <div className="flex items-center">
+          <h2 className="text-xl font-['SF_Pro_Display'] font-semibold">Recent Content</h2>
+          <Link href="/library" className="ml-2 text-sm text-primary hover:text-primary/80 transition-colors">
+            View All <i className="fas fa-chevron-right ml-1"></i>
+          </Link>
+        </div>
         <div className="flex space-x-2">
           <div className="relative">
             <select
