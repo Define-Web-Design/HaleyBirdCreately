@@ -56,35 +56,20 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // Try to use port 5000 first, as that's what Replit expects
-  // Fall back to a different port if 5000 is unavailable
-  const tryPorts = [5000, 3000, 8080];
-  let currentPortIndex = 0;
+  // Use port 5000 for Replit environments
+  const port = process.env.PORT || 5000;
   
-  function listenOnPort(portIndex: number) {
-    const port = process.env.PORT ? parseInt(process.env.PORT) : tryPorts[portIndex];
-    
-    server.listen({
-      port,
-      host: "0.0.0.0",
-      reusePort: true,
-    }).on('error', (e: any) => {
-      if (e.code === 'EADDRINUSE') {
-        currentPortIndex++;
-        if (currentPortIndex < tryPorts.length) {
-          log(`Port ${port} is in use, trying port ${tryPorts[currentPortIndex]} instead...`);
-          listenOnPort(currentPortIndex);
-        } else {
-          log('All predefined ports are in use. Please free up a port or specify a different port via PORT env variable.');
-          throw e;
-        }
-      } else {
-        throw e;
-      }
-    }).on('listening', () => {
-      log(`serving on port ${port}`);
-    });
-  }
-  
-  listenOnPort(currentPortIndex);
+  server.listen({
+    port: parseInt(port.toString()),
+    host: "0.0.0.0",
+  }).on('error', (e: any) => {
+    if (e.code === 'EADDRINUSE') {
+      log(`Port ${port} is in use. Please free up this port or specify a different port via PORT env variable.`);
+      throw e;
+    } else {
+      throw e;
+    }
+  }).on('listening', () => {
+    log(`serving on port ${port}`);
+  });
 })();

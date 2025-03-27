@@ -473,3 +473,224 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
 };
 
 export default MoodCapsuleForm;
+import React, { useState, useEffect } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { useQuery } from "@tanstack/react-query";
+import { 
+  Form, 
+  FormControl, 
+  FormField, 
+  FormItem, 
+  FormLabel, 
+  FormMessage
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { MultiSelect, type Option } from "@/components/ui/multi-select";
+import { toast } from "@/components/ui/use-toast";
+import { Loader2 } from "lucide-react";
+
+// Define schema for form validation
+const moodCapsuleSchema = z.object({
+  name: z.string().min(2, { message: "Name must be at least 2 characters" }).max(50),
+  description: z.string().max(500, { message: "Description must be less than 500 characters" }).optional(),
+  emotionalTone: z.array(z.string()).min(1, { message: "At least one emotional tone is required" }),
+  contentIds: z.array(z.number()).min(1, { message: "At least one content must be selected" })
+});
+
+type MoodCapsuleFormValues = z.infer<typeof moodCapsuleSchema>;
+
+// List of emotional tones as options
+const emotionalToneOptions: Option[] = [
+  { label: "Happy", value: "happy" },
+  { label: "Sad", value: "sad" },
+  { label: "Excited", value: "excited" },
+  { label: "Calm", value: "calm" },
+  { label: "Anxious", value: "anxious" },
+  { label: "Nostalgic", value: "nostalgic" },
+  { label: "Hopeful", value: "hopeful" },
+  { label: "Peaceful", value: "peaceful" },
+  { label: "Energetic", value: "energetic" },
+  { label: "Reflective", value: "reflective" }
+];
+
+interface MoodCapsuleFormProps {
+  onSubmit: (values: MoodCapsuleFormValues) => void;
+  initialValues?: Partial<MoodCapsuleFormValues>;
+  isSubmitting?: boolean;
+}
+
+export function MoodCapsuleForm({ 
+  onSubmit, 
+  initialValues, 
+  isSubmitting = false 
+}: MoodCapsuleFormProps) {
+  // Fetch user content for selection
+  const { data: userContent, isLoading: isLoadingContent } = useQuery<any[]>(["/api/content"]);
+  
+  // Transform user content to options format for MultiSelect
+  const contentOptions: Option[] = React.useMemo(() => {
+    if (!userContent) return [];
+    return userContent.map(content => ({
+      label: content.title,
+      value: content.id.toString(),
+      description: content.description?.substring(0, 50) || undefined,
+    }));
+  }, [userContent]);
+
+  // Form setup with validation
+  const form = useForm<MoodCapsuleFormValues>({
+    resolver: zodResolver(moodCapsuleSchema),
+    defaultValues: {
+      name: initialValues?.name || "",
+      description: initialValues?.description || "",
+      emotionalTone: initialValues?.emotionalTone || [],
+      contentIds: initialValues?.contentIds || []
+    }
+  });
+
+  // Handle form submission
+  const handleSubmit = (values: MoodCapsuleFormValues) => {
+    try {
+      onSubmit(values);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create mood capsule. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Name</FormLabel>
+              <FormControl>
+                <Input 
+                  placeholder="Enter mood capsule name" 
+                  {...field} 
+                  aria-required="true" 
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Description</FormLabel>
+              <FormControl>
+                <Textarea 
+                  placeholder="Enter an optional description" 
+                  {...field} 
+                  rows={3}
+                  value={field.value || ""}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="emotionalTone"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Emotional Tone</FormLabel>
+              <FormControl>
+                <MultiSelect
+                  options={emotionalToneOptions}
+                  placeholder="Select emotional tones"
+                  value={field.value.map(tone => ({
+                    label: emotionalToneOptions.find(opt => opt.value === tone)?.label || tone,
+                    value: tone
+                  }))}
+                  onChange={(selected) => {
+                    field.onChange(selected.map(item => item.value));
+                  }}
+                  aria-required="true"
+                  aria-label="Emotional tone selector"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="contentIds"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Content</FormLabel>
+              <FormControl>
+                {isLoadingContent ? (
+                  <div className="flex items-center justify-center p-4 border rounded-md">
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span className="ml-2">Loading content...</span>
+                  </div>
+                ) : (
+                  <MultiSelect
+                    options={contentOptions}
+                    placeholder="Select content"
+                    value={field.value.map(id => {
+                      const option = contentOptions.find(opt => opt.value === id.toString());
+                      return {
+                        label: option?.label || `Content ${id}`,
+                        value: id.toString()
+                      };
+                    })}
+                    onChange={(selected) => {
+                      field.onChange(selected.map(item => parseInt(item.value)));
+                    }}
+                    aria-required="true"
+                    aria-label="Content selector"
+                  />
+                )}
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="flex justify-end space-x-2 pt-2">
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={() => form.reset()}
+            disabled={isSubmitting}
+            aria-label="Reset form fields"
+          >
+            Reset
+          </Button>
+          <Button 
+            type="submit" 
+            disabled={isSubmitting || isLoadingContent}
+            aria-label="Create mood capsule"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : "Create Mood Capsule"}
+          </Button>
+        </div>
+      </form>
+    </Form>
+  );
+}

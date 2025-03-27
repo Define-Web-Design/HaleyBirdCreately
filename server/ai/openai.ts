@@ -1,4 +1,9 @@
 import OpenAI from "openai";
+import { Configuration, OpenAIApi } from "openai";
+import dotenv from "dotenv";
+
+// Load environment variables
+dotenv.config();
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const MODEL = "gpt-4o";
@@ -290,6 +295,49 @@ export async function generateColorPalette(
   }
 }
 
+// Configure OpenAI API (for the new function)
+const configuration = new Configuration({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+const openai2 = new OpenAIApi(configuration);
+
+export async function generateMoodPalette(mood: string): Promise<string[]> {
+  try {
+    // Check if OpenAI API key is configured
+    if (!process.env.OPENAI_API_KEY) {
+      console.warn("OPENAI_API_KEY not set, returning fallback palette");
+      return ["#FFD166", "#06D6A0", "#118AB2", "#EF476F", "#073B4C"];
+    }
+
+    const prompt = `Generate a color palette of 5 colors that evokes the mood: ${mood}. Return only the hex codes in a JSON array format.`;
+
+    const response = await openai2.createCompletion({
+      model: "text-davinci-003",
+      prompt,
+      max_tokens: 100,
+      temperature: 0.7,
+    });
+
+    // Parse the response text as JSON
+    const responseText = response.data.choices[0]?.text || "[]";
+    try {
+      const colors: string[] = JSON.parse(responseText.trim());
+      if (Array.isArray(colors) && colors.length > 0) {
+        return colors;
+      }
+    } catch (error) {
+      console.error("Failed to parse OpenAI response:", error);
+    }
+
+    // Fallback palette if parsing fails
+    return ["#FFD166", "#06D6A0", "#118AB2", "#EF476F", "#073B4C"];
+  } catch (error) {
+    console.error("Error generating palette with OpenAI:", error);
+    return ["#FFD166", "#06D6A0", "#118AB2", "#EF476F", "#073B4C"];
+  }
+}
+
 export default {
   isConfigured,
   generateText,
@@ -299,5 +347,6 @@ export default {
   generateCaption,
   analyzeContentPerformance,
   suggestPostingTimes,
-  generateColorPalette
+  generateColorPalette,
+  generateMoodPalette
 };

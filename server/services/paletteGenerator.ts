@@ -116,3 +116,59 @@ export async function generatePaletteFromImage(imageUrl: string): Promise<Genera
     suggestedTags: ['image-extracted', 'photo-palette', 'visual']
   };
 }
+import { generateMoodPalette as openaiGeneratePalette } from "../ai/openai";
+
+interface PaletteOptions {
+  mood: string;
+  description?: string;
+  colorCount?: number;
+  includeNames?: boolean;
+}
+
+interface ColorPalette {
+  colors: string[];
+  explanation: string;
+  colorNames?: string[];
+}
+
+export async function generateMoodPalette(options: PaletteOptions): Promise<ColorPalette> {
+  try {
+    // Generate base colors using OpenAI
+    const colors = await openaiGeneratePalette(options.mood);
+    
+    const defaultPalette: ColorPalette = {
+      colors: colors.slice(0, options.colorCount || 5),
+      explanation: `A ${options.mood} palette that evokes ${options.description || options.mood} feelings`,
+      colorNames: options.includeNames ? generateColorNames(colors) : undefined
+    };
+    
+    return defaultPalette;
+  } catch (error) {
+    console.error("Error in palette generator service:", error);
+    
+    // Fallback palette
+    return {
+      colors: ["#FFD166", "#06D6A0", "#118AB2", "#EF476F", "#073B4C"].slice(0, options.colorCount || 5),
+      explanation: `Fallback ${options.mood} palette - AI generation failed`,
+      colorNames: options.includeNames ? ["Amber", "Mint", "Azure", "Coral", "Navy"] : undefined
+    };
+  }
+}
+
+// Helper function to generate color names based on hex values
+function generateColorNames(colors: string[]): string[] {
+  // This is a simple implementation - in a real system, you'd use a color naming API or library
+  const colorMap: Record<string, string> = {
+    "#FFD166": "Amber",
+    "#06D6A0": "Mint",
+    "#118AB2": "Azure",
+    "#EF476F": "Coral",
+    "#073B4C": "Navy",
+    // Add more color mappings as needed
+  };
+  
+  return colors.map(color => {
+    // Find the closest color in our map or generate a generic name
+    return colorMap[color] || `Color-${color.substring(1, 4)}`;
+  });
+}
