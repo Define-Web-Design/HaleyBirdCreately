@@ -1,11 +1,11 @@
 
 import { useState, useEffect } from 'react';
-import { useTheme } from '@/hooks/useTheme';
+import { useTheme } from '@/lib/hooks/use-theme';
 import { Button } from '@/components/ui/button';
 import { Sun, Moon, ZoomIn, ZoomOut, Eye } from 'lucide-react';
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
-  const { theme, setTheme } = useTheme();
+  const { isDark, toggleTheme } = useTheme();
   const [fontSize, setFontSize] = useState(16);
   const [highContrast, setHighContrast] = useState(false);
 
@@ -24,10 +24,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <Button
           variant="outline"
           size="icon"
-          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          onClick={toggleTheme}
           aria-label="Toggle theme"
         >
-          {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+          {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
         </Button>
         <Button
           variant="outline"

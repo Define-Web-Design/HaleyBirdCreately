@@ -735,9 +735,16 @@ export default function CreativeSymbiosisSection() {
     daysActive: 7
   };
   
+  // Define Tier info type
+  type TierInfo = {
+    color: string;
+    nextTier: string | null;
+    features: string[];
+  };
+  
   // Get tier information
-  const getTierInfo = (tier: string = 'starter') => {
-    const tiers = {
+  const getTierInfo = (tier: string = 'starter'): TierInfo => {
+    const tiers: Record<string, TierInfo> = {
       'starter': {
         color: 'from-primary to-primary/70',
         nextTier: 'Growing',
@@ -765,7 +772,8 @@ export default function CreativeSymbiosisSection() {
       }
     };
     
-    return tiers[tier.toLowerCase()] || tiers.starter;
+    const lowerTier = tier.toLowerCase();
+    return tiers[lowerTier] || tiers.starter;
   };
   
   const currentTier = evolutionPoints?.currentTier?.toLowerCase() || 'starter';
@@ -824,7 +832,7 @@ export default function CreativeSymbiosisSection() {
             <div className="mt-6 pt-6 border-t border-border">
               <h4 className="text-sm font-medium mb-3">Tier Benefits:</h4>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {tierInfo.features.map((feature, index) => (
+                {tierInfo.features.map((feature: string, index: number) => (
                   <div key={index} className="flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
                       stroke="currentColor" className="w-4 h-4 mr-2 text-primary" strokeWidth="2">
