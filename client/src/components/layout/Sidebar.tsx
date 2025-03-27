@@ -49,15 +49,10 @@ const Sidebar = ({
   const [accessibilityExpanded, setAccessibilityExpanded] = useState(false);
   const [expandedSubMenu, setExpandedSubMenu] = useState<string | null>(null);
   
-  // Only close sidebar on navigation when submenu is not open
-  // and we're not using the toggle button explicitly
+  // Close sidebar on navigation except when submenu is open
   useEffect(() => {
-    if (expanded && expandedSubMenu === null && !sessionStorage.getItem('sidebarToggled')) {
+    if (expanded && expandedSubMenu === null) {
       setExpanded(false);
-    }
-    // Clear the toggle flag after it's been used
-    if (sessionStorage.getItem('sidebarToggled')) {
-      sessionStorage.removeItem('sidebarToggled');
     }
   }, [location, expanded, expandedSubMenu, setExpanded]);
 
@@ -68,32 +63,14 @@ const Sidebar = ({
   const handleMenuItemClick = useCallback((item: MenuItem) => {
     // If item has submenu, toggle it
     if (item.subMenu && item.subMenu.length > 0) {
-      // This is a category with subcategories
       setExpandedSubMenu(prev => prev === item.path ? null : item.path);
       setExpanded(true); // Keep sidebar expanded when submenu is toggled
-      
-      // Implement your special actions for categories here
-      // For example:
-      if (item.onCategoryClick) {
-        item.onCategoryClick(item);
-      }
     } else {
-      // This is a regular menu item or a subcategory
-      
-      // Implement your special actions for subcategories here
-      // For example:
-      if (item.onSubCategoryClick) {
-        item.onSubCategoryClick(item);
-      }
-      
       // If no submenu, close sidebar after a brief delay to allow for animation
-      // Only if we're on mobile - on desktop we might want to keep it open
-      if (window.innerWidth < 768) {
-        setTimeout(() => {
-          setExpandedSubMenu(null);
-          setExpanded(false);
-        }, 150);
-      }
+      setTimeout(() => {
+        setExpandedSubMenu(null);
+        setExpanded(false);
+      }, 150);
     }
   }, [setExpanded]);
 
