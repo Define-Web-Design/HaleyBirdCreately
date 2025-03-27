@@ -87,8 +87,4 @@ app.use((req, res, next) => {
   }
   
   listenOnPort(currentPortIndex);
-    reusePort: true,
-  }, () => {
-    log(`serving on port ${port}`);
-  });
 })();
