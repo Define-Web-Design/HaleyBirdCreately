@@ -12,9 +12,15 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Heart, Edit, Download, Plus, Sparkles } from 'lucide-react';
-import PaletteGenerator from '@/components/color-palettes/PaletteGenerator';
+import { Heart, Edit, Download, Plus, Sparkles, PanelLeftOpen, Palette, Sliders } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Progress } from '@/components/ui/progress';
+import PaletteGenerator from '@/components/color-palettes/PaletteGenerator';
+import VoiceColorSelector from '@/components/color-palettes/VoiceColorSelector';
+import ColorTheoryTutorial from '@/components/color-palettes/ColorTheoryTutorial';
+import AdaptiveThemeGenerator from '@/components/color-palettes/AdaptiveThemeGenerator';
+import SocialMediaSharing from '@/components/color-palettes/SocialMediaSharing';
+import { MoodLoadingGroup } from '@/components/ui/mood-loading';
 
 // Define the ColorPalette type
 interface ColorPalette {
@@ -56,6 +62,8 @@ const ColorPalettesPage = () => {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('all');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [selectedColor, setSelectedColor] = useState<string>('#FFD166');
+  const [showAdvancedTools, setShowAdvancedTools] = useState(false);
   const [newPalette, setNewPalette] = useState<NewPalette>({
     name: '',
     mood: 'happy',
@@ -77,7 +85,11 @@ const ColorPalettesPage = () => {
   // Mutation to create a new color palette
   const createPaletteMutation = useMutation({
     mutationFn: (palette: Omit<ColorPalette, 'id' | 'userId' | 'usageCount' | 'createdAt' | 'updatedAt'>) => 
-      apiRequest('POST', '/api/color-palettes', palette),
+      apiRequest({
+        method: 'POST',
+        url: '/api/color-palettes',
+        data: palette
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/color-palettes'] });
       setIsCreateDialogOpen(false);
@@ -99,7 +111,11 @@ const ColorPalettesPage = () => {
   // Mutation to toggle favorite status
   const toggleFavoriteMutation = useMutation({
     mutationFn: ({ id, isFavorite }: { id: number, isFavorite: boolean }) => 
-      apiRequest('PUT', `/api/color-palettes/${id}`, { isFavorite }),
+      apiRequest({
+        method: 'PUT',
+        url: `/api/color-palettes/${id}`,
+        data: { isFavorite }
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/color-palettes'] });
     }
@@ -108,7 +124,10 @@ const ColorPalettesPage = () => {
   // Mutation to increment usage count
   const incrementUsageMutation = useMutation({
     mutationFn: (id: number) => 
-      apiRequest('POST', `/api/color-palettes/${id}/increment-usage`),
+      apiRequest({
+        method: 'POST',
+        url: `/api/color-palettes/${id}/increment-usage`
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/color-palettes'] });
     }
@@ -306,17 +325,22 @@ const ColorPalettesPage = () => {
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label className="text-right">Colors</Label>
-                  <div className="col-span-3 flex flex-wrap gap-2">
-                    {newPalette.colors.map((color, index) => (
-                      <div key={index} className="relative">
-                        <input
-                          type="color"
-                          value={color}
-                          onChange={(e) => handleColorChange(index, e.target.value)}
-                          className="h-10 w-10 cursor-pointer rounded-md border p-0"
-                        />
-                      </div>
-                    ))}
+                  <div className="col-span-3">
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {newPalette.colors.map((color, index) => (
+                        <div key={index} className="relative">
+                          <input
+                            type="color"
+                            value={color}
+                            onChange={(e) => handleColorChange(index, e.target.value)}
+                            className="h-10 w-10 cursor-pointer rounded-md border p-0"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Use voice color selection to add colors from speech, or pick them manually.
+                    </div>
                   </div>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
@@ -399,6 +423,74 @@ const ColorPalettesPage = () => {
           <Button variant="outline" size="sm" onClick={resetApplicationTheme}>
             Reset Theme
           </Button>
+        </div>
+      )}
+      
+      {/* Advanced Color Tools Toggle */}
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-semibold">Color Palettes</h2>
+        <Button 
+          variant="outline" 
+          onClick={() => setShowAdvancedTools(!showAdvancedTools)}
+          className="flex items-center gap-2"
+        >
+          <Sliders className="h-4 w-4" />
+          {showAdvancedTools ? "Hide Tools" : "Show Advanced Tools"}
+        </Button>
+      </div>
+      
+      {/* Advanced Color Tools */}
+      {showAdvancedTools && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div className="space-y-4">
+            <VoiceColorSelector 
+              onColorSelected={(color) => {
+                setSelectedColor(color);
+                // Add the color to the new palette if creating one
+                if (isCreateDialogOpen && newPalette.colors.length < 8) {
+                  handleColorChange(newPalette.colors.length - 1, color);
+                }
+                toast({
+                  title: "Color Selected",
+                  description: `Selected ${color} using voice recognition!`,
+                });
+              }} 
+            />
+            
+            <ColorTheoryTutorial />
+            
+            {/* Mood Animations preview */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg">Mood Animations</CardTitle>
+                <CardDescription>Visualize your moods with playful animations</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <MoodLoadingGroup moods={['happy', 'calm', 'energetic', 'melancholic']} className="flex justify-center gap-4 py-4" />
+              </CardContent>
+            </Card>
+          </div>
+          
+          <div className="space-y-4">
+            <AdaptiveThemeGenerator 
+              onThemeGenerated={(theme) => {
+                setActivePalette({
+                  primary: theme.primary,
+                  accent: theme.secondary,
+                  background: theme.background,
+                });
+                toast({
+                  title: "Theme Applied",
+                  description: "Generated theme has been applied to the application",
+                });
+              }} 
+            />
+            
+            <SocialMediaSharing 
+              paletteName="My Creative Palette" 
+              paletteColors={newPalette.colors}
+            />
+          </div>
         </div>
       )}
 
@@ -487,6 +579,15 @@ const ColorPalettesPage = () => {
                           Used {palette.usageCount} {palette.usageCount === 1 ? 'time' : 'times'}
                         </Badge>
                         <div className="flex space-x-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => applyPaletteToTheme(palette)}
+                            title="Apply to theme"
+                            className="apple-press apple-focus-ring"
+                          >
+                            <Palette className="h-4 w-4" />
+                          </Button>
                           <Button
                             variant="ghost"
                             size="icon"

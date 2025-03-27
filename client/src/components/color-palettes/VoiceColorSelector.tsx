@@ -74,7 +74,7 @@ const VoiceColorSelector: React.FC<VoiceColorSelectorProps> = ({ onColorSelected
   
   // Effect to handle color detection and progress when listening
   useEffect(() => {
-    let progressInterval: NodeJS.Timeout;
+    let progressInterval: NodeJS.Timeout | undefined;
     
     if (isListening) {
       // Reset progress and detected colors when starting to listen
@@ -109,7 +109,7 @@ const VoiceColorSelector: React.FC<VoiceColorSelectorProps> = ({ onColorSelected
   
   // Stop listening automatically after 10 seconds
   useEffect(() => {
-    let timeoutId: NodeJS.Timeout;
+    let timeoutId: NodeJS.Timeout | undefined;
     
     if (isListening) {
       timeoutId = setTimeout(() => {
