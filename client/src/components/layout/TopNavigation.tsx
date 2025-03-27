@@ -34,13 +34,11 @@ export default function TopNavigation({ toggleSidebar, isMobile }: TopNavigation
     <div className="flex items-center justify-between h-16 px-4 border-b bg-background">
       {/* Left side */}
       <div className="flex items-center">
-        {isMobile && (
-          <Button variant="ghost" size="icon" onClick={toggleSidebar} aria-label="Toggle sidebar">
-            <Menu className="h-5 w-5" />
-            <span className="sr-only">Toggle sidebar</span>
-          </Button>
-        )}
-        <h1 className="text-xl font-semibold ml-2">Creative Studio</h1>
+        <Button variant="ghost" size="icon" onClick={toggleSidebar} aria-label="Toggle sidebar">
+          <Menu className="h-5 w-5" />
+          <span className="sr-only">Toggle sidebar</span>
+        </Button>
+        <h1 className="text-xl font-['SF_Pro_Display'] font-semibold ml-2">Creately</h1>
       </div>
 
       {/* Right side - notification and profile buttons */}

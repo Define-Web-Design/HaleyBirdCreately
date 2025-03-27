@@ -267,15 +267,23 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
                           render={({ field: { onChange, value } }) => {
                             // Emotional Tone is a string in the schema, convert to array for MultiSelect
                             // and back to comma-separated string for storage
-                            const selectedValues = value ? value.split(',') : [];
+                            const selectedValues = value ? value.split(',').filter(v => v !== '').map(val => ({
+                              label: emotionalTones.find(tone => tone.value === val)?.label || val,
+                              value: val
+                            })) : [];
                             
                             return (
                               <MultiSelect
                                 options={emotionalTones}
-                                selected={selectedValues}
+                                value={selectedValues}
                                 onChange={(selected) => {
                                   // Store as comma-separated string
-                                  onChange(selected.join(','));
+                                  if (selected.length === 0) {
+                                    // If nothing selected, use the first emotional tone as default
+                                    onChange(emotionalTones[0].value);
+                                  } else {
+                                    onChange(selected.map(option => option.value).join(','));
+                                  }
                                 }}
                                 placeholder="Select emotional tones..."
                                 className="w-full"
@@ -302,7 +310,8 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
                     <FormLabel>Caption Tone</FormLabel>
                     <Select 
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      value={field.value || 'balanced'}
+                      defaultValue="balanced"
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -310,11 +319,14 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {captionTones.map((tone) => (
-                          <SelectItem key={tone.value} value={tone.value}>
-                            {tone.label}
-                          </SelectItem>
-                        ))}
+                        {captionTones
+                          .filter(tone => tone.value !== '')
+                          .map((tone) => (
+                            <SelectItem key={tone.value} value={tone.value}>
+                              {tone.label}
+                            </SelectItem>
+                          ))
+                        }
                       </SelectContent>
                     </Select>
                     <FormDescription>
@@ -375,22 +387,28 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
                           name="contentIds"
                           control={form.control}
                           render={({ field: { onChange, value } }) => {
-                            // Map the array of numbers to array of strings (required for MultiSelect)
-                            const selectedValues = (value || []).map(id => id.toString());
-                            
                             // Convert contentItems to expected MultiSelect options format
                             const contentOptions = (contentItems as ContentItem[]).map(item => ({
                               label: item.title,
                               value: item.id.toString(),
                             }));
                             
+                            // Map the array of numbers to Option objects for MultiSelect
+                            const selectedItems = (value || []).map(id => {
+                              const item = (contentItems as ContentItem[]).find(item => item.id === id);
+                              return {
+                                label: item?.title || `Content #${id}`,
+                                value: id.toString(),
+                              };
+                            });
+                            
                             return (
                               <MultiSelect
                                 options={contentOptions}
-                                selected={selectedValues}
+                                value={selectedItems}
                                 onChange={(selected) => {
                                   // Convert back to array of numbers for form state
-                                  onChange(selected.map(id => parseInt(id, 10)));
+                                  onChange(selected.map(option => parseInt(option.value, 10)));
                                 }}
                                 placeholder="Select content items..."
                                 className="w-full"

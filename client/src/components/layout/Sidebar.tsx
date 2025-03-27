@@ -62,7 +62,7 @@ const Sidebar = ({
                   ? 'text-primary bg-orange-50 dark:bg-gray-800' 
                   : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
                 }`}>
-                <i className={`${item.icon} w-5 mr-3`}></i>
+                <i className={`${item.icon} w-5 mr-3 text-lg`}></i>
                 <span>{item.name}</span>
                 {item.isNew && (
                   <span className="ml-2 px-1.5 py-0.5 text-xs font-medium text-white bg-primary rounded-full">New</span>
@@ -82,7 +82,7 @@ const Sidebar = ({
           {SMART_TOOLS.map((tool) => (
             <li key={tool.path} className="px-2 mt-1 first:mt-0">
               <Link href={tool.path} className="flex items-center px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">
-                <i className={`${tool.icon} w-5 mr-3`}></i>
+                <i className={`${tool.icon} w-5 mr-3 text-lg`}></i>
                 <span>{tool.name}</span>
               </Link>
             </li>
