@@ -1,174 +1,190 @@
-import { generateText, generateJsonResponse } from '../ai/openai';
 
-interface MoodPaletteParams {
-  mood: string;
-  description?: string;
-  colorCount?: number;
-  includeNames?: boolean;
-}
+import { z } from 'zod';
+import OpenAI from 'openai';
+import { MoodTone } from '../../shared/schema';
 
-interface ColorInfo {
-  hex: string;
-  name?: string;
-}
+// Define the schema for color palette
+const ColorSchema = z.object({
+  hex: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
+  name: z.string(),
+  role: z.string(),
+});
 
-interface GeneratedPalette {
-  colors: ColorInfo[];
-  moodDescription: string;
-  suggestedTags: string[];
+export type Color = z.infer<typeof ColorSchema>;
+
+const PaletteSchema = z.object({
+  colors: z.array(ColorSchema),
+  moodName: z.string(),
+  description: z.string().optional(),
+});
+
+export type Palette = z.infer<typeof PaletteSchema>;
+
+/**
+ * Generates a color palette based on a mood tone
+ * @param mood The mood tone to generate a palette for
+ * @returns A palette of colors
+ */
+export async function generateMoodPalette(mood: MoodTone): Promise<Palette> {
+  // For now, use predefined palettes
+  const palettes: Record<MoodTone, Palette> = {
+    [MoodTone.ENERGETIC]: {
+      colors: [
+        { hex: '#FF5252', name: 'Vibrant Red', role: 'primary' },
+        { hex: '#FFBC00', name: 'Sunshine Yellow', role: 'secondary' },
+        { hex: '#FF914D', name: 'Energetic Orange', role: 'accent' },
+        { hex: '#FFFFFF', name: 'Clean White', role: 'background' },
+        { hex: '#333333', name: 'Deep Charcoal', role: 'text' },
+      ],
+      moodName: 'Energetic',
+      description: 'A vibrant, high-energy palette that evokes movement and excitement',
+    },
+    [MoodTone.CALM]: {
+      colors: [
+        { hex: '#6FB5CE', name: 'Serene Blue', role: 'primary' },
+        { hex: '#A4D4AE', name: 'Soft Mint', role: 'secondary' },
+        { hex: '#F4F9F4', name: 'Whisper White', role: 'background' },
+        { hex: '#D0E8CF', name: 'Pale Sage', role: 'accent' },
+        { hex: '#445552', name: 'Deep Teal', role: 'text' },
+      ],
+      moodName: 'Calm',
+      description: 'A peaceful, balanced palette that soothes and centers',
+    },
+    [MoodTone.PROFESSIONAL]: {
+      colors: [
+        { hex: '#2C3E50', name: 'Deep Navy', role: 'primary' },
+        { hex: '#34495E', name: 'Slate Gray', role: 'secondary' },
+        { hex: '#ECF0F1', name: 'Cloud White', role: 'background' },
+        { hex: '#3498DB', name: 'Professional Blue', role: 'accent' },
+        { hex: '#2C3E50', name: 'Navy Text', role: 'text' },
+      ],
+      moodName: 'Professional',
+      description: 'A confident, polished palette that conveys expertise and trust',
+    },
+    [MoodTone.PLAYFUL]: {
+      colors: [
+        { hex: '#FF6B6B', name: 'Playful Coral', role: 'primary' },
+        { hex: '#48DBFB', name: 'Sky Blue', role: 'secondary' },
+        { hex: '#FFFFFF', name: 'Bright White', role: 'background' },
+        { hex: '#FFF86B', name: 'Sunshine Yellow', role: 'accent' },
+        { hex: '#333333', name: 'Deep Gray', role: 'text' },
+      ],
+      moodName: 'Playful',
+      description: 'A whimsical, light-hearted palette that encourages creativity and joy',
+    },
+    [MoodTone.ELEGANT]: {
+      colors: [
+        { hex: '#8C7B72', name: 'Taupe', role: 'primary' },
+        { hex: '#2C2C2C', name: 'Rich Black', role: 'secondary' },
+        { hex: '#F9F6F2', name: 'Cream', role: 'background' },
+        { hex: '#D7C9B8', name: 'Warm Beige', role: 'accent' },
+        { hex: '#2C2C2C', name: 'Classic Black', role: 'text' },
+      ],
+      moodName: 'Elegant',
+      description: 'A sophisticated, refined palette that conveys luxury and timelessness',
+    },
+    [MoodTone.NOSTALGIC]: {
+      colors: [
+        { hex: '#F9C58D', name: 'Vintage Gold', role: 'primary' },
+        { hex: '#BF7B54', name: 'Aged Copper', role: 'secondary' },
+        { hex: '#FAF3E4', name: 'Antique Paper', role: 'background' },
+        { hex: '#8C8470', name: 'Faded Olive', role: 'accent' },
+        { hex: '#5A5047', name: 'Sepia Brown', role: 'text' },
+      ],
+      moodName: 'Nostalgic',
+      description: 'A warm, memory-evoking palette with a touch of vintage charm',
+    },
+    [MoodTone.MYSTERIOUS]: {
+      colors: [
+        { hex: '#484273', name: 'Midnight Purple', role: 'primary' },
+        { hex: '#2B2231', name: 'Deep Violet', role: 'secondary' },
+        { hex: '#0F0C1A', name: 'Enigmatic Black', role: 'background' },
+        { hex: '#645E9D', name: 'Twilight Blue', role: 'accent' },
+        { hex: '#E6E6FA', name: 'Misty White', role: 'text' },
+      ],
+      moodName: 'Mysterious',
+      description: 'An intriguing, atmospheric palette that evokes curiosity and wonder',
+    },
+    [MoodTone.BOLD]: {
+      colors: [
+        { hex: '#FF1E56', name: 'Striking Red', role: 'primary' },
+        { hex: '#FFAC41', name: 'Bold Orange', role: 'secondary' },
+        { hex: '#FFFFFF', name: 'Stark White', role: 'background' },
+        { hex: '#323232', name: 'Charcoal Gray', role: 'accent' },
+        { hex: '#000000', name: 'Pure Black', role: 'text' },
+      ],
+      moodName: 'Bold',
+      description: 'A powerful, attention-grabbing palette with high contrast and impact',
+    },
+  };
+
+  return palettes[mood];
 }
 
 /**
- * Generate a color palette based on mood using AI
- * 
- * @param params Parameters for palette generation
- * @returns A generated color palette with colors, description, and tags
+ * Generate a color palette based on a description using AI
+ * @param description Text description of the desired mood or theme
+ * @returns A palette of colors
  */
-export async function generateMoodPalette(params: MoodPaletteParams): Promise<GeneratedPalette> {
-  const { mood, description, colorCount = 5, includeNames = true } = params;
-  
+export async function generateAIPalette(description: string): Promise<Palette> {
   try {
-    const colorNames = includeNames ? 'true' : 'false';
-    const prompt = `
-      Generate a harmonious color palette based on the mood: "${mood}"
-      ${description ? `Additional context: "${description}"` : ''}
-      
-      The palette should contain exactly ${colorCount} colors that work well together.
-      ${includeNames ? 'Include descriptive names for each color.' : ''}
-      
-      Also provide:
-      1. A short description of the mood and how the colors reflect it
-      2. A list of 3-5 tags that describe this palette's style, usage scenarios, or associated concepts
-      
-      Format the response as a JSON object with the following structure:
-      {
-        "colors": [
-          {
-            "hex": "#HEXCODE",
-            ${includeNames ? '"name": "Color Name",' : ''}
-          }
-        ],
-        "moodDescription": "Short description of the palette mood and color relationships",
-        "suggestedTags": ["tag1", "tag2", "tag3"]
-      }
-    `;
-
-    const response = await generateJsonResponse<GeneratedPalette>(prompt, {
-      temperature: 0.7
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
     });
 
-    // Ensure we have the right number of colors
-    if (response.colors.length !== colorCount) {
-      // Adjust array length if needed
-      if (response.colors.length > colorCount) {
-        response.colors = response.colors.slice(0, colorCount);
-      } else {
-        // If we have fewer colors than requested, duplicate the last one
-        // (this should rarely happen with a well-structured prompt)
-        while (response.colors.length < colorCount) {
-          const lastColor = response.colors[response.colors.length - 1];
-          response.colors.push({ ...lastColor });
+    const response = await openai.chat.completions.create({
+      model: "gpt-4",
+      messages: [
+        {
+          role: "system",
+          content: 
+            "You are a color palette generator. Generate a 5-color palette based on the mood or theme described. " +
+            "Return ONLY valid JSON with the following structure: " +
+            "{ \"colors\": [" +
+            "{ \"hex\": \"#HEXCODE\", \"name\": \"Color Name\", \"role\": \"primary\" }, " +
+            "{ \"hex\": \"#HEXCODE\", \"name\": \"Color Name\", \"role\": \"secondary\" }, " +
+            "{ \"hex\": \"#HEXCODE\", \"name\": \"Color Name\", \"role\": \"background\" }, " +
+            "{ \"hex\": \"#HEXCODE\", \"name\": \"Color Name\", \"role\": \"accent\" }, " +
+            "{ \"hex\": \"#HEXCODE\", \"name\": \"Color Name\", \"role\": \"text\" } " +
+            "], " +
+            "\"moodName\": \"Short name for the mood\", " +
+            "\"description\": \"Brief description of the palette and how it evokes the mood\" }"
+        },
+        {
+          role: "user",
+          content: `Generate a color palette for: ${description}`
         }
-      }
+      ],
+      temperature: 0.7,
+      max_tokens: 500,
+    });
+
+    const content = response.choices[0].message.content;
+    if (!content) {
+      throw new Error("No content returned from OpenAI");
     }
 
-    // Ensure all colors have proper hex format
-    response.colors = response.colors.map((color) => ({
-      ...color,
-      hex: color.hex.startsWith('#') ? color.hex : `#${color.hex}`
-    }));
-
-    return response;
+    try {
+      const data = JSON.parse(content.trim());
+      const palette = PaletteSchema.parse(data);
+      return palette;
+    } catch (error) {
+      console.error("Failed to parse AI response:", content);
+      throw new Error("Invalid response format from AI");
+    }
   } catch (error) {
-    console.error('Error generating palette:', error);
-    
-    // Return a default palette if AI generation fails
+    console.error("Error generating AI palette:", error);
+    // Fallback to a default palette
     return {
-      colors: Array(colorCount).fill(0).map((_, i) => ({
-        hex: ['#F94144', '#F3722C', '#F8961E', '#F9C74F', '#90BE6D', '#43AA8B', '#577590'][i % 7],
-        name: includeNames ? `Color ${i+1}` : undefined
-      })),
-      moodDescription: `A palette based on the mood "${mood}"${description ? ` with elements of ${description}` : ''}`,
-      suggestedTags: [mood, 'palette', 'colors']
+      colors: [
+        { hex: '#3498DB', name: 'Default Blue', role: 'primary' },
+        { hex: '#2ECC71', name: 'Default Green', role: 'secondary' },
+        { hex: '#FFFFFF', name: 'Default White', role: 'background' },
+        { hex: '#F1C40F', name: 'Default Yellow', role: 'accent' },
+        { hex: '#34495E', name: 'Default Navy', role: 'text' },
+      ],
+      moodName: 'Default',
+      description: 'A fallback palette when AI generation fails',
     };
   }
-}
-
-/**
- * Generate color palette based on image analysis
- * 
- * This would extract dominant colors from an image and create a palette
- * For future implementation
- */
-export async function generatePaletteFromImage(imageUrl: string): Promise<GeneratedPalette> {
-  // This is a placeholder for future functionality
-  // Would use image analysis to extract dominant colors
-  
-  return {
-    colors: [
-      { hex: '#264653', name: 'Deep Teal' },
-      { hex: '#2A9D8F', name: 'Persian Green' },
-      { hex: '#E9C46A', name: 'Saffron' },
-      { hex: '#F4A261', name: 'Sandy Brown' },
-      { hex: '#E76F51', name: 'Burnt Sienna' }
-    ],
-    moodDescription: 'Palette extracted from the uploaded image, capturing its dominant colors and mood.',
-    suggestedTags: ['image-extracted', 'photo-palette', 'visual']
-  };
-}
-import { generateMoodPalette as openaiGeneratePalette } from "../ai/openai";
-
-interface PaletteOptions {
-  mood: string;
-  description?: string;
-  colorCount?: number;
-  includeNames?: boolean;
-}
-
-interface ColorPalette {
-  colors: string[];
-  explanation: string;
-  colorNames?: string[];
-}
-
-export async function generateMoodPalette(options: PaletteOptions): Promise<ColorPalette> {
-  try {
-    // Generate base colors using OpenAI
-    const colors = await openaiGeneratePalette(options.mood);
-    
-    const defaultPalette: ColorPalette = {
-      colors: colors.slice(0, options.colorCount || 5),
-      explanation: `A ${options.mood} palette that evokes ${options.description || options.mood} feelings`,
-      colorNames: options.includeNames ? generateColorNames(colors) : undefined
-    };
-    
-    return defaultPalette;
-  } catch (error) {
-    console.error("Error in palette generator service:", error);
-    
-    // Fallback palette
-    return {
-      colors: ["#FFD166", "#06D6A0", "#118AB2", "#EF476F", "#073B4C"].slice(0, options.colorCount || 5),
-      explanation: `Fallback ${options.mood} palette - AI generation failed`,
-      colorNames: options.includeNames ? ["Amber", "Mint", "Azure", "Coral", "Navy"] : undefined
-    };
-  }
-}
-
-// Helper function to generate color names based on hex values
-function generateColorNames(colors: string[]): string[] {
-  // This is a simple implementation - in a real system, you'd use a color naming API or library
-  const colorMap: Record<string, string> = {
-    "#FFD166": "Amber",
-    "#06D6A0": "Mint",
-    "#118AB2": "Azure",
-    "#EF476F": "Coral",
-    "#073B4C": "Navy",
-    // Add more color mappings as needed
-  };
-  
-  return colors.map(color => {
-    // Find the closest color in our map or generate a generic name
-    return colorMap[color] || `Color-${color.substring(1, 4)}`;
-  });
 }
