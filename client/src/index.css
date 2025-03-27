@@ -1,11 +1,61 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Base Styles */
 :root {
+  --grid-base: 8px;
   --touch-target-size: 44px;
+}
+
+/* Base spacing system */
+.spacing-grid {
+  gap: var(--grid-base);
+  padding: calc(var(--grid-base) * 2);
+  margin: var(--grid-base);
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.high-contrast {
+  --contrast-bg: #000;
+  --contrast-text: #fff;
+  @apply text-black dark:text-white bg-white dark:bg-black border-2 border-black dark:border-white;
+}
+
+/* Touch targets */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Animations with reduced motion support */
+.fade-in {
+  @apply transition-opacity duration-300;
+}
+
+/* Focus styles */
+*:focus-visible {
+  @apply outline-2 outline-offset-2 outline-primary;
+}
+
+/* Loading states */
+.skeleton {
+  @apply animate-pulse bg-gray-200 dark:bg-gray-700 rounded;
+}
+
+/* Lazy loading */
+.lazy-load {
+  @apply opacity-0 transition-opacity duration-300;
+}
+
+.lazy-loaded {
+  @apply opacity-100;
 }
 
 /* Animations */
@@ -19,37 +69,6 @@
   to { transform: translateY(0); opacity: 1; }
 }
 
-/* Enhanced Utilities */
-@layer utilities {
-  .touch-target {
-    min-width: var(--touch-target-size);
-    min-height: var(--touch-target-size);
-  }
-  
-  .glass {
-    @apply backdrop-blur-lg bg-white/30 dark:bg-gray-800/30;
-  }
-
-  .skeleton {
-    @apply animate-pulse bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700;
-    background-size: 2000px 100%;
-    animation: shimmer 2s linear infinite;
-  }
-}
-
-/* Accessibility */
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-}
-
-.high-contrast {
-  @apply text-black dark:text-white bg-white dark:bg-black border-2 border-black dark:border-white;
-}
 
 /* Grid System */
 .grid-8 {
