@@ -190,3 +190,77 @@ export function isFocusable(element: HTMLElement): boolean {
     element.getAttribute("contenteditable") === "true"
   );
 }
+/**
+ * Accessibility utilities for improving the user experience
+ */
+
+// Keyboard navigation support
+export const handleAccessibleKeyDown = (
+  event: React.KeyboardEvent,
+  onEnter?: () => void,
+  onSpace?: () => void
+) => {
+  if (event.key === 'Enter' && onEnter) {
+    event.preventDefault();
+    onEnter();
+  } else if (event.key === ' ' && onSpace) {
+    event.preventDefault();
+    onSpace();
+  }
+};
+
+// Screen reader text - visually hidden but accessible to screen readers
+export const srOnly = `
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+`;
+
+// Utility function to toggle high contrast mode
+export const toggleHighContrast = (enable: boolean) => {
+  if (enable) {
+    document.documentElement.classList.add('high-contrast');
+  } else {
+    document.documentElement.classList.remove('high-contrast');
+  }
+};
+
+// Color blindness simulation modes
+export type ColorBlindnessMode = 'normal' | 'protanopia' | 'deuteranopia' | 'tritanopia';
+
+export const applyColorBlindnessMode = (mode: ColorBlindnessMode) => {
+  // Remove all existing color blindness classes
+  document.documentElement.classList.remove(
+    'color-normal',
+    'color-protanopia',
+    'color-deuteranopia',
+    'color-tritanopia'
+  );
+  
+  // Apply the selected mode
+  document.documentElement.classList.add(`color-${mode}`);
+  
+  // Store the preference for future sessions
+  localStorage.setItem('colorBlindnessMode', mode);
+};
+
+// Initialize accessibility settings from stored preferences
+export const initAccessibilitySettings = () => {
+  // Initialize high contrast mode
+  const highContrast = localStorage.getItem('highContrast') === 'true';
+  toggleHighContrast(highContrast);
+  
+  // Initialize color blindness mode
+  const colorMode = localStorage.getItem('colorBlindnessMode') as ColorBlindnessMode || 'normal';
+  applyColorBlindnessMode(colorMode);
+  
+  // Initialize font size preferences
+  const fontSize = localStorage.getItem('fontSize') || '16';
+  document.documentElement.style.fontSize = `${fontSize}px`;
+};

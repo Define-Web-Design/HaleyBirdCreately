@@ -1,64 +1,45 @@
-
-import { useState, useEffect } from 'react';
-import Sidebar from './Sidebar';
+import React, { useState } from 'react';
+import { SidebarProvider } from '@/components/ui/sidebar';
 import TopNavigation from './TopNavigation';
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
-  const [fontSize, setFontSize] = useState(16);
-  const [highContrast, setHighContrast] = useState(false);
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
 
-  useEffect(() => {
-    document.documentElement.style.fontSize = `${fontSize}px`;
-    document.documentElement.classList.toggle('high-contrast', highContrast);
-  }, [fontSize, highContrast]);
+  // Check if the screen is mobile size on mount and window resize
+  React.useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
 
-  const toggleMobileSidebar = () => {
-    setIsMobileSidebarOpen(!isMobileSidebarOpen);
+    // Initial check
+    checkMobile();
+
+    // Add event listener
+    window.addEventListener('resize', checkMobile);
+
+    // Cleanup
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
   };
 
   return (
-    <div className="min-h-screen bg-background flex">
-      <a href="#main-content" className="sr-only focus:not-sr-only">
-        Skip to main content
-      </a>
-      
-      {/* Sidebar for desktop */}
-      <div className="hidden md:block h-screen sticky top-0">
-        <Sidebar 
-          fontSize={fontSize}
-          setFontSize={setFontSize}
-          highContrast={highContrast}
-          setHighContrast={setHighContrast}
+    <SidebarProvider>
+      <div className="flex flex-col min-h-screen bg-background">
+        <TopNavigation 
+          toggleSidebar={toggleSidebar}
+          isMobile={isMobile}
         />
+        <div className="flex flex-1 overflow-hidden">
+          {/* Main content */}
+          <main className="flex-1 overflow-y-auto p-4">
+            {children}
+          </main>
+        </div>
       </div>
-      
-      {/* Mobile sidebar overlay */}
-      {isMobileSidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
-          onClick={toggleMobileSidebar}
-        />
-      )}
-      
-      {/* Mobile sidebar */}
-      <div className={`fixed inset-y-0 left-0 transform ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:hidden transition-transform duration-300 ease-in-out z-50 h-full`}>
-        <Sidebar 
-          fontSize={fontSize}
-          setFontSize={setFontSize}
-          highContrast={highContrast}
-          setHighContrast={setHighContrast}
-        />
-      </div>
-      
-      <div className="flex-1 flex flex-col">
-        {/* Top navigation with mobile menu button */}
-        <TopNavigation toggleMobileMenu={toggleMobileSidebar} />
-
-        <main id="main-content" className="flex-1 p-4 md:p-8">
-          {children}
-        </main>
-      </div>
-    </div>
+    </SidebarProvider>
   );
 }
