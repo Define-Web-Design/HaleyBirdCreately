@@ -1,12 +1,12 @@
-import { useContext } from 'react';
-import { ThemeContext } from './AppShell';
+import { useTheme } from '@/lib/hooks/use-theme';
+import { Menu, Bell, Search } from 'lucide-react';
 
 interface TopNavigationProps {
   toggleMobileMenu: () => void;
 }
 
 const TopNavigation = ({ toggleMobileMenu }: TopNavigationProps) => {
-  const { isDark, toggleTheme } = useContext(ThemeContext);
+  const { isDark } = useTheme();
 
   return (
     <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow-sm">
@@ -16,13 +16,13 @@ const TopNavigation = ({ toggleMobileMenu }: TopNavigationProps) => {
           className="md:hidden text-gray-500 hover:text-primary dark:text-gray-400 dark:hover:text-primary"
           onClick={toggleMobileMenu}
         >
-          <i className="fas fa-bars text-xl"></i>
+          <Menu className="h-6 w-6" />
         </button>
         
         {/* Search Bar */}
         <div className="relative flex-1 max-w-sm mx-4 md:mx-0">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <i className="fas fa-search text-gray-400"></i>
+            <Search className="h-4 w-4 text-gray-400" />
           </div>
           <input 
             type="text" 
@@ -34,15 +34,8 @@ const TopNavigation = ({ toggleMobileMenu }: TopNavigationProps) => {
         {/* Right Navigation Items */}
         <div className="flex items-center space-x-4">
           <button className="relative text-gray-500 hover:text-primary dark:text-gray-400 dark:hover:text-primary">
-            <i className="fas fa-bell text-xl"></i>
+            <Bell className="h-5 w-5" />
             <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-primary"></span>
-          </button>
-          
-          <button 
-            className="p-2 text-gray-500 hover:text-primary dark:text-gray-400 dark:hover:text-primary"
-            onClick={toggleTheme}
-          >
-            <i className={`fas ${isDark ? 'fa-sun' : 'fa-moon'}`}></i>
           </button>
           
           <a href="#" className="block md:hidden">
