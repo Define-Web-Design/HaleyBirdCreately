@@ -38,7 +38,7 @@ const AppShell = ({ children }: AppShellProps) => {
     <ThemeContext.Provider value={{ isDark, toggleTheme }}>
       <div className="flex h-screen overflow-hidden">
         {/* Sidebar - hidden on mobile unless toggled */}
-        <div className={`${isMobileMenuOpen ? 'block' : 'hidden'} md:flex fixed md:relative z-20 md:z-auto w-64 h-full`}>
+        <div className={`transform transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 md:flex fixed md:relative z-20 md:z-auto w-64 h-full`}>
           <Sidebar />
         </div>
         

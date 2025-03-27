@@ -54,7 +54,7 @@ const ContentVaultPage = () => {
           </div>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <div className="bg-gradient-to-br from-accent/10 to-primary/5 dark:from-accent/20 dark:to-primary/10 rounded-lg p-4">
             <div className="flex items-center justify-between mb-2">
               <h3 className="font-medium">Evergreen Content</h3>
