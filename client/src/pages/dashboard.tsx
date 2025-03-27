@@ -11,6 +11,15 @@ import { AnalyticsData, ContentItem, User } from '@/lib/types';
 const Dashboard = () => {
   const { toast } = useToast();
   
+  // Test toast auto-dismiss functionality
+  useEffect(() => {
+    // Show a test toast that should auto-dismiss after 5 seconds
+    toast({
+      title: "Auto-dismiss Test",
+      description: "This toast should automatically dismiss after 5 seconds",
+    });
+  }, []);
+  
   // Queries for data
   const { data: user, isLoading: isLoadingUser } = useQuery<User | null>({
     queryKey: ['/api/user'],

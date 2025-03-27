@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import TopNavigation from './TopNavigation';
 import Sidebar from './Sidebar';
@@ -10,7 +10,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const [highContrast, setHighContrast] = useState(false);
 
   // Check if the screen is mobile size on mount and window resize
-  React.useEffect(() => {
+  useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
       if (window.innerWidth < 768) {
@@ -27,6 +27,27 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     // Cleanup
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  // Add scroll event listener to show/hide the scroll-to-top button on mobile
+  useEffect(() => {
+    if (!isMobile) return;
+    
+    const scrollButton = document.getElementById('scroll-to-top-button');
+    
+    const handleScroll = () => {
+      if (!scrollButton) return;
+      
+      if (window.scrollY > 300) {
+        scrollButton.style.display = 'block';
+      } else {
+        scrollButton.style.display = 'none';
+      }
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [isMobile]);
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -52,6 +73,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               setFontSize={setFontSize}
               highContrast={highContrast}
               setHighContrast={setHighContrast}
+              expanded={sidebarOpen}
+              setExpanded={setSidebarOpen}
             />
           </div>
 

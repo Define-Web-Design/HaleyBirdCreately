@@ -1,8 +1,8 @@
 import { Link, useLocation } from 'wouter';
 import { MENU_ITEMS, SMART_TOOLS } from '@/lib/constants';
 import { useTheme } from '@/lib/hooks/use-theme';
-import { useState } from 'react';
-import { Sun, Moon, ZoomIn, ZoomOut, Eye, ChevronUp, ChevronDown } from 'lucide-react';
+import { useState, useCallback, useEffect } from 'react';
+import { Sun, Moon, ZoomIn, ZoomOut, Eye, ChevronUp, ChevronDown, ChevronRight } from 'lucide-react';
 import { Switch } from "@/components/ui/switch";
 import {
   DropdownMenu,
@@ -18,21 +18,61 @@ interface SidebarProps {
   setFontSize?: (size: number) => void;
   highContrast?: boolean;
   setHighContrast?: (contrast: boolean) => void;
+  expanded?: boolean;
+  setExpanded?: (expanded: boolean) => void;
+}
+
+// Define types for menu items with possible sub-menus
+interface MenuItem {
+  name: string;
+  path: string;
+  icon: string;
+  isNew?: boolean;
+  subMenu?: SubMenuItem[];
+}
+
+interface SubMenuItem {
+  name: string;
+  path: string;
 }
 
 const Sidebar = ({ 
   fontSize = 16, 
   setFontSize = () => {}, 
   highContrast = false, 
-  setHighContrast = () => {} 
+  setHighContrast = () => {},
+  expanded = true,
+  setExpanded = () => {}
 }: SidebarProps) => {
   const [location] = useLocation();
   const { isDark, toggleTheme } = useTheme();
   const [accessibilityExpanded, setAccessibilityExpanded] = useState(false);
+  const [expandedSubMenu, setExpandedSubMenu] = useState<string | null>(null);
+  
+  // Close sidebar on navigation except when submenu is open
+  useEffect(() => {
+    if (expanded && expandedSubMenu === null) {
+      setExpanded(false);
+    }
+  }, [location, expanded, expandedSubMenu, setExpanded]);
 
   const toggleAccessibility = () => {
     setAccessibilityExpanded(!accessibilityExpanded);
   };
+
+  const handleMenuItemClick = useCallback((item: MenuItem) => {
+    // If item has submenu, toggle it
+    if (item.subMenu && item.subMenu.length > 0) {
+      setExpandedSubMenu(prev => prev === item.path ? null : item.path);
+      setExpanded(true); // Keep sidebar expanded when submenu is toggled
+    } else {
+      // If no submenu, close sidebar after a brief delay to allow for animation
+      setTimeout(() => {
+        setExpandedSubMenu(null);
+        setExpanded(false);
+      }, 150);
+    }
+  }, [setExpanded]);
 
   return (
     <div className="flex flex-col w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 shadow-sm h-full">
@@ -55,21 +95,91 @@ const Sidebar = ({
         
         {/* Menu Items */}
         <ul>
-          {MENU_ITEMS.map((item) => (
-            <li key={item.path} className="px-2 mt-1 first:mt-0">
-              <Link href={item.path} className={`flex items-center px-4 py-3 rounded-lg ${
-                  location === item.path 
-                  ? 'text-primary bg-orange-50 dark:bg-gray-800' 
-                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
-                }`}>
-                <i className={`${item.icon} w-5 mr-3 text-lg`}></i>
-                <span>{item.name}</span>
-                {item.isNew && (
-                  <span className="ml-2 px-1.5 py-0.5 text-xs font-medium text-white bg-primary rounded-full">New</span>
-                )}
-              </Link>
-            </li>
-          ))}
+          {MENU_ITEMS.map((item) => {
+            // For demo purposes, let's add submenu to Content Library
+            const hasSubMenu = item.name === "Content Library" || item.name === "Color Palettes";
+            const subMenu = hasSubMenu ? [
+              { name: "All Content", path: `${item.path}/all` },
+              { name: "Recent", path: `${item.path}/recent` },
+              { name: "Categories", path: `${item.path}/categories` },
+              { name: "Favorites", path: `${item.path}/favorites` }
+            ] : [];
+            
+            const itemWithSubMenu = hasSubMenu ? { ...item, subMenu } : item;
+            const isSubMenuExpanded = expandedSubMenu === item.path;
+            
+            return (
+              <li key={item.path} className="px-2 mt-1 first:mt-0">
+                <div>
+                  {hasSubMenu ? (
+                    <button 
+                      onClick={() => handleMenuItemClick(itemWithSubMenu as MenuItem)}
+                      className={`w-full flex items-center justify-between px-4 py-3 rounded-lg ${
+                        location === item.path || isSubMenuExpanded 
+                        ? 'text-primary bg-orange-50 dark:bg-gray-800' 
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                      }`}
+                    >
+                      <div className="flex items-center">
+                        <i className={`${item.icon} w-5 mr-3 text-lg`}></i>
+                        <span>{item.name}</span>
+                        {item.isNew && (
+                          <span className="ml-2 px-1.5 py-0.5 text-xs font-medium text-white bg-primary rounded-full">New</span>
+                        )}
+                      </div>
+                      {isSubMenuExpanded ? (
+                        <ChevronDown className="h-4 w-4" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4" />
+                      )}
+                    </button>
+                  ) : (
+                    <Link 
+                      href={item.path} 
+                      onClick={() => handleMenuItemClick(item as MenuItem)}
+                      className={`flex items-center px-4 py-3 rounded-lg ${
+                        location === item.path 
+                        ? 'text-primary bg-orange-50 dark:bg-gray-800' 
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                      }`}
+                    >
+                      <i className={`${item.icon} w-5 mr-3 text-lg`}></i>
+                      <span>{item.name}</span>
+                      {item.isNew && (
+                        <span className="ml-2 px-1.5 py-0.5 text-xs font-medium text-white bg-primary rounded-full">New</span>
+                      )}
+                    </Link>
+                  )}
+                  
+                  {/* Sub menu */}
+                  {hasSubMenu && isSubMenuExpanded && (
+                    <ul className="ml-7 mt-1 space-y-1 border-l-2 border-gray-200 dark:border-gray-700 pl-2">
+                      {subMenu.map((subItem) => (
+                        <li key={subItem.path}>
+                          <Link 
+                            href={subItem.path}
+                            onClick={() => {
+                              setTimeout(() => {
+                                setExpandedSubMenu(null);
+                                setExpanded(false);
+                              }, 150);
+                            }}
+                            className={`flex items-center px-3 py-2 text-sm rounded-md ${
+                              location === subItem.path
+                              ? 'text-primary bg-orange-50/70 dark:bg-gray-800/70' 
+                              : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                            }`}
+                          >
+                            {subItem.name}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </li>
+            );
+          })}
         </ul>
         
         <div className="px-4 mt-8 mb-4">
@@ -81,7 +191,11 @@ const Sidebar = ({
         <ul>
           {SMART_TOOLS.map((tool) => (
             <li key={tool.path} className="px-2 mt-1 first:mt-0">
-              <Link href={tool.path} className="flex items-center px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">
+              <Link 
+                href={tool.path} 
+                onClick={() => handleMenuItemClick(tool as MenuItem)}
+                className="flex items-center px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
+              >
                 <i className={`${tool.icon} w-5 mr-3 text-lg`}></i>
                 <span>{tool.name}</span>
               </Link>
