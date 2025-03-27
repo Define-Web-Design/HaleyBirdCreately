@@ -11,6 +11,7 @@ import MoodBoards from "./pages/mood-boards";
 import ContentVault from "./pages/content-vault";
 import ApplePhotos from "./pages/apple-photos";
 import CreativeSymbiosis from "./pages/creative-symbiosis";
+import ColorPalettes from "./pages/color-palettes";
 import NotFound from "./pages/not-found";
 
 function Router() {
@@ -25,6 +26,7 @@ function Router() {
         <Route path="/content-vault" component={ContentVault} />
         <Route path="/apple-photos" component={ApplePhotos} />
         <Route path="/creative-symbiosis" component={CreativeSymbiosis} />
+        <Route path="/color-palettes" component={ColorPalettes} />
         <Route component={NotFound} />
       </Switch>
     </AppShell>
