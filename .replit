@@ -47,7 +47,7 @@ localPort = 8425
 externalPort = 3002
 
 [workflows]
-runButton = "Project"
+runButton = "Run App"
 
 [[workflows.workflow]]
 name = "Project"
@@ -72,3 +72,16 @@ task = "packager.installForAll"
 task = "shell.exec"
 args = "npm run dev"
 waitForPort = 5000
+
+[[workflows.workflow]]
+name = "Run App"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "killall -9 node || true"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"

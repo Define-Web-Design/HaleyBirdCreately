@@ -57,8 +57,23 @@ app.use((req, res, next) => {
   }
 
   // Try to use port 5000 first, as that's what Replit expects
-  // Fall back to a random port only if 5000 is unavailable
-  const port = process.env.PORT ? parseInt(process.env.PORT) : 5000;
+  // Fall back to a different port if 5000 is unavailable
+  let port = process.env.PORT ? parseInt(process.env.PORT) : 5000;
+  
+  server.on('error', (e: any) => {
+    if (e.code === 'EADDRINUSE' && port === 5000) {
+      log(`Port ${port} is in use, trying port 3000 instead...`);
+      port = 3000;
+      server.listen({
+        port,
+        host: "0.0.0.0",
+        reusePort: true,
+      });
+    } else {
+      throw e;
+    }
+  });
+  
   server.listen({
     port,
     host: "0.0.0.0",

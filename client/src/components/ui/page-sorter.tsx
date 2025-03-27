@@ -136,7 +136,7 @@ export function PageSorter({
             </ul>
           )}
         </Droppable>
-      </DragDropContext>
+      </DragDropContext>t>
 
       <Modal isOpen={isOpen} onClose={closeModal} title="Confirm Delete">
         <div className="space-y-4">
