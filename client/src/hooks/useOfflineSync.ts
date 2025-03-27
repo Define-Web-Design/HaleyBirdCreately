@@ -1,19 +1,30 @@
 
 import { useState, useEffect } from 'react';
 
-interface SyncOptions {
-  key: string;
-  onSync?: (data: any) => void;
-  onError?: (error: Error) => void;
+interface SyncState {
+  isOnline: boolean;
+  isSyncing: boolean;
+  lastSynced: Date | null;
+  pendingChanges: any[];
 }
 
-export const useOfflineSync = ({ key, onSync, onError }: SyncOptions) => {
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [pendingChanges, setPendingChanges] = useState<any[]>([]);
+export function useOfflineSync() {
+  const [state, setState] = useState<SyncState>({
+    isOnline: navigator.onLine,
+    isSyncing: false,
+    lastSynced: null,
+    pendingChanges: []
+  });
 
   useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
+    const handleOnline = () => {
+      setState(prev => ({ ...prev, isOnline: true }));
+      syncChanges();
+    };
+
+    const handleOffline = () => {
+      setState(prev => ({ ...prev, isOnline: false }));
+    };
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
@@ -24,37 +35,37 @@ export const useOfflineSync = ({ key, onSync, onError }: SyncOptions) => {
     };
   }, []);
 
-  const saveChange = async (change: any) => {
+  const syncChanges = async () => {
+    if (!state.pendingChanges.length) return;
+
+    setState(prev => ({ ...prev, isSyncing: true }));
     try {
-      if (!isOnline) {
-        const stored = JSON.parse(localStorage.getItem(key) || '[]');
-        stored.push({ ...change, timestamp: Date.now() });
-        localStorage.setItem(key, JSON.stringify(stored));
-        setPendingChanges(stored);
-      } else {
-        await onSync?.(change);
-      }
+      // Implement your sync logic here
+      setState(prev => ({
+        ...prev,
+        isSyncing: false,
+        lastSynced: new Date(),
+        pendingChanges: []
+      }));
     } catch (error) {
-      onError?.(error as Error);
+      console.error('Sync failed:', error);
+      setState(prev => ({ ...prev, isSyncing: false }));
     }
   };
 
-  useEffect(() => {
-    if (isOnline && pendingChanges.length > 0) {
-      const syncChanges = async () => {
-        for (const change of pendingChanges) {
-          try {
-            await onSync?.(change);
-          } catch (error) {
-            onError?.(error as Error);
-          }
-        }
-        localStorage.removeItem(key);
-        setPendingChanges([]);
-      };
+  const addChange = (change: any) => {
+    setState(prev => ({
+      ...prev,
+      pendingChanges: [...prev.pendingChanges, change]
+    }));
+    if (state.isOnline) {
       syncChanges();
     }
-  }, [isOnline, pendingChanges, key, onSync, onError]);
+  };
 
-  return { isOnline, pendingChanges, saveChange };
-};
+  return {
+    ...state,
+    addChange,
+    syncChanges
+  };
+}

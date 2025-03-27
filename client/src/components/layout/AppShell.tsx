@@ -1,64 +1,63 @@
-import React, { useState, useEffect } from 'react';
-import { useTheme } from '../../hooks/useTheme';
-import { useHapticFeedback } from '../../hooks/useHapticFeedback';
-import { SkipLink } from '../accessibility/SkipLink';
-import { AccessibilityToolbar } from '../accessibility/AccessibilityToolbar';
 
-export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isDark, toggleTheme, setHighContrast } = useTheme();
-  const { triggerHaptic } = useHapticFeedback();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+import { useState, useEffect } from 'react';
+import { useTheme } from '@/hooks/useTheme';
+import { Button } from '@/components/ui/button';
+import { Sun, Moon, ZoomIn, ZoomOut, Eye } from 'lucide-react';
 
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-    triggerHaptic('medium');
-  };
+export default function AppShell({ children }: { children: React.ReactNode }) {
+  const { theme, setTheme } = useTheme();
+  const [fontSize, setFontSize] = useState(16);
+  const [highContrast, setHighContrast] = useState(false);
 
-  const [isOnline, setIsOnline] = useState(true);
   useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
-
+    document.documentElement.style.fontSize = `${fontSize}px`;
+    document.documentElement.classList.toggle('high-contrast', highContrast);
+  }, [fontSize, highContrast]);
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900">
-      <SkipLink />
-      <AccessibilityToolbar 
-        onThemeToggle={toggleTheme}
-        onContrastToggle={setHighContrast}
-      />
-
-      <div className="flex h-screen overflow-hidden">
-        <nav
-          className={`transform transition-transform duration-300 ease-in-out 
-            ${isMenuOpen ? 'translate-x-0' : '-translate-x-full'} 
-            md:translate-x-0 fixed md:relative w-64 h-full z-20`}
-          aria-label="Main navigation"
+    <div className="min-h-screen bg-background">
+      <a href="#main-content" className="sr-only focus:not-sr-only">
+        Skip to main content
+      </a>
+      
+      <div className="fixed top-4 right-4 flex gap-2 z-50">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          aria-label="Toggle theme"
         >
-          {/* Sidebar content */}
-          <Sidebar onClose={() => setIsMenuOpen(false)} />
-        </nav>
-
-        <main id="main-content" className="flex-1 overflow-auto">
-          <div className="spacing-grid">
-            {!isOnline && (
-              <div className="fixed top-0 left-0 w-full bg-yellow-500 text-black p-2 text-center z-50">
-                You are currently offline. Some features may be limited.
-              </div>
-            )}
-            {children}
-          </div>
-        </main>
+          {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+        </Button>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => setFontSize(s => Math.min(s + 2, 24))}
+          aria-label="Increase font size"
+        >
+          <ZoomIn className="h-5 w-5" />
+        </Button>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => setFontSize(s => Math.max(s - 2, 12))}
+          aria-label="Decrease font size"
+        >
+          <ZoomOut className="h-5 w-5" />
+        </Button>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => setHighContrast(h => !h)}
+          aria-label="Toggle high contrast"
+        >
+          <Eye className="h-5 w-5" />
+        </Button>
       </div>
+
+      <main id="main-content" className="container mx-auto px-4 py-8">
+        {children}
+      </main>
     </div>
   );
-};
+}

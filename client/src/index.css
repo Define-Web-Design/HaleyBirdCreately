@@ -1,93 +1,86 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --grid-base: 8px;
-  --touch-target-size: 44px;
+@layer base {
+  :root {
+    --grid-base: 8px;
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 48%;
+  }
 }
 
-/* Base spacing system */
-.spacing-grid {
-  gap: var(--grid-base);
-  padding: calc(var(--grid-base) * 2);
-  margin: var(--grid-base);
-}
-
-/* Accessibility improvements */
-@media (prefers-reduced-motion: reduce) {
+@layer base {
   * {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  button, a {
+    @apply min-h-[44px] min-w-[44px];
+  }
+  input, textarea {
+    @apply p-2;
   }
 }
 
-.high-contrast {
-  --contrast-bg: #000;
-  --contrast-text: #fff;
-  @apply text-black dark:text-white bg-white dark:bg-black border-2 border-black dark:border-white;
-}
-
-/* Touch targets */
-.touch-target {
-  min-height: 44px;
-  min-width: 44px;
-}
-
-/* Animations with reduced motion support */
-.fade-in {
-  @apply transition-opacity duration-300;
-}
-
-/* Focus styles */
-*:focus-visible {
-  @apply outline-2 outline-offset-2 outline-primary;
-}
-
-/* Loading states */
-.skeleton {
-  @apply animate-pulse bg-gray-200 dark:bg-gray-700 rounded;
-}
-
-/* Lazy loading */
-.lazy-load {
-  @apply opacity-0 transition-opacity duration-300;
-}
-
-.lazy-loaded {
-  @apply opacity-100;
-}
-
-/* Animations */
-@keyframes shimmer {
-  0% { background-position: -1000px 0; }
-  100% { background-position: 1000px 0; }
-}
-
-@keyframes slideIn {
-  from { transform: translateY(20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-}
-
-
-/* Grid System */
-.grid-8 {
-  @apply grid gap-2 md:gap-4 lg:gap-8;
-}
-
-/* Touch Feedback */
-@media (hover: hover) {
-  .hover-feedback {
-    @apply transition-transform hover:-translate-y-0.5 hover:shadow-lg;
+@layer components {
+  .skeleton {
+    @apply animate-pulse bg-muted;
   }
 }
 
-/* Micro-interactions */
-.btn-press {
-  @apply active:scale-95 transition-transform;
-}
-
-/* Loading States */
-.loading-skeleton {
-  @apply animate-pulse bg-gray-200 dark:bg-gray-700 rounded;
+@layer utilities {
+  .grid-8 {
+    grid-gap: var(--grid-base);
+  }
+  .p-8 {
+    padding: var(--grid-base);
+  }
+  .m-8 {
+    margin: var(--grid-base);
+  }
 }
