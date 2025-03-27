@@ -847,10 +847,12 @@ export default function CreativeSymbiosisSection() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <EvolutionProgressCard />
-        <CapabilitiesCard />
-        <CreativeHistoryCard />
+      <div className="container mx-auto px-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          <EvolutionProgressCard className="h-full" />
+          <CapabilitiesCard className="h-full" />
+          <CreativeHistoryCard className="h-full" />
+        </div>
       </div>
 
       {/* Creative journey stats with visual improvements */}
@@ -861,7 +863,7 @@ export default function CreativeSymbiosisSection() {
         </div>
         
         <div className="p-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 items-stretch">
             <div className="bg-card rounded-lg border p-4 text-center">
               <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center mx-auto mb-3">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
