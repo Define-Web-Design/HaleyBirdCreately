@@ -1,12 +1,20 @@
 import { useTheme } from '@/lib/hooks/use-theme';
-import { Menu, Bell, Search } from 'lucide-react';
+import { Menu, Bell, Search, Sun, Moon } from 'lucide-react';
+import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger 
+} from "@/components/ui/tooltip";
 
 interface TopNavigationProps {
   toggleMobileMenu: () => void;
 }
 
 const TopNavigation = ({ toggleMobileMenu }: TopNavigationProps) => {
-  const { isDark } = useTheme();
+  const { isDark, toggleTheme } = useTheme();
 
   return (
     <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow-sm">
@@ -33,6 +41,28 @@ const TopNavigation = ({ toggleMobileMenu }: TopNavigationProps) => {
         
         {/* Right Navigation Items */}
         <div className="flex items-center space-x-4">
+          {/* Theme Toggle */}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center space-x-2">
+                  <Sun className={`h-4 w-4 ${!isDark ? 'text-primary' : 'text-gray-400'}`} />
+                  <Switch 
+                    checked={isDark}
+                    onCheckedChange={toggleTheme}
+                    aria-label="Toggle dark mode"
+                    id="theme-toggle"
+                  />
+                  <Moon className={`h-4 w-4 ${isDark ? 'text-primary' : 'text-gray-400'}`} />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Toggle {isDark ? 'light' : 'dark'} mode</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          {/* Notification Bell */}
           <button className="relative text-gray-500 hover:text-primary dark:text-gray-400 dark:hover:text-primary">
             <Bell className="h-5 w-5" />
             <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-primary"></span>
