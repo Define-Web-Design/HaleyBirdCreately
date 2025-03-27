@@ -368,3 +368,15 @@ export interface CaptionGenerationResponse {
   caption: string;
   errors?: string[];
 }
+
+// Define MoodTone enum for palette generation
+export enum MoodTone {
+  ENERGETIC = "ENERGETIC",
+  CALM = "CALM",
+  PROFESSIONAL = "PROFESSIONAL",
+  PLAYFUL = "PLAYFUL",
+  ELEGANT = "ELEGANT",
+  NOSTALGIC = "NOSTALGIC",
+  MYSTERIOUS = "MYSTERIOUS",
+  BOLD = "BOLD",
+}

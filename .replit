@@ -51,7 +51,7 @@ localPort = 8425
 externalPort = 3002
 
 [workflows]
-runButton = "Run App"
+runButton = "Run Server"
 
 [[workflows.workflow]]
 name = "Project"
@@ -79,6 +79,19 @@ waitForPort = 5000
 
 [[workflows.workflow]]
 name = "Run App"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pkill -f node || true"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
+
+[[workflows.workflow]]
+name = "Run Server"
 author = 40896524
 mode = "sequential"
 

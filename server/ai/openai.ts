@@ -1,5 +1,4 @@
 import OpenAI from "openai";
-import { Configuration, OpenAIApi } from "openai";
 import dotenv from "dotenv";
 
 // Load environment variables
@@ -295,42 +294,36 @@ export async function generateColorPalette(
   }
 }
 
-// Configure OpenAI API (for the new function)
-const configuration = new Configuration({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
-const openai2 = new OpenAIApi(configuration);
-
 export async function generateMoodPalette(mood: string): Promise<string[]> {
   try {
     // Check if OpenAI API key is configured
-    if (!process.env.OPENAI_API_KEY) {
-      console.warn("OPENAI_API_KEY not set, returning fallback palette");
+    if (!isConfigured) {
+      console.warn("OpenAI API key not configured. Using fallback palette");
       return ["#FFD166", "#06D6A0", "#118AB2", "#EF476F", "#073B4C"];
     }
 
     const prompt = `Generate a color palette of 5 colors that evokes the mood: ${mood}. Return only the hex codes in a JSON array format.`;
-
-    const response = await openai2.createCompletion({
-      model: "text-davinci-003",
-      prompt,
-      max_tokens: 100,
-      temperature: 0.7,
-    });
-
-    // Parse the response text as JSON
-    const responseText = response.data.choices[0]?.text || "[]";
-    try {
-      const colors: string[] = JSON.parse(responseText.trim());
-      if (Array.isArray(colors) && colors.length > 0) {
-        return colors;
+    
+    const systemPrompt = `You are a color theory expert. Generate a color palette that captures the essence of the given mood. 
+    Return ONLY a JSON array of exactly 5 hex color codes (e.g., ["#RRGGBB", "#RRGGBB", "#RRGGBB", "#RRGGBB", "#RRGGBB"]).
+    Do not include any explanation or additional text.`;
+    
+    const colors = await generateJsonResponse<string[]>(prompt, systemPrompt, { temperature: 0.7 });
+    
+    // Ensure we have exactly 5 colors
+    if (Array.isArray(colors) && colors.length > 0) {
+      // Trim to exactly 5 colors or pad with defaults if needed
+      const result = colors.slice(0, 5);
+      const defaults = ["#FFD166", "#06D6A0", "#118AB2", "#EF476F", "#073B4C"];
+      
+      while (result.length < 5) {
+        result.push(defaults[result.length % defaults.length]);
       }
-    } catch (error) {
-      console.error("Failed to parse OpenAI response:", error);
+      
+      return result;
     }
-
-    // Fallback palette if parsing fails
+    
+    // Fallback palette
     return ["#FFD166", "#06D6A0", "#118AB2", "#EF476F", "#073B4C"];
   } catch (error) {
     console.error("Error generating palette with OpenAI:", error);
