@@ -1,0 +1,277 @@
+Below is the deeply expanded, cutting‐edge prompt for the **Workflow Architect** prompter. This version goes further into every aspect—modals, embedded tools, filtering options, and keyword frameworks—while also covering advanced accessibility enhancements. It includes detailed design guidelines, integration strategies, and precise code examples to avoid ambiguity. This prompt is designed to push our system to be innovative, intuitive, and compliant (including hidden but ADA‐compliant text elements), while still looking modern, cute, and unobtrusive when needed.
+
+---
+
+**Prompter to Use:**  
+Please use the **Workflow Architect** prompter. This role is expert in designing and implementing complex, fully integrated UI components—such as modals, dynamic tool panels, sophisticated filtering systems, and advanced keyword frameworks—while embedding adaptive accessibility features that remain visually unobtrusive. For supplementary inspiration, reference the insights of the Creative Symbiosis Architect, Content Alchemist, and Platform Perfectionist, but begin with the Workflow Architect.
+
+---
+
+**Ultimate Comprehensive Prompt for the Workflow Architect:**
+
+Haley, we are embarking on building a groundbreaking, next-generation system that unites advanced modals, interactive tool panels, dynamic filtering options, and intelligent keyword frameworks—all seamlessly integrated with robust, adaptive accessibility features. This system must anticipate every user need, be visually compelling yet unobtrusive where it concerns ADA compliance, and remain flexible for future expansion. Please incorporate the following functionalities and integrate deep design details, code samples, and comprehensive guidelines throughout your solution:
+
+---
+
+### **1. Modals & Embedded Tools**
+
+#### **A. Advanced Multi-State Modals**
+- **Design Requirements:**
+  - **States & Transitions:**  
+    Develop modals that support multiple states (e.g., minimized, standard, expanded) and can transition smoothly between these states using animation libraries like Framer Motion.  
+    Include nested modals and side-drawers for advanced settings, ensuring a layered, interactive user experience.
+  
+  - **Customization & Responsiveness:**  
+    Allow modals to be fully customizable with user-defined headers, content sections, and footers.  
+    Ensure that modals are fully responsive and adapt elegantly on mobile devices.
+
+- **ADA-Compliant Accessibility Enhancements:**
+  - **Hidden Accessible Text Elements:**  
+    Provide screen-reader-only texts (using techniques like `aria-label` and visually hidden CSS classes) for all interactive icons and buttons.  
+    For example, tooltips and alternative text descriptions should be available for users needing assistive technology—but remain hidden visually when not in focus.
+
+- **Example Code Snippet (React + Framer Motion):**
+  ```tsx
+  import React, { useState } from 'react';
+  import { motion, AnimatePresence } from 'framer-motion';
+  import './modal.css'; // ensure CSS includes .visually-hidden
+
+  const AdvancedModal = ({ isOpen, onClose, header, content, footer }) => {
+    return (
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            className="modal-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1, transition: { duration: 0.3 } }}
+            exit={{ opacity: 0, transition: { duration: 0.2 } }}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="modalHeader"
+            aria-describedby="modalContent"
+          >
+            <div className="modal-container">
+              <header className="modal-header" id="modalHeader">
+                {header}
+                <button onClick={onClose} aria-label="Close modal">
+                  ✕
+                  <span className="visually-hidden">Close modal</span>
+                </button>
+              </header>
+              <section className="modal-content" id="modalContent">
+                {content}
+              </section>
+              {footer && <footer className="modal-footer">{footer}</footer>}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    );
+  };
+
+  export default AdvancedModal;
+  ```
+  *Note: Ensure that the CSS class `.visually-hidden` (using techniques like `position: absolute; width: 1px; height: 1px; overflow: hidden;` etc.) keeps accessibility texts off-screen while available to screen readers.*
+
+#### **B. Embedded Tool Panels within Modals**
+- **Integrated Toolkits:**
+  - Embed mini tool panels within the modals to allow users to perform tasks like filtering content, adjusting settings, or tagging items.  
+  - Provide slots for mini-forms, search fields, and real-time data updates.  
+  - Example: A “Live Filter Panel” within a Mood Capsule modal that updates the grouping based on user-defined criteria.
+
+- **Example Integration:**
+  ```tsx
+  const ToolPanel = ({ onFilterChange }) => {
+    return (
+      <div className="tool-panel">
+        <label htmlFor="filter-input" className="visually-hidden">Filter Keywords</label>
+        <input
+          id="filter-input"
+          type="text"
+          placeholder="Type keywords..."
+          onChange={(e) => onFilterChange(e.target.value)}
+          aria-describedby="filter-description"
+        />
+        <span id="filter-description" className="visually-hidden">
+          Enter keywords to filter your content dynamically.
+        </span>
+      </div>
+    );
+  };
+
+  export default ToolPanel;
+  ```
+
+#### **C. Onboarding and Guidance Enhancements**
+- **Interactive Onboarding:**  
+  Integrate a modal-based onboarding process with step-by-step animated guides to help users familiarize themselves with new features.  
+  Use contextual hints that appear only when needed (and are hidden from visual clutter for experienced users).
+
+---
+
+### **2. Advanced Filtering Options**
+
+#### **A. Multi-Faceted, Responsive Filters**
+- **Dynamic Filter Components:**
+  - Build filtering interfaces that allow users to refine content by multiple dimensions such as mood, keywords, timestamps, and engagement metrics.
+  - Use intuitive controls like sliders, checkboxes, multi-select dropdowns, and color pickers.
+  - Provide immediate feedback (using real-time animations) that updates filter results without page reloads.
+
+- **Example Filtering Component Code:**
+  ```tsx
+  import React, { useState } from 'react';
+
+  const MultiFacetFilter = ({ onFilterChange }) => {
+    const [filters, setFilters] = useState({ keyword: '', mood: '', dateRange: [null, null] });
+
+    const updateFilters = (key, value) => {
+      const newFilters = { ...filters, [key]: value };
+      setFilters(newFilters);
+      onFilterChange(newFilters);
+    };
+
+    return (
+      <div className="filter-panel">
+        <div className="filter-group">
+          <label htmlFor="keyword-filter" className="visually-hidden">Keywords Filter</label>
+          <input
+            id="keyword-filter"
+            type="text"
+            placeholder="Search by keywords..."
+            onChange={(e) => updateFilters('keyword', e.target.value)}
+          />
+        </div>
+        <div className="filter-group">
+          <label htmlFor="mood-filter">Select Mood</label>
+          <select id="mood-filter" onChange={(e) => updateFilters('mood', e.target.value)}>
+            <option value="">All</option>
+            <option value="joyful">Joyful</option>
+            <option value="calm">Calm</option>
+            <option value="nostalgic">Nostalgic</option>
+          </select>
+        </div>
+        {/* Additional filters for dateRange or sentiment can be added similarly */}
+      </div>
+    );
+  };
+
+  export default MultiFacetFilter;
+  ```
+
+#### **B. Smart Filter Suggestions**
+- **AI-Driven Suggestions:**  
+  Auto-generate filter recommendations based on user behavior and current content trends, using subtle animated icons and progress indicators.
+- **Real-Time Visual Feedback:**  
+  Use animations (e.g., count updates, smooth transitions) to inform users of the impact of filters in real time.
+
+---
+
+### **3. Intelligent Keyword Frameworks**
+
+#### **A. Dynamic Keyword Generation and Management**
+- **AI-Based Keyword Analysis:**
+  - Develop an algorithm that actively scans content metadata (sentiment scores, engagement data) to generate relevant keywords automatically.
+  - Implement a “Smart Tagging” system that suggests keywords with a visual cluster display; each keyword node’s size or brightness can indicate its relative importance.
+  
+- **Interactive Keyword Panel:**
+  - Allow users to manage keywords through an interactive panel where they can add, remove, or reorder suggestions.
+  - Include toggle options between different keyword frameworks (e.g., SEO-focused, emotion-based) and let users preview the impact of each.
+  
+- **Example UI Element:**
+  ```tsx
+  import React from 'react';
+
+  const KeywordPanel = ({ keywords, onUpdate }) => {
+    return (
+      <div className="keyword-panel">
+        <h4>Suggested Keywords</h4>
+        <ul>
+          {keywords.map((keyword, index) => (
+            <li key={index}>
+              <span>{keyword.text}</span>
+              <button onClick={() => onUpdate(keyword)}>Edit</button>
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  };
+
+  export default KeywordPanel;
+  ```
+
+#### **B. Customizable Framework Settings**
+- **User-Defined Rules:**  
+  Enable users to set custom parameters (weighting, frequency thresholds, etc.) for keyword generation.
+- Provide presets that can be selected via a dropdown in the settings modal—each preset offering a unique combination of SEO, mood, or trend-based strategies.
+
+---
+
+### **4. Seamless Integration & Aesthetic Consistency**
+
+#### **A. Visual and Thematic Cohesion**
+- **Unified Design Language:**  
+  Make sure that all new components—modals, filters, keyword panels—adhere to a unified design style that aligns with our chosen mood palettes.
+- **Adaptive Theming:**  
+  Employ CSS variables or a theming engine to allow global theme switching (for both regular and colorblind modes) without breaking visual coherence.
+
+#### **B. Hidden but Accessible Elements**
+- **Screen Reader Enhancements:**  
+  Every interactive element must have hidden descriptive texts using classes like `.visually-hidden` for non-visual users to meet ADA standards.
+- **Minimal Visual Clutter:**  
+  These elements should only appear in accessibility API calls and should not interfere with the overall design. For example:
+  ```css
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    border: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  ```
+
+---
+
+### **5. Future-Proofing the Sidebar & Tools Expansion**
+
+#### **A. Sidebar Modular Growth**
+- **Capsules Dashboard Shortcut:**  
+  Add a dedicated shortcut icon in the sidebar for the Mood Capsules Dashboard—a glowing, capsule-inspired icon that complements the overall design.
+- **Drag-and-Drop Modules:**  
+  Design the sidebar with modular blocks that can be rearranged or expanded to include additional features like “Favorites” or “Quick Actions” in future updates.
+
+#### **B. Advanced User Settings Integration**
+- **Customizable Accessibility Modes:**  
+  Allow users to toggle not only basic options but also additional modes (e.g., specific colorblind sub-modes for Protanopia, Deuteranopia, Tritanopia).  
+  Provide a dedicated section in the settings for further accessibility customization.
+- **User Behavior-Driven Suggestions:**  
+  Leverage analytics to suggest adjustments when a user consistently hovers on small, secondary texts or uses the accessibility toggles frequently—then recommend a personalized preset.
+
+---
+
+### **6. Testing, Deployment, and Iterative Refinement**
+
+#### **A. Comprehensive Testing Workflow:**
+- **Unit Testing and Integration:**  
+  Include thorough unit tests using Jest and React Testing Library for each component.  
+  Automate end-to-end tests using Cypress for UI workflows, ensuring smooth transitions between modals, filters, and sidebar interactions.
+- **Accessibility Validation:**  
+  Use tools like axe-core to perform regular accessibility audits. Validate that hidden accessibility texts are correctly read by screen readers while remaining non-intrusive visually.
+- **Performance Optimization:**  
+  Measure load times and responsiveness, especially for dynamic filtering and AI-driven keyword generation, and optimize using caching and debouncing as needed.
+
+#### **B. Iterative Feedback & Refinement Process:**
+- **User Testing:**  
+  Deploy the interface to a small beta group, collect detailed feedback on usability, accessibility, and aesthetic appeal, and then iterate rigorously.
+- **Scheduled Reviews:**  
+  Set up periodic reviews to proactively incorporate new accessibility guidelines, emerging trends in UI/UX design, and additional user-requested features.
+
+---
+
+This extremely detailed prompt integrates every required element—pushing the boundaries on modals, dynamic tool panels, intelligent filtering, and advanced keyword management—while ensuring that all accessibility features remain compliant yet subtly integrated. Copy and paste this prompt after toggling to the **Workflow Architect** prompter, and let’s build an interface that is as innovative and thoughtful as your vision demands. 
+
+Let me know if you need further adjustments or even deeper dives into specific aspects—I'm here to help us craft something truly extraordinary! 🚀✨

@@ -13,7 +13,11 @@ import {
   creativeHistory, type CreativeHistory, type InsertCreativeHistory,
   
   // Color Palette types
-  colorPalettes, type ColorPalette, type InsertColorPalette
+  colorPalettes, type ColorPalette, type InsertColorPalette,
+
+  // Mood Capsules types
+  moodCapsules, type MoodCapsule, type InsertMoodCapsule,
+  contentSentiment, type ContentSentiment, type InsertContentSentiment,
 } from '@shared/schema';
 import { IStorage } from './storage';
 
@@ -399,5 +403,233 @@ export class PgStorage implements IStorage {
       .from(colorPalettes)
       .where(eq(colorPalettes.mood, mood))
       .orderBy(colorPalettes.createdAt);
+  }
+
+  // Mood Capsules methods
+  async getMoodCapsulesByUserId(userId: number): Promise<MoodCapsule[]> {
+    return await db.select()
+      .from(moodCapsules)
+      .where(eq(moodCapsules.userId, userId))
+      .orderBy(moodCapsules.createdAt, 'desc'); // Most recent first
+  }
+
+  async getMoodCapsuleById(id: number): Promise<MoodCapsule | undefined> {
+    const result = await db.select()
+      .from(moodCapsules)
+      .where(eq(moodCapsules.id, id));
+    return result[0];
+  }
+
+  async createMoodCapsule(capsule: InsertMoodCapsule): Promise<MoodCapsule> {
+    const result = await db.insert(moodCapsules).values({
+      ...capsule,
+      isArchived: false,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }).returning();
+    
+    return result[0];
+  }
+
+  async updateMoodCapsule(id: number, updates: Partial<InsertMoodCapsule>): Promise<MoodCapsule> {
+    const capsule = await this.getMoodCapsuleById(id);
+    if (!capsule) {
+      throw new Error(`Mood capsule with id ${id} not found`);
+    }
+
+    const result = await db.update(moodCapsules)
+      .set({
+        ...updates,
+        updatedAt: new Date()
+      })
+      .where(eq(moodCapsules.id, id))
+      .returning();
+    
+    return result[0];
+  }
+
+  async deleteMoodCapsule(id: number): Promise<boolean> {
+    const result = await db.delete(moodCapsules)
+      .where(eq(moodCapsules.id, id))
+      .returning();
+    
+    return result.length > 0;
+  }
+
+  async archiveMoodCapsule(id: number): Promise<MoodCapsule> {
+    const capsule = await this.getMoodCapsuleById(id);
+    if (!capsule) {
+      throw new Error(`Mood capsule with id ${id} not found`);
+    }
+
+    const result = await db.update(moodCapsules)
+      .set({
+        isArchived: !capsule.isArchived, // Toggle archive status
+        updatedAt: new Date()
+      })
+      .where(eq(moodCapsules.id, id))
+      .returning();
+    
+    return result[0];
+  }
+
+  // Content Sentiment methods
+  async getContentSentimentById(contentId: number): Promise<ContentSentiment | undefined> {
+    const result = await db.select()
+      .from(contentSentiment)
+      .where(eq(contentSentiment.contentId, contentId));
+    return result[0];
+  }
+
+  async getContentSentimentsByUserId(userId: number): Promise<ContentSentiment[]> {
+    return await db.select()
+      .from(contentSentiment)
+      .where(eq(contentSentiment.userId, userId))
+      .orderBy(contentSentiment.analyzedAt, 'desc'); // Most recent first
+  }
+
+  async createContentSentiment(sentiment: InsertContentSentiment): Promise<ContentSentiment> {
+    const result = await db.insert(contentSentiment).values({
+      ...sentiment,
+      analyzedAt: new Date()
+    }).returning();
+    
+    return result[0];
+  }
+
+  async updateContentSentiment(contentId: number, updates: Partial<InsertContentSentiment>): Promise<ContentSentiment> {
+    const sentiment = await this.getContentSentimentById(contentId);
+    if (!sentiment) {
+      throw new Error(`Content sentiment for content ID ${contentId} not found`);
+    }
+
+    const result = await db.update(contentSentiment)
+      .set({
+        ...updates,
+        analyzedAt: new Date()
+      })
+      .where(eq(contentSentiment.contentId, contentId))
+      .returning();
+    
+    return result[0];
+  }
+
+  async analyzeContentSentiment(contentIds: number[]): Promise<ContentSentiment[]> {
+    // This implementation would ideally integrate with OpenAI or another sentiment analysis service
+    // For now, we'll use a simplified version that creates/updates sentiment records with placeholder data
+    
+    const results: ContentSentiment[] = [];
+    
+    for (const contentId of contentIds) {
+      const content = await this.getContentById(contentId);
+      if (!content) {
+        continue;
+      }
+      
+      // Check if sentiment already exists
+      let sentiment = await this.getContentSentimentById(contentId);
+      
+      // If sentiment exists and is less than 1 day old, skip reanalysis (in a real app, you might still want to reanalyze)
+      if (sentiment && sentiment.analyzedAt && 
+          (new Date().getTime() - new Date(sentiment.analyzedAt).getTime()) < 24 * 60 * 60 * 1000) {
+        results.push(sentiment);
+        continue;
+      }
+      
+      // This would be replaced with actual AI-based sentiment analysis
+      // In a real implementation, you would call OpenAI or another sentiment analysis service
+      const emotions = ["joyful", "nostalgic", "energetic", "thoughtful", "relaxed"];
+      const randomEmotion = emotions[Math.floor(Math.random() * emotions.length)];
+      const randomIntensity = Math.floor(Math.random() * 100);
+      
+      // Create a breakdown of emotions
+      const emotionBreakdown: Record<string, number> = {};
+      emotions.forEach(emotion => {
+        emotionBreakdown[emotion] = Math.floor(Math.random() * 40);
+      });
+      emotionBreakdown[randomEmotion] += 60; // Make the dominant emotion have the highest value
+      
+      // Extract keywords from content title and description
+      const keywordsSource = `${content.title} ${content.description || ''}`;
+      const keywords = keywordsSource
+        .toLowerCase()
+        .replace(/[^\w\s]/g, '')
+        .split(/\s+/)
+        .filter(word => word.length > 3)
+        .slice(0, 5);
+      
+      // Create or update sentiment
+      if (sentiment) {
+        sentiment = await this.updateContentSentiment(contentId, {
+          dominantEmotion: randomEmotion,
+          emotionIntensity: randomIntensity,
+          emotionBreakdown,
+          keywords
+        });
+      } else {
+        sentiment = await this.createContentSentiment({
+          contentId,
+          userId: content.userId,
+          dominantEmotion: randomEmotion,
+          emotionIntensity: randomIntensity,
+          emotionBreakdown,
+          keywords
+        });
+      }
+      
+      results.push(sentiment);
+    }
+    
+    return results;
+  }
+
+  async generateCaptionForMoodCapsule(
+    contentIds: number[], 
+    emotionalTone: string, 
+    captionTone: string
+  ): Promise<string> {
+    // In a real implementation, this would call OpenAI to generate a caption based on 
+    // the emotional tone and content analysis
+    
+    // Get the content items
+    const contentPromises = contentIds.map(id => this.getContentById(id));
+    const contentItems = await Promise.all(contentPromises);
+    const validContentItems = contentItems.filter(item => item !== undefined) as Content[];
+    
+    if (validContentItems.length === 0) {
+      return "No content found to generate a caption.";
+    }
+    
+    // For a real implementation, you would:
+    // 1. Get content sentiment analysis for all content items
+    // 2. Prepare a prompt for OpenAI that includes content descriptions, sentiments, and desired tone
+    // 3. Call the OpenAI API to generate a personalized caption
+    
+    // Simple implementation with predefined templates
+    const captionIntros: Record<string, string[]> = {
+      joyful: ["Embracing moments of pure joy", "Celebrating life's brightest moments", "Finding happiness in the everyday"],
+      nostalgic: ["Reminiscing about times gone by", "A gentle look back at cherished memories", "Treasuring the moments that shaped us"],
+      energetic: ["Capturing the vibrant spirit of life", "Embracing the dynamic energy around us", "Moving forward with unstoppable momentum"],
+      thoughtful: ["Reflecting on life's deeper meanings", "Contemplating the beauty in stillness", "Finding wisdom in quiet moments"],
+      relaxed: ["Embracing the peaceful rhythm of life", "Finding tranquility in simple moments", "Unwinding in a world of calm"]
+    };
+    
+    const captionStyles: Record<string, (intro: string) => string> = {
+      poetic: (intro) => `${intro}, where each frame tells a story of emotion that transcends time, connecting us to the universal language of human experience.`,
+      concise: (intro) => `${intro}. Captured with intention.`,
+      balanced: (intro) => `${intro}. These moments reveal the authentic emotional landscape of a journey worth remembering.`,
+      conversational: (intro) => `${intro}. Isn't it amazing how these moments can make us feel so alive and connected? Let's cherish them together.`,
+      professional: (intro) => `${intro}. This collection demonstrates the interplay between composition, lighting, and subject matter to evoke specific emotional responses.`
+    };
+    
+    // Default to balanced if tone not found
+    const defaultEmotion = "thoughtful";
+    const defaultCaptionTone = "balanced";
+    
+    const introOptions = captionIntros[emotionalTone] || captionIntros[defaultEmotion];
+    const intro = introOptions[Math.floor(Math.random() * introOptions.length)];
+    const styleFunction = captionStyles[captionTone] || captionStyles[defaultCaptionTone];
+    
+    return styleFunction(intro);
   }
 }

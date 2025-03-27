@@ -190,8 +190,8 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
     setIsGeneratingCaption(true);
     
     try {
-      const response = await apiRequest({
-        url: '/api/content/caption',
+      const response = await apiRequest<{ success: boolean; caption: string }>({
+        url: '/api/mood-capsules/generate-caption',
         method: 'POST',
         data: {
           contentIds,
@@ -200,7 +200,7 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
         },
       });
       
-      if (response.success && response.caption) {
+      if (response && response.success && response.caption) {
         form.setValue('description', response.caption);
         
         toast({

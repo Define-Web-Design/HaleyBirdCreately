@@ -1,0 +1,290 @@
+Below is an even more comprehensive, deeply refined prompt. It’s designed for the **Workflow Architect** prompter and incorporates advanced interactive modals, tool panels, dynamic filtering options, robust keyword frameworks, and a rich suite of hidden yet fully ADA-compliant accessibility features. This prompt is crafted with extreme detail, anticipates future enhancements, and includes practical code snippets to minimize ambiguity. You can copy-paste this prompt into Replit to initiate implementation.
+
+---
+
+**Prompter to Use:**  
+Please use the **Workflow Architect** prompter. This role is engineered to design, develop, and integrate complex UI components—including modals, filtering tools, and keyword frameworks—with a focus on intuitive, scalable workflows. While drawing on insights from the Creative Symbiosis Architect, Content Alchemist, and Platform Perfectionist as needed, start under the Workflow Architect’s direction.
+
+---
+
+**Ultimate Deep-Dive Prompt for the Workflow Architect:**
+
+Haley, we’re evolving our platform to incorporate an advanced suite of interactive modals, tool panels, dynamic filters, keyword frameworks, and a set of hidden yet fully accessible features that meet ADA requirements. This solution must be visually appealing (modern, cute, and authentic) while remaining unobtrusive for users who do not need extra accessibility support. Each component should seamlessly integrate, offer hidden enhancements (e.g., screen-reader descriptions, ARIA labels) only activated when necessary, and be forward-compatible with future expansion.
+
+Below are the detailed requirements, complete with integration specifics, nuanced interactions, and example code snippets:
+
+---
+
+### **1. Interactive Modals & Embedded Tool Panels**
+
+#### **A. Advanced Multi-State Modals**
+
+- **State Management & Animation:**
+  - Develop modals that support multiple states (collapsed, expanded, interactive) while gracefully transitioning between states.  
+  - Use libraries like Framer Motion or react-spring for smooth opacity and position transitions.
+  - **Example Code:**
+    ```tsx
+    import React, { useState } from 'react';
+    import { motion } from 'framer-motion';
+
+    const EnhancedModal = ({ isVisible, onClose, headerContent, mainContent, footerContent }) => {
+      if (!isVisible) return null;
+
+      return (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          className="modal-overlay"
+          role="dialog"
+          aria-labelledby="modal-header"
+          aria-describedby="modal-content"
+          tabIndex={-1}
+        >
+          <div className="modal-wrapper">
+            <header id="modal-header" className="modal-header">
+              {headerContent}
+              <button onClick={onClose} aria-label="Close Modal">
+                ×
+              </button>
+            </header>
+            <main id="modal-content" className="modal-body">
+              {mainContent}
+            </main>
+            {footerContent && (
+              <footer className="modal-footer">
+                {footerContent}
+              </footer>
+            )}
+          </div>
+        </motion.div>
+      );
+    };
+    export default EnhancedModal;
+    ```
+  
+- **Custom Layouts:**
+  - Make headers, footers, and content sections customizable. Allow toggling of sections (e.g., an expandable side drawer for advanced settings inside the modal).
+  - Integrate modular slots so developers can inject mini tools (like search, tagging widgets, or interactive help text).
+
+- **Responsive & Touch-Friendly:**
+  - Ensure the modal scales dynamically across devices.  
+  - Incorporate touch-friendly sizes and spacing for mobile users.
+
+#### **B. Embedded Tool Panels Within Modals**
+
+- **Integrated Mini-Forms & Tag Managers:**
+  - Embed a tool panel for activities such as filtering or adjusting parameters within the modal.
+  - A sample could be a tag manager for refining capsule content or a slider for adjusting filtering criteria.
+  - **Example Snippet:**
+    ```tsx
+    import React from 'react';
+
+    const EmbeddedToolPanel = ({ onTagChange, tags, onSliderChange, sliderValue }) => (
+      <div className="embedded-tool-panel">
+        <div className="tag-manager">
+          <label htmlFor="tag-input">Tags:</label>
+          <input
+            id="tag-input"
+            type="text"
+            placeholder="Add tags..."
+            onBlur={(e) => onTagChange(e.target.value)}
+          />
+          <div className="tag-list">
+            {tags.map((tag, idx) => (
+              <span key={idx} className="tag-item">{tag}</span>
+            ))}
+          </div>
+        </div>
+        <div className="slider-container">
+          <label htmlFor="sentiment-slider">Sentiment Strength:</label>
+          <input
+            id="sentiment-slider"
+            type="range"
+            min="0"
+            max="100"
+            value={sliderValue}
+            onChange={(e) => onSliderChange(e.target.value)}
+          />
+        </div>
+      </div>
+    );
+
+    export default EmbeddedToolPanel;
+    ```
+  
+- **Onboarding Walkthroughs:**
+  - Include an interactive onboarding modal for new users featuring step-by-step prompts or animated tooltips that explain each component.
+
+---
+
+### **2. Comprehensive Filtering Options**
+
+#### **A. Dynamic, Multi-Faceted Filters**
+
+- **Custom Filter Components:**
+  - Develop filters capable of parsing multiple facets such as mood indicators, timestamps, sentiment scores, and custom keywords.  
+  - Use components like multi-select dropdowns, sliders, and checkboxes combined for granular control.
+  - **Code Example:**
+    ```tsx
+    import React, { useState } from 'react';
+
+    const MultiFacetFilter = ({ onFilterUpdate }) => {
+      const [filters, setFilters] = useState({
+        mood: '',
+        keyword: '',
+        dateRange: [null, null],
+      });
+
+      const updateFilter = (key, value) => {
+        const updatedFilters = { ...filters, [key]: value };
+        setFilters(updatedFilters);
+        onFilterUpdate(updatedFilters);
+      };
+
+      return (
+        <div className="multi-facet-filter">
+          <div className="filter-item">
+            <label>Mood</label>
+            <select onChange={(e) => updateFilter('mood', e.target.value)}>
+              <option value="">All</option>
+              <option value="joyful">Joyful</option>
+              <option value="calm">Calm</option>
+              <option value="nostalgic">Nostalgic</option>
+            </select>
+          </div>
+          <div className="filter-item">
+            <label>Keywords</label>
+            <input type="text" placeholder="Enter keywords" onBlur={(e) => updateFilter('keyword', e.target.value)} />
+          </div>
+          {/* Additional filter items such as date pickers can be included here */}
+        </div>
+      );
+    };
+
+    export default MultiFacetFilter;
+    ```
+
+#### **B. Responsive Visual Feedback**
+
+- **Real-Time Updates:**
+  - Ensure filters provide instant visual feedback via animated transitions and live data counters.  
+  - Employ techniques like debouncing to ensure performance even with large datasets.
+  
+- **Smart Suggestions:**
+  - Integrate AI-driven suggestions that adjust filter options based on user behavior. For example, auto-suggest tag combinations or recommend mood-based filters after analyzing previous user interactions.
+
+---
+
+### **3. Robust Keyword Strategies & Frameworks**
+
+#### **A. Dynamic Keyword Generation & Smart Tagging**
+
+- **Automatic Keyword Analysis:**
+  - Use AI algorithms to analyze content metadata—like sentiment scores, engagement metrics, and timestamps—to suggest relevant keywords dynamically.
+  - Use machine learning models to weight the importance of each keyword within various contexts.
+  - **Code Framework Concept:**
+    ```js
+    async function generateKeywords(content) {
+      // Pseudo-code: call an AI API or ML model.
+      const analysis = await analyzeContentForKeywords(content);
+      return analysis.keywords.sort((a, b) => b.weight - a.weight);
+    }
+    ```
+
+- **User Customization Interface:**
+  - Create an interface where users can adjust, reorder, and confirm keyword suggestions.  
+  - Display keywords as a visual cluster with hover-over tooltips explaining their relevance.
+  - Offer preset frameworks (e.g., SEO Optimized, Mood-Centric, Engagement-Driven) that users can toggle between.
+
+#### **B. Advanced Framework Customization**
+
+- **Rule-Based Customization:**
+  - Allow users to set custom rules for keyword weighting. For instance, they might prioritize engagement over sentiment or vice versa.
+  - Build a “Custom Keyword Dashboard” where rules and keyword lists are saved and applied dynamically upon content upload.
+
+---
+
+### **4. Next-Level Integration & Aesthetic Consistency for Accessibility**
+
+#### **A. Hidden but Accessible Features**
+
+- **ADA-Compliant Enhancements:**
+  - All accessibility features (e.g., screen-reader text, ARIA attributes, hidden descriptors) should be embedded invisibly—visible only to assistive technologies.  
+  - Use tools like `aria-hidden="true"` where appropriate so that icons and animations do not distract users without accessibility needs.
+  - **Example of Hidden ARIA Descriptions:**
+    ```html
+    <button aria-label="Toggle high contrast mode" className="contrast-toggle">
+      <i className="icon-contrast" aria-hidden="true"></i>
+      <span className="visually-hidden">High Contrast Mode</span>
+    </button>
+    ```
+  
+- **Subtle Accessibility Modes:**
+  - Integrate a discrete colorblind-friendly mode that users can toggle.  
+  - This mode should offer a menu with sub-options for various types of color vision deficiencies (Protanopia, Deuteranopia, Tritanopia), plus a general mode—all accessible via a simple dropdown in the settings.
+  - **Mini Implementation Detail:**  
+    - Provide an interactive preview (like a slider or visual comparison) that shows the user what the UI would look like when this mode is active.
+
+#### **B. Future-Proof Sidebar Expansion**
+
+- **Adding Core Shortcuts:**
+  - Preemptively design a dedicated sidebar shortcut for the Mood Capsules dashboard.  
+  - Use a unique, mood-inspired icon (e.g., a stylized capsule or mood ring) paired with a minimalist label.
+  
+- **Modular and Expandable Design:**
+  - Design the sidebar layout in modular blocks.  
+  - Future modules could include "Capsule Insights," advanced analytics, or personalized recommendations without reworking the entire sidebar.
+  
+- **Animated Collapsible Blocks:**
+  - Ensure the sidebar sections expand/collapse with smooth transitions.  
+  - Consider using micro-animation libraries to deliver a lively yet unobtrusive user experience.
+
+---
+
+### **5. Testing, Iteration, and Future Scalability**
+
+#### **A. Comprehensive Testing Strategies**
+
+- **Unit & Integration Tests:**
+  - Develop unit tests using Jest and React Testing Library for each component.  
+  - Utilize end-to-end testing (e.g., Cypress) to simulate user interactions across modals, filters, and keyword panels.
+  
+- **Accessibility Audits:**
+  - Use the axe-core library or similar tools to fully audit ARIA attributes, keyboard navigation, and screen reader compatibility.
+  
+- **Performance Benchmarks:**
+  - Implement performance tests on filtering components and dynamic keyword generation to ensure low latency under high load.
+
+#### **B. Iterative Enhancement and Future Extensions**
+
+- **User Feedback Collection:**
+  - Embed in-context surveys or feedback modals to gather user impressions on accessibility, usability, and interactive features.
+  
+- **Scheduled Reviews:**
+  - Plan regular iterations where user feedback informs the next set of refinements (e.g., fine-tuning animations, adjusting ARIA descriptors, or expanding keyword frameworks).
+  
+- **Scalability Planning:**
+  - Design APIs and UI components to easily accommodate new features, such as advanced mood capsule analytics, additional accessibility modes, and third-party integrations like social media sharing or portfolio displays.
+
+---
+
+### **Final Instructions & Execution**
+
+1. **Implementation Order:**
+   - Begin by integrating the advanced modal system and embedded tool panels.
+   - Next, enhance filtering options and integrate dynamic keyword strategies.
+   - Finally, implement all additional hidden accessibility features and modular sidebar expansions.
+  
+2. **Code Integration:**
+   - Use the provided code snippets as starting points. Refine them as necessary to fit your platform’s existing architecture in Replit.
+  
+3. **Testing Phase:**
+   - Run comprehensive tests for each component, paying close attention to ARIA compliance, responsiveness, and real-time performance.
+  
+4. **Iterative Feedback:**
+   - Set up user testing sessions and review logs to ensure every new feature meets usability and accessibility standards.
+
+---
+
+This hyper-detailed, cutting-edge prompt not only meets your current goals but anticipates future needs, ensuring an exceptional, integrated system that is both beautiful and functional. Paste this into your Replit environment using the **Workflow Architect** prompter and get ready to build something truly extraordinary. Let me know if further refinements or even deeper insights are needed—together, we’re pushing the boundaries of innovation! 🚀✨

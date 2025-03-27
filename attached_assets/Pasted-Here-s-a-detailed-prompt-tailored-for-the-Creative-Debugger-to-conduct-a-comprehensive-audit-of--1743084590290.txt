@@ -1,0 +1,118 @@
+Here’s a detailed prompt tailored for the **Creative Debugger** to conduct a comprehensive audit of your app across both web and mobile. This prompt ensures every element, from responsiveness to functionality and accessibility, is evaluated thoroughly. I've also anticipated additional areas that might require special attention and included strategies to identify hidden issues that might not be immediately visible. It’s exhaustive yet precise—ready for copy-and-paste use.
+
+---
+
+**Prompter to Use:**  
+Please use the **Creative Debugger** prompter. This role is perfect for a full-scale audit of an app’s functionality, design, responsiveness, and accessibility. Begin with this prompter but reference other assistant prompters like the **Platform Perfectionist** (for polishing design and flow), **Simultaneous Workflow Mastermind** (for addressing multiple issues simultaneously), and **Content Alchemist** (for evaluating page and content consistency), where needed.
+
+---
+
+**Comprehensive App Audit Prompt for the Creative Debugger:**
+
+Haley, let’s conduct a full audit of the app across both web and mobile platforms. The goal is to detect and list every error, inaccuracy, inefficiency, or missing element while also identifying opportunities for refinement and optimization. Please address the following areas systematically:
+
+---
+
+### **1. Functional Integrity**
+- **Missing Links or Dead Ends:**
+  - Check for **missing page links, button links, landing pages, back links**, or any links that lead to 404 errors or dead ends.
+  - Review the **navigation flow**—ensure that every button, menu item, and clickable component leads to its intended destination.
+
+- **Button States:**
+  - Verify that all buttons (primary, secondary, and hover states) are functional, and their **hover effects or click animations** respond correctly across devices.
+
+- **Broken Features or Widgets:**
+  - Identify any **interactive features (sliders, dropdowns, forms)** or embedded elements that don’t perform as expected.
+
+---
+
+### **2. Web Responsiveness and Mobile Optimization**
+- **Device Compatibility:**
+  - Test the app on different devices (desktop, tablet, mobile) and screen sizes (landscape and portrait modes).  
+  - Look for any **layout distortions, overlaps, misaligned text, or cutoff elements** that may occur.
+
+- **Breakpoints and Scaling:**
+  - Confirm that all breakpoints function correctly—ensuring fluid responsiveness when resizing the browser or switching between screen dimensions.
+
+- **Touchscreen Accessibility:**
+  - Verify that all interactive elements are **touch-friendly** (adequate size, spacing) and support standard mobile gestures (tap, swipe, pinch-to-zoom). 
+
+---
+
+### **3. Content Accuracy and Completeness**
+- **Missing or Incomplete Pages:**
+  - Ensure all pages (landing pages, sub-pages, or pop-ups) are present and populated with appropriate content.
+  - Check for any **placeholder text (“Lorem Ipsum”) or missing media elements (images, icons, videos).**
+
+- **Content Consistency:**
+  - Review page headers, descriptions, and text for **formatting consistency**, spelling/grammar issues, or incorrect links to unrelated content.  
+  - Cross-check **style adherence**—ensuring consistent use of typography, colors, and branding elements.
+
+---
+
+### **4. Flow and Efficiency**
+- **User Journey Analysis:**
+  - Simulate different user journeys from entry to completion (e.g., logging in, submitting a form, accessing a feature).  
+  - Identify any **unnecessary steps, confusing navigation paths, or redundancies.**
+
+- **Workflow Gaps:**
+  - Highlight missing options (e.g., no “Back to Home” button or breadcrumb navigation) that could streamline navigation.
+
+---
+
+### **5. Accessibility Compliance**
+- **Interactive Element Accessibility:**
+  - Confirm that all **buttons, toggles, sliders, dropdowns**, and other elements are keyboard navigable and screen-reader compatible.
+  
+- **Text Alternatives for Media:**
+  - Ensure all non-text elements (images, icons) have **alt attributes** or hidden descriptive texts for screen readers.
+
+- **Color Accessibility:**
+  - Test the app with colorblindness simulators to confirm all visual cues are discernible in colorblind-friendly palettes (Protanopia, Deuteranopia, Tritanopia).  
+  - Ensure sufficient **contrast ratios** between text and background for readability.
+
+- **Motion Sensitivity:**
+  - Validate that animations/transitions have an option to be disabled for users with sensory sensitivities.
+
+---
+
+### **6. Performance Optimization**
+- **Loading Times:**
+  - Measure loading speeds across devices (including slower connections). List pages or elements that cause delays.
+  
+- **Caching Issues:**
+  - Identify images or assets that aren’t optimized (e.g., oversized images or missing compression).
+
+---
+
+### **7. Advanced Audit Additions**
+- **Cross-Browser Testing:**
+  - Test the app on different browsers (Chrome, Firefox, Safari, Edge) to identify browser-specific bugs or inconsistencies.
+
+- **Interactive Feedback:**
+  - Ensure real-time user feedback mechanisms (e.g., form validation, loading spinners) are functional and visually consistent.
+
+- **Redundancy Check:**
+  - Identify duplicate buttons, repetitive actions, or redundant content that could clutter the user experience.
+
+---
+
+### **8. Future Optimization Recommendations**
+- **Scalability Potential:**
+  - Suggest infrastructure or UI adjustments that could support future feature expansions or accommodate increased traffic.
+
+- **Placeholder Alerts:**
+  - Add tooltips or placeholders to elements in development so users know it’s a “work in progress.”
+
+---
+
+### **9. Testing Strategy**
+- **Detailed Bug Report:**
+  - Generate a prioritized bug report listing all issues by severity (Critical, Major, Minor).
+  
+- **Automated Tests:**
+  - Suggest implementing automated regression tests to avoid recurring issues and reduce manual testing overhead.
+
+---
+
+This comprehensive audit should cover every conceivable aspect of the app and help refine its functionality, usability, and accessibility while preparing it for seamless expansion. Paste this prompt into your Replit environment under the **Creative Debugger** prompter, and let’s ensure your app operates at its peak potential. Let me know if further refinements are needed! 🚀✨

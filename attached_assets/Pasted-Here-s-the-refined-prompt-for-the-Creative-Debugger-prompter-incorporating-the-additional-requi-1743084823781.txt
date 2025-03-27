@@ -1,0 +1,123 @@
+Here’s the refined prompt for the **Creative Debugger** prompter, incorporating the additional requirements regarding the notification icon placement and the profile button enhancements. It expands on the original prompt with every detail for the app audit and includes instructions for refining the top navigation bar as described.
+
+---
+
+**Prompter to Use:**  
+Please use the **Creative Debugger** prompter. This role is specialized in conducting thorough audits of applications, addressing issues related to technical accuracy, responsiveness, functionality, missing elements, and design inconsistencies. For aesthetic and functional refinements, reference insights from the Platform Perfectionist.
+
+---
+
+**Comprehensive App Audit Prompt:**
+
+Haley, this is a detailed prompt to guide a full audit of our web and mobile application. This audit must ensure technical and functional accuracy, design consistency, and seamless user experiences. Specifically, please check for the following while addressing the refinements below:
+
+---
+
+### **1. Technical Accuracy & Functionality**
+- **Broken Links:**  
+  - Verify that all internal and external links are operational and lead to the correct pages. Check buttons, menus, and interactive areas for navigational accuracy.
+  - Confirm backlinks and navigation links (in menus, buttons, or breadcrumbs) are properly configured.
+- **Missing Pages & Features:**  
+  - Identify any missing landing pages, orphaned pages, or gaps in the user journey caused by unlinked buttons or incomplete paths.
+  - Check for unimplemented or absent call-to-action buttons (e.g., "Learn More," "Sign Up").
+- **Code Integrity:**  
+  - Ensure the absence of JavaScript console errors, network errors, or unhandled exceptions across web and mobile platforms.
+  - Validate that API endpoints consistently return expected and correct responses.
+
+**Example Exploratory Code for Link Testing (JavaScript):**
+```js
+const links = document.querySelectorAll('a');
+links.forEach(link => {
+  fetch(link.href, { method: 'HEAD' })
+    .then(response => {
+      if (!response.ok) {
+        console.error('Broken link found:', link.href, response.status);
+      }
+    })
+    .catch(error => console.error('Error fetching link:', link.href, error));
+});
+```
+
+---
+
+### **2. UI/UX Consistency & Responsiveness**
+- **Top Navigation Bar Improvements:**  
+  - The blue notification indicator should never float arbitrarily. It must be **visually aligned and positioned directly adjacent to the notifications icon** for coherence.
+  - Resize the **profile picture circle** next to the notification icon in the top navigation bar. This needs to function as a button, opening a drop-down menu with key profile options (e.g., “View Profile,” “Settings,” “Log Out”).
+  - Add a hover or click animation to the profile icon button for an engaging yet minimal interaction. Ensure dropdown menus are accessible via keyboard navigation.
+
+- **Layout & Design Consistency:**  
+  - Validate that typography, spacing, and color themes follow the global design guidelines across all pages.  
+  - Ensure that modals, menus, and other UI elements scale correctly across devices (desktop, tablet, and mobile).
+
+- **Responsive Behavior:**  
+  - Test the app's responsiveness using tools like Chrome DevTools (responsive mode) and check layouts on real mobile devices for accuracy.  
+  - Confirm that navigation menus, toolbars, and content grids adjust seamlessly to different screen sizes.
+
+- **User Experience Flows:**  
+  - Verify intuitive navigation flows, especially for primary actions (e.g., onboarding, capsule creation).  
+  - Identify and address any incomplete or confusing transitions between pages.
+
+---
+
+### **3. Accessibility Compliance**
+- **Hidden Accessibility Texts:**  
+  - Verify that all accessibility-only texts (using `.visually-hidden` CSS or ARIA labels) exist for assistive technologies but remain hidden for general users.
+  - Example: Add hidden labels such as `aria-label="Notifications Icon"` to enhance screen reader accessibility.
+
+- **Keyboard Accessibility:**  
+  - Check that all interactive elements (like buttons, dropdowns, and modals) are navigable using only the keyboard.
+
+- **Advanced Accessibility Features:**  
+  - Ensure that **colorblind-friendly modes** and **high contrast modes** are fully functional, correctly rendering alternate palettes for various types of colorblindness.  
+  - Test text-to-speech toggles and confirm that all key elements are spoken accurately and in a logical order.
+
+**CSS for Hidden Text (Visually Hidden Class):**
+```css
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  clip: rect(0 0 0 0);
+  overflow: hidden;
+  white-space: nowrap;
+}
+```
+
+---
+
+### **4. Data Flow & Interactivity**
+- **Micro-Interactions:**  
+  - Check hover effects, click animations, and modal transitions for smoothness. Ensure consistent performance across both platforms.  
+  - Verify real-time updates in dynamic components such as search filters, form validations, or keyword suggestions.
+
+- **Dynamic Integrations:**  
+  - Ensure full functionality of integrated features (e.g., the Mood Capsules, Accessibility Tools) across all pages.  
+  - Confirm that saved user preferences (filters, accessibility modes, etc.) persist during navigation.
+
+---
+
+### **5. Missing Functionality & Opportunities for Improvement**
+- **Audit for Missing Elements:**  
+  - Check for absent features such as navigation breadcrumbs, shortcut buttons, or sidebar links that enhance user experience (e.g., add a Mood Capsules shortcut in the sidebar for quick access).
+  - Ensure all existing buttons link correctly to their intended destinations.
+  
+- **Recommendations for Enhancements:**  
+  - Suggest new features or improvements (e.g., error messages for failed API calls, dynamic progress trackers for user interactions).
+
+---
+
+### **6. Reporting & Documentation**
+- **Comprehensive Findings Report:**  
+  - Create a detailed list of all issues discovered, categorized by priority (e.g., critical, major, minor).  
+  - Include screenshots or recordings for visual issues and code snippets for technical fixes.
+
+- **Implementation Roadmap:**  
+  - Provide an actionable plan for resolving issues, optimizing the app, and incorporating suggested enhancements.
+
+---
+
+Toggle to the **Creative Debugger** prompter and copy this prompt into your Replit environment to begin the audit. Address all points methodically, ensuring that both web and mobile interfaces are flawless and that the navigation bar refinements are implemented as outlined. Let me know if you need additional input or deeper insights

@@ -1,0 +1,108 @@
+Below is the updated, comprehensive audit prompt—now refined further to include checks for both functionality/responsiveness and additional UI/UX adjustments. This version is designed for the **Creative Debugger** prompter and includes provisos to ensure that the top navigation bar elements (notification icon and profile picture) are neatly aligned and function as intended. It details a full audit checklist for your web and mobile applications.
+
+---
+
+**Prompter to Use:**  
+Please use the **Creative Debugger** prompter. This role specializes in thoroughly auditing applications—both visually and functionally—to identify errors, inefficiencies, and missing elements. While you may reference insights from the Platform Perfectionist (for design consistency) and the Workflow Architect (for process flow), begin your work as the Creative Debugger.
+
+---
+
+**Comprehensive App Audit Prompt:**
+
+Haley, please perform a full audit of our web and mobile application. Your audit should cover every aspect of the app, ensuring nothing is overlooked. In addition, pay special attention to adjustments in the top navigation bar:  
+- The blue notifications icon must not appear as a floating element; it must be creatively aligned and placed in sync with its surroundings.  
+- The profile circle picture should be resized, transformed into a clickable button, and integrated closely with the notification icon—enabling a well-designed drop-down menu that leads to all necessary profile pages and settings.
+
+Specifically, please check for the following:
+
+### **1. Technical Accuracy & Functionality**
+
+- **Broken Links:**  
+  - Review all internal and external links to ensure they are functional. Verify that each link points to an existing, reachable page.  
+  - Confirm that backlinks and navigation links (across pages, buttons, and menu items) are correctly configured.
+
+- **Missing Pages & Buttons:**  
+  - Identify any missing landing pages or call-to-action buttons referenced within the UI but not implemented.  
+  - Detect any orphaned pages that are not linked from main navigation elements.
+
+- **Code Integrity:**  
+  - Examine for JavaScript console errors, network issues, or unhandled exceptions on both web and mobile interfaces.  
+  - Verify that all API endpoints are returning the expected responses.
+
+**Example Exploratory Code for Link Testing (JavaScript):**
+```js
+// Automated link checker snippet for browser console
+const links = document.querySelectorAll('a');
+links.forEach(link => {
+  fetch(link.href, { method: 'HEAD' })
+    .then(response => {
+      if (!response.ok) {
+        console.error('Broken link:', link.href, response.status);
+      }
+    })
+    .catch(error => console.error('Error fetching link:', link.href, error));
+});
+```
+
+### **2. UI/UX Consistency & Responsiveness**
+
+- **Page Layout & Design Consistency:**  
+  - Ensure that design elements (typography, colors, spacing) remain consistent across all pages according to our global theme.  
+  - Check that all UI components (modals, menus, tool panels) display as designed on various screen sizes.
+
+- **Responsive Behavior:**  
+  - Audit the site's responsiveness on different devices (desktop, tablet, mobile), ensuring that UI elements adapt appropriately.  
+  - Use tools like Chrome DevTools' responsive mode to simulate various device viewports.
+
+- **User Experience Flows:**  
+  - Validate that the user navigation flows are intuitive and that calls-to-action (e.g., "Sign Up," "Learn More," "View Capsules") lead to the expected destinations.  
+  - Test for missing or confusing page transitions and unnecessary steps in the user journey.
+
+- **Navigation Bar Adjustments:**  
+  - **Notification Icon:** Ensure that the blue notifications icon is aligned closely with the profile button and is not floating separately; it should integrate naturally within the top bar.  
+  - **Profile Button:** Confirm that the profile circle is appropriately resized, converted into a clickable button, and linked to a drop-down menu that consolidates all profile-related actions (Profile, Settings, Log Out, etc.).
+
+### **3. Accessibility Compliance**
+
+- **Screen Reader & ARIA Standards:**  
+  - Verify that all interactive elements have proper ARIA labels and hidden accessibility texts (using `.visually-hidden` CSS) so that they are compliant with ADA standards without cluttering the UI.
+- **Keyboard Navigation:**  
+  - Ensure that the entire application can be navigated solely by keyboard, with a focus on vital elements.
+- **Advanced Accessibility Features:**  
+  - Confirm that additional modes (high contrast, colorblind modes, text-to-speech toggles, etc.) are available, toggling correctly, and not obstructing the general user interface.
+
+### **4. Data Flow & Interactivity**
+
+- **Dynamic Components:**  
+  - Test interactive UI components (modals, quick menus, dynamic filters) for smooth, real-time updates and correct handling of large datasets.
+  - Verify that micro-interactions (hover animations, button click feedback) are fluid and responsive.
+
+- **Integration Consistency:**  
+  - Validate that integrated features (e.g., Mood Capsules, sidebar accessibility tools) work uniformly across pages and that user preferences (such as selected accessibility modes or active filters) persist during navigation.
+
+### **5. Missing Functionality & Potential Improvements**
+
+- **Audit for Missing Elements:**  
+  - Check for any absent features such as missing call-to-action buttons, breadcrumbs, or navigation links that lead to dead ends.
+  - Identify opportunities to enhance the UI, such as adding shortcuts (e.g., directly to the Mood Capsules Dashboard) or quick action panels in the sidebar.
+  
+- **Future Enhancement Opportunities:**  
+  - Suggest additional micro-interactions (like contextual tooltips on hover, subtle error messages on failed API calls) that could improve overall user experience.
+  - Recommend designs for modular widget expansion in the sidebar to accommodate future features seamlessly.
+
+---
+
+### **Reporting & Documentation**
+
+- **Document Findings:**  
+  - Create a detailed report listing all identified errors, inefficiencies, and missing elements. Provide prioritized recommendations (critical, major, minor) for fixes.
+- **Code & Visual Evidence:**  
+  - Include code snippets where issues are found, along with screenshot evidence or screen recordings demonstrating the problematic areas.
+- **Iterative Improvement Plan:**  
+  - Outline a plan for iterative testing and enhancement based on user feedback and performance metrics.
+
+---
+
+Please use this comprehensive checklist to perform a full audit across both the web and mobile aspects of the application. Make sure every aspect—technical, visual, interactive, and accessibility-related—is rigorously examined and documented so that we can confidently move forward with a flawless, user-friendly product.
+
+Toggle to the **Creative Debugger** prompter with this prompt, copy and paste it into your environment, and then initiate the audit process. Let me know if you need further guidance or additional details during the audit. We're aiming for an impeccable, exceptional user experience across every device and interaction! 🚀✨

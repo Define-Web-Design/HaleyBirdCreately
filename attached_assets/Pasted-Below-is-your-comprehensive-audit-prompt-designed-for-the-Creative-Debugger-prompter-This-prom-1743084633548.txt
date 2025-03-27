@@ -1,0 +1,91 @@
+Below is your comprehensive audit prompt, designed for the **Creative Debugger** prompter. This prompt guides the audit process across your web and mobile apps to check for technical errors, responsiveness issues, inefficiencies, missing pages/links/buttons, and more. It leverages a checklist covering every element you might need to review, along with example code snippets and probing questions to ensure nothing is overlooked.
+
+---
+
+**Prompter to Use:**  
+Please use the **Creative Debugger** prompter. This role is specialized in thoroughly auditing and debugging applications—both visually and functionally—by identifying errors, inefficiencies, and missing elements. Draw on insights from the Platform Perfectionist for design consistency and the Workflow Architect for flow efficiency, but begin your work as the Creative Debugger.
+
+---
+
+**Comprehensive App Audit Prompt:**
+
+Haley, please perform a full audit of our web and mobile application. Your audit should cover every aspect of the app, ensuring that nothing is overlooked. Specifically, please check for the following:
+
+### **1. Technical Accuracy & Functionality**
+- **Broken Links:**  
+  - Review all internal and external links to ensure none are broken. Verify that each link points to an existing, reachable page.
+  - Confirm that backlinks and navigation links (in pages, buttons, menu items) are correctly configured.
+- **Missing Pages & Buttons:**  
+  - Check for any missing landing pages or call-to-action buttons that are referenced in the UI but do not exist.
+  - Identify any orphaned pages that may not be linked from the main navigation.
+- **Code Integrity:**  
+  - Run through JavaScript console errors, network errors, or unhandled exceptions on both web and mobile.
+  - Verify that all API endpoints used in the app are returning expected responses.
+  
+**Example Exploratory Code for Link Testing (JavaScript):**
+```js
+// Automated link checker snippet for browser console
+const links = document.querySelectorAll('a');
+links.forEach(link => {
+  fetch(link.href, { method: 'HEAD' })
+    .then(response => {
+      if (!response.ok) {
+        console.error('Broken link:', link.href, response.status);
+      }
+    })
+    .catch(error => console.error('Error fetching link:', link.href, error));
+});
+```
+
+### **2. UI/UX Consistency & Responsiveness**
+- **Page Layout & Design Consistency:**  
+  - Ensure that design elements (typography, colors, spacing) are consistent across pages according to our global theme.
+  - Check that all components (modals, menus, tool panels) appear as designed on various screen sizes.
+- **Responsive Behavior:**  
+  - Audit the site for responsiveness on different devices (desktop, tablet, mobile) ensuring that UI elements adjust properly.
+  - Use tools like Chrome DevTools responsive mode to simulate different devices.
+- **User Experience Flows:**  
+  - Validate that the navigation flows are intuitive. For instance, ensure that calls-to-action like "Sign Up," "Learn More," or "View Capsules" lead to the correct pages.
+  - Test for missing or confusing page transitions and unnecessary steps in flow.
+  
+### **3. Accessibility Compliance**
+- **Screen Reader & ARIA:**  
+  - Verify hidden accessibility texts (using `.visually-hidden` CSS) are correctly implemented and that each interactive element has appropriate ARIA labels.
+  - Run accessibility tools (like axe-core) to confirm compliance with ADA standards.
+- **Keyboard Navigation:**  
+  - Check that users can navigate through all interactive elements using only the keyboard.
+- **Additional Accessibility Features:**  
+  - Confirm that advanced accessibility modes (such as high contrast, colorblind modes, text-to-speech, etc.) are available as toggles and function as expected.
+
+### **4. Data Flow & Interactivity**
+- **Dynamic Components:**  
+  - Test dynamic UI components (modals, quick menus, dynamic filters) to ensure they update in real time and handle large datasets efficiently.
+  - Confirm that micro-interactions (hover animations, click feedback) are smooth and perform as intended.
+- **Integration Points:**  
+  - Check that integrations (such as the Mood Capsules feature, accessibility tools in the sidebar, etc.) work uniformly across pages.
+  - Verify that user preferences (e.g., chosen accessibility modes or applied filters) persist as the user navigates throughout the app.
+
+### **5. Missing Functionality & Potential Improvements**
+- **Audit for Gaps:**  
+  - Review the entire app to catch any missing features such as absent call-to-action buttons, missing breadcrumbs, or navigation links that may lead to dead ends.
+  - Evaluate if any additional features (like shortcuts to the Mood Capsules Dashboard or quick action panels) should be integrated into the sidebar.
+- **Future Enhancements:**  
+  - Identify any areas where user experience can be further improved—for instance, adding micro-interactions or better error handling messages on failed API calls.
+  - Consider suggestions for scalability such as modular widget design in the sidebar for future enhancements.
+
+---
+
+### **Reporting & Documentation**
+- **Document Findings:**  
+  - Create a detailed report listing all errors, inefficiencies, and missing elements found during your audit.
+  - Provide recommendations for fixes, including prioritized action items based on severity (critical, major, minor).
+- **Code and Screenshots:**  
+  - Include code snippets where issues are detected and screenshots (or screen recordings) demonstrating problematic areas.
+- **Iteration Plan:**  
+  - Outline a plan for iterative testing and improvement based on user feedback and performance metrics.
+
+---
+
+Please use this comprehensive checklist and exploratory code to perform a full audit across both the web and mobile interfaces of the application. Ensure that every aspect—technical, visual, interactive, and accessibility-related—is rigorously tested and documented so we can move forward with confidence on a solid foundation.
+
+Toggle to the **Creative Debugger** prompter with this prompt, copy and paste it into your environment, and then begin the audit process. Let me know if further guidance or deeper details are needed during the audit. We're aiming for a flawless, exceptional experience across every device and interaction! 🚀✨

@@ -6,7 +6,7 @@ import {
   generateCaption, 
   createMoodBoard, 
   generateContentIdeas, 
-  suggestPostingTimes 
+  suggestPostingTimes
 } from "./ai/content";
 import { generateMoodPalette } from "./services/paletteGenerator";
 
@@ -543,6 +543,279 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ 
         success: false,
         message: error.message || 'Failed to generate color palette'
+      });
+    }
+  });
+  
+  // Mood Capsules Routes
+  
+  // Get mood capsules for current user
+  app.get(`${apiPrefix}/mood-capsules`, async (req: Request, res: Response) => {
+    try {
+      const userId = 1; // Mock user ID
+      
+      const capsules = await storage.getMoodCapsulesByUserId(userId);
+      
+      res.json(capsules);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Get a specific mood capsule by ID
+  app.get(`${apiPrefix}/mood-capsules/:id`, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      
+      if (!id) {
+        return res.status(400).json({ message: "Capsule ID is required" });
+      }
+      
+      const capsule = await storage.getMoodCapsuleById(parseInt(id));
+      
+      if (!capsule) {
+        return res.status(404).json({ message: "Mood capsule not found" });
+      }
+      
+      res.json(capsule);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Create a new mood capsule
+  app.post(`${apiPrefix}/mood-capsules`, async (req: Request, res: Response) => {
+    try {
+      const userId = 1; // Mock user ID
+      const { name, description, emotionalTone, contentIds, tags } = req.body;
+      
+      if (!name || !emotionalTone || !contentIds) {
+        return res.status(400).json({ message: "Name, emotional tone, and content IDs are required" });
+      }
+      
+      // Create the mood capsule
+      const capsule = await storage.createMoodCapsule({
+        userId,
+        name,
+        description,
+        emotionalTone,
+        contentIds
+      });
+      
+      res.status(201).json(capsule);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Update a mood capsule
+  app.put(`${apiPrefix}/mood-capsules/:id`, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+      
+      if (!id) {
+        return res.status(400).json({ message: "Capsule ID is required" });
+      }
+      
+      const capsule = await storage.updateMoodCapsule(parseInt(id), updates);
+      
+      res.json(capsule);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Delete a mood capsule
+  app.delete(`${apiPrefix}/mood-capsules/:id`, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      
+      if (!id) {
+        return res.status(400).json({ message: "Capsule ID is required" });
+      }
+      
+      const success = await storage.deleteMoodCapsule(parseInt(id));
+      
+      if (!success) {
+        return res.status(404).json({ message: "Mood capsule not found or could not be deleted" });
+      }
+      
+      res.json({ success: true, message: "Mood capsule deleted successfully" });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Archive a mood capsule
+  app.post(`${apiPrefix}/mood-capsules/:id/archive`, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      
+      if (!id) {
+        return res.status(400).json({ message: "Capsule ID is required" });
+      }
+      
+      const capsule = await storage.archiveMoodCapsule(parseInt(id));
+      
+      res.json(capsule);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Content Sentiment Routes
+  
+  // Get content sentiment by content ID
+  app.get(`${apiPrefix}/content-sentiment/:contentId`, async (req: Request, res: Response) => {
+    try {
+      const { contentId } = req.params;
+      
+      if (!contentId) {
+        return res.status(400).json({ message: "Content ID is required" });
+      }
+      
+      const sentiment = await storage.getContentSentimentById(parseInt(contentId));
+      
+      if (!sentiment) {
+        return res.status(404).json({ message: "Content sentiment not found" });
+      }
+      
+      res.json(sentiment);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Get all content sentiments for a user
+  app.get(`${apiPrefix}/content-sentiment`, async (req: Request, res: Response) => {
+    try {
+      const userId = 1; // Mock user ID
+      
+      const sentiments = await storage.getContentSentimentsByUserId(userId);
+      
+      res.json(sentiments);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Analyze content sentiment for multiple content items
+  app.post(`${apiPrefix}/content-sentiment/analyze`, async (req: Request, res: Response) => {
+    try {
+      const { contentIds } = req.body;
+      
+      if (!contentIds || !Array.isArray(contentIds) || contentIds.length === 0) {
+        return res.status(400).json({ message: "Valid contentIds array is required" });
+      }
+      
+      // Call AI service to analyze content sentiment
+      const sentiments = await storage.analyzeContentSentiment(contentIds);
+      
+      res.json({
+        success: true,
+        sentiments
+      });
+    } catch (error: any) {
+      console.error('Error analyzing sentiment:', error);
+      res.status(500).json({ 
+        success: false,
+        message: error.message || 'Failed to analyze content sentiment'
+      });
+    }
+  });
+  
+  // Generate caption for mood capsule
+  app.post(`${apiPrefix}/mood-capsules/generate-caption`, async (req: Request, res: Response) => {
+    try {
+      const { contentIds, emotionalTone, captionTone } = req.body;
+      
+      if (!contentIds || !Array.isArray(contentIds) || contentIds.length === 0 || !emotionalTone) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Valid contentIds array and emotionalTone are required" 
+        });
+      }
+      
+      // Generate caption using AI
+      const caption = await storage.generateCaptionForMoodCapsule(
+        contentIds,
+        emotionalTone,
+        captionTone || 'natural'
+      );
+      
+      res.json({
+        success: true,
+        caption
+      });
+    } catch (error: any) {
+      console.error('Error generating caption:', error);
+      res.status(500).json({ 
+        success: false,
+        message: error.message || 'Failed to generate caption'
+      });
+    }
+  });
+  
+  // Auto-create mood capsules from content
+  app.post(`${apiPrefix}/mood-capsules/auto-create`, async (req: Request, res: Response) => {
+    try {
+      const { contentIds } = req.body;
+      const userId = 1; // Mock user ID
+      
+      if (!contentIds || !Array.isArray(contentIds) || contentIds.length === 0) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Valid contentIds array is required" 
+        });
+      }
+      
+      // Step 1: Analyze the content sentiment
+      const sentiments = await storage.analyzeContentSentiment(contentIds);
+      
+      // Step 2: Group content by dominant emotion
+      const emotionGroups: Record<string, number[]> = {};
+      
+      sentiments.forEach(sentiment => {
+        if (sentiment.dominantEmotion) {
+          if (!emotionGroups[sentiment.dominantEmotion]) {
+            emotionGroups[sentiment.dominantEmotion] = [];
+          }
+          emotionGroups[sentiment.dominantEmotion].push(sentiment.contentId);
+        }
+      });
+      
+      // Step 3: Create a mood capsule for each emotion group
+      const createdCapsules = [];
+      
+      for (const [emotion, ids] of Object.entries(emotionGroups)) {
+        if (ids.length > 0) {
+          // Generate a caption for this emotion group
+          const caption = await storage.generateCaptionForMoodCapsule(ids, emotion, 'natural');
+          
+          // Create the mood capsule
+          const capsule = await storage.createMoodCapsule({
+            userId,
+            name: `${emotion.charAt(0).toUpperCase() + emotion.slice(1)} Capsule`,
+            description: caption,
+            emotionalTone: emotion,
+            contentIds: ids
+          });
+          
+          createdCapsules.push(capsule);
+        }
+      }
+      
+      res.status(201).json({
+        success: true,
+        capsules: createdCapsules,
+        emotionGroups: Object.keys(emotionGroups)
+      });
+    } catch (error: any) {
+      console.error('Error auto-creating mood capsules:', error);
+      res.status(500).json({ 
+        success: false,
+        message: error.message || 'Failed to auto-create mood capsules'
       });
     }
   });
