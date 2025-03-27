@@ -226,6 +226,140 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Creative Symbiosis Framework Routes
+  
+  // Get user's evolution points
+  app.get(`${apiPrefix}/evolution-points`, async (req: Request, res: Response) => {
+    try {
+      // This would check session authentication in a real app
+      const userId = 1; // Mock user ID
+      
+      // Refresh the creative energy points first (simulate time passing)
+      const points = await storage.refreshCreativeEnergyPoints(userId);
+      
+      if (!points) {
+        return res.status(404).json({ message: "Evolution points not found" });
+      }
+      
+      res.json(points);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Track user engagement
+  app.post(`${apiPrefix}/user-engagement`, async (req: Request, res: Response) => {
+    try {
+      const { interactionType, interactionDetails } = req.body;
+      const userId = 1; // Mock user ID
+      
+      if (!interactionType) {
+        return res.status(400).json({ message: "Interaction type is required" });
+      }
+      
+      const engagement = await storage.trackUserEngagement({
+        userId,
+        interactionType,
+        interactionDetails: interactionDetails || {}
+      });
+      
+      res.json(engagement);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Get user capabilities
+  app.get(`${apiPrefix}/user-capabilities`, async (req: Request, res: Response) => {
+    try {
+      const userId = 1; // Mock user ID
+      
+      const capabilities = await storage.getUserCapabilitiesByUserId(userId);
+      
+      res.json(capabilities);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Unlock a new capability
+  app.post(`${apiPrefix}/user-capabilities`, async (req: Request, res: Response) => {
+    try {
+      const { capabilityName } = req.body;
+      const userId = 1; // Mock user ID
+      
+      if (!capabilityName) {
+        return res.status(400).json({ message: "Capability name is required" });
+      }
+      
+      const capability = await storage.unlockUserCapability({
+        userId,
+        capabilityName,
+        isUnlocked: true,
+        level: 1
+      });
+      
+      res.json(capability);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Upgrade a capability level
+  app.put(`${apiPrefix}/user-capabilities/:capabilityName`, async (req: Request, res: Response) => {
+    try {
+      const { capabilityName } = req.params;
+      const userId = 1; // Mock user ID
+      
+      const updatedCapability = await storage.upgradeCapabilityLevel(userId, capabilityName);
+      
+      res.json(updatedCapability);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Get creative history
+  app.get(`${apiPrefix}/creative-history/:period`, async (req: Request, res: Response) => {
+    try {
+      const { period } = req.params;
+      const userId = 1; // Mock user ID
+      
+      if (!period) {
+        return res.status(400).json({ message: "Period is required" });
+      }
+      
+      const history = await storage.getCreativeHistoryByUserIdAndPeriod(userId, period);
+      
+      if (!history) {
+        return res.status(404).json({ message: "Creative history not found" });
+      }
+      
+      res.json(history);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Update creative history
+  app.put(`${apiPrefix}/creative-history/:period`, async (req: Request, res: Response) => {
+    try {
+      const { period } = req.params;
+      const updates = req.body;
+      const userId = 1; // Mock user ID
+      
+      if (!period) {
+        return res.status(400).json({ message: "Period is required" });
+      }
+      
+      const history = await storage.updateCreativeHistory(userId, period, updates);
+      
+      res.json(history);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;

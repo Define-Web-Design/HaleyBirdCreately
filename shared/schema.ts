@@ -177,3 +177,93 @@ export interface PhotoImportResponse {
   photos: ApplePhoto[];
   errors?: string[];
 }
+
+// User Engagement table - for tracking user interactions
+export const userEngagement = pgTable("user_engagement", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  engagementType: text("engagement_type").notNull(), // content_created, ai_feature_used, etc.
+  engagementDetails: jsonb("engagement_details"),
+  points: integer("points").default(1),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Evolution Points table - tracks user growth and points
+export const evolutionPoints = pgTable("evolution_points", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().unique(),
+  totalPoints: integer("total_points").default(0),
+  currentTier: text("current_tier").default("Novice"),
+  nextMilestone: integer("next_milestone").default(100),
+  creativeEnergyPoints: integer("creative_energy_points").default(10),
+  lastPointsUpdate: timestamp("last_points_update").defaultNow(),
+  lastEnergyRefresh: timestamp("last_energy_refresh").defaultNow(),
+});
+
+// User Capabilities table - for tracking unlocked AI features
+export const userCapabilities = pgTable("user_capabilities", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  capabilityName: text("capability_name").notNull(),
+  isUnlocked: boolean("is_unlocked").default(false),
+  level: integer("level").default(1),
+  unlockedAt: timestamp("unlocked_at"),
+  expiresAt: timestamp("expires_at"),
+});
+
+// Creative History table - for tracking user creative journey
+export const creativeHistory = pgTable("creative_history", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  period: text("period").notNull(), // daily, weekly, monthly
+  contentCreated: integer("content_created").default(0),
+  aiCollaborations: integer("ai_collaborations").default(0),
+  capabilitiesUnlocked: integer("capabilities_unlocked").default(0),
+  milestones: jsonb("milestones"),
+  date: timestamp("date").defaultNow(),
+});
+
+// Export insert schemas for new tables
+export const insertUserEngagementSchema = createInsertSchema(userEngagement).pick({
+  userId: true,
+  engagementType: true,
+  engagementDetails: true,
+  points: true,
+});
+
+export const insertEvolutionPointsSchema = createInsertSchema(evolutionPoints).pick({
+  userId: true,
+  totalPoints: true,
+  currentTier: true,
+  nextMilestone: true,
+  creativeEnergyPoints: true,
+});
+
+export const insertUserCapabilitiesSchema = createInsertSchema(userCapabilities).pick({
+  userId: true,
+  capabilityName: true,
+  isUnlocked: true,
+  level: true,
+});
+
+export const insertCreativeHistorySchema = createInsertSchema(creativeHistory).pick({
+  userId: true,
+  period: true,
+  contentCreated: true,
+  aiCollaborations: true,
+  capabilitiesUnlocked: true,
+  milestones: true,
+});
+
+// Export types for new tables
+export type InsertUserEngagement = z.infer<typeof insertUserEngagementSchema>;
+export type UserEngagement = typeof userEngagement.$inferSelect;
+
+export type InsertEvolutionPoints = z.infer<typeof insertEvolutionPointsSchema>;
+export type EvolutionPoints = typeof evolutionPoints.$inferSelect;
+
+export type InsertUserCapabilities = z.infer<typeof insertUserCapabilitiesSchema>;
+export type UserCapabilities = typeof userCapabilities.$inferSelect;
+
+export type InsertCreativeHistory = z.infer<typeof insertCreativeHistorySchema>;
+export type CreativeHistory = typeof creativeHistory.$inferSelect;

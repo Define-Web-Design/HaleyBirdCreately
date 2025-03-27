@@ -1,3 +1,5 @@
+import { useState, useEffect } from 'react';
+
 // Color scheme
 export const COLORS = {
   PRIMARY: "#F2994A", // warm orange
@@ -45,6 +47,11 @@ export const MENU_ITEMS = [
     name: "Apple Photos",
     path: "/apple-photos",
     icon: "fas fa-camera",
+  },
+  {
+    name: "Creative Symbiosis",
+    path: "/creative-symbiosis",
+    icon: "fas fa-seedling",
     isNew: true,
   },
 ];
@@ -117,8 +124,8 @@ export const PLATFORMS: Platform[] = [
 // Hook to get integrated platforms
 export const useIntegratedPlatforms = () => {
   //This needs to be implemented with a proper query library like react-query or swr.  This is a placeholder.
-  const [integratedPlatforms, setIntegratedPlatforms] = React.useState<Platform[]>([]);
-  React.useEffect(() => {
+  const [integratedPlatforms, setIntegratedPlatforms] = useState<Platform[]>([]);
+  useEffect(() => {
     const fetchIntegrations = async () => {
       try {
         const response = await fetch('/api/user/integrations');
