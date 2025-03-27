@@ -50,7 +50,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }, [isMobile]);
 
   const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
+    setSidebarOpen(prevState => !prevState);
   };
 
   return (
