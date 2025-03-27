@@ -2,7 +2,14 @@
 import { useState, useEffect } from 'react';
 import { useTheme } from '@/lib/hooks/use-theme';
 import { Button } from '@/components/ui/button';
-import { Sun, Moon, ZoomIn, ZoomOut, Eye, Menu } from 'lucide-react';
+import { Sun, Moon, ZoomIn, ZoomOut, Eye, Menu, Settings2 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import Sidebar from './Sidebar';
 import TopNavigation from './TopNavigation';
 
@@ -59,30 +66,29 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           >
             {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setFontSize(s => Math.min(s + 2, 24))}
-            aria-label="Increase font size"
-          >
-            <ZoomIn className="h-5 w-5" />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setFontSize(s => Math.max(s - 2, 12))}
-            aria-label="Decrease font size"
-          >
-            <ZoomOut className="h-5 w-5" />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setHighContrast(h => !h)}
-            aria-label="Toggle high contrast"
-          >
-            <Eye className="h-5 w-5" />
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="opacity-70 hover:opacity-100">
+                <Settings2 className="h-5 w-5" />
+                <span className="sr-only">Accessibility settings</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Accessibility</DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => setFontSize(s => Math.min(s + 2, 24))}>
+                <ZoomIn className="mr-2 h-4 w-4" />
+                Increase Text Size
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setFontSize(s => Math.max(s - 2, 12))}>
+                <ZoomOut className="mr-2 h-4 w-4" />
+                Decrease Text Size
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setHighContrast(h => !h)}>
+                <Eye className="mr-2 h-4 w-4" />
+                Toggle High Contrast
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         <main id="main-content" className="flex-1 p-4 md:p-8">
