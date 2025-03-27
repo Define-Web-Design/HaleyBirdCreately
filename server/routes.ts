@@ -250,17 +250,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Track user engagement
   app.post(`${apiPrefix}/user-engagement`, async (req: Request, res: Response) => {
     try {
-      const { interactionType, interactionDetails } = req.body;
+      const { engagementType, engagementDetails } = req.body;
       const userId = 1; // Mock user ID
       
-      if (!interactionType) {
-        return res.status(400).json({ message: "Interaction type is required" });
+      if (!engagementType) {
+        return res.status(400).json({ message: "Engagement type is required" });
       }
       
       const engagement = await storage.trackUserEngagement({
         userId,
-        interactionType,
-        interactionDetails: interactionDetails || {}
+        engagementType,
+        engagementDetails: engagementDetails || {},
+        points: 5 // Default points for engagement
       });
       
       res.json(engagement);

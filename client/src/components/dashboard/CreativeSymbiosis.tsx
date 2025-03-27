@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'wouter';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,6 +6,7 @@ import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
+import { toast } from '@/hooks/use-toast';
 
 interface EvolutionPoints {
   userId: number;
@@ -27,11 +28,29 @@ interface UserCapability {
 }
 
 export function EvolutionProgressCard() {
-  const { data: evolutionPoints, isLoading } = useQuery({
+  const queryClient = useQueryClient();
+  
+  const { data: evolutionPoints, isLoading } = useQuery<EvolutionPoints>({
     queryKey: ['/api/evolution-points'],
-    select: (data: EvolutionPoints) => data,
     enabled: true,
   });
+  
+  const handleRefreshEnergy = async () => {
+    try {
+      await queryClient.invalidateQueries({ queryKey: ['/api/evolution-points'] });
+      toast({
+        title: "Energy Refreshed",
+        description: "Your creative energy has been refreshed.",
+        variant: "default",
+      });
+    } catch (error) {
+      toast({
+        title: "Energy Refresh Failed",
+        description: "There was an error refreshing your creative energy.",
+        variant: "destructive",
+      });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -62,8 +81,12 @@ export function EvolutionProgressCard() {
     );
   }
 
-  const progressPercentage = (evolutionPoints.totalPoints / evolutionPoints.nextMilestone) * 100;
-  const formattedDate = new Date(evolutionPoints.lastPointsUpdate).toLocaleDateString('en-US', {
+  const totalPoints = evolutionPoints.totalPoints || 0;
+  const nextMilestone = evolutionPoints.nextMilestone || 1; // Avoid division by zero
+  const progressPercentage = (totalPoints / nextMilestone) * 100;
+  
+  const lastUpdate = evolutionPoints.lastPointsUpdate ? new Date(evolutionPoints.lastPointsUpdate) : new Date();
+  const formattedDate = lastUpdate.toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
@@ -78,7 +101,7 @@ export function EvolutionProgressCard() {
             <CardDescription>Your creative journey with AI</CardDescription>
           </div>
           <Badge variant="outline" className="bg-primary/10 text-primary">
-            {evolutionPoints.currentTier}
+            {evolutionPoints.currentTier || 'Beginner'}
           </Badge>
         </div>
       </CardHeader>
@@ -86,11 +109,11 @@ export function EvolutionProgressCard() {
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
             <span>Total Evolution Points</span>
-            <span className="font-medium">{evolutionPoints.totalPoints} / {evolutionPoints.nextMilestone}</span>
+            <span className="font-medium">{totalPoints} / {nextMilestone}</span>
           </div>
           <Progress value={progressPercentage} className="h-2" />
           <p className="text-xs text-muted-foreground">
-            {Math.ceil(evolutionPoints.nextMilestone - evolutionPoints.totalPoints)} points until next tier
+            {Math.ceil(nextMilestone - totalPoints)} points until next tier
           </p>
         </div>
 
@@ -98,7 +121,7 @@ export function EvolutionProgressCard() {
           <div className="space-y-1">
             <h4 className="text-sm font-medium">Creative Energy</h4>
             <div className="flex items-center">
-              <span className="text-2xl font-bold text-primary">{evolutionPoints.creativeEnergyPoints}</span>
+              <span className="text-2xl font-bold text-primary">{evolutionPoints.creativeEnergyPoints || 0}</span>
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -120,7 +143,7 @@ export function EvolutionProgressCard() {
             </div>
           </div>
 
-          <Button variant="outline" size="sm">Refresh Energy</Button>
+          <Button variant="outline" size="sm" onClick={handleRefreshEnergy}>Refresh Energy</Button>
         </div>
       </CardContent>
     </Card>
@@ -161,12 +184,66 @@ export function CreativeHistoryCard() {
 }
 
 export function CapabilitiesCard() {
-  const { data: capabilities } = useQuery({
+  const queryClient = useQueryClient();
+  
+  const { data: capabilities = [] } = useQuery<UserCapability[]>({
     queryKey: ['/api/user-capabilities'],
     enabled: true,
   });
-
-  const userCapabilities: UserCapability[] = Array.isArray(capabilities) ? capabilities : [];
+  
+  const { data: evolutionPoints } = useQuery<EvolutionPoints>({
+    queryKey: ['/api/evolution-points'],
+    enabled: true,
+  });
+  
+  const handleUpgradeCapability = async () => {
+    // Find the first unlocked capability to upgrade
+    const upgradeableCapability = capabilities.find((cap: UserCapability) => cap.isUnlocked === true);
+    
+    if (!upgradeableCapability) {
+      toast({
+        title: "No capability to upgrade",
+        description: "You need to unlock a capability first.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Check if user has enough creative energy
+    if (!evolutionPoints || evolutionPoints.creativeEnergyPoints < 20) {
+      toast({
+        title: "Not enough creative energy",
+        description: "You need at least 20 creative energy points to upgrade a capability.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      await fetch(`/api/user-capabilities/${upgradeableCapability.capabilityName}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+      
+      // Refresh capabilities and evolution points
+      await queryClient.invalidateQueries({ queryKey: ['/api/user-capabilities'] });
+      await queryClient.invalidateQueries({ queryKey: ['/api/evolution-points'] });
+      
+      toast({
+        title: "Capability Upgraded",
+        description: `${upgradeableCapability.capabilityName} has been upgraded to level ${upgradeableCapability.level + 1}.`,
+        variant: "default",
+      });
+    } catch (error) {
+      toast({
+        title: "Upgrade Failed",
+        description: "There was an error upgrading your capability.",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <Card>
@@ -176,19 +253,19 @@ export function CapabilitiesCard() {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {userCapabilities.length > 0 ? (
-            userCapabilities.map((capability) => (
+          {capabilities.length > 0 ? (
+            capabilities.map((capability: UserCapability) => (
               <div key={capability.id} className="space-y-2">
                 <div className="flex items-center justify-between">
                   <h4 className="text-sm font-medium">{capability.capabilityName}</h4>
                   <Badge 
-                    variant={capability.isUnlocked ? "default" : "outline"}
-                    className={capability.isUnlocked ? "bg-green-500/10 text-green-500 hover:bg-green-500/20" : ""}
+                    variant={capability.isUnlocked === true ? "default" : "outline"}
+                    className={capability.isUnlocked === true ? "bg-green-500/10 text-green-500 hover:bg-green-500/20" : ""}
                   >
-                    {capability.isUnlocked ? `Level ${capability.level}` : 'Locked'}
+                    {capability.isUnlocked === true && capability.level ? `Level ${capability.level}` : 'Locked'}
                   </Badge>
                 </div>
-                {capability.isUnlocked && (
+                {capability.isUnlocked === true && capability.level && (
                   <Progress value={capability.level * 20} className="h-1" />
                 )}
               </div>
@@ -202,7 +279,9 @@ export function CapabilitiesCard() {
         </div>
       </CardContent>
       <CardFooter>
-        <Button variant="outline" size="sm" className="w-full">Upgrade Capabilities</Button>
+        <Button variant="outline" size="sm" className="w-full" onClick={handleUpgradeCapability}>
+          Upgrade Capabilities
+        </Button>
       </CardFooter>
     </Card>
   );
