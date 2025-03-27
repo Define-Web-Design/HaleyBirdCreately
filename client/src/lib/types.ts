@@ -97,7 +97,17 @@ export interface ToolCard {
 }
 
 // Theme types
+export interface ActivePalette {
+  primary: string;
+  accent?: string;
+  background?: string;
+  isPaletteActive: boolean;
+}
+
 export interface ThemeContextType {
   isDark: boolean;
   toggleTheme: () => void;
+  activePalette: ActivePalette;
+  setActivePalette: (palette: Partial<ActivePalette>) => void;
+  resetPalette: () => void;
 }

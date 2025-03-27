@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { useTheme } from '@/lib/hooks/use-theme';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,10 +12,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Avatar } from '@/components/ui/avatar';
-import { Trash2, Heart, Edit, Copy, Star, Download, Plus } from 'lucide-react';
+import { Heart, Edit, Download, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { type QueryClient } from '@tanstack/react-query';
 
 // Define the ColorPalette type
 interface ColorPalette {
@@ -28,6 +27,15 @@ interface ColorPalette {
   usageCount: number;
   createdAt: string;
   updatedAt: string;
+}
+
+// Define interface for new palette creation
+interface NewPalette {
+  name: string;
+  mood: string;
+  colors: string[];
+  tags: string[];
+  isFavorite: boolean;
 }
 
 // Mock moods for the mood selector
@@ -47,7 +55,7 @@ const ColorPalettesPage = () => {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('all');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [newPalette, setNewPalette] = useState({
+  const [newPalette, setNewPalette] = useState<NewPalette>({
     name: '',
     mood: 'happy',
     colors: ['#FFD166', '#06D6A0', '#118AB2', '#EF476F', '#073B4C'],
@@ -56,21 +64,19 @@ const ColorPalettesPage = () => {
   });
   const [currentTag, setCurrentTag] = useState('');
 
+  // Get theme management functions
+  const { setActivePalette, resetPalette, activePalette } = useTheme();
+
   // Query to fetch color palettes
   const { data: colorPalettes, isLoading } = useQuery({
     queryKey: ['/api/color-palettes'],
-    // Remove the generic type parameter
-    queryFn: () => apiRequest('/api/color-palettes')
+    // The default getQueryFn will be used automatically
   });
 
   // Mutation to create a new color palette
   const createPaletteMutation = useMutation({
     mutationFn: (palette: Omit<ColorPalette, 'id' | 'userId' | 'usageCount' | 'createdAt' | 'updatedAt'>) => 
-      // Fix the types by separating object parameters
-      apiRequest('/api/color-palettes', {
-        method: 'POST',
-        body: JSON.stringify(palette)
-      } as RequestInit),
+      apiRequest('POST', '/api/color-palettes', palette),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/color-palettes'] });
       setIsCreateDialogOpen(false);
@@ -92,10 +98,7 @@ const ColorPalettesPage = () => {
   // Mutation to toggle favorite status
   const toggleFavoriteMutation = useMutation({
     mutationFn: ({ id, isFavorite }: { id: number, isFavorite: boolean }) => 
-      apiRequest(`/api/color-palettes/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify({ isFavorite })
-      } as RequestInit),
+      apiRequest('PUT', `/api/color-palettes/${id}`, { isFavorite }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/color-palettes'] });
     }
@@ -104,9 +107,7 @@ const ColorPalettesPage = () => {
   // Mutation to increment usage count
   const incrementUsageMutation = useMutation({
     mutationFn: (id: number) => 
-      apiRequest(`/api/color-palettes/${id}/increment-usage`, {
-        method: 'POST'
-      } as RequestInit),
+      apiRequest('POST', `/api/color-palettes/${id}/increment-usage`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/color-palettes'] });
     }
@@ -158,6 +159,34 @@ const ColorPalettesPage = () => {
     toast({
       title: 'Color Copied',
       description: `${color} copied to clipboard`,
+    });
+  };
+  
+  // Helper function to apply a palette to the application theme
+  const applyPaletteToTheme = (palette: ColorPalette) => {
+    if (palette.colors.length > 0) {
+      setActivePalette({
+        primary: palette.colors[0],
+        accent: palette.colors.length > 1 ? palette.colors[1] : undefined,
+        background: palette.colors.length > 2 ? palette.colors[2] : undefined,
+      });
+      
+      toast({
+        title: 'Palette Applied',
+        description: `${palette.name} applied to application theme`,
+      });
+      
+      // Increment usage count
+      incrementUsageMutation.mutate(palette.id);
+    }
+  };
+  
+  // Helper function to reset the application theme
+  const resetApplicationTheme = () => {
+    resetPalette();
+    toast({
+      title: 'Theme Reset',
+      description: 'Application theme has been reset to default',
     });
   };
 
@@ -307,7 +336,7 @@ const ColorPalettesPage = () => {
                       </Button>
                     </div>
                     <div className="flex flex-wrap gap-2 mt-2">
-                      {newPalette.tags.map((tag) => (
+                      {newPalette.tags.map((tag: string) => (
                         <Badge key={tag} variant="secondary" className="px-2 py-1">
                           {tag}
                           <button
@@ -353,6 +382,25 @@ const ColorPalettesPage = () => {
         </Dialog>
       </div>
 
+      {/* Active Palette Indicator */}
+      {activePalette.isPaletteActive && (
+        <div className="bg-secondary/40 rounded-lg p-4 flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <div 
+              className="w-6 h-6 rounded-full border shadow-sm" 
+              style={{ backgroundColor: activePalette.primary }}
+            />
+            <div>
+              <h3 className="text-sm font-medium">Active Theme Palette</h3>
+              <p className="text-xs text-muted-foreground">Colors from your palette are being applied to the app theme</p>
+            </div>
+          </div>
+          <Button variant="outline" size="sm" onClick={resetApplicationTheme}>
+            Reset Theme
+          </Button>
+        </div>
+      )}
+
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="w-full justify-start">
           <TabsTrigger value="all">All Palettes</TabsTrigger>
@@ -384,7 +432,7 @@ const ColorPalettesPage = () => {
                 getFilteredPalettes().map((palette) => (
                   <Card key={palette.id} className="w-full overflow-hidden transition-all hover:shadow-md">
                     <div className="flex h-16">
-                      {palette.colors.map((color, index) => (
+                      {palette.colors.map((color: string, index: number) => (
                         <div
                           key={index}
                           className="h-full flex-1 cursor-pointer hover:scale-105 transition-transform"
@@ -422,7 +470,7 @@ const ColorPalettesPage = () => {
                     <CardContent className="pt-0">
                       <div className="flex flex-wrap gap-1 mb-3">
                         <Badge variant="outline">{palette.mood}</Badge>
-                        {palette.tags.slice(0, 3).map((tag) => (
+                        {palette.tags.slice(0, 3).map((tag: string) => (
                           <Badge key={tag} variant="secondary" className="text-xs">
                             {tag}
                           </Badge>
