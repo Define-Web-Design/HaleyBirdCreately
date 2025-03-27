@@ -223,6 +223,48 @@ export const creativeHistory = pgTable("creative_history", {
   date: timestamp("date").defaultNow(),
 });
 
+// Color Palettes table for mood-based color generation
+export const colorPalettes = pgTable("color_palettes", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  name: text("name").notNull(),
+  mood: text("mood").notNull(), // happy, calm, energetic, etc.
+  colors: text("colors").array(), // Array of hex color codes
+  tags: text("tags").array(),
+  isFavorite: boolean("is_favorite").default(false),
+  usageCount: integer("usage_count").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Mood Capsules table for AI-driven content grouping by emotional tone
+export const moodCapsules = pgTable("mood_capsules", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+  emotionalTone: text("emotional_tone").notNull(), // joyful, nostalgic, energetic, etc.
+  captionTone: text("caption_tone").default("balanced"), // poetic, concise, conversational, etc.
+  aiGeneratedCaption: text("ai_generated_caption"),
+  contentIds: integer("content_ids").array(), // Array of content IDs that belong to this capsule
+  thumbnailUrl: text("thumbnail_url"),
+  isArchived: boolean("is_archived").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Content Sentiment Analysis table for storing mood-related data about content
+export const contentSentiment = pgTable("content_sentiment", {
+  id: serial("id").primaryKey(),
+  contentId: integer("content_id").notNull().unique(),
+  userId: integer("user_id").notNull(),
+  dominantEmotion: text("dominant_emotion"), // primary emotion detected in the content
+  emotionIntensity: integer("emotion_intensity"), // 0-100 scale of emotional intensity
+  emotionBreakdown: jsonb("emotion_breakdown"), // detailed breakdown of detected emotions
+  keywords: text("keywords").array(), // emotion-related keywords extracted from content
+  analyzedAt: timestamp("analyzed_at").defaultNow(),
+});
+
 // Export insert schemas for new tables
 export const insertUserEngagementSchema = createInsertSchema(userEngagement).pick({
   userId: true,
@@ -255,7 +297,36 @@ export const insertCreativeHistorySchema = createInsertSchema(creativeHistory).p
   milestones: true,
 });
 
-// Export types for new tables
+export const insertColorPaletteSchema = createInsertSchema(colorPalettes).pick({
+  userId: true,
+  name: true,
+  mood: true,
+  colors: true,
+  tags: true,
+  isFavorite: true,
+});
+
+export const insertMoodCapsuleSchema = createInsertSchema(moodCapsules).pick({
+  userId: true,
+  name: true,
+  description: true,
+  emotionalTone: true,
+  captionTone: true,
+  aiGeneratedCaption: true,
+  contentIds: true,
+  thumbnailUrl: true,
+});
+
+export const insertContentSentimentSchema = createInsertSchema(contentSentiment).pick({
+  contentId: true,
+  userId: true,
+  dominantEmotion: true,
+  emotionIntensity: true,
+  emotionBreakdown: true,
+  keywords: true,
+});
+
+// Export types for all tables
 export type InsertUserEngagement = z.infer<typeof insertUserEngagementSchema>;
 export type UserEngagement = typeof userEngagement.$inferSelect;
 
@@ -268,28 +339,32 @@ export type UserCapabilities = typeof userCapabilities.$inferSelect;
 export type InsertCreativeHistory = z.infer<typeof insertCreativeHistorySchema>;
 export type CreativeHistory = typeof creativeHistory.$inferSelect;
 
-// Color Palettes table for mood-based color generation
-export const colorPalettes = pgTable("color_palettes", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull(),
-  name: text("name").notNull(),
-  mood: text("mood").notNull(), // happy, calm, energetic, etc.
-  colors: text("colors").array(), // Array of hex color codes
-  tags: text("tags").array(),
-  isFavorite: boolean("is_favorite").default(false),
-  usageCount: integer("usage_count").default(0),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-export const insertColorPaletteSchema = createInsertSchema(colorPalettes).pick({
-  userId: true,
-  name: true,
-  mood: true,
-  colors: true,
-  tags: true,
-  isFavorite: true,
-});
-
 export type InsertColorPalette = z.infer<typeof insertColorPaletteSchema>;
 export type ColorPalette = typeof colorPalettes.$inferSelect;
+
+export type InsertMoodCapsule = z.infer<typeof insertMoodCapsuleSchema>;
+export type MoodCapsule = typeof moodCapsules.$inferSelect;
+
+export type InsertContentSentiment = z.infer<typeof insertContentSentimentSchema>;
+export type ContentSentiment = typeof contentSentiment.$inferSelect;
+
+// Interface for Mood Capsule API response
+export interface MoodCapsuleAnalysisResponse {
+  success: boolean;
+  moodCapsules: MoodCapsule[];
+  contentSentiments: ContentSentiment[];
+  errors?: string[];
+}
+
+// Interface for AI caption generation
+export interface CaptionGenerationRequest {
+  contentIds: number[];
+  emotionalTone: string;
+  captionTone: string;
+}
+
+export interface CaptionGenerationResponse {
+  success: boolean;
+  caption: string;
+  errors?: string[];
+}

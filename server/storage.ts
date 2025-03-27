@@ -11,7 +11,11 @@ import {
   creativeHistory, type CreativeHistory, type InsertCreativeHistory,
   
   // Color Palette types
-  colorPalettes, type ColorPalette, type InsertColorPalette
+  colorPalettes, type ColorPalette, type InsertColorPalette,
+  
+  // Mood Capsules types
+  moodCapsules, type MoodCapsule, type InsertMoodCapsule,
+  contentSentiment, type ContentSentiment, type InsertContentSentiment
 } from "@shared/schema";
 
 export interface IStorage {
@@ -63,6 +67,22 @@ export interface IStorage {
   updateColorPalette(id: number, updates: Partial<InsertColorPalette>): Promise<ColorPalette>;
   incrementColorPaletteUsage(id: number): Promise<ColorPalette>;
   getColorPalettesByMood(mood: string): Promise<ColorPalette[]>;
+  
+  // Mood Capsules methods
+  getMoodCapsulesByUserId(userId: number): Promise<MoodCapsule[]>;
+  getMoodCapsuleById(id: number): Promise<MoodCapsule | undefined>;
+  createMoodCapsule(capsule: InsertMoodCapsule): Promise<MoodCapsule>;
+  updateMoodCapsule(id: number, updates: Partial<InsertMoodCapsule>): Promise<MoodCapsule>;
+  deleteMoodCapsule(id: number): Promise<boolean>;
+  archiveMoodCapsule(id: number): Promise<MoodCapsule>;
+  
+  // Content Sentiment methods
+  getContentSentimentById(contentId: number): Promise<ContentSentiment | undefined>;
+  getContentSentimentsByUserId(userId: number): Promise<ContentSentiment[]>;
+  createContentSentiment(sentiment: InsertContentSentiment): Promise<ContentSentiment>;
+  updateContentSentiment(contentId: number, updates: Partial<InsertContentSentiment>): Promise<ContentSentiment>;
+  analyzeContentSentiment(contentIds: number[]): Promise<ContentSentiment[]>;
+  generateCaptionForMoodCapsule(contentIds: number[], emotionalTone: string, captionTone: string): Promise<string>;
 }
 
 export class MemStorage implements IStorage {
@@ -78,6 +98,10 @@ export class MemStorage implements IStorage {
   private creativeHistoryData: Map<number, CreativeHistory> = new Map();
   private colorPalettesData: Map<number, ColorPalette> = new Map();
   
+  // Mood Capsules storage
+  private moodCapsulesData: Map<number, MoodCapsule> = new Map();
+  private contentSentimentsData: Map<number, ContentSentiment> = new Map();
+  
   private currentUserId: number;
   private currentContentId: number;
   private currentMoodBoardId: number;
@@ -87,6 +111,8 @@ export class MemStorage implements IStorage {
   private currentCapabilityId: number = 1;
   private currentCreativeHistoryId: number = 1;
   private currentColorPaletteId: number = 1;
+  private currentMoodCapsuleId: number = 1;
+  private currentContentSentimentId: number = 1;
 
   constructor() {
     this.users = new Map();
@@ -101,6 +127,10 @@ export class MemStorage implements IStorage {
     this.creativeHistoryData = new Map();
     this.colorPalettesData = new Map();
     
+    // Initialize Mood Capsules storage
+    this.moodCapsulesData = new Map();
+    this.contentSentimentsData = new Map();
+    
     this.currentUserId = 1;
     this.currentContentId = 1;
     this.currentMoodBoardId = 1;
@@ -110,6 +140,8 @@ export class MemStorage implements IStorage {
     this.currentCapabilityId = 1;
     this.currentCreativeHistoryId = 1;
     this.currentColorPaletteId = 1;
+    this.currentMoodCapsuleId = 1;
+    this.currentContentSentimentId = 1;
     
     // Initialize with mock data
     this.initializeMockData();
@@ -729,6 +761,229 @@ export class MemStorage implements IStorage {
   async getColorPalettesByMood(mood: string): Promise<ColorPalette[]> {
     return Array.from(this.colorPalettesData.values())
       .filter(palette => palette.mood.toLowerCase() === mood.toLowerCase());
+  }
+
+  // Mood Capsules methods
+  async getMoodCapsulesByUserId(userId: number): Promise<MoodCapsule[]> {
+    return Array.from(this.moodCapsulesData.values())
+      .filter(capsule => capsule.userId === userId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()); // Most recent first
+  }
+
+  async getMoodCapsuleById(id: number): Promise<MoodCapsule | undefined> {
+    return this.moodCapsulesData.get(id);
+  }
+
+  async createMoodCapsule(capsule: InsertMoodCapsule): Promise<MoodCapsule> {
+    const id = this.currentMoodCapsuleId++;
+    const moodCapsule: MoodCapsule = {
+      ...capsule,
+      id,
+      description: capsule.description || null,
+      captionTone: capsule.captionTone || "balanced",
+      aiGeneratedCaption: capsule.aiGeneratedCaption || null,
+      thumbnailUrl: capsule.thumbnailUrl || null,
+      contentIds: capsule.contentIds || [],
+      isArchived: false,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.moodCapsulesData.set(id, moodCapsule);
+    return moodCapsule;
+  }
+
+  async updateMoodCapsule(id: number, updates: Partial<InsertMoodCapsule>): Promise<MoodCapsule> {
+    const capsule = await this.getMoodCapsuleById(id);
+    if (!capsule) {
+      throw new Error(`Mood capsule with id ${id} not found`);
+    }
+
+    const updatedCapsule: MoodCapsule = {
+      ...capsule,
+      ...updates,
+      updatedAt: new Date()
+    };
+    this.moodCapsulesData.set(id, updatedCapsule);
+    return updatedCapsule;
+  }
+
+  async deleteMoodCapsule(id: number): Promise<boolean> {
+    const exists = this.moodCapsulesData.has(id);
+    if (!exists) {
+      return false;
+    }
+    return this.moodCapsulesData.delete(id);
+  }
+
+  async archiveMoodCapsule(id: number): Promise<MoodCapsule> {
+    const capsule = await this.getMoodCapsuleById(id);
+    if (!capsule) {
+      throw new Error(`Mood capsule with id ${id} not found`);
+    }
+
+    const archivedCapsule: MoodCapsule = {
+      ...capsule,
+      isArchived: true,
+      updatedAt: new Date()
+    };
+    this.moodCapsulesData.set(id, archivedCapsule);
+    return archivedCapsule;
+  }
+
+  // Content Sentiment methods
+  async getContentSentimentById(contentId: number): Promise<ContentSentiment | undefined> {
+    return Array.from(this.contentSentimentsData.values())
+      .find(sentiment => sentiment.contentId === contentId);
+  }
+
+  async getContentSentimentsByUserId(userId: number): Promise<ContentSentiment[]> {
+    return Array.from(this.contentSentimentsData.values())
+      .filter(sentiment => sentiment.userId === userId)
+      .sort((a, b) => b.analyzedAt.getTime() - a.analyzedAt.getTime()); // Most recent first
+  }
+
+  async createContentSentiment(sentiment: InsertContentSentiment): Promise<ContentSentiment> {
+    const id = this.currentContentSentimentId++;
+    const contentSentiment: ContentSentiment = {
+      ...sentiment,
+      id,
+      dominantEmotion: sentiment.dominantEmotion || null,
+      emotionIntensity: sentiment.emotionIntensity || 0,
+      emotionBreakdown: sentiment.emotionBreakdown || {},
+      keywords: sentiment.keywords || [],
+      analyzedAt: new Date()
+    };
+    this.contentSentimentsData.set(id, contentSentiment);
+    return contentSentiment;
+  }
+
+  async updateContentSentiment(contentId: number, updates: Partial<InsertContentSentiment>): Promise<ContentSentiment> {
+    const sentiment = await this.getContentSentimentById(contentId);
+    if (!sentiment) {
+      throw new Error(`Content sentiment for content ID ${contentId} not found`);
+    }
+
+    const updatedSentiment: ContentSentiment = {
+      ...sentiment,
+      ...updates,
+      analyzedAt: new Date()
+    };
+    this.contentSentimentsData.set(sentiment.id, updatedSentiment);
+    return updatedSentiment;
+  }
+
+  async analyzeContentSentiment(contentIds: number[]): Promise<ContentSentiment[]> {
+    const results: ContentSentiment[] = [];
+    
+    for (const contentId of contentIds) {
+      const content = await this.getContentById(contentId);
+      if (!content) {
+        continue;
+      }
+      
+      // Check if sentiment already exists
+      let sentiment = await this.getContentSentimentById(contentId);
+      
+      // If sentiment exists and is less than 1 day old, skip reanalysis
+      if (sentiment && 
+          (new Date().getTime() - sentiment.analyzedAt.getTime()) < 24 * 60 * 60 * 1000) {
+        results.push(sentiment);
+        continue;
+      }
+      
+      // Simulate AI analysis - in a real implementation, this would call an AI service
+      const emotions = ["joyful", "nostalgic", "energetic", "thoughtful", "relaxed"];
+      const randomEmotion = emotions[Math.floor(Math.random() * emotions.length)];
+      const randomIntensity = Math.floor(Math.random() * 100);
+      
+      // Create a breakdown of emotions (with the dominant one having the highest value)
+      const emotionBreakdown: Record<string, number> = {};
+      emotions.forEach(emotion => {
+        emotionBreakdown[emotion] = Math.floor(Math.random() * 40);
+      });
+      emotionBreakdown[randomEmotion] += 60; // Make sure the dominant emotion has the highest value
+      
+      // Extract keywords from content title and description
+      const keywordsSource = `${content.title} ${content.description || ''}`;
+      const keywords = keywordsSource
+        .toLowerCase()
+        .replace(/[^\w\s]/g, '')
+        .split(/\s+/)
+        .filter(word => word.length > 3)
+        .slice(0, 5);
+      
+      // Create or update sentiment
+      if (sentiment) {
+        sentiment = await this.updateContentSentiment(contentId, {
+          dominantEmotion: randomEmotion,
+          emotionIntensity: randomIntensity,
+          emotionBreakdown,
+          keywords
+        });
+      } else {
+        sentiment = await this.createContentSentiment({
+          contentId,
+          userId: content.userId,
+          dominantEmotion: randomEmotion,
+          emotionIntensity: randomIntensity,
+          emotionBreakdown,
+          keywords
+        });
+      }
+      
+      results.push(sentiment);
+    }
+    
+    return results;
+  }
+
+  async generateCaptionForMoodCapsule(
+    contentIds: number[], 
+    emotionalTone: string, 
+    captionTone: string
+  ): Promise<string> {
+    // In a real implementation, this would call an AI service to generate a caption
+    // based on the emotional tone and content analysis
+    
+    // Get the content items
+    const contentItems = await Promise.all(
+      contentIds.map(id => this.getContentById(id))
+    );
+    const validContentItems = contentItems.filter(item => item !== undefined) as Content[];
+    
+    if (validContentItems.length === 0) {
+      return "No content found to generate a caption.";
+    }
+    
+    // Get content sentiment analysis
+    await this.analyzeContentSentiment(contentIds);
+    
+    // Generate a caption based on the emotional tone and caption tone
+    const captionIntros: Record<string, string[]> = {
+      joyful: ["Embracing moments of pure joy", "Celebrating life's brightest moments", "Finding happiness in the everyday"],
+      nostalgic: ["Reminiscing about times gone by", "A gentle look back at cherished memories", "Treasuring the moments that shaped us"],
+      energetic: ["Capturing the vibrant spirit of life", "Embracing the dynamic energy around us", "Moving forward with unstoppable momentum"],
+      thoughtful: ["Reflecting on life's deeper meanings", "Contemplating the beauty in stillness", "Finding wisdom in quiet moments"],
+      relaxed: ["Embracing the peaceful rhythm of life", "Finding tranquility in simple moments", "Unwinding in a world of calm"]
+    };
+    
+    const captionStyles: Record<string, (intro: string) => string> = {
+      poetic: (intro) => `${intro}, where each frame tells a story of emotion that transcends time, connecting us to the universal language of human experience.`,
+      concise: (intro) => `${intro}. Captured with intention.`,
+      balanced: (intro) => `${intro}. These moments reveal the authentic emotional landscape of a journey worth remembering.`,
+      conversational: (intro) => `${intro}. Isn't it amazing how these moments can make us feel so alive and connected? Let's cherish them together.`,
+      technical: (intro) => `${intro}. This collection demonstrates the interplay between composition, lighting, and subject matter to evoke specific emotional responses.`
+    };
+    
+    // Default to balanced if tone not found
+    const defaultEmotion = "thoughtful";
+    const defaultCaptionTone = "balanced";
+    
+    const introOptions = captionIntros[emotionalTone] || captionIntros[defaultEmotion];
+    const intro = introOptions[Math.floor(Math.random() * introOptions.length)];
+    const styleFunction = captionStyles[captionTone] || captionStyles[defaultCaptionTone];
+    
+    return styleFunction(intro);
   }
 }
 
