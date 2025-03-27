@@ -360,6 +360,119 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: error.message });
     }
   });
+  
+  // Color Palette routes
+  
+  // Get all color palettes for a user
+  app.get(`${apiPrefix}/color-palettes`, async (req: Request, res: Response) => {
+    try {
+      const userId = 1; // Mock user ID
+      
+      const palettes = await storage.getColorPalettesByUserId(userId);
+      
+      res.json(palettes);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Get a specific color palette by ID
+  app.get(`${apiPrefix}/color-palettes/:id`, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      
+      if (!id) {
+        return res.status(400).json({ message: "Palette ID is required" });
+      }
+      
+      const palette = await storage.getColorPaletteById(parseInt(id));
+      
+      if (!palette) {
+        return res.status(404).json({ message: "Color palette not found" });
+      }
+      
+      res.json(palette);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Create a new color palette
+  app.post(`${apiPrefix}/color-palettes`, async (req: Request, res: Response) => {
+    try {
+      const userId = 1; // Mock user ID
+      const { name, mood, colors, tags, isFavorite } = req.body;
+      
+      if (!name || !mood || !colors) {
+        return res.status(400).json({ message: "Name, mood, and colors are required" });
+      }
+      
+      const palette = await storage.createColorPalette({
+        userId,
+        name,
+        mood,
+        colors,
+        tags,
+        isFavorite
+      });
+      
+      res.status(201).json(palette);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Update a color palette
+  app.put(`${apiPrefix}/color-palettes/:id`, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+      
+      if (!id) {
+        return res.status(400).json({ message: "Palette ID is required" });
+      }
+      
+      const palette = await storage.updateColorPalette(parseInt(id), updates);
+      
+      res.json(palette);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Increment usage count for a color palette
+  app.post(`${apiPrefix}/color-palettes/:id/increment-usage`, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      
+      if (!id) {
+        return res.status(400).json({ message: "Palette ID is required" });
+      }
+      
+      const palette = await storage.incrementColorPaletteUsage(parseInt(id));
+      
+      res.json(palette);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Get color palettes by mood
+  app.get(`${apiPrefix}/color-palettes/by-mood/:mood`, async (req: Request, res: Response) => {
+    try {
+      const { mood } = req.params;
+      
+      if (!mood) {
+        return res.status(400).json({ message: "Mood is required" });
+      }
+      
+      const palettes = await storage.getColorPalettesByMood(mood);
+      
+      res.json(palettes);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
 
   const httpServer = createServer(app);
 

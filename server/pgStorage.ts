@@ -10,7 +10,10 @@ import {
   userEngagement, type UserEngagement, type InsertUserEngagement,
   evolutionPoints, type EvolutionPoints, type InsertEvolutionPoints,
   userCapabilities, type UserCapabilities, type InsertUserCapabilities,
-  creativeHistory, type CreativeHistory, type InsertCreativeHistory
+  creativeHistory, type CreativeHistory, type InsertCreativeHistory,
+  
+  // Color Palette types
+  colorPalettes, type ColorPalette, type InsertColorPalette
 } from '@shared/schema';
 import { IStorage } from './storage';
 
@@ -324,5 +327,77 @@ export class PgStorage implements IStorage {
       .returning();
     
     return result[0];
+  }
+  
+  // Color Palette methods
+  async getColorPalettesByUserId(userId: number): Promise<ColorPalette[]> {
+    return await db.select()
+      .from(colorPalettes)
+      .where(eq(colorPalettes.userId, userId))
+      .orderBy(colorPalettes.createdAt);
+  }
+  
+  async getColorPaletteById(id: number): Promise<ColorPalette | undefined> {
+    const result = await db.select()
+      .from(colorPalettes)
+      .where(eq(colorPalettes.id, id));
+    return result[0];
+  }
+  
+  async createColorPalette(palette: InsertColorPalette): Promise<ColorPalette> {
+    const result = await db.insert(colorPalettes).values({
+      ...palette,
+      updatedAt: new Date(),
+      usageCount: 0
+    }).returning();
+    
+    return result[0];
+  }
+  
+  async updateColorPalette(id: number, updates: Partial<InsertColorPalette>): Promise<ColorPalette> {
+    // Get current palette
+    const palette = await this.getColorPaletteById(id);
+    
+    if (!palette) {
+      throw new Error(`Color palette with id ${id} not found`);
+    }
+    
+    // Update the record
+    const result = await db.update(colorPalettes)
+      .set({
+        ...updates,
+        updatedAt: new Date()
+      })
+      .where(eq(colorPalettes.id, id))
+      .returning();
+    
+    return result[0];
+  }
+  
+  async incrementColorPaletteUsage(id: number): Promise<ColorPalette> {
+    // Get current palette
+    const palette = await this.getColorPaletteById(id);
+    
+    if (!palette) {
+      throw new Error(`Color palette with id ${id} not found`);
+    }
+    
+    // Update the usage count
+    const result = await db.update(colorPalettes)
+      .set({
+        usageCount: (palette.usageCount || 0) + 1,
+        updatedAt: new Date()
+      })
+      .where(eq(colorPalettes.id, id))
+      .returning();
+    
+    return result[0];
+  }
+  
+  async getColorPalettesByMood(mood: string): Promise<ColorPalette[]> {
+    return await db.select()
+      .from(colorPalettes)
+      .where(eq(colorPalettes.mood, mood))
+      .orderBy(colorPalettes.createdAt);
   }
 }
