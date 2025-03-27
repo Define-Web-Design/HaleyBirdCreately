@@ -1,0 +1,32 @@
+AI Prompt: Strategic Focus for Creately and Enhanced Output Optimization
+
+Objective: Deepen understanding of Creately platform features, explore opportunities for new feature implementation or enhancements, and refine responses for clarity, creativity, and technical precision.
+
+Context:  
+Creately is a cutting-edge AI-powered content management platform designed for creators, offering tools that support:  
+- Content Management Tools: Creation, scheduling, and analytics for seamless workflows.  
+- Creative Symbiosis Framework: Adapts and evolves based on user engagement patterns.  
+- AI-Powered Capabilities: Features such as caption generation, content analysis, and visual enhancement.  
+- Mood Capsules: Group content emotionally to build deeper audience connections.  
+- Design Tools: Color palette generation aligned with user creativity.  
+
+The platform uses a robust technical stack (TypeScript, React, Express, PostgreSQL, and Drizzle ORM), blending user-centric design with technical precision.
+
+Instructions:  
+1. Revisit the platform’s documented features or explore new functionality:  
+   - Break down any specific feature of interest, detailing its purpose, user benefits, and potential challenges.  
+   - Suggest optimizations or new, innovative feature ideas that align with user goals.  
+
+2. Propose technical solutions and actionable steps:  
+   - Provide specific implementation strategies for suggested features or optimizations.  
+   - Where applicable, include cross-platform considerations and examples.  
+
+3. Craft markdown summaries of insights:  
+   - Ensure responses are concise, compelling, and usable as prompts for further refinement (e.g., Microsoft Copilot).  
+   - Highlight technical and creative clarity while maintaining a charismatic tone.  
+
+4. Prioritize intelligence and relevance:  
+   - Each response should be thoughtful, actionable, and technically accurate, while reflecting the platform’s creative aesthetic and goals.
+
+Expectations:  
+All outputs should demonstrate a thorough understanding of the platform’s vision and align with its creative and technical goals. Responses should balance intelligence and creativity while avoiding unnecessary complexity. Incorporate engaging yet technically sound examples and scenarios.
