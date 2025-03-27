@@ -249,17 +249,18 @@ export class MemStorage implements IStorage {
     // Create mock Creative Symbiosis data
     
     // User engagement data
-    const interactionTypes = ["content_created", "tool_used", "feature_explored", "feedback_given"];
+    const engagementTypes = ["content_created", "tool_used", "feature_explored", "feedback_given"];
     for (let i = 0; i < 5; i++) {
       const engagement: UserEngagement = {
         id: this.currentEngagementId++,
         userId: mockUser.id,
-        interactionType: interactionTypes[i % interactionTypes.length],
-        interactionDetails: {
+        engagementType: engagementTypes[i % engagementTypes.length],
+        engagementDetails: {
           location: i % 2 === 0 ? "dashboard" : "content_editor",
           duration: 5 + Math.floor(Math.random() * 25),
           outcome: i % 3 === 0 ? "completed" : "in_progress"
         },
+        points: 1,
         createdAt: new Date(Date.now() - i * 12 * 60 * 60 * 1000)
       };
       this.userEngagements.set(engagement.id, engagement);
@@ -875,6 +876,9 @@ export class MemStorage implements IStorage {
   async analyzeContentSentiment(contentIds: number[]): Promise<ContentSentiment[]> {
     const results: ContentSentiment[] = [];
     
+    // Import OpenAI integration
+    const openai = (await import('./ai/openai')).default;
+    
     for (const contentId of contentIds) {
       const content = await this.getContentById(contentId);
       if (!content) {
@@ -891,8 +895,72 @@ export class MemStorage implements IStorage {
         continue;
       }
       
-      // Simulate AI analysis - in a real implementation, this would call an AI service
-      const emotions = ["joyful", "nostalgic", "energetic", "thoughtful", "relaxed"];
+      try {
+        // Use OpenAI for sentiment analysis if configured
+        if (openai.isConfigured) {
+          // Create comprehensive prompt for emotional analysis
+          const prompt = `
+            Analyze the emotional tone of this content:
+            
+            Title: ${content.title}
+            Description: ${content.description || 'No description'}
+            
+            Provide a detailed emotional analysis with:
+            1. The dominant emotion (choose from: joyful, nostalgic, energetic, thoughtful, relaxed, melancholic, powerful, mysterious)
+            2. Emotional intensity on a scale of 1-100
+            3. A breakdown of all emotions present with their relative percentages
+            4. 5 key emotional keywords from the content
+          `;
+          
+          const systemPrompt = `
+            You are an expert in emotional content analysis. 
+            Provide accurate and nuanced emotional analysis of creative content.
+            Return a JSON object with these keys:
+            {
+              "dominantEmotion": string (one of: joyful, nostalgic, energetic, thoughtful, relaxed, melancholic, powerful, mysterious),
+              "emotionIntensity": number (1-100),
+              "emotionBreakdown": object with emotion names as keys and percentage values as numbers,
+              "keywords": array of 5 strings representing emotional keywords from the content
+            }
+          `;
+          
+          // Request AI analysis
+          const analysis = await openai.generateJsonResponse<{
+            dominantEmotion: string;
+            emotionIntensity: number;
+            emotionBreakdown: Record<string, number>;
+            keywords: string[];
+          }>(prompt, systemPrompt, { temperature: 0.4 });
+          
+          // Create or update sentiment
+          if (sentiment) {
+            sentiment = await this.updateContentSentiment(contentId, {
+              dominantEmotion: analysis.dominantEmotion,
+              emotionIntensity: analysis.emotionIntensity,
+              emotionBreakdown: analysis.emotionBreakdown,
+              keywords: analysis.keywords
+            });
+          } else {
+            sentiment = await this.createContentSentiment({
+              contentId,
+              userId: content.userId,
+              dominantEmotion: analysis.dominantEmotion,
+              emotionIntensity: analysis.emotionIntensity,
+              emotionBreakdown: analysis.emotionBreakdown,
+              keywords: analysis.keywords
+            });
+          }
+          
+          results.push(sentiment);
+          continue;
+        }
+      } catch (error) {
+        console.error("Error using OpenAI for sentiment analysis:", error);
+        // Fall back to basic analysis method if OpenAI fails
+      }
+      
+      // Fallback: Basic analysis if OpenAI is not available or fails
+      const emotions = ["joyful", "nostalgic", "energetic", "thoughtful", "relaxed", "melancholic", "powerful", "mysterious"];
       const randomEmotion = emotions[Math.floor(Math.random() * emotions.length)];
       const randomIntensity = Math.floor(Math.random() * 100);
       
@@ -942,9 +1010,6 @@ export class MemStorage implements IStorage {
     emotionalTone: string, 
     captionTone: string
   ): Promise<string> {
-    // In a real implementation, this would call an AI service to generate a caption
-    // based on the emotional tone and content analysis
-    
     // Get the content items
     const contentItems = await Promise.all(
       contentIds.map(id => this.getContentById(id))
@@ -955,16 +1020,74 @@ export class MemStorage implements IStorage {
       return "No content found to generate a caption.";
     }
     
-    // Get content sentiment analysis
-    await this.analyzeContentSentiment(contentIds);
+    // Import OpenAI integration
+    const openai = (await import('./ai/openai')).default;
     
-    // Generate a caption based on the emotional tone and caption tone
+    // Get content sentiment analysis for more accurate captions
+    const sentiments = await this.analyzeContentSentiment(contentIds);
+    
+    try {
+      // Use OpenAI for caption generation if configured
+      if (openai.isConfigured) {
+        // Extract content information for the AI
+        const contentSummary = validContentItems.map(item => 
+          `Title: ${item.title}
+           Description: ${item.description || 'No description'}
+           Platform: ${item.platform || 'Not specified'}`
+        ).join('\n\n');
+        
+        // Get emotional keywords from sentiment analysis
+        const keywords = sentiments
+          .flatMap(s => s.keywords || [])
+          .filter((v, i, a) => a.indexOf(v) === i) // Unique values
+          .slice(0, 8)
+          .join(', ');
+        
+        const prompt = `
+          Create a ${captionTone} caption for a collection of content pieces that share a ${emotionalTone} mood.
+          
+          The content includes:
+          ${contentSummary}
+          
+          Key emotional themes: ${keywords}
+          
+          The caption should:
+          1. Capture the essence of the ${emotionalTone} emotional tone
+          2. Use a ${captionTone} writing style
+          3. Be concise but evocative (30-60 words)
+          4. Tie together the content pieces thematically
+          5. Avoid specific references to the content titles
+          6. Feel authentic and human-written, not AI-generated
+        `;
+        
+        const systemPrompt = `
+          You are a professional creative writer specializing in emotional storytelling.
+          Create a compelling caption that evokes the specified emotional tone using the specified writing style.
+          Ensure the caption feels authentic, insightful, and connects emotionally with the reader.
+          Return ONLY the caption text with no additional explanations or formatting.
+        `;
+        
+        // Generate AI caption
+        const caption = await openai.generateText(prompt, { temperature: 0.7 });
+        if (caption && caption.trim().length > 0) {
+          return caption.trim();
+        }
+      }
+    } catch (error) {
+      console.error("Error generating AI caption:", error);
+      // Fall back to template-based caption if AI fails
+    }
+    
+    // Fallback: Template-based caption generation
     const captionIntros: Record<string, string[]> = {
       joyful: ["Embracing moments of pure joy", "Celebrating life's brightest moments", "Finding happiness in the everyday"],
       nostalgic: ["Reminiscing about times gone by", "A gentle look back at cherished memories", "Treasuring the moments that shaped us"],
       energetic: ["Capturing the vibrant spirit of life", "Embracing the dynamic energy around us", "Moving forward with unstoppable momentum"],
       thoughtful: ["Reflecting on life's deeper meanings", "Contemplating the beauty in stillness", "Finding wisdom in quiet moments"],
-      relaxed: ["Embracing the peaceful rhythm of life", "Finding tranquility in simple moments", "Unwinding in a world of calm"]
+      relaxed: ["Embracing the peaceful rhythm of life", "Finding tranquility in simple moments", "Unwinding in a world of calm"],
+      melancholic: ["Finding beauty in the bittersweet moments", "Exploring the depth of emotions that shape us", "Honoring the quiet sadness that brings wisdom"],
+      powerful: ["Standing in the strength of our convictions", "Embracing the force that drives us forward", "Channeling energy that transforms our world"],
+      mysterious: ["Exploring the unknown corners of our creativity", "Embracing the enigmatic journey of discovery", "Finding wonder in the unexplained"]
     };
     
     const captionStyles: Record<string, (intro: string) => string> = {
@@ -972,7 +1095,9 @@ export class MemStorage implements IStorage {
       concise: (intro) => `${intro}. Captured with intention.`,
       balanced: (intro) => `${intro}. These moments reveal the authentic emotional landscape of a journey worth remembering.`,
       conversational: (intro) => `${intro}. Isn't it amazing how these moments can make us feel so alive and connected? Let's cherish them together.`,
-      technical: (intro) => `${intro}. This collection demonstrates the interplay between composition, lighting, and subject matter to evoke specific emotional responses.`
+      technical: (intro) => `${intro}. This collection demonstrates the interplay between composition, lighting, and subject matter to evoke specific emotional responses.`,
+      inspirational: (intro) => `${intro}. Through these experiences, we discover the extraordinary capacity we have to feel, transform, and inspire others.`,
+      humorous: (intro) => `${intro} - with a smile, a laugh, and the gentle reminder not to take ourselves too seriously along the way.`
     };
     
     // Default to balanced if tone not found

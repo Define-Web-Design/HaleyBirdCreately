@@ -8,7 +8,7 @@ import {
   generateContentIdeas, 
   suggestPostingTimes
 } from "./ai/content";
-import { generateMoodPalette } from "./services/paletteGenerator";
+import { generateMoodPalette, generateAIPalette } from "./services/paletteGenerator";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // API routes prefix
@@ -527,12 +527,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      const generatedPalette = await generateMoodPalette({
-        mood,
-        description,
-        colorCount: colorCount || 5,
-        includeNames: true
-      });
+      const generatedPalette = await generateAIPalette(description || mood);
       
       res.json({
         success: true,
@@ -760,8 +755,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auto-create mood capsules from content
   app.post(`${apiPrefix}/mood-capsules/auto-create`, async (req: Request, res: Response) => {
     try {
-      const { contentIds } = req.body;
-      const userId = 1; // Mock user ID
+      const { contentIds, userId = 1, minGroupSize = 2, captionTone = 'balanced' } = req.body;
       
       if (!contentIds || !Array.isArray(contentIds) || contentIds.length === 0) {
         return res.status(400).json({ 
@@ -770,52 +764,140 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Step 1: Analyze the content sentiment
+      // To track progress for large content sets
+      const totalItems = contentIds.length;
+      let processedItems = 0;
+      
+      // Step 1: Analyze the content sentiment with more depth
+      console.log(`Analyzing sentiment for ${totalItems} content items...`);
       const sentiments = await storage.analyzeContentSentiment(contentIds);
+      processedItems = sentiments.length;
+      console.log(`Sentiment analysis complete: ${processedItems}/${totalItems} items processed`);
       
-      // Step 2: Group content by dominant emotion
+      // Step 2: Group content by dominant emotion with enhanced logic
       const emotionGroups: Record<string, number[]> = {};
+      const emotionIntensities: Record<string, number> = {};
       
+      // First pass: Collect emotions and their average intensities
       sentiments.forEach(sentiment => {
         if (sentiment.dominantEmotion) {
           if (!emotionGroups[sentiment.dominantEmotion]) {
             emotionGroups[sentiment.dominantEmotion] = [];
+            emotionIntensities[sentiment.dominantEmotion] = 0;
           }
           emotionGroups[sentiment.dominantEmotion].push(sentiment.contentId);
+          emotionIntensities[sentiment.dominantEmotion] += sentiment.emotionIntensity || 0;
         }
       });
       
-      // Step 3: Create a mood capsule for each emotion group
+      // Calculate average intensity for each emotion group
+      Object.keys(emotionIntensities).forEach(emotion => {
+        if (emotionGroups[emotion].length > 0) {
+          emotionIntensities[emotion] = emotionIntensities[emotion] / emotionGroups[emotion].length;
+        }
+      });
+      
+      // Filter small groups and merge them into most compatible larger groups
+      const primaryEmotions = Object.keys(emotionGroups)
+        .filter(emotion => emotionGroups[emotion].length >= minGroupSize)
+        .sort((a, b) => emotionGroups[b].length - emotionGroups[a].length);
+      
+      const smallGroups = Object.keys(emotionGroups)
+        .filter(emotion => emotionGroups[emotion].length < minGroupSize);
+      
+      // If we have small groups, try to reassign them
+      smallGroups.forEach(smallEmotion => {
+        if (primaryEmotions.length === 0) {
+          // If no primary emotions, keep as is if it has at least one item
+          if (emotionGroups[smallEmotion].length > 0) {
+            primaryEmotions.push(smallEmotion);
+          }
+          return;
+        }
+        
+        // Reassign to closest primary emotion
+        const contentIdsToReassign = emotionGroups[smallEmotion];
+        let targetEmotion = primaryEmotions[0]; // Default to largest group
+        
+        // For advanced implementations: use emotional similarity to find best match
+        // For now, we'll just add to the largest group
+        
+        // Add to target emotion group
+        emotionGroups[targetEmotion] = [...emotionGroups[targetEmotion], ...contentIdsToReassign];
+        
+        // Remove small group
+        delete emotionGroups[smallEmotion];
+      });
+      
+      // Step 3: Create improved mood capsules for each emotion group
       const createdCapsules = [];
+      console.log(`Creating mood capsules for ${Object.keys(emotionGroups).length} emotion groups...`);
       
       for (const [emotion, ids] of Object.entries(emotionGroups)) {
         if (ids.length > 0) {
-          // Generate a caption for this emotion group
-          const caption = await storage.generateCaptionForMoodCapsule(ids, emotion, 'natural');
-          
-          // Create the mood capsule
-          const capsule = await storage.createMoodCapsule({
-            userId,
-            name: `${emotion.charAt(0).toUpperCase() + emotion.slice(1)} Capsule`,
-            description: caption,
-            emotionalTone: emotion,
-            contentIds: ids
-          });
-          
-          createdCapsules.push(capsule);
+          try {
+            // Generate a descriptive name based on emotion and size
+            const emotionName = emotion.charAt(0).toUpperCase() + emotion.slice(1);
+            const sizeSuffix = ids.length > 5 ? "Collection" : "Moments";
+            const capsuleName = `${emotionName} ${sizeSuffix}`;
+            
+            // Generate a caption with the preferred tone
+            console.log(`Generating caption for "${capsuleName}" with ${ids.length} items...`);
+            const caption = await storage.generateCaptionForMoodCapsule(ids, emotion, captionTone);
+            
+            // Create thumbnail URL from first content if available
+            let thumbnailUrl = "";
+            if (ids.length > 0) {
+              const firstContent = await storage.getContentById(ids[0]);
+              if (firstContent && firstContent.imageUrl) {
+                thumbnailUrl = firstContent.imageUrl;
+              }
+            }
+            
+            // Create the mood capsule with enhanced metadata
+            const capsule = await storage.createMoodCapsule({
+              userId,
+              name: capsuleName,
+              description: caption,
+              emotionalTone: emotion,
+              contentIds: ids,
+              thumbnailUrl,
+              captionTone
+            });
+            
+            createdCapsules.push(capsule);
+            console.log(`Created mood capsule: "${capsuleName}" with ${ids.length} items`);
+          } catch (groupError) {
+            console.error(`Error creating capsule for ${emotion} group:`, groupError);
+            // Continue with other groups even if one fails
+          }
         }
       }
+      
+      // Step 4: Return detailed response with analytics
+      const analytics = {
+        totalContentItems: totalItems,
+        processedItems,
+        groupsCreated: createdCapsules.length,
+        emotionDistribution: Object.fromEntries(
+          Object.entries(emotionGroups).map(([emotion, ids]) => 
+            [emotion, { count: ids.length, intensity: emotionIntensities[emotion] || 0 }]
+          )
+        )
+      };
       
       res.status(201).json({
         success: true,
         capsules: createdCapsules,
-        emotionGroups: Object.keys(emotionGroups)
+        emotionGroups: Object.keys(emotionGroups),
+        analytics
       });
     } catch (error: any) {
       console.error('Error auto-creating mood capsules:', error);
       res.status(500).json({ 
         success: false,
-        message: error.message || 'Failed to auto-create mood capsules'
+        message: error.message || 'Failed to auto-create mood capsules',
+        error: process.env.NODE_ENV === 'development' ? error.stack : undefined
       });
     }
   });

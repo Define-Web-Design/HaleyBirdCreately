@@ -6,8 +6,6 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-app.use((req, res, next) => {
-
 // Global error handler for uncaught exceptions
 process.on('uncaughtException', (error) => {
   console.error('UNCAUGHT EXCEPTION:');
@@ -25,6 +23,7 @@ process.on('unhandledRejection', (reason, promise) => {
   console.error('Promise:', promise);
 });
 
+app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
   let capturedJsonResponse: Record<string, any> | undefined = undefined;

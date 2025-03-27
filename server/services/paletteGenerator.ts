@@ -128,12 +128,18 @@ export async function generateMoodPalette(mood: MoodTone): Promise<Palette> {
  */
 export async function generateAIPalette(description: string): Promise<Palette> {
   try {
+    // Check if OpenAI API key is configured and valid
+    if (!process.env.OPENAI_API_KEY) {
+      console.warn("OpenAI API key not found in environment. Using fallback palette.");
+      throw new Error("OpenAI API key not configured");
+    }
+    
     const openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
     });
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4",
+      model: "gpt-3.5-turbo", // Use a more widely available model
       messages: [
         {
           role: "system",

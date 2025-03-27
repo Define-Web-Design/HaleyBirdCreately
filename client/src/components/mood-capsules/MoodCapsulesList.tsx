@@ -35,7 +35,8 @@ import {
   Search, 
   SortAsc, 
   RefreshCw,
-  ArchiveIcon
+  ArchiveIcon,
+  Sparkles
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -47,12 +48,14 @@ interface MoodCapsulesListProps {
   onCreateCapsule: () => void;
   onEditCapsule: (capsule: MoodCapsule) => void;
   onViewCapsule: (capsule: MoodCapsule) => void;
+  onAutoCreateCapsules: () => void;
 }
 
 const MoodCapsulesList: React.FC<MoodCapsulesListProps> = ({ 
   onCreateCapsule,
   onEditCapsule,
-  onViewCapsule
+  onViewCapsule,
+  onAutoCreateCapsules
 }) => {
   const { toast } = useToast();
   const [tab, setTab] = useState("all");
@@ -232,6 +235,16 @@ const MoodCapsulesList: React.FC<MoodCapsulesListProps> = ({
           </Button>
           
           <Button 
+            onClick={onAutoCreateCapsules}
+            size="sm"
+            variant="outline"
+            className="hidden sm:flex"
+          >
+            <Sparkles className="h-4 w-4 mr-2" />
+            AI Create
+          </Button>
+          
+          <Button 
             onClick={onCreateCapsule}
             size="sm"
           >
@@ -382,10 +395,17 @@ const MoodCapsulesList: React.FC<MoodCapsulesListProps> = ({
                   : "Create your first mood capsule to organize your content"}
             </p>
             {tab !== "archived" && (
-              <Button onClick={onCreateCapsule}>
-                <PlusCircle className="h-4 w-4 mr-2" />
-                Create New Capsule
-              </Button>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Button onClick={onCreateCapsule}>
+                  <PlusCircle className="h-4 w-4 mr-2" />
+                  Create Manually
+                </Button>
+                
+                <Button onClick={onAutoCreateCapsules} variant="outline">
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Auto-Create with AI
+                </Button>
+              </div>
             )}
           </CardContent>
         </Card>
