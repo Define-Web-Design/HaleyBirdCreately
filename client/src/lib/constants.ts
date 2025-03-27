@@ -60,6 +60,12 @@ export const MENU_ITEMS = [
     icon: "fas fa-swatchbook",
     isNew: true,
   },
+  {
+    name: "Mood Capsules",
+    path: "/mood-capsules",
+    icon: "fas fa-brain",
+    isNew: true,
+  },
 ];
 
 export const SMART_TOOLS = [

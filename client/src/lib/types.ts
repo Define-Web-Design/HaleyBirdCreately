@@ -111,3 +111,30 @@ export interface ThemeContextType {
   setActivePalette: (palette: Partial<ActivePalette>) => void;
   resetPalette: () => void;
 }
+
+// Mood Capsule types
+export interface MoodCapsule {
+  id: number;
+  userId: number;
+  name: string;
+  description?: string;
+  emotionalTone: string;
+  captionTone?: string;
+  aiGeneratedCaption?: string;
+  contentIds?: number[];
+  thumbnailUrl?: string;
+  isArchived?: boolean;
+  createdAt?: Date | null;
+  updatedAt?: Date | null;
+}
+
+export interface ContentSentiment {
+  id: number;
+  contentId: number;
+  userId: number;
+  dominantEmotion?: string;
+  emotionIntensity?: number;
+  emotionBreakdown?: Record<string, number>;
+  keywords?: string[];
+  analyzedAt?: Date | null;
+}

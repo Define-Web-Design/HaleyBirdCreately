@@ -12,6 +12,7 @@ import ContentVault from "./pages/content-vault";
 import ApplePhotos from "./pages/apple-photos";
 import CreativeSymbiosis from "./pages/creative-symbiosis";
 import ColorPalettes from "./pages/color-palettes";
+import MoodCapsules from "./pages/mood-capsules";
 import NotFound from "./pages/not-found";
 import Profile from './components/profile/Profile'; // Added import for Profile component
 
@@ -29,6 +30,7 @@ function Router() {
         <Route path="/apple-photos" component={ApplePhotos} />
         <Route path="/creative-symbiosis" component={CreativeSymbiosis} />
         <Route path="/color-palettes" component={ColorPalettes} />
+        <Route path="/mood-capsules" component={MoodCapsules} />
         <Route path="/profile" component={Profile} /> {/* Added route for Profile */}
         <Route component={NotFound} />
       </Switch>
