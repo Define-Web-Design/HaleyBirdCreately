@@ -250,10 +250,10 @@ const Sidebar = ({
                   <Link href="/profile">Profile Settings</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/profile#accessibility">Accessibility</Link>
+                  <Link href="/profile/accessibility">Accessibility</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/profile#integrations">Integrations</Link>
+                  <Link href="/profile/integrations">Integrations</Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
