@@ -101,11 +101,11 @@ const Sidebar = ({
 
   return (
     <div className="flex flex-col w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 shadow-sm h-full">
-      {/* Logo */}
-      <div className="p-4 flex items-center">
+      {/* Logo - Clickable to go back to dashboard */}
+      <Link href="/" className="p-4 flex items-center cursor-pointer hover:opacity-90 transition-opacity">
         <div className="bg-gradient-to-r from-[#F2994A] to-[#FF9DAE] h-10 w-10 rounded-lg flex items-center justify-center text-white font-bold text-xl mr-3">C</div>
         <h1 className="text-xl font-['SF_Pro_Display'] font-semibold">Creately</h1>
-      </div>
+      </Link>
       
       {/* Navigation Menu */}
       <nav className="flex-1 overflow-y-auto py-4">

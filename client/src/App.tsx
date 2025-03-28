@@ -14,8 +14,11 @@ import ApplePhotos from "./pages/apple-photos";
 import CreativeSymbiosis from "./pages/creative-symbiosis";
 import ColorPalettes from "./pages/color-palettes";
 import MoodCapsules from "./pages/mood-capsules";
+import AIEnhancement from "./pages/ai-enhancement";
+import CreativePrompts from "./pages/creative-prompts";
+import CrossPlatformTools from "./pages/cross-platform-tools";
 import NotFound from "./pages/not-found";
-import Profile from './components/profile/Profile'; // Added import for Profile component
+import Profile from './components/profile/Profile';
 
 
 function Router() {
@@ -41,9 +44,9 @@ function Router() {
         <Route path="/color-palettes/categories" component={ColorPalettes} />
         <Route path="/color-palettes/favorites" component={ColorPalettes} />
         <Route path="/mood-capsules" component={MoodCapsules} />
-        <Route path="/ai-enhancement" component={NotFound} /> {/* Added route for AI Enhancement */}
-        <Route path="/creative-prompts" component={NotFound} /> {/* Added route for Creative Prompts */}
-        <Route path="/cross-platform-tools" component={NotFound} /> {/* Added route for Cross-Platform Tools */}
+        <Route path="/ai-enhancement" component={AIEnhancement} />
+        <Route path="/creative-prompts" component={CreativePrompts} />
+        <Route path="/cross-platform-tools" component={CrossPlatformTools} />
         <Route path="/profile" component={Profile} /> {/* Added route for Profile */}
         <Route path="/profile/accessibility" component={Profile} /> {/* Added route for Profile accessibility */}
         <Route path="/profile/integrations" component={Profile} /> {/* Added route for Profile integrations */}
