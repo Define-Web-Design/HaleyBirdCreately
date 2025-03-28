@@ -29,6 +29,8 @@ interface MenuItem {
   icon: string;
   isNew?: boolean;
   subMenu?: SubMenuItem[];
+  onCategoryClick?: (item: MenuItem) => void;
+  onSubCategoryClick?: (item: MenuItem) => void;
 }
 
 interface SubMenuItem {

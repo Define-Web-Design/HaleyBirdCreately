@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { useTheme } from '@/lib/hooks/use-theme';
+import { useLocation } from 'wouter';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -57,10 +58,20 @@ const MOODS = [
   { value: 'serious', label: 'Serious', color: '#1D3557' },
 ];
 
-const ColorPalettesPage = () => {
+const ColorPalettesPage = (props: { params?: { section?: string } }) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState('all');
+  const [location] = useLocation();
+  
+  // Set activeTab based on URL path
+  const determineActiveTab = () => {
+    if (location.includes('/recent')) return 'recent';
+    if (location.includes('/categories')) return 'categories';
+    if (location.includes('/favorites')) return 'favorites';
+    return 'all';
+  };
+  
+  const [activeTab, setActiveTab] = useState(determineActiveTab());
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedColor, setSelectedColor] = useState<string>('#FFD166');
   const [showAdvancedTools, setShowAdvancedTools] = useState(false);
@@ -72,6 +83,11 @@ const ColorPalettesPage = () => {
     isFavorite: false
   });
   const [currentTag, setCurrentTag] = useState('');
+
+  // Update active tab when location changes
+  useEffect(() => {
+    setActiveTab(determineActiveTab());
+  }, [location]);
 
   // Get theme management functions
   const { setActivePalette, resetPalette, activePalette } = useTheme();
@@ -217,11 +233,31 @@ const ColorPalettesPage = () => {
     switch (activeTab) {
       case 'favorites':
         return colorPalettes.filter((palette: ColorPalette) => palette.isFavorite);
+      case 'recent':
+        // Sort by date and get the most recent palettes
+        return [...colorPalettes].sort((a, b) => 
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        ).slice(0, 12);
+      case 'categories':
+        // Get URL parameters for potential mood filter
+        const urlParams = new URLSearchParams(window.location.search);
+        const moodFilter = urlParams.get('mood');
+        
+        if (moodFilter && MOODS.some(m => m.value === moodFilter)) {
+          return colorPalettes.filter((palette: ColorPalette) => palette.mood === moodFilter);
+        }
+        
+        // If no specific mood filter, group by mood for the categories page
+        // We'll just return all here but in a real app you might want to organize differently
+        return colorPalettes;
       case 'happy':
       case 'calm':
       case 'energetic':
       case 'melancholic':
       case 'professional':
+      case 'playful':
+      case 'romantic':
+      case 'serious':
         return colorPalettes.filter((palette: ColorPalette) => palette.mood === activeTab);
       default:
         return colorPalettes;
@@ -494,9 +530,29 @@ const ColorPalettesPage = () => {
         </div>
       )}
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <Tabs 
+        value={activeTab} 
+        onValueChange={(value) => {
+          setActiveTab(value);
+          // Update URL based on selected tab
+          let newPath = '/color-palettes';
+          if (value === 'all') {
+            newPath = '/color-palettes';
+          } else if (['recent', 'categories', 'favorites'].includes(value)) {
+            newPath = `/color-palettes/${value}`;
+          } else {
+            newPath = `/color-palettes/categories?mood=${value}`;
+          }
+          
+          // Navigate to the new path using wouter
+          window.history.pushState(null, '', newPath);
+        }} 
+        className="w-full"
+      >
         <TabsList className="w-full justify-start">
           <TabsTrigger value="all">All Palettes</TabsTrigger>
+          <TabsTrigger value="recent">Recent</TabsTrigger>
+          <TabsTrigger value="categories">Categories</TabsTrigger>
           <TabsTrigger value="favorites">Favorites</TabsTrigger>
           <Separator orientation="vertical" className="mx-2 h-5" />
           {MOODS.slice(0, 5).map((mood) => (
