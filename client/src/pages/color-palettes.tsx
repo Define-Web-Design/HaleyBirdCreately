@@ -482,14 +482,36 @@ const ColorPalettesPage = (props: { params?: { section?: string } }) => {
             <VoiceColorSelector 
               onColorSelected={(color) => {
                 setSelectedColor(color);
+                
                 // Add the color to the new palette if creating one
                 if (isCreateDialogOpen && newPalette.colors.length < 8) {
-                  handleColorChange(newPalette.colors.length - 1, color);
+                  // Replace the last color with the new one or add it if there's room
+                  const newColors = [...newPalette.colors];
+                  if (newColors.length < 8) {
+                    newColors.push(color);
+                  } else {
+                    newColors[newColors.length - 1] = color;
+                  }
+                  
+                  setNewPalette({
+                    ...newPalette,
+                    colors: newColors
+                  });
                 }
+                
                 toast({
                   title: "Color Selected",
                   description: `Selected ${color} using voice recognition!`,
                 });
+                
+                // If dialog isn't open, let's apply it to the theme directly
+                if (!isCreateDialogOpen) {
+                  setActivePalette({
+                    primary: color,
+                    accent: undefined,
+                    background: undefined,
+                  });
+                }
               }} 
             />
             

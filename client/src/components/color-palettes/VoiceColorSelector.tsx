@@ -77,7 +77,7 @@ const VoiceColorSelector: React.FC<VoiceColorSelectorProps> = ({ onColorSelected
     let progressInterval: NodeJS.Timeout | undefined;
     
     if (isListening) {
-      // Reset progress and detected colors when starting to listen
+      // Reset progress when starting to listen
       setListeningProgress(0);
       
       // Set up interval to update progress bar
@@ -88,16 +88,6 @@ const VoiceColorSelector: React.FC<VoiceColorSelectorProps> = ({ onColorSelected
           return newValue > 100 ? 100 : newValue;
         });
       }, 100);
-      
-      // Process transcript to find colors
-      const colors = extractColorsFromText(transcript);
-      setDetectedColors(colors);
-      
-      // If colors are detected, add them to a set to avoid duplicates
-      if (colors.length > 0) {
-        // Update detected colors
-        setDetectedColors(colors);
-      }
     } else if (progressInterval) {
       clearInterval(progressInterval);
     }
@@ -105,7 +95,20 @@ const VoiceColorSelector: React.FC<VoiceColorSelectorProps> = ({ onColorSelected
     return () => {
       if (progressInterval) clearInterval(progressInterval);
     };
-  }, [isListening, transcript]);
+  }, [isListening]);
+  
+  // Separate effect to continuously process the transcript for colors
+  useEffect(() => {
+    if (isListening && transcript) {
+      // Process transcript to find colors
+      const colors = extractColorsFromText(transcript);
+      
+      // Only update if we have colors to avoid unnecessary re-renders
+      if (colors.length > 0) {
+        setDetectedColors(colors);
+      }
+    }
+  }, [transcript, isListening]);
   
   // Stop listening automatically after 10 seconds
   useEffect(() => {
