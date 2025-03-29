@@ -1,7 +1,7 @@
 import { Switch, Route } from "wouter";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
-import { Toaster } from "@/components/ui/toaster";
+import AutoDismissToaster from "@/components/ui/auto-dismiss-toaster";
 import AppShell from "./components/layout/AppShell";
 import Dashboard from "./pages/dashboard";
 import ContentLibrary from "./pages/content-library";
@@ -17,6 +17,7 @@ import MoodCapsules from "./pages/mood-capsules";
 import AIEnhancement from "./pages/ai-enhancement";
 import CreativePrompts from "./pages/creative-prompts";
 import CrossPlatformTools from "./pages/cross-platform-tools";
+import NavigationTest from "./pages/nav-test";
 import NotFound from "./pages/not-found";
 import Profile from './components/profile/Profile';
 
@@ -50,6 +51,7 @@ function Router() {
         <Route path="/profile" component={Profile} /> {/* Added route for Profile */}
         <Route path="/profile/accessibility" component={Profile} /> {/* Added route for Profile accessibility */}
         <Route path="/profile/integrations" component={Profile} /> {/* Added route for Profile integrations */}
+        <Route path="/nav-test" component={NavigationTest} /> {/* Navigation testing tool */}
         <Route component={NotFound} />
       </Switch>
     </AppShell>
@@ -60,7 +62,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <Router />
-      <Toaster />
+      <AutoDismissToaster defaultDuration={5000} />
     </QueryClientProvider>
   );
 }
