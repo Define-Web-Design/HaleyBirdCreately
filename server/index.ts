@@ -73,8 +73,8 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // Use port 5000 for Replit environments
-  const port = process.env.PORT || 5000;
+  // Use port 3001 for Replit environments
+  const port = process.env.PORT || 3001;
   
   server.listen({
     port: parseInt(port.toString()),
