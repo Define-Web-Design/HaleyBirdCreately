@@ -1165,3 +1165,28 @@ args = "# Run comprehensive validation"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "node -e \"require('./client/src/utils/consolidated-validation.js').runFullSystemValidation().then(report => { require('./client/src/utils/consolidated-validation.js').displayFullValidationResults(report); process.exit(report.overallSuccess ? 0 : 1); })\""
+
+[[workflows.workflow]]
+name = "Thorough Task Verification"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Kill any running processes"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pkill -f node || true"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run the comprehensive validation"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node -e \"const { setUpComprehensiveVerificationWorkflow, verifyAllTasksCompleted, createCheckpointIfAllTasksVerified } = require('./client/src/utils/task-verification-system.js'); const tasks = require('./tasks.json'); async function runVerification() { await setUpComprehensiveVerificationWorkflow(tasks, 'Complete Verification'); const canProceed = await verifyAllTasksCompleted(); if (canProceed) { await createCheckpointIfAllTasksVerified(); process.exit(0); } else { console.error('Cannot proceed: Not all tasks verified'); process.exit(1); } } runVerification().catch(err => { console.error(err); process.exit(1); });\""
