@@ -55,7 +55,7 @@ localPort = 8425
 externalPort = 3002
 
 [workflows]
-runButton = "Development Server"
+runButton = "Comprehensive Task Verification"
 
 [[workflows.workflow]]
 name = "Project"
@@ -696,3 +696,44 @@ args = "# Run validation for specific tasks (customize this with your instructio
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "node -e \"require('./client/src/utils/consolidated-validation.js').runCompleteWorkflowValidation('Ensure all links work, validate form submissions, and check accessibility of all pages').then(success => { console.log(success ? 'All tasks validated successfully!' : 'Task validation failed'); process.exit(success ? 0 : 1); })\""
+
+[[workflows.workflow]]
+name = "Comprehensive Task Verification"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Kill any running processes first"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pkill -f node || true"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Start with code quality checks"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run lint"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npx tsc --noEmit"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run the comprehensive validation system"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node -e \"require('./client/src/utils/comprehensive-validation.js').verifyBeforeCheckpoint().then(canProceed => { process.exit(canProceed ? 0 : 1); })\""
