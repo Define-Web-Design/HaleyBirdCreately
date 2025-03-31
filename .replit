@@ -55,7 +55,7 @@ localPort = 8425
 externalPort = 3002
 
 [workflows]
-runButton = "Complete Task Validation"
+runButton = "Development Server"
 
 [[workflows.workflow]]
 name = "Project"
