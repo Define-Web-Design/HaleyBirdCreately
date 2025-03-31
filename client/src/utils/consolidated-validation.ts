@@ -292,8 +292,36 @@ export async function saveValidationReport(report: ValidationReport, filePath?: 
   }
 }
 
-// To run the full validation:
-// runFullSystemValidation().then(report => {
-//   displayFullValidationResults(report);
-//   saveValidationReport(report);
+// Import the task validation orchestrator
+import { taskOrchestrator, TaskRequest } from './task-validation-orchestrator';
+import { runValidationFromInstruction, runValidationWorkflow } from './validation-runner';
+
+// Function to run the complete workflow validation
+export async function runCompleteWorkflowValidation(instruction?: string): Promise<boolean> {
+  console.log('Starting complete workflow validation...');
+  console.log('='.repeat(80));
+  
+  try {
+    if (instruction) {
+      return runValidationFromInstruction(instruction, { 
+        displayResults: true, 
+        throwOnFailure: false 
+      });
+    } else {
+      // Run a full system validation
+      const report = await runFullSystemValidation();
+      displayFullValidationResults(report);
+      return report.overallSuccess;
+    }
+  } catch (error) {
+    console.error('Error during workflow validation:', error);
+    return false;
+  }
+}
+
+// Command-line execution
+// To run the full validation with workflow:
+// runCompleteWorkflowValidation("Fix navigation links and improve accessibility").then(success => {
+//   console.log(success ? 'Workflow completed successfully!' : 'Workflow validation failed');
+//   process.exit(success ? 0 : 1);
 // });

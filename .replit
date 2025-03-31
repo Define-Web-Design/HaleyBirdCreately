@@ -55,7 +55,7 @@ localPort = 8425
 externalPort = 3002
 
 [workflows]
-runButton = "Run Development Server"
+runButton = "Complete Task Validation"
 
 [[workflows.workflow]]
 name = "Project"
@@ -630,3 +630,69 @@ args = "pkill -f node || true"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npm run dev"
+
+[[workflows.workflow]]
+name = "Complete Task Validation"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Kill any running processes"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pkill -f node || true"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Start with code quality checks"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run lint"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npx tsc --noEmit"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run the complete task validation workflow"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node -e \"require('./client/src/utils/consolidated-validation.js').runCompleteWorkflowValidation().then(success => { console.log(success ? 'All tasks validated successfully!' : 'Task validation failed'); process.exit(success ? 0 : 1); })\""
+
+[[workflows.workflow]]
+name = "Task-Specific Validation"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Kill any running processes"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pkill -f node || true"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run validation for specific tasks (customize this with your instruction)"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node -e \"require('./client/src/utils/consolidated-validation.js').runCompleteWorkflowValidation('Ensure all links work, validate form submissions, and check accessibility of all pages').then(success => { console.log(success ? 'All tasks validated successfully!' : 'Task validation failed'); process.exit(success ? 0 : 1); })\""
