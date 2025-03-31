@@ -31,21 +31,21 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   // Add scroll event listener to show/hide the scroll-to-top button on mobile
   useEffect(() => {
     if (!isMobile) return;
-    
+
     const scrollButton = document.getElementById('scroll-to-top-button');
-    
+
     const handleScroll = () => {
       if (!scrollButton) return;
-      
+
       if (window.scrollY > 300) {
         scrollButton.style.display = 'block';
       } else {
         scrollButton.style.display = 'none';
       }
     };
-    
+
     window.addEventListener('scroll', handleScroll);
-    
+
     return () => window.removeEventListener('scroll', handleScroll);
   }, [isMobile]);
 
@@ -62,11 +62,17 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           isMobile={isMobile}
         />
         <div className="flex flex-1 overflow-hidden">
+          {/* Skip Link for Keyboard Users */}
+          <a href="#main-content" className="skip-to-content">Skip to content</a>
+
           {/* Sidebar - conditionally shown based on sidebarOpen state */}
           <div
             className={`${
               sidebarOpen ? 'translate-x-0' : '-translate-x-full'
             } fixed md:relative z-20 h-full transition-transform duration-300 ease-in-out md:translate-x-0 shadow-lg`}
+            id="sidebar"
+            role="navigation"
+            aria-label="Main navigation"
           >
             <Sidebar 
               fontSize={fontSize}
@@ -77,7 +83,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               setExpanded={setSidebarOpen}
             />
           </div>
-          
+
           {/* Overlay for mobile - closes sidebar when clicking outside */}
           {sidebarOpen && isMobile && (
             <div 
@@ -92,6 +98,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             className={`flex-1 overflow-y-auto p-2 sm:p-4 md:p-6 transition-padding duration-300 ${
               sidebarOpen ? 'md:ml-64' : ''
             }`}
+            id="main-content" 
+            role="main"
+            tabIndex={-1} // Allows focusing when using skip link
           >
             {/* Scroll to top button for mobile - only shows when scrolled down */}
             {isMobile && (

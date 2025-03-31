@@ -66,6 +66,22 @@
   border-width: 0;
 }
 
+/* Skip to content link - visually hidden until focused */
+.skip-to-content {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  padding: 8px;
+  z-index: 100;
+  transition: top 0.2s ease;
+}
+
+.skip-to-content:focus {
+  top: 0;
+}
+
 /* Focus styles for keyboard navigation */
 *:focus-visible {
   outline: 2px solid var(--ring);
@@ -82,4 +98,61 @@ textarea:focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 2px;
   box-shadow: 0 0 0 2px var(--background), 0 0 0 4px var(--ring);
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.reduced-motion *, 
+.reduced-motion ::before,
+.reduced-motion ::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Improved error states for form elements */
+.input-error {
+  border-color: var(--destructive);
+}
+
+.input-error:focus-visible {
+  outline-color: var(--destructive);
+  box-shadow: 0 0 0 2px var(--background), 0 0 0 4px var(--destructive);
+}
+
+/* Accessible loading states */
+.loading-indicator {
+  display: inline-block;
+  position: relative;
+  width: 1.5em;
+  height: 1.5em;
+}
+
+.loading-indicator::after {
+  content: " ";
+  display: block;
+  width: 1.2em;
+  height: 1.2em;
+  border-radius: 50%;
+  border: 2px solid var(--primary);
+  border-color: var(--primary) transparent var(--primary) transparent;
+  animation: loading-indicator 1.2s linear infinite;
+}
+
+@keyframes loading-indicator {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }

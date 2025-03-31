@@ -1,159 +1,11 @@
+
+// Navigation testing utilities for auditing UI elements and interactions
+
 /**
- * Navigation Tester Utility
- * 
- * This utility provides functionality to test navigation and links throughout the application.
- * It simulates what tools like Selenium or Puppeteer would do for web testing.
+ * Check interactive elements on a specific page
+ * @param pagePath The URL path to check
+ * @returns Promise with results of the check
  */
-
-interface NavigationRoute {
-  path: string;
-  name: string;
-  subRoutes?: string[];
-}
-
-// Define all application routes for testing
-export const ALL_ROUTES: NavigationRoute[] = [
-  { 
-    path: '/', 
-    name: 'Dashboard',
-  },
-  { 
-    path: '/content-library', 
-    name: 'Content Library',
-    subRoutes: [
-      '/content-library/all',
-      '/content-library/recent',
-      '/content-library/categories',
-      '/content-library/favorites',
-    ]
-  },
-  { 
-    path: '/content-calendar', 
-    name: 'Content Calendar',
-  },
-  { 
-    path: '/analytics', 
-    name: 'Analytics',
-  },
-  { 
-    path: '/mood-boards', 
-    name: 'Mood Boards',
-  },
-  { 
-    path: '/content-vault', 
-    name: 'Content Vault',
-  },
-  { 
-    path: '/apple-photos', 
-    name: 'Apple Photos Integration',
-  },
-  { 
-    path: '/creative-symbiosis', 
-    name: 'Creative Symbiosis',
-  },
-  { 
-    path: '/color-palettes', 
-    name: 'Color Palettes',
-    subRoutes: [
-      '/color-palettes/all',
-      '/color-palettes/recent',
-      '/color-palettes/categories',
-      '/color-palettes/favorites',
-    ]
-  },
-  { 
-    path: '/mood-capsules', 
-    name: 'Mood Capsules',
-  },
-  { 
-    path: '/ai-enhancement', 
-    name: 'AI Enhancement',
-  },
-  { 
-    path: '/creative-prompts', 
-    name: 'Creative Prompts',
-  },
-  { 
-    path: '/cross-platform-tools', 
-    name: 'Cross Platform Tools',
-  },
-  { 
-    path: '/profile', 
-    name: 'Profile',
-    subRoutes: [
-      '/profile/accessibility',
-      '/profile/integrations',
-    ]
-  },
-  {
-    path: '/nav-test',
-    name: 'Navigation Test',
-  }
-];
-
-// Validate that all routes in the menu are accessible
-export const validateMenuRoutes = (): { valid: boolean; missingRoutes: string[] } => {
-  // Find all link elements with href attributes
-  const linkElements = document.querySelectorAll('a[href]');
-  const routeLinks: string[] = Array.from(linkElements).map(el => (el as HTMLAnchorElement).getAttribute('href') || '');
-  
-  // Get paths from ALL_ROUTES
-  const definedPaths = ALL_ROUTES.map(route => route.path);
-  const definedSubPaths = ALL_ROUTES.flatMap(route => route.subRoutes || []);
-  const allDefinedPaths = [...definedPaths, ...definedSubPaths];
-  
-  // Find missing routes
-  const missingRoutes = allDefinedPaths.filter(path => !routeLinks.includes(path));
-  
-  return {
-    valid: missingRoutes.length === 0,
-    missingRoutes
-  };
-};
-
-// Verify that all navigation links are working correctly
-export const verifyNavigationLinks = (): Promise<{
-  success: boolean;
-  errors: { path: string; error: string }[];
-}> => {
-  return new Promise(resolve => {
-    const errors: { path: string; error: string }[] = [];
-    
-    // Check if all route paths are valid
-    ALL_ROUTES.forEach(route => {
-      // Main route check
-      try {
-        const linkElement = document.querySelector(`a[href="${route.path}"]`);
-        if (!linkElement) {
-          errors.push({ path: route.path, error: 'Link element not found' });
-        }
-      } catch (error) {
-        errors.push({ path: route.path, error: String(error) });
-      }
-      
-      // Subroutes check
-      if (route.subRoutes) {
-        route.subRoutes.forEach(subRoute => {
-          try {
-            const subLinkElement = document.querySelector(`a[href="${subRoute}"]`);
-            if (!subLinkElement) {
-              errors.push({ path: subRoute, error: 'Subroute link element not found' });
-            }
-          } catch (error) {
-            errors.push({ path: subRoute, error: String(error) });
-          }
-        });
-      }
-    });
-    
-    resolve({
-      success: errors.length === 0,
-      errors
-    });
-  });
-};
-
-// Check interactive elements on a specific page
 export const checkPageInteractiveElements = (pagePath: string): Promise<{
   success: boolean;
   elementsCount: number;
@@ -176,32 +28,23 @@ export const checkPageInteractiveElements = (pagePath: string): Promise<{
       
       // Collect information about interactive elements
       buttons.forEach(button => {
-        interactiveElements.push(`Button: ${button.textContent || 'Unnamed button'}`);
+        interactiveElements.push(`Button: ${button.textContent || button.getAttribute('aria-label') || 'Unnamed button'}`);
       });
       
       links.forEach(link => {
-        interactiveElements.push(`Link: ${link.textContent || 'Unnamed link'} (${link.getAttribute('href')})`);
+        interactiveElements.push(`Link: ${link.textContent || link.getAttribute('aria-label') || 'Unnamed link'} (${link.getAttribute('href')})`);
       });
       
       inputs.forEach(input => {
-        interactiveElements.push(`Input: ${input.getAttribute('name') || input.getAttribute('placeholder') || 'Unnamed input'}`);
+        interactiveElements.push(`Input: ${input.getAttribute('name') || input.getAttribute('placeholder') || input.getAttribute('aria-label') || 'Unnamed input'}`);
       });
       
       selects.forEach(select => {
-        interactiveElements.push(`Select: ${select.getAttribute('name') || 'Unnamed select'}`);
+        interactiveElements.push(`Select: ${select.getAttribute('name') || select.getAttribute('aria-label') || 'Unnamed select'}`);
       });
       
       textareas.forEach(textarea => {
-        interactiveElements.push(`Textarea: ${textarea.getAttribute('name') || textarea.getAttribute('placeholder') || 'Unnamed textarea'}`);
-      });
-      
-      resolve({
-        success: interactiveElements.length > 0,
-        elementsCount: interactiveElements.length,
-        interactiveElements
-      });
-    }, 500); // Give time for dynamic content to load
-        interactiveElements.push(`Textarea: ${textarea.getAttribute('name') || textarea.getAttribute('placeholder') || 'Unnamed textarea'}`);
+        interactiveElements.push(`Textarea: ${textarea.getAttribute('name') || textarea.getAttribute('placeholder') || textarea.getAttribute('aria-label') || 'Unnamed textarea'}`);
       });
       
       resolve({
@@ -213,7 +56,10 @@ export const checkPageInteractiveElements = (pagePath: string): Promise<{
   });
 };
 
-// Verify toast notification behavior
+/**
+ * Verify toast notification behavior
+ * @returns Promise with analysis of toast implementation
+ */
 export const verifyToastBehavior = async (): Promise<{ 
   automatic: boolean; 
   closable: boolean;
@@ -274,4 +120,194 @@ export const verifyToastBehavior = async (): Promise<{
       recommendations
     });
   });
+};
+
+/**
+ * Verify all links on the page to detect broken links
+ * @returns Promise with a list of potential broken links
+ */
+export const verifyPageLinks = async (): Promise<{
+  totalLinks: number;
+  potentialBrokenLinks: Array<{href: string, text: string}>;
+  recommendations: string[];
+}> => {
+  return new Promise(resolve => {
+    const links = document.querySelectorAll('a');
+    const potentialBrokenLinks: Array<{href: string, text: string}> = [];
+    const recommendations: string[] = [];
+    
+    links.forEach(link => {
+      const href = link.getAttribute('href');
+      const text = link.textContent || 'Unnamed link';
+      
+      // Check for potentially broken links
+      if (!href || href === '#' || href === 'javascript:void(0)') {
+        potentialBrokenLinks.push({ href: href || 'empty', text });
+      } else if (href.startsWith('/') && !href.includes('.')) {
+        // Check client-side routes by making sure they match defined routes
+        // This is a simplified check and would need to be adjusted based on your routing system
+        const validRoutes = [
+          '/', '/dashboard', '/mood-capsules', '/content-library', 
+          '/analytics', '/ai-enhancement', '/color-palettes', 
+          '/creative-symbiosis', '/apple-photos', '/mood-boards',
+          '/content-calendar', '/creative-prompts', '/content-vault',
+          '/cross-platform-tools', '/legal-verification', '/nav-test'
+        ];
+        
+        if (!validRoutes.includes(href)) {
+          potentialBrokenLinks.push({ href, text });
+        }
+      }
+    });
+    
+    // Generate recommendations
+    if (potentialBrokenLinks.length > 0) {
+      recommendations.push('Fix broken or empty links to improve navigation and SEO');
+      
+      if (potentialBrokenLinks.some(link => link.href === 'empty' || link.href === '#')) {
+        recommendations.push('Replace placeholder links with proper routes or use buttons instead of anchor tags');
+      }
+    } else {
+      recommendations.push('All links appear to be properly configured');
+    }
+    
+    resolve({
+      totalLinks: links.length,
+      potentialBrokenLinks,
+      recommendations
+    });
+  });
+};
+
+/**
+ * Test keyboard navigation through the application
+ * @returns Promise with results of keyboard navigation test
+ */
+export const testKeyboardNavigation = async (): Promise<{
+  success: boolean;
+  focusableElements: number;
+  tabbableElements: number;
+  issues: string[];
+  recommendations: string[];
+}> => {
+  return new Promise(resolve => {
+    const focusableElements = document.querySelectorAll(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    
+    const issues: string[] = [];
+    const recommendations: string[] = [];
+    
+    // Check for elements that should be focusable but aren't
+    const interactiveNotFocusable = document.querySelectorAll(
+      'div[onclick], div[role="button"], span[onclick], span[role="button"]'
+    );
+    
+    if (interactiveNotFocusable.length > 0) {
+      issues.push(`Found ${interactiveNotFocusable.length} interactive elements that are not properly focusable`);
+      recommendations.push('Convert div/span elements with click handlers to buttons or add tabindex="0" and keyboard event handlers');
+    }
+    
+    // Check for proper focus styling
+    const customFocusStyles = window.getComputedStyle(document.documentElement).getPropertyValue('--focus-visible-ring');
+    if (!customFocusStyles) {
+      recommendations.push('Add custom focus styles for better keyboard navigation visibility');
+    }
+    
+    // Check for skip links
+    const skipLinks = document.querySelectorAll('a[href="#main"], a[href="#content"]');
+    if (skipLinks.length === 0) {
+      issues.push('No skip links found for keyboard users to bypass navigation');
+      recommendations.push('Add a skip link at the beginning of the page to allow keyboard users to skip to the main content');
+    }
+    
+    // Calculate tabbable elements (tabindex >= 0)
+    const tabbableElements = Array.from(focusableElements).filter(el => {
+      const tabIndex = parseInt(el.getAttribute('tabindex') || '0', 10);
+      return tabIndex >= 0;
+    });
+    
+    resolve({
+      success: issues.length === 0,
+      focusableElements: focusableElements.length,
+      tabbableElements: tabbableElements.length,
+      issues,
+      recommendations
+    });
+  });
+};
+
+/**
+ * Run a comprehensive accessibility audit on the current page
+ */
+export const runAccessibilityAudit = async (): Promise<{
+  score: number;
+  issues: string[];
+  recommendations: string[];
+}> => {
+  // In a real implementation, this would use axe-core or similar
+  // For now, we'll implement basic checks
+  
+  const issues: string[] = [];
+  const recommendations: string[] = [];
+  
+  // Check for images without alt text
+  const imagesWithoutAlt = document.querySelectorAll('img:not([alt])');
+  if (imagesWithoutAlt.length > 0) {
+    issues.push(`Found ${imagesWithoutAlt.length} images without alt text`);
+    recommendations.push('Add descriptive alt text to all images');
+  }
+  
+  // Check for proper heading structure
+  const headings = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
+  const headingLevels = Array.from(headings).map(h => parseInt(h.tagName.substring(1), 10));
+  
+  let hasH1 = false;
+  let previousLevel = 0;
+  let headingIssues = 0;
+  
+  headingLevels.forEach(level => {
+    if (level === 1) hasH1 = true;
+    
+    // Check for skipped heading levels
+    if (previousLevel > 0 && level > previousLevel + 1) {
+      headingIssues++;
+    }
+    
+    previousLevel = level;
+  });
+  
+  if (!hasH1) {
+    issues.push('No H1 heading found on the page');
+    recommendations.push('Add an H1 heading to properly structure the page content');
+  }
+  
+  if (headingIssues > 0) {
+    issues.push(`Found ${headingIssues} instances of skipped heading levels`);
+    recommendations.push('Ensure heading levels are sequential (H1 → H2 → H3) without skipping levels');
+  }
+  
+  // Check color contrast (simplified)
+  const contrastIssues = document.querySelectorAll('[style*="color"]').length;
+  recommendations.push('Verify color contrast meets WCAG AA standards (4.5:1 for normal text, 3:1 for large text)');
+  
+  // Check for ARIA roles
+  const elementsWithAriaRoles = document.querySelectorAll('[role]');
+  if (elementsWithAriaRoles.length > 0) {
+    recommendations.push('Verify ARIA roles are used correctly and necessary');
+  }
+  
+  // Calculate a simple score
+  const totalChecks = 4; // Images, headings, color, ARIA
+  const issuesFound = (imagesWithoutAlt.length > 0 ? 1 : 0) + 
+                     ((!hasH1 || headingIssues > 0) ? 1 : 0) +
+                     (contrastIssues > 0 ? 1 : 0);
+  
+  const score = Math.round(((totalChecks - issuesFound) / totalChecks) * 100);
+  
+  return {
+    score,
+    issues,
+    recommendations
+  };
 };
