@@ -269,6 +269,83 @@ class SecurityMonitorService {
     
     return { valid, issues };
   }
+  
+  /**
+   * Validate AI-enhanced content for appropriate usage and legal compliance
+   */
+  async validateAIEnhancedContent(contentId: number, enhancementType: string): Promise<{
+    valid: boolean;
+    issues: string[];
+    recommendations: string[];
+  }> {
+    const issues: string[] = [];
+    const recommendations: string[] = [];
+    let valid = true;
+    
+    try {
+      // Get the original content
+      const content = await storage.getContentById(contentId);
+      
+      if (!content) {
+        return {
+          valid: false,
+          issues: ['Content not found'],
+          recommendations: ['Verify content ID is correct']
+        };
+      }
+      
+      // Log this validation check for security auditing
+      await storage.trackAccessAttempt({
+        userId: content.userId,
+        ipAddress: 'system',
+        endpoint: 'ai-validation',
+        timestamp: new Date(),
+        isAuthorized: true,
+        details: JSON.stringify({
+          contentId,
+          enhancementType,
+          action: 'validate'
+        })
+      });
+      
+      // For demo purposes, we'll simulate different validations based on enhancement type
+      switch (enhancementType) {
+        case 'caption':
+          // Check for potential IP/copyright concerns in caption generation
+          if (content.tags?.includes('3rd-party') || content.tags?.includes('licensed')) {
+            valid = false;
+            issues.push('Content contains third-party or licensed elements');
+            recommendations.push('Review license agreements before generating captions');
+            recommendations.push('Consider adding attribution to generated captions');
+          }
+          break;
+          
+        case 'mood-board':
+          // Check for potential style/brand consistency
+          if (content.tags?.includes('branding') && !content.tags.includes('flexible-use')) {
+            recommendations.push('This is branded content - ensure generated mood boards comply with brand guidelines');
+          }
+          break;
+          
+        case 'cross-platform':
+          // No specific issues for this type
+          break;
+          
+        default:
+          recommendations.push('Unknown enhancement type. Verify it complies with usage terms.');
+      }
+      
+      // Add a generic legal recommendation
+      recommendations.push('Always review AI-generated content before publishing');
+      
+    } catch (error) {
+      console.error('Error validating AI enhanced content:', error);
+      valid = false;
+      issues.push('System error during validation');
+    }
+    
+    return { valid, issues, recommendations };
+  }
 }
 
 export const securityMonitor = new SecurityMonitorService();

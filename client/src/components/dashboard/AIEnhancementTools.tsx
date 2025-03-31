@@ -86,3 +86,50 @@ const AIEnhancementTools = ({ onToolSelect }: AIEnhancementToolsProps) => {
 };
 
 export default AIEnhancementTools;
+import React from 'react';
+import { Card, CardContent } from '../ui/card';
+import { ENHANCEMENT_TOOLS } from '../../lib/constants';
+import { Badge } from '../ui/badge';
+
+interface AIEnhancementToolProps {
+  onSelectTool: (toolName: string) => void;
+  selectedTool: string | null;
+}
+
+const AIEnhancementTool: React.FC<AIEnhancementToolProps> = ({ onSelectTool, selectedTool }) => {
+  return (
+    <div className="space-y-3">
+      <h3 className="text-lg font-medium">AI Enhancement Tools</h3>
+      <p className="text-sm text-muted-foreground">Enhance your content with AI-powered tools</p>
+      
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mt-4">
+        {ENHANCEMENT_TOOLS.map((tool) => (
+          <Card 
+            key={tool.title}
+            className={`cursor-pointer transition-all ${selectedTool === tool.title ? 'ring-2 ring-primary' : 'hover:bg-accent/50'} ${tool.animation}`}
+            onClick={() => onSelectTool(tool.title)}
+          >
+            <CardContent className="p-3">
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-lg ${tool.iconGradient} text-white`}>
+                  <i className={`${tool.icon} text-base`}></i>
+                </div>
+                <div>
+                  <h3 className="font-medium flex items-center text-sm">
+                    {tool.title}
+                    {tool.isNew && (
+                      <Badge className="ml-1 bg-primary text-white text-xs py-0 px-1">New</Badge>
+                    )}
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{tool.description}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default AIEnhancementTool;

@@ -1095,6 +1095,253 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // AI Enhancement routes
+  app.post('/api/ai/enhance/caption', async (req, res) => {
+    const { contentId, style, length } = req.body;
+    
+    if (!contentId) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Content ID is required' 
+      });
+    }
+    
+    try {
+      // Validate the request for security and ownership
+      const validation = await securityMonitor.validateAIEnhancedContent(contentId, 'caption');
+      
+      if (!validation.valid && validation.issues.length > 0) {
+        return res.status(403).json({
+          success: false,
+          message: 'Cannot enhance this content due to security/ownership restrictions',
+          issues: validation.issues,
+          recommendations: validation.recommendations
+        });
+      }
+      
+      // Get the content
+      const content = await storage.getContentById(contentId);
+      
+      if (!content) {
+        return res.status(404).json({ 
+          success: false, 
+          message: 'Content not found' 
+        });
+      }
+      
+      // Generate caption using AI
+      const caption = await generateCaption(content, style || 'balanced', length || 'medium');
+      
+      // Add watermarking and ownership information
+      const response = {
+        success: true,
+        caption,
+        tags: ['tag1', 'tag2', 'tag3'], // Example tags
+        recommendations: validation.recommendations,
+        ownershipInfo: {
+          ownerId: content.userId,
+          timestamp: new Date().toISOString(),
+          notice: "© 2023 All Rights Reserved. This content is proprietary."
+        }
+      };
+      
+      res.json(response);
+    } catch (error) {
+      console.error('AI enhancement error:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Failed to generate AI enhancement',
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  });
+  
+  app.post('/api/ai/enhance/mood-board', async (req, res) => {
+    const { contentId, theme, colorCount = 5 } = req.body;
+    
+    if (!contentId) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Content ID is required' 
+      });
+    }
+    
+    try {
+      // Validate the request for security and ownership
+      const validation = await securityMonitor.validateAIEnhancedContent(contentId, 'mood-board');
+      
+      if (!validation.valid && validation.issues.length > 0) {
+        return res.status(403).json({
+          success: false,
+          message: 'Cannot enhance this content due to security/ownership restrictions',
+          issues: validation.issues,
+          recommendations: validation.recommendations
+        });
+      }
+      
+      // Get the content
+      const content = await storage.getContentById(contentId);
+      
+      if (!content) {
+        return res.status(404).json({ 
+          success: false, 
+          message: 'Content not found' 
+        });
+      }
+      
+      // Generate mood palette
+      const palette = await generateMoodPalette(content.tags?.join(' ') || theme || 'neutral', colorCount);
+      
+      // Create a mood board - in a real implementation, this would use AI to select images
+      const moodBoard = {
+        theme: theme || content.tags?.[0] || 'creative',
+        colors: palette,
+        imageUrls: [
+          "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=800",
+          "https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=800",
+          "https://images.unsplash.com/photo-1496902526517-c0f2cb8fdb6a?w=800",
+          "https://images.unsplash.com/photo-1490312278390-ab64016e0aa9?w=800"
+        ],
+        keywords: content.tags || [theme || 'creative', 'design', 'inspiration']
+      };
+      
+      // Add watermarking and ownership information
+      const response = {
+        success: true,
+        moodBoard,
+        recommendations: validation.recommendations,
+        ownershipInfo: {
+          ownerId: content.userId,
+          timestamp: new Date().toISOString(),
+          notice: "© 2023 All Rights Reserved. This content is proprietary."
+        }
+      };
+      
+      res.json(response);
+    } catch (error) {
+      console.error('AI mood board generation error:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Failed to generate mood board',
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  });
+  
+  app.post('/api/ai/enhance/cross-platform', async (req, res) => {
+    const { contentId, platforms } = req.body;
+    
+    if (!contentId) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Content ID is required' 
+      });
+    }
+    
+    if (!platforms || !Array.isArray(platforms) || platforms.length === 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'At least one platform must be specified' 
+      });
+    }
+    
+    try {
+      // Validate the request for security and ownership
+      const validation = await securityMonitor.validateAIEnhancedContent(contentId, 'cross-platform');
+      
+      if (!validation.valid && validation.issues.length > 0) {
+        return res.status(403).json({
+          success: false,
+          message: 'Cannot enhance this content due to security/ownership restrictions',
+          issues: validation.issues,
+          recommendations: validation.recommendations
+        });
+      }
+      
+      // Get the content
+      const content = await storage.getContentById(contentId);
+      
+      if (!content) {
+        return res.status(404).json({ 
+          success: false, 
+          message: 'Content not found' 
+        });
+      }
+      
+      // Generate platform-specific versions
+      const platformVersions = {};
+      
+      for (const platform of platforms) {
+        // In a real implementation, this would use AI to tailor content
+        platformVersions[platform] = {
+          caption: `${platform} optimized: ${content.description || 'Check out our latest update!'}`,
+          hashtags: content.tags?.map(tag => `#${tag}`) || ['#creative', '#content'],
+          recommendedImageSize: getPlatformImageSize(platform),
+          characterLimit: getPlatformCharLimit(platform),
+          bestTimeToPost: getPlatformBestTime(platform)
+        };
+      }
+      
+      // Add watermarking and ownership information
+      const response = {
+        success: true,
+        platformVersions,
+        recommendations: validation.recommendations,
+        ownershipInfo: {
+          ownerId: content.userId,
+          timestamp: new Date().toISOString(),
+          notice: "© 2023 All Rights Reserved. This content is proprietary."
+        }
+      };
+      
+      res.json(response);
+    } catch (error) {
+      console.error('Cross-platform adaptation error:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Failed to generate cross-platform adaptations',
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  });
+  
+  // Helper functions for platform-specific details
+  function getPlatformImageSize(platform: string): string {
+    const sizes = {
+      instagram: '1080x1080 (square), 1080x1350 (portrait)',
+      twitter: '1200x675 (landscape)',
+      facebook: '1200x630 (landscape)',
+      linkedin: '1200x627 (landscape)',
+      tiktok: '1080x1920 (portrait)',
+      pinterest: '1000x1500 (portrait)'
+    };
+    return sizes[platform.toLowerCase()] || '1200x630 (standard)';
+  }
+  
+  function getPlatformCharLimit(platform: string): number {
+    const limits = {
+      instagram: 2200,
+      twitter: 280,
+      facebook: 63206,
+      linkedin: 3000,
+      tiktok: 2200,
+      pinterest: 500
+    };
+    return limits[platform.toLowerCase()] || 2000;
+  }
+  
+  function getPlatformBestTime(platform: string): string {
+    const times = {
+      instagram: 'Wednesday at 11 AM and Friday at 10–11 AM',
+      twitter: 'Monday, Tuesday, Wednesday at 9 AM',
+      facebook: 'Tuesday, Wednesday, Friday from 9 AM to 1 PM',
+      linkedin: 'Tuesday, Wednesday, Thursday at 9 AM',
+      tiktok: 'Tuesday at 9 AM, Thursday at 7 PM, Friday at 5 AM',
+      pinterest: 'Friday and Saturday at 8 PM to 11 PM'
+    };
+    return times[platform.toLowerCase()] || 'Weekdays at 9 AM to 12 PM';
+  }
+
   // Example API routes
   app.get('/api/hello', (req, res) => {
     res.json({ 

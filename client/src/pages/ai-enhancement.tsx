@@ -1,15 +1,18 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { PageHeader } from '@/components/layout/PageHeader';
-import { Badge } from '@/components/ui/badge';
-import { Sparkles, Image, CheckCircle, Loader2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { ENHANCEMENT_TOOLS } from '@/lib/constants';
 
-// Mock data for example content
+import { useState } from 'react';
+import { useToast } from '../components/ui/use-toast';
+import { 
+  Card, CardContent, CardHeader, 
+  CardTitle, CardDescription 
+} from '../components/ui/card';
+import { Button } from '../components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { Badge } from '../components/ui/badge';
+import { Textarea } from '../components/ui/textarea';
+import { CheckCircle, Image } from 'lucide-react';
+import { ENHANCEMENT_TOOLS } from '../lib/constants';
+
+// Mock content items for demonstration purposes
 const mockContentItems = [
   {
     id: 1,
@@ -94,79 +97,76 @@ const AIEnhancement = () => {
   
   return (
     <div className="container py-6 max-w-7xl mx-auto">
-      <PageHeader
-        heading="AI Enhancement Tools"
-        description="Enhance your content with AI-powered creative tools"
-        rightSection={
-          <Button 
-            onClick={handleGenerateEnhancement}
-            disabled={!selectedContent || !selectedTool || isProcessing}
-            className="flex items-center gap-2"
-          >
-            {isProcessing ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Sparkles className="h-4 w-4" />
-            )}
-            {isProcessing ? "Processing..." : "Generate Enhancement"}
-          </Button>
-        }
-      />
+      <div className="flex flex-col space-y-2">
+        <h1 className="text-2xl font-bold">AI Enhancement Studio</h1>
+        <p className="text-muted-foreground">
+          Transform your content with AI-powered creative tools
+        </p>
+      </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-        {/* Left sidebar - Content selection */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+        {/* Left section - Content selection */}
         <div className="space-y-4">
           <h2 className="text-lg font-medium">Select Content</h2>
-          <p className="text-sm text-muted-foreground">Choose content to enhance with AI tools</p>
+          <p className="text-sm text-muted-foreground">Choose content to enhance</p>
           
-          <div className="space-y-3">
-            {mockContentItems.map((item) => (
-              <Card 
-                key={item.id}
-                className={`cursor-pointer transition-all hover:shadow-md ${
-                  selectedContent === item.id ? 'ring-2 ring-primary' : ''
-                }`}
-                onClick={() => handleSelectContent(item.id)}
-              >
-                <div className="aspect-video w-full overflow-hidden rounded-t-lg">
-                  <img 
-                    src={item.imageUrl} 
-                    alt={item.title} 
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <CardContent className="p-3">
-                  <h3 className="font-medium">{item.title}</h3>
-                  <p className="text-xs text-muted-foreground mt-1">{item.description}</p>
-                  <div className="flex flex-wrap gap-1 mt-2">
-                    {item.tags.map((tag) => (
-                      <Badge key={tag} variant="outline" className="text-xs">
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
+          <Tabs defaultValue="recent">
+            <TabsList>
+              <TabsTrigger value="recent">Recent</TabsTrigger>
+              <TabsTrigger value="archived">Archived</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="recent" className="space-y-4 pt-4">
+              {mockContentItems.map((item) => (
+                <Card 
+                  key={item.id}
+                  className={`cursor-pointer transition-all ${selectedContent === item.id ? 'ring-2 ring-primary' : 'hover:bg-accent/50'}`}
+                  onClick={() => handleSelectContent(item.id)}
+                >
+                  <CardContent className="p-3 flex items-center gap-3">
+                    <div className="h-16 w-16 rounded bg-muted overflow-hidden flex-shrink-0">
+                      <img src={item.imageUrl} alt={item.title} className="h-full w-full object-cover" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium">{item.title}</h3>
+                      <p className="text-xs text-muted-foreground line-clamp-1">{item.description}</p>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {item.tags.map((tag) => (
+                          <Badge key={tag} variant="outline" className="text-xs py-0">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </TabsContent>
+            
+            <TabsContent value="archived" className="pt-4">
+              <Card>
+                <CardContent className="p-8 text-center">
+                  <p className="text-muted-foreground">No archived content found</p>
                 </CardContent>
               </Card>
-            ))}
-          </div>
+            </TabsContent>
+          </Tabs>
         </div>
         
-        {/* Middle section - Tool selection */}
+        {/* Middle section - Tools */}
         <div className="space-y-4">
-          <h2 className="text-lg font-medium">Select Enhancement Tool</h2>
-          <p className="text-sm text-muted-foreground">Choose an AI tool to enhance your content</p>
+          <h2 className="text-lg font-medium">Enhancement Tools</h2>
+          <p className="text-sm text-muted-foreground">Select a tool to enhance your content</p>
           
           <div className="space-y-3">
             {ENHANCEMENT_TOOLS.map((tool) => (
               <Card 
                 key={tool.title}
-                className={`cursor-pointer transition-all hover:shadow-md ${
-                  selectedTool === tool.title ? 'ring-2 ring-primary' : ''
-                } ${tool.animation}`}
+                className={`cursor-pointer transition-all ${selectedTool === tool.title ? 'ring-2 ring-primary' : 'hover:bg-accent/50'} ${tool.animation}`}
                 onClick={() => handleSelectTool(tool.title)}
               >
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-3">
+                <CardContent className="p-3">
+                  <div className="flex items-center gap-3">
                     <div className={`p-3 rounded-lg ${tool.iconGradient} text-white`}>
                       <i className={`${tool.icon} text-lg`}></i>
                     </div>
@@ -234,101 +234,76 @@ const AIEnhancement = () => {
                   </div>
                 )}
                 
-                {selectedTool === "Color Mood Analyzer" && (
-                  <div className="space-y-4">
-                    <h4 className="text-sm font-medium">Detected Color Palette:</h4>
-                    <div className="flex space-x-2">
-                      {mockEnhancementResults.colorPalette.map((color) => (
-                        <div 
-                          key={color}
-                          className="h-12 w-full rounded-md border"
-                          style={{ backgroundColor: color }}
-                          title={color}
-                        />
-                      ))}
-                    </div>
-                    <div className="pt-2">
-                      <h4 className="text-sm font-medium mb-2">Mood Analysis:</h4>
-                      <p className="text-sm text-muted-foreground">
-                        This palette conveys a sense of patriotic professionalism with a splash of energy.
-                        It balances cool, calming tones with vibrant accents.
-                      </p>
-                    </div>
-                  </div>
-                )}
-                
                 {selectedTool === "Mood Board Generator" && (
                   <div className="space-y-2">
                     <h4 className="text-sm font-medium">Generated Mood Board:</h4>
-                    <div className="grid grid-cols-3 gap-2">
-                      <img 
-                        src="https://images.unsplash.com/photo-1549989476-69a92fa57c36?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&h=300&q=80" 
-                        alt="Mood 1"
-                        className="w-full h-24 object-cover rounded-md"
-                      />
-                      <img 
-                        src="https://images.unsplash.com/photo-1550672953-32aba17236aa?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&h=300&q=80" 
-                        alt="Mood 2"
-                        className="w-full h-24 object-cover rounded-md"
-                      />
-                      <img 
-                        src="https://images.unsplash.com/photo-1549989131-0b4ffa113cfd?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&h=300&q=80" 
-                        alt="Mood 3"
-                        className="w-full h-24 object-cover rounded-md"
-                      />
+                    <div className="grid grid-cols-2 gap-2">
+                      {[1, 2, 3, 4].map((num) => (
+                        <div key={num} className="aspect-square rounded-md bg-muted overflow-hidden">
+                          <img 
+                            src={`https://source.unsplash.com/random/300x300?mood=${num}`} 
+                            alt={`Mood image ${num}`}
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
+                      ))}
                     </div>
                     <div className="pt-2">
-                      <h4 className="text-sm font-medium mb-1">Theme Keywords:</h4>
-                      <p className="text-sm text-muted-foreground">
-                        Vibrant, Natural, Energetic, Spring, Fresh, Outdoor
-                      </p>
+                      <h4 className="text-sm font-medium mb-2">Color Palette:</h4>
+                      <div className="flex space-x-2">
+                        {mockEnhancementResults.colorPalette.map((color, idx) => (
+                          <div 
+                            key={idx} 
+                            className="h-8 w-8 rounded-full border" 
+                            style={{ backgroundColor: color }}
+                            title={color}
+                          />
+                        ))}
+                      </div>
                     </div>
                   </div>
                 )}
                 
                 {selectedTool === "Cross-Platform Adapter" && (
                   <div className="space-y-4">
-                    <h4 className="text-sm font-medium">Platform Optimizations:</h4>
-                    <div className="space-y-2">
-                      <div className="p-3 border rounded-md">
-                        <div className="flex items-center">
-                          <i className="fab fa-instagram text-pink-600 text-xl mr-2"></i>
-                          <h5 className="font-medium">Instagram</h5>
+                    <div>
+                      <h4 className="text-sm font-medium mb-2">Instagram Version:</h4>
+                      <div className="rounded-md bg-muted p-3">
+                        <p className="text-sm">Caption optimized for Instagram with emojis and hashtags.</p>
+                        <div className="mt-2 text-xs text-muted-foreground">
+                          Character count: 217/2200
                         </div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          1:1 square format, vibrant filters, 5 hashtags
-                        </p>
                       </div>
-                      
-                      <div className="p-3 border rounded-md">
-                        <div className="flex items-center">
-                          <i className="fab fa-linkedin text-blue-700 text-xl mr-2"></i>
-                          <h5 className="font-medium">LinkedIn</h5>
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-medium mb-2">Twitter/X Version:</h4>
+                      <div className="rounded-md bg-muted p-3">
+                        <p className="text-sm">Our Spring Collection brings vibrant sustainable fashion for the modern professional. Check it out! #SpringFashion</p>
+                        <div className="mt-2 text-xs text-muted-foreground">
+                          Character count: 124/280
                         </div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          16:9 format, professional tone, 3 industry hashtags
-                        </p>
-                      </div>
-                      
-                      <div className="p-3 border rounded-md">
-                        <div className="flex items-center">
-                          <i className="fab fa-facebook text-blue-600 text-xl mr-2"></i>
-                          <h5 className="font-medium">Facebook</h5>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          1200x630px format, conversational tone, question prompt
-                        </p>
                       </div>
                     </div>
                   </div>
                 )}
               </CardContent>
-              <CardFooter className="flex justify-end gap-2 border-t pt-4">
-                <Button variant="outline">Refine Results</Button>
-                <Button>Apply Enhancement</Button>
-              </CardFooter>
             </Card>
           )}
+          
+          <Button 
+            className="w-full"
+            disabled={!selectedContent || !selectedTool || isProcessing}
+            onClick={handleGenerateEnhancement}
+          >
+            {isProcessing ? (
+              <>
+                <span className="animate-spin mr-2">⟳</span>
+                Processing...
+              </>
+            ) : (
+              'Generate Enhancement'
+            )}
+          </Button>
         </div>
       </div>
     </div>
