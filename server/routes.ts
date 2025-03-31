@@ -9,8 +9,67 @@ import {
   suggestPostingTimes
 } from "./ai/content";
 import { generateMoodPalette, generateAIPalette } from "./services/paletteGenerator";
+import { 
+  apiLimiter, 
+  addOwnershipHeaders, 
+  validateAccess, 
+  scrapeDetection 
+} from "./middleware/security";
+import { securityMonitor } from "./services/securityMonitor";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Apply global security middleware
+  app.use(addOwnershipHeaders);
+  app.use(scrapeDetection);
+  
+  // Apply rate limiting to all API routes
+  app.use("/api", apiLimiter);
+  
+  // Legal routes - these must be accessible without authentication
+  app.get("/api/public/legal/terms", (req: Request, res: Response) => {
+    res.json({
+      title: "Terms of Service",
+      version: "1.0.0",
+      lastUpdated: new Date().toISOString(),
+      requiresAcceptance: true
+    });
+  });
+  
+  app.get("/api/public/legal/privacy", (req: Request, res: Response) => {
+    res.json({
+      title: "Privacy Notice & Intellectual Property Protection",
+      version: "1.0.0",
+      lastUpdated: new Date().toISOString(),
+      requiresAcceptance: true
+    });
+  });
+  
+  // Record terms acceptance
+  app.post("/api/public/legal/accept", async (req: Request, res: Response) => {
+    const { documentType, version, userId } = req.body;
+    
+    if (!documentType || !version) {
+      return res.status(400).json({ message: "Document type and version are required" });
+    }
+    
+    try {
+      await storage.recordLegalAcceptance({
+        userId: userId || 0,
+        documentType,
+        version,
+        acceptedAt: new Date(),
+        ipAddress: req.ip,
+        userAgent: req.headers["user-agent"] || "unknown"
+      });
+      
+      res.status(200).json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Apply access validation to protected routes
+  app.use("/api", validateAccess);
   // API routes prefix
   const apiPrefix = "/api";
 

@@ -3,19 +3,23 @@ import {
   content, type Content, type InsertContent,
   moodBoards, type MoodBoard, type InsertMoodBoard,
   analyticsData, type AnalyticsData, type InsertAnalyticsData,
-  
+
   // Creative Symbiosis Framework types
   userEngagement, type UserEngagement, type InsertUserEngagement,
   evolutionPoints, type EvolutionPoints, type InsertEvolutionPoints,
   userCapabilities, type UserCapabilities, type InsertUserCapabilities,
   creativeHistory, type CreativeHistory, type InsertCreativeHistory,
-  
+
   // Color Palette types
   colorPalettes, type ColorPalette, type InsertColorPalette,
-  
+
   // Mood Capsules types
   moodCapsules, type MoodCapsule, type InsertMoodCapsule,
-  contentSentiment, type ContentSentiment, type InsertContentSentiment
+  contentSentiment, type ContentSentiment, type InsertContentSentiment,
+  legalAcceptance, type LegalAcceptance, type InsertLegalAcceptance,
+  securityAlert, type SecurityAlert, type InsertSecurityAlert,
+  accessAttempt, type AccessAttempt, type InsertAccessAttempt,
+  assetOwnership, type AssetOwnership, type InsertAssetOwnership
 } from "@shared/schema";
 
 export interface IStorage {
@@ -23,43 +27,43 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
-  
+
   // Content methods
   getContentByUserId(userId: number): Promise<Content[]>;
   getArchivedContentByUserId(userId: number): Promise<Content[]>;
   getContentById(id: number): Promise<Content | undefined>;
   createContent(content: InsertContent): Promise<Content>;
-  
+
   // Mood board methods
   getMoodBoardsByUserId(userId: number): Promise<MoodBoard[]>;
   createMoodBoard(moodBoard: InsertMoodBoard): Promise<MoodBoard>;
-  
+
   // Analytics methods
   getAnalyticsByUserId(userId: number, period: string): Promise<AnalyticsData | undefined>;
   createAnalyticsData(data: InsertAnalyticsData): Promise<AnalyticsData>;
-  
+
   // Creative Symbiosis Framework methods
-  
+
   // User Engagement methods
   getUserEngagementByUserId(userId: number): Promise<UserEngagement[]>;
   trackUserEngagement(engagement: InsertUserEngagement): Promise<UserEngagement>;
-  
+
   // Evolution Points methods
   getEvolutionPointsByUserId(userId: number): Promise<EvolutionPoints | undefined>;
   createEvolutionPoints(points: InsertEvolutionPoints): Promise<EvolutionPoints>;
   updateEvolutionPoints(userId: number, pointsToAdd: number): Promise<EvolutionPoints>;
   refreshCreativeEnergyPoints(userId: number): Promise<EvolutionPoints>;
-  
+
   // User Capabilities methods
   getUserCapabilitiesByUserId(userId: number): Promise<UserCapabilities[]>;
   unlockUserCapability(capability: InsertUserCapabilities): Promise<UserCapabilities>;
   upgradeCapabilityLevel(userId: number, capabilityName: string): Promise<UserCapabilities>;
-  
+
   // Creative History methods
   getCreativeHistoryByUserIdAndPeriod(userId: number, period: string): Promise<CreativeHistory | undefined>;
   createCreativeHistory(history: InsertCreativeHistory): Promise<CreativeHistory>;
   updateCreativeHistory(userId: number, period: string, updates: Partial<InsertCreativeHistory>): Promise<CreativeHistory>;
-  
+
   // Color Palette methods
   getColorPalettesByUserId(userId: number): Promise<ColorPalette[]>;
   getColorPaletteById(id: number): Promise<ColorPalette | undefined>;
@@ -67,7 +71,7 @@ export interface IStorage {
   updateColorPalette(id: number, updates: Partial<InsertColorPalette>): Promise<ColorPalette>;
   incrementColorPaletteUsage(id: number): Promise<ColorPalette>;
   getColorPalettesByMood(mood: string): Promise<ColorPalette[]>;
-  
+
   // Mood Capsules methods
   getMoodCapsulesByUserId(userId: number): Promise<MoodCapsule[]>;
   getMoodCapsuleById(id: number): Promise<MoodCapsule | undefined>;
@@ -75,14 +79,20 @@ export interface IStorage {
   updateMoodCapsule(id: number, updates: Partial<InsertMoodCapsule>): Promise<MoodCapsule>;
   deleteMoodCapsule(id: number): Promise<boolean>;
   archiveMoodCapsule(id: number): Promise<MoodCapsule>;
-  
+
   // Content Sentiment methods
-  getContentSentimentById(contentId: number): Promise<ContentSentiment | undefined>;
   getContentSentimentsByUserId(userId: number): Promise<ContentSentiment[]>;
-  createContentSentiment(sentiment: InsertContentSentiment): Promise<ContentSentiment>;
-  updateContentSentiment(contentId: number, updates: Partial<InsertContentSentiment>): Promise<ContentSentiment>;
   analyzeContentSentiment(contentIds: number[]): Promise<ContentSentiment[]>;
-  generateCaptionForMoodCapsule(contentIds: number[], emotionalTone: string, captionTone: string): Promise<string>;
+  generateCaptionForMoodCapsule(contentIds: number[], emotionalTone: string, captionTone?: string): Promise<string>;
+
+  // Security and legal methods
+  recordLegalAcceptance(acceptance: InsertLegalAcceptance): Promise<LegalAcceptance>;
+  getLegalAcceptance(userId: number, documentType: string): Promise<LegalAcceptance | null>;
+  storeSecurityAlert(alert: InsertSecurityAlert): Promise<SecurityAlert>;
+  getSecurityAlerts(limit: number): Promise<SecurityAlert[]>;
+  trackAccessAttempt(attempt: InsertAccessAttempt): Promise<AccessAttempt>;
+  registerAssetOwnership(asset: InsertAssetOwnership): Promise<AssetOwnership>;
+  verifyAssetOwnership(assetId: string, watermarkHash: string): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -90,18 +100,24 @@ export class MemStorage implements IStorage {
   private contents: Map<number, Content>;
   private moodBoards: Map<number, MoodBoard>;
   private analyticsData: Map<number, AnalyticsData>;
-  
+
   // Creative Symbiosis Framework storage
   private userEngagements: Map<number, UserEngagement> = new Map();
   private evolutionPointsData: Map<number, EvolutionPoints> = new Map();
   private userCapabilitiesData: Map<number, UserCapabilities> = new Map();
   private creativeHistoryData: Map<number, CreativeHistory> = new Map();
   private colorPalettesData: Map<number, ColorPalette> = new Map();
-  
+
   // Mood Capsules storage
   private moodCapsulesData: Map<number, MoodCapsule> = new Map();
   private contentSentimentsData: Map<number, ContentSentiment> = new Map();
-  
+
+  // Legal and Security storage
+  private legalAcceptances: Map<string, LegalAcceptance> = new Map();
+  private securityAlerts: SecurityAlert[] = [];
+  private accessAttempts: Map<string, AccessAttempt> = new Map();
+  private assetOwnerships: Map<string, AssetOwnership> = new Map();
+
   private currentUserId: number;
   private currentContentId: number;
   private currentMoodBoardId: number;
@@ -113,24 +129,34 @@ export class MemStorage implements IStorage {
   private currentColorPaletteId: number = 1;
   private currentMoodCapsuleId: number = 1;
   private currentContentSentimentId: number = 1;
+  private currentLegalAcceptanceId: number = 1;
+  private currentSecurityAlertId: number = 1;
+  private currentAccessAttemptId: number = 1;
+  private currentAssetOwnershipId: number = 1;
 
   constructor() {
     this.users = new Map();
     this.contents = new Map();
     this.moodBoards = new Map();
     this.analyticsData = new Map();
-    
+
     // Initialize Creative Symbiosis Framework storage
     this.userEngagements = new Map();
     this.evolutionPointsData = new Map();
     this.userCapabilitiesData = new Map();
     this.creativeHistoryData = new Map();
     this.colorPalettesData = new Map();
-    
+
     // Initialize Mood Capsules storage
     this.moodCapsulesData = new Map();
     this.contentSentimentsData = new Map();
-    
+
+    // Initialize legal and security storage
+    this.legalAcceptances = new Map();
+    this.securityAlerts = [];
+    this.accessAttempts = new Map();
+    this.assetOwnerships = new Map();
+
     this.currentUserId = 1;
     this.currentContentId = 1;
     this.currentMoodBoardId = 1;
@@ -142,7 +168,11 @@ export class MemStorage implements IStorage {
     this.currentColorPaletteId = 1;
     this.currentMoodCapsuleId = 1;
     this.currentContentSentimentId = 1;
-    
+    this.currentLegalAcceptanceId = 1;
+    this.currentSecurityAlertId = 1;
+    this.currentAccessAttemptId = 1;
+    this.currentAssetOwnershipId = 1;
+
     // Initialize with mock data
     this.initializeMockData();
   }
@@ -165,11 +195,11 @@ export class MemStorage implements IStorage {
       updatedAt: new Date()
     };
     this.users.set(mockUser.id, mockUser);
-    
+
     // Create mock content
     const contentStatuses = ["Draft", "Scheduled", "Posted"];
     const platforms = ["Instagram", "TikTok", "Pinterest", "Twitter"];
-    
+
     for (let i = 0; i < 8; i++) {
       const contentItem: Content = {
         id: this.currentContentId++,
@@ -189,10 +219,10 @@ export class MemStorage implements IStorage {
       };
       this.contents.set(contentItem.id, contentItem);
     }
-    
+
     // Create mock mood boards
     const moodBoardThemes = ["Summer Vibes", "Minimalist", "Bold Colors", "Nature Inspired"];
-    
+
     for (let i = 0; i < 4; i++) {
       const moodBoard: MoodBoard = {
         id: this.currentMoodBoardId++,
@@ -209,10 +239,10 @@ export class MemStorage implements IStorage {
       };
       this.moodBoards.set(moodBoard.id, moodBoard);
     }
-    
+
     // Create mock analytics data
     const periods = ["daily", "weekly", "monthly"];
-    
+
     for (let i = 0; i < 3; i++) {
       const analyticsItem: AnalyticsData = {
         id: this.currentAnalyticsId++,
@@ -245,9 +275,9 @@ export class MemStorage implements IStorage {
       };
       this.analyticsData.set(analyticsItem.id, analyticsItem);
     }
-    
+
     // Create mock Creative Symbiosis data
-    
+
     // User engagement data
     const engagementTypes = ["content_created", "tool_used", "feature_explored", "feedback_given"];
     for (let i = 0; i < 5; i++) {
@@ -265,7 +295,7 @@ export class MemStorage implements IStorage {
       };
       this.userEngagements.set(engagement.id, engagement);
     }
-    
+
     // Evolution points data
     const evolutionTiers = ["starter", "growing", "established", "advanced", "expert"];
     const pointsData: EvolutionPoints = {
@@ -279,7 +309,7 @@ export class MemStorage implements IStorage {
       updatedAt: new Date()
     };
     this.evolutionPointsData.set(pointsData.id, pointsData);
-    
+
     // User capabilities data
     const capabilities = [
       "basic_analysis", 
@@ -287,7 +317,7 @@ export class MemStorage implements IStorage {
       "mood_board_creation", 
       "schedule_optimization"
     ];
-    
+
     for (let i = 0; i < capabilities.length; i++) {
       const capability: UserCapabilities = {
         id: this.currentCapabilityId++,
@@ -300,10 +330,10 @@ export class MemStorage implements IStorage {
       };
       this.userCapabilitiesData.set(capability.id, capability);
     }
-    
+
     // Creative history data
     const historyPeriods = ["weekly", "monthly", "quarterly"];
-    
+
     for (let i = 0; i < historyPeriods.length; i++) {
       const history: CreativeHistory = {
         id: this.currentCreativeHistoryId++,
@@ -328,7 +358,7 @@ export class MemStorage implements IStorage {
       };
       this.creativeHistoryData.set(history.id, history);
     }
-    
+
     // Create mock color palettes
     const moods = ["happy", "calm", "energetic", "melancholic", "professional"];
     const colorSets = [
@@ -338,7 +368,7 @@ export class MemStorage implements IStorage {
       ["#2B2D42", "#8D99AE", "#EDF2F4", "#D90429", "#457B9D"], // melancholic
       ["#194B7E", "#314E6F", "#547AA5", "#C2DBF5", "#E2EBF4"]  // professional
     ];
-    
+
     for (let i = 0; i < moods.length; i++) {
       const colorPalette: ColorPalette = {
         id: this.currentColorPaletteId++,
@@ -385,22 +415,22 @@ export class MemStorage implements IStorage {
     this.users.set(id, user);
     return user;
   }
-  
+
   // Content methods
   async getContentByUserId(userId: number): Promise<Content[]> {
     return Array.from(this.contents.values())
       .filter(content => content.userId === userId && content.status !== 'Posted');
   }
-  
+
   async getArchivedContentByUserId(userId: number): Promise<Content[]> {
     return Array.from(this.contents.values())
       .filter(content => content.userId === userId && content.status === 'Posted');
   }
-  
+
   async getContentById(id: number): Promise<Content | undefined> {
     return this.contents.get(id);
   }
-  
+
   async createContent(insertContent: InsertContent): Promise<Content> {
     const id = this.currentContentId++;
     const content: Content = {
@@ -420,13 +450,13 @@ export class MemStorage implements IStorage {
     this.contents.set(id, content);
     return content;
   }
-  
+
   // Mood board methods
   async getMoodBoardsByUserId(userId: number): Promise<MoodBoard[]> {
     return Array.from(this.moodBoards.values())
       .filter(board => board.userId === userId);
   }
-  
+
   async createMoodBoard(insertMoodBoard: InsertMoodBoard): Promise<MoodBoard> {
     const id = this.currentMoodBoardId++;
     const moodBoard: MoodBoard = {
@@ -440,13 +470,13 @@ export class MemStorage implements IStorage {
     this.moodBoards.set(id, moodBoard);
     return moodBoard;
   }
-  
+
   // Analytics methods
   async getAnalyticsByUserId(userId: number, period: string): Promise<AnalyticsData | undefined> {
     return Array.from(this.analyticsData.values())
       .find(data => data.userId === userId && data.period === period);
   }
-  
+
   async createAnalyticsData(insertData: InsertAnalyticsData): Promise<AnalyticsData> {
     const id = this.currentAnalyticsId++;
     const data: AnalyticsData = {
@@ -470,7 +500,7 @@ export class MemStorage implements IStorage {
       .filter(engagement => engagement.userId === userId)
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()); // Sort by latest first
   }
-  
+
   async trackUserEngagement(engagement: InsertUserEngagement): Promise<UserEngagement> {
     const id = this.currentEngagementId++;
     const userEngagement: UserEngagement = {
@@ -479,19 +509,19 @@ export class MemStorage implements IStorage {
       createdAt: new Date()
     };
     this.userEngagements.set(id, userEngagement);
-    
+
     // Also update user's evolution points
     await this.updateEvolutionPoints(engagement.userId, 5); // Award 5 points for any interaction
-    
+
     return userEngagement;
   }
-  
+
   // Evolution Points methods
   async getEvolutionPointsByUserId(userId: number): Promise<EvolutionPoints | undefined> {
     return Array.from(this.evolutionPointsData.values())
       .find(points => points.userId === userId);
   }
-  
+
   async createEvolutionPoints(points: InsertEvolutionPoints): Promise<EvolutionPoints> {
     const id = this.currentEvolutionPointsId++;
     const evolutionPoints: EvolutionPoints = {
@@ -503,10 +533,10 @@ export class MemStorage implements IStorage {
     this.evolutionPointsData.set(id, evolutionPoints);
     return evolutionPoints;
   }
-  
+
   async updateEvolutionPoints(userId: number, pointsToAdd: number): Promise<EvolutionPoints> {
     let userPoints = await this.getEvolutionPointsByUserId(userId);
-    
+
     // If user doesn't have evolution points yet, create them
     if (!userPoints) {
       userPoints = await this.createEvolutionPoints({
@@ -517,14 +547,14 @@ export class MemStorage implements IStorage {
         creativeEnergyPoints: 100
       });
     }
-    
+
     // Update the points
     const totalPoints = userPoints.totalPoints + pointsToAdd;
-    
+
     // Determine tier based on total points
     let currentTier = userPoints.currentTier;
     let nextMilestone = userPoints.nextMilestone;
-    
+
     if (totalPoints >= 1000) {
       currentTier = "expert";
       nextMilestone = 1500;
@@ -538,7 +568,7 @@ export class MemStorage implements IStorage {
       currentTier = "growing";
       nextMilestone = 250;
     }
-    
+
     // Update the record
     const updatedPoints: EvolutionPoints = {
       ...userPoints,
@@ -547,15 +577,15 @@ export class MemStorage implements IStorage {
       nextMilestone,
       updatedAt: new Date()
     };
-    
+
     this.evolutionPointsData.set(userPoints.id, updatedPoints);
-    
+
     return updatedPoints;
   }
-  
+
   async refreshCreativeEnergyPoints(userId: number): Promise<EvolutionPoints> {
     const userPoints = await this.getEvolutionPointsByUserId(userId);
-    
+
     if (!userPoints) {
       return this.createEvolutionPoints({
         userId,
@@ -565,14 +595,14 @@ export class MemStorage implements IStorage {
         creativeEnergyPoints: 100 // Start with full energy
       });
     }
-    
+
     // Calculate how many points to regenerate based on time elapsed
     const now = new Date();
     const hoursElapsed = Math.floor((now.getTime() - userPoints.lastPointsUpdate.getTime()) / (1000 * 60 * 60));
-    
+
     // Regenerate at a rate of 5 points per hour, up to a maximum based on tier
     const pointsToRegenerate = Math.min(hoursElapsed * 5, 100);
-    
+
     // Max energy depends on tier
     let maxEnergy = 100;
     switch (userPoints.currentTier) {
@@ -589,10 +619,10 @@ export class MemStorage implements IStorage {
         maxEnergy = 110;
         break;
     }
-    
+
     // Update energy points
     const newEnergyPoints = Math.min(userPoints.creativeEnergyPoints + pointsToRegenerate, maxEnergy);
-    
+
     // Update the record
     const updatedPoints: EvolutionPoints = {
       ...userPoints,
@@ -600,18 +630,18 @@ export class MemStorage implements IStorage {
       lastPointsUpdate: now,
       updatedAt: now
     };
-    
+
     this.evolutionPointsData.set(userPoints.id, updatedPoints);
-    
+
     return updatedPoints;
   }
-  
+
   // User Capabilities methods
   async getUserCapabilitiesByUserId(userId: number): Promise<UserCapabilities[]> {
     return Array.from(this.userCapabilitiesData.values())
       .filter(capability => capability.userId === userId);
   }
-  
+
   async unlockUserCapability(capability: InsertUserCapabilities): Promise<UserCapabilities> {
     const id = this.currentCapabilityId++;
     const userCapability: UserCapabilities = {
@@ -624,34 +654,34 @@ export class MemStorage implements IStorage {
     this.userCapabilitiesData.set(id, userCapability);
     return userCapability;
   }
-  
+
   async upgradeCapabilityLevel(userId: number, capabilityName: string): Promise<UserCapabilities> {
     // Find the capability
     const capability = Array.from(this.userCapabilitiesData.values())
       .find(cap => cap.userId === userId && cap.capabilityName === capabilityName);
-    
+
     if (!capability) {
       throw new Error(`Capability ${capabilityName} not found for user ${userId}`);
     }
-    
+
     // Upgrade the level
     const updatedCapability: UserCapabilities = {
       ...capability,
       level: capability.level + 1,
       updatedAt: new Date()
     };
-    
+
     this.userCapabilitiesData.set(capability.id, updatedCapability);
-    
+
     return updatedCapability;
   }
-  
+
   // Creative History methods
   async getCreativeHistoryByUserIdAndPeriod(userId: number, period: string): Promise<CreativeHistory | undefined> {
     return Array.from(this.creativeHistoryData.values())
       .find(history => history.userId === userId && history.period === period);
   }
-  
+
   async createCreativeHistory(history: InsertCreativeHistory): Promise<CreativeHistory> {
     const id = this.currentCreativeHistoryId++;
     const creativeHistory: CreativeHistory = {
@@ -662,11 +692,11 @@ export class MemStorage implements IStorage {
     this.creativeHistoryData.set(id, creativeHistory);
     return creativeHistory;
   }
-  
+
   async updateCreativeHistory(userId: number, period: string, updates: Partial<InsertCreativeHistory>): Promise<CreativeHistory> {
     // Find the history record
     const history = await this.getCreativeHistoryByUserIdAndPeriod(userId, period);
-    
+
     if (!history) {
       // If not found, create a new one with the updates
       return this.createCreativeHistory({
@@ -675,7 +705,7 @@ export class MemStorage implements IStorage {
         ...(updates as InsertCreativeHistory)
       });
     }
-    
+
     // Update the existing record
     const updatedHistory: CreativeHistory = {
       ...history,
@@ -686,22 +716,22 @@ export class MemStorage implements IStorage {
       id: history.id,
       createdAt: history.createdAt
     };
-    
+
     this.creativeHistoryData.set(history.id, updatedHistory);
-    
+
     return updatedHistory;
   }
-  
+
   // Color Palette methods
   async getColorPalettesByUserId(userId: number): Promise<ColorPalette[]> {
     return Array.from(this.colorPalettesData.values())
       .filter(palette => palette.userId === userId);
   }
-  
+
   async getColorPaletteById(id: number): Promise<ColorPalette | undefined> {
     return this.colorPalettesData.get(id);
   }
-  
+
   async createColorPalette(palette: InsertColorPalette): Promise<ColorPalette> {
     const id = this.currentColorPaletteId++;
     const colorPalette: ColorPalette = {
@@ -717,14 +747,14 @@ export class MemStorage implements IStorage {
     this.colorPalettesData.set(id, colorPalette);
     return colorPalette;
   }
-  
+
   async updateColorPalette(id: number, updates: Partial<InsertColorPalette>): Promise<ColorPalette> {
     const palette = await this.getColorPaletteById(id);
-    
+
     if (!palette) {
       throw new Error(`Color palette with id ${id} not found`);
     }
-    
+
     const updatedPalette: ColorPalette = {
       ...palette,
       ...updates,
@@ -735,30 +765,30 @@ export class MemStorage implements IStorage {
       createdAt: palette.createdAt,
       updatedAt: new Date()
     };
-    
+
     this.colorPalettesData.set(id, updatedPalette);
-    
+
     return updatedPalette;
   }
-  
+
   async incrementColorPaletteUsage(id: number): Promise<ColorPalette> {
     const palette = await this.getColorPaletteById(id);
-    
+
     if (!palette) {
       throw new Error(`Color palette with id ${id} not found`);
     }
-    
+
     const updatedPalette: ColorPalette = {
       ...palette,
       usageCount: palette.usageCount + 1,
       updatedAt: new Date()
     };
-    
+
     this.colorPalettesData.set(id, updatedPalette);
-    
+
     return updatedPalette;
   }
-  
+
   async getColorPalettesByMood(mood: string): Promise<ColorPalette[]> {
     return Array.from(this.colorPalettesData.values())
       .filter(palette => palette.mood.toLowerCase() === mood.toLowerCase());
@@ -875,43 +905,43 @@ export class MemStorage implements IStorage {
 
   async analyzeContentSentiment(contentIds: number[]): Promise<ContentSentiment[]> {
     const results: ContentSentiment[] = [];
-    
+
     // Import OpenAI integration
     const openai = (await import('./ai/openai')).default;
-    
+
     for (const contentId of contentIds) {
       const content = await this.getContentById(contentId);
       if (!content) {
         continue;
       }
-      
+
       // Check if sentiment already exists
       let sentiment = await this.getContentSentimentById(contentId);
-      
+
       // If sentiment exists and is less than 1 day old, skip reanalysis
       if (sentiment && 
           (new Date().getTime() - sentiment.analyzedAt.getTime()) < 24 * 60 * 60 * 1000) {
         results.push(sentiment);
         continue;
       }
-      
+
       try {
         // Use OpenAI for sentiment analysis if configured
         if (openai.isConfigured) {
           // Create comprehensive prompt for emotional analysis
           const prompt = `
             Analyze the emotional tone of this content:
-            
+
             Title: ${content.title}
             Description: ${content.description || 'No description'}
-            
+
             Provide a detailed emotional analysis with:
             1. The dominant emotion (choose from: joyful, nostalgic, energetic, thoughtful, relaxed, melancholic, powerful, mysterious)
             2. Emotional intensity on a scale of 1-100
             3. A breakdown of all emotions present with their relative percentages
             4. 5 key emotional keywords from the content
           `;
-          
+
           const systemPrompt = `
             You are an expert in emotional content analysis. 
             Provide accurate and nuanced emotional analysis of creative content.
@@ -923,7 +953,7 @@ export class MemStorage implements IStorage {
               "keywords": array of 5 strings representing emotional keywords from the content
             }
           `;
-          
+
           // Request AI analysis
           const analysis = await openai.generateJsonResponse<{
             dominantEmotion: string;
@@ -931,7 +961,7 @@ export class MemStorage implements IStorage {
             emotionBreakdown: Record<string, number>;
             keywords: string[];
           }>(prompt, systemPrompt, { temperature: 0.4 });
-          
+
           // Create or update sentiment
           if (sentiment) {
             sentiment = await this.updateContentSentiment(contentId, {
@@ -950,7 +980,7 @@ export class MemStorage implements IStorage {
               keywords: analysis.keywords
             });
           }
-          
+
           results.push(sentiment);
           continue;
         }
@@ -958,19 +988,19 @@ export class MemStorage implements IStorage {
         console.error("Error using OpenAI for sentiment analysis:", error);
         // Fall back to basic analysis method if OpenAI fails
       }
-      
+
       // Fallback: Basic analysis if OpenAI is not available or fails
       const emotions = ["joyful", "nostalgic", "energetic", "thoughtful", "relaxed", "melancholic", "powerful", "mysterious"];
       const randomEmotion = emotions[Math.floor(Math.random() * emotions.length)];
       const randomIntensity = Math.floor(Math.random() * 100);
-      
+
       // Create a breakdown of emotions (with the dominant one having the highest value)
       const emotionBreakdown: Record<string, number> = {};
       emotions.forEach(emotion => {
         emotionBreakdown[emotion] = Math.floor(Math.random() * 40);
       });
       emotionBreakdown[randomEmotion] += 60; // Make sure the dominant emotion has the highest value
-      
+
       // Extract keywords from content title and description
       const keywordsSource = `${content.title} ${content.description || ''}`;
       const keywords = keywordsSource
@@ -979,7 +1009,7 @@ export class MemStorage implements IStorage {
         .split(/\s+/)
         .filter(word => word.length > 3)
         .slice(0, 5);
-      
+
       // Create or update sentiment
       if (sentiment) {
         sentiment = await this.updateContentSentiment(contentId, {
@@ -998,10 +1028,10 @@ export class MemStorage implements IStorage {
           keywords
         });
       }
-      
+
       results.push(sentiment);
     }
-    
+
     return results;
   }
 
@@ -1015,17 +1045,17 @@ export class MemStorage implements IStorage {
       contentIds.map(id => this.getContentById(id))
     );
     const validContentItems = contentItems.filter(item => item !== undefined) as Content[];
-    
+
     if (validContentItems.length === 0) {
       return "No content found to generate a caption.";
     }
-    
+
     // Import OpenAI integration
     const openai = (await import('./ai/openai')).default;
-    
+
     // Get content sentiment analysis for more accurate captions
     const sentiments = await this.analyzeContentSentiment(contentIds);
-    
+
     try {
       // Use OpenAI for caption generation if configured
       if (openai.isConfigured) {
@@ -1035,22 +1065,22 @@ export class MemStorage implements IStorage {
            Description: ${item.description || 'No description'}
            Platform: ${item.platform || 'Not specified'}`
         ).join('\n\n');
-        
+
         // Get emotional keywords from sentiment analysis
         const keywords = sentiments
           .flatMap(s => s.keywords || [])
           .filter((v, i, a) => a.indexOf(v) === i) // Unique values
           .slice(0, 8)
           .join(', ');
-        
+
         const prompt = `
           Create a ${captionTone} caption for a collection of content pieces that share a ${emotionalTone} mood.
-          
+
           The content includes:
           ${contentSummary}
-          
+
           Key emotional themes: ${keywords}
-          
+
           The caption should:
           1. Capture the essence of the ${emotionalTone} emotional tone
           2. Use a ${captionTone} writing style
@@ -1059,14 +1089,14 @@ export class MemStorage implements IStorage {
           5. Avoid specific references to the content titles
           6. Feel authentic and human-written, not AI-generated
         `;
-        
+
         const systemPrompt = `
           You are a professional creative writer specializing in emotional storytelling.
           Create a compelling caption that evokes the specified emotional tone using the specified writing style.
           Ensure the caption feels authentic, insightful, and connects emotionally with the reader.
           Return ONLY the caption text with no additional explanations or formatting.
         `;
-        
+
         // Generate AI caption
         const caption = await openai.generateText(prompt, { temperature: 0.7 });
         if (caption && caption.trim().length > 0) {
@@ -1077,7 +1107,7 @@ export class MemStorage implements IStorage {
       console.error("Error generating AI caption:", error);
       // Fall back to template-based caption if AI fails
     }
-    
+
     // Fallback: Template-based caption generation
     const captionIntros: Record<string, string[]> = {
       joyful: ["Embracing moments of pure joy", "Celebrating life's brightest moments", "Finding happiness in the everyday"],
@@ -1089,7 +1119,7 @@ export class MemStorage implements IStorage {
       powerful: ["Standing in the strength of our convictions", "Embracing the force that drives us forward", "Channeling energy that transforms our world"],
       mysterious: ["Exploring the unknown corners of our creativity", "Embracing the enigmatic journey of discovery", "Finding wonder in the unexplained"]
     };
-    
+
     const captionStyles: Record<string, (intro: string) => string> = {
       poetic: (intro) => `${intro}, where each frame tells a story of emotion that transcends time, connecting us to the universal language of human experience.`,
       concise: (intro) => `${intro}. Captured with intention.`,
@@ -1099,16 +1129,58 @@ export class MemStorage implements IStorage {
       inspirational: (intro) => `${intro}. Through these experiences, we discover the extraordinary capacity we have to feel, transform, and inspire others.`,
       humorous: (intro) => `${intro} - with a smile, a laugh, and the gentle reminder not to take ourselves too seriously along the way.`
     };
-    
+
     // Default to balanced if tone not found
     const defaultEmotion = "thoughtful";
     const defaultCaptionTone = "balanced";
-    
+
     const introOptions = captionIntros[emotionalTone] || captionIntros[defaultEmotion];
     const intro = introOptions[Math.floor(Math.random() * introOptions.length)];
     const styleFunction = captionStyles[captionTone] || captionStyles[defaultCaptionTone];
-    
+
     return styleFunction(intro);
+  }
+
+  // Security and Legal Methods
+  async recordLegalAcceptance(acceptance: InsertLegalAcceptance): Promise<LegalAcceptance> {
+    const id = this.currentLegalAcceptanceId++;
+    const legalAcceptance: LegalAcceptance = { ...acceptance, id, acceptedAt: new Date() };
+    this.legalAcceptances.set(`${acceptance.userId}-${acceptance.documentType}`, legalAcceptance);
+    return legalAcceptance;
+  }
+
+  async getLegalAcceptance(userId: number, documentType: string): Promise<LegalAcceptance | null> {
+    return this.legalAcceptances.get(`${userId}-${documentType}`) || null;
+  }
+
+  async storeSecurityAlert(alert: InsertSecurityAlert): Promise<SecurityAlert> {
+    const id = this.currentSecurityAlertId++;
+    const securityAlert: SecurityAlert = { ...alert, id, createdAt: new Date() };
+    this.securityAlerts.push(securityAlert);
+    return securityAlert;
+  }
+
+  async getSecurityAlerts(limit: number): Promise<SecurityAlert[]> {
+    return this.securityAlerts.slice(0, limit);
+  }
+
+  async trackAccessAttempt(attempt: InsertAccessAttempt): Promise<AccessAttempt> {
+    const id = this.currentAccessAttemptId++;
+    const accessAttempt: AccessAttempt = { ...attempt, id, createdAt: new Date() };
+    this.accessAttempts.set(`${attempt.userId}-${attempt.timestamp}`, accessAttempt);
+    return accessAttempt;
+  }
+
+  async registerAssetOwnership(asset: InsertAssetOwnership): Promise<AssetOwnership> {
+    const id = this.currentAssetOwnershipId++;
+    const assetOwnership: AssetOwnership = { ...asset, id, registeredAt: new Date() };
+    this.assetOwnerships.set(asset.assetId, assetOwnership);
+    return assetOwnership;
+  }
+
+  async verifyAssetOwnership(assetId: string, watermarkHash: string): Promise<boolean> {
+    const ownership = this.assetOwnerships.get(assetId);
+    return ownership ? ownership.watermarkHash === watermarkHash : false;
   }
 }
 

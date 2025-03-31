@@ -380,3 +380,104 @@ export enum MoodTone {
   MYSTERIOUS = "MYSTERIOUS",
   BOLD = "BOLD",
 }
+
+// Security and Legal schemas
+
+// Legal document acceptance tracking
+export const legalAcceptance = pgTable("legal_acceptance", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  documentType: text("document_type").notNull(), // terms, privacy, etc.
+  version: text("version").notNull(),
+  acceptedAt: timestamp("accepted_at").defaultNow(),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+});
+
+// Security alerts and monitoring
+export const securityAlerts = pgTable("security_alerts", {
+  id: serial("id").primaryKey(),
+  alertType: text("alert_type").notNull(), // access, scraping, extraction, unauthorized
+  severity: text("severity").notNull(), // low, medium, high
+  details: jsonb("details"),
+  timestamp: timestamp("timestamp").defaultNow(),
+  ipAddress: text("ip_address"),
+  userId: integer("user_id"),
+  resolved: boolean("resolved").default(false),
+  resolutionNotes: text("resolution_notes"),
+});
+
+// Access attempts tracking
+export const accessAttempts = pgTable("access_attempts", {
+  id: serial("id").primaryKey(),
+  ipAddress: text("ip_address").notNull(),
+  path: text("path").notNull(),
+  method: text("method").notNull(),
+  timestamp: timestamp("timestamp").defaultNow(),
+  userAgent: text("user_agent"),
+  authorized: boolean("authorized").default(false),
+  userId: integer("user_id"),
+});
+
+// Asset ownership and watermarking
+export const assetOwnership = pgTable("asset_ownership", {
+  id: serial("id").primaryKey(),
+  assetId: text("asset_id").notNull(),
+  assetType: text("asset_type").notNull(), // image, text, code
+  watermarkHash: text("watermark_hash").notNull(),
+  ownerInfo: text("owner_info").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  lastVerifiedAt: timestamp("last_verified_at"),
+  verificationStatus: boolean("verification_status").default(true),
+});
+
+// Export insert schemas for security tables
+export const insertLegalAcceptanceSchema = createInsertSchema(legalAcceptance).pick({
+  userId: true,
+  documentType: true,
+  version: true,
+  acceptedAt: true,
+  ipAddress: true,
+  userAgent: true,
+});
+
+export const insertSecurityAlertSchema = createInsertSchema(securityAlerts).pick({
+  alertType: true,
+  severity: true,
+  details: true,
+  timestamp: true,
+  ipAddress: true,
+  userId: true,
+});
+
+export const insertAccessAttemptSchema = createInsertSchema(accessAttempts).pick({
+  ipAddress: true,
+  path: true,
+  method: true,
+  timestamp: true,
+  userAgent: true,
+  authorized: true,
+  userId: true,
+});
+
+export const insertAssetOwnershipSchema = createInsertSchema(assetOwnership).pick({
+  assetId: true,
+  assetType: true,
+  watermarkHash: true,
+  ownerInfo: true,
+  lastVerifiedAt: true,
+  verificationStatus: true,
+});
+
+// Export types for security tables
+export type InsertLegalAcceptance = z.infer<typeof insertLegalAcceptanceSchema>;
+export type LegalAcceptance = typeof legalAcceptance.$inferSelect;
+
+export type InsertSecurityAlert = z.infer<typeof insertSecurityAlertSchema>;
+export type SecurityAlert = typeof securityAlerts.$inferSelect;
+
+export type InsertAccessAttempt = z.infer<typeof insertAccessAttemptSchema>;
+export type AccessAttempt = typeof accessAttempts.$inferSelect;
+
+export type InsertAssetOwnership = z.infer<typeof insertAssetOwnershipSchema>;
+export type AssetOwnership = typeof assetOwnership.$inferSelect;
