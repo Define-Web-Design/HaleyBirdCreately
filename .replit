@@ -55,7 +55,7 @@ localPort = 8425
 externalPort = 3002
 
 [workflows]
-runButton = "Complete Task Verification"
+runButton = "Simultaneous Task Verification"
 
 [[workflows.workflow]]
 name = "Project"
@@ -824,7 +824,19 @@ mode = "parallel"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "# Run code quality checks"
+args = "# Kill any running processes"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pkill -f node || true"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Start with code quality checks"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
@@ -840,47 +852,11 @@ args = ""
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "# Run accessibility audit"
+args = "# Run the comprehensive validation system with strict checkpoint requirements"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "node -e \"const { runAccessibilityAudit } = require('./client/src/utils/navigation-tester.js'); runAccessibilityAudit().then(results => console.log(JSON.stringify(results, null, 2)));\""
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = ""
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "# Check navigation links"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "node -e \"const { verifyPageLinks } = require('./client/src/utils/navigation-tester.js'); verifyPageLinks().then(results => console.log(JSON.stringify(results, null, 2)));\""
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = ""
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "# Run API validation"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "node -e \"const { validateApiEndpoints } = require('./client/src/utils/api-validator.js'); validateApiEndpoints().then(results => console.log(JSON.stringify(results, null, 2)));\""
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = ""
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "# Run comprehensive validation"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "node -e \"require('./client/src/utils/consolidated-validation.js').runFullSystemValidation().then(report => { require('./client/src/utils/consolidated-validation.js').displayFullValidationResults(report); });\""
+args = "node -e \"require('./client/src/utils/task-validation-orchestrator.js').taskOrchestrator.ensureSimultaneousValidation().then(result => { console.log(result.message); process.exit(result.success ? 0 : 1); })\""
 
 [[workflows.workflow]]
 name = "Complete Task Verification"

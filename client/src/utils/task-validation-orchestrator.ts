@@ -339,6 +339,82 @@ class TaskValidationOrchestrator {
       message: `Checkpoint ${checkpoint.id} created successfully`
     };
   }
+  
+  /**
+   * Execute simultaneous validation of all tasks and ensure all are completed
+   * before allowing any checkpoint creation
+   */
+  public async ensureSimultaneousValidation(): Promise<{ success: boolean; message: string }> {
+    console.log('Starting simultaneous validation for all tasks...');
+    console.log('='.repeat(80));
+    
+    // If no tasks are registered, this is likely a new workflow
+    if (this._context.taskRequests.length === 0) {
+      console.log('No tasks registered. Please register tasks before validation.');
+      return {
+        success: false,
+        message: 'No tasks registered for validation. Please define tasks first.'
+      };
+    }
+    
+    try {
+      // Run validation for all tasks
+      console.log(`Validating ${this._context.taskRequests.length} tasks simultaneously...`);
+      await this.validateAllTasks();
+      
+      // Check if ANY task failed
+      const failedTasks = this._context.taskRequests.filter(task => task.status === 'failed');
+      
+      if (failedTasks.length > 0) {
+        console.error(`${failedTasks.length} tasks failed validation:`);
+        failedTasks.forEach(task => {
+          console.error(`- Task ${task.id} (${task.type}): ${task.description}`);
+          console.error(`  Error: ${task.error || 'Unknown error'}`);
+        });
+        
+        return {
+          success: false,
+          message: `Cannot create checkpoint - ${failedTasks.length} tasks failed validation. All tasks must be completed simultaneously.`
+        };
+      }
+      
+      // If all tasks completed successfully, create a checkpoint
+      if (this.canCreateCheckpoint()) {
+        // Create a checkpoint record
+        const checkpoint = {
+          id: `checkpoint-${Date.now()}`,
+          timestamp: new Date().toISOString(),
+          tasks: this._context.taskRequests,
+          validationReport: this._context.validationReport
+        };
+        
+        console.log('All tasks validated successfully. Creating checkpoint:', checkpoint.id);
+        
+        // Reset the context for new tasks
+        this._context = {
+          taskRequests: [],
+          timestamp: new Date().toISOString(),
+          allTasksCompleted: false
+        };
+        
+        return {
+          success: true,
+          message: `All tasks were successfully validated simultaneously. Checkpoint ${checkpoint.id} created.`
+        };
+      } else {
+        return {
+          success: false,
+          message: 'Cannot create checkpoint - not all tasks completed successfully together.'
+        };
+      }
+    } catch (error) {
+      console.error('Error during simultaneous validation:', error);
+      return {
+        success: false,
+        message: `Validation failed with error: ${error.message || 'Unknown error'}`
+      };
+    }
+  }
 }
 
 export const taskOrchestrator = TaskValidationOrchestrator.getInstance();
