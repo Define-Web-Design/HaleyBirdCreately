@@ -55,7 +55,7 @@ localPort = 8425
 externalPort = 3002
 
 [workflows]
-runButton = "Full App with Accessibility"
+runButton = "Run Application"
 
 [[workflows.workflow]]
 name = "Project"
@@ -156,11 +156,11 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "pkill -f node || true"
+args = "cd client && npm run dev"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npm run dev"
+args = "cd server && npm run dev"
 
 [[workflows.workflow]]
 name = "Start Full Stack"
@@ -200,3 +200,29 @@ args = "npm run build"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npm run test:a11y"
+
+[[workflows.workflow]]
+name = "Run Application"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pkill -f node || true"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
+
+[[workflows.workflow]]
+name = "Lint and Type Check"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run lint"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run type-check"

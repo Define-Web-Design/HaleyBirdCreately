@@ -49,7 +49,7 @@ interface MoodCapsuleDetailProps {
   onEdit: (capsule: MoodCapsule) => void;
 }
 
-const MoodCapsuleDetail: React.FC<MoodCapsuleDetailProps> = ({
+const MoodCapsuleDetail: React.FC<MoodCapsuleDetailProps> = React.memo(({
   capsuleId,
   isOpen,
   onClose,
@@ -62,15 +62,31 @@ const MoodCapsuleDetail: React.FC<MoodCapsuleDetailProps> = ({
   const [isRegeneratingCaption, setIsRegeneratingCaption] = React.useState(false);
   
   // Fetch the specific mood capsule
-  const { data: capsule, isLoading: isCapsuleLoading } = useQuery<MoodCapsule>({
+  const { data: capsule, isLoading: isCapsuleLoading, error: capsuleError } = useQuery<MoodCapsule>({
     queryKey: [`/api/mood-capsules/${capsuleId}`],
     enabled: isOpen && !!capsuleId,
+    retry: 2,
+    onError: (error) => {
+      toast({
+        title: "Error loading mood capsule",
+        description: "There was a problem loading this mood capsule. Please try again.",
+        variant: "destructive",
+      });
+    }
   });
   
   // Fetch content items for this capsule
-  const { data: content = [], isLoading: isContentLoading } = useQuery<ContentItem[]>({
+  const { data: content = [], isLoading: isContentLoading, error: contentError } = useQuery<ContentItem[]>({
     queryKey: [`/api/content/by-capsule/${capsuleId}`],
     enabled: isOpen && !!capsuleId,
+    retry: 2,
+    onError: (error) => {
+      toast({
+        title: "Error loading content",
+        description: "There was a problem loading content for this mood capsule.",
+        variant: "destructive",
+      });
+    }
   });
   
   // Handle the regeneration of AI caption
@@ -112,10 +128,35 @@ const MoodCapsuleDetail: React.FC<MoodCapsuleDetailProps> = ({
   const DetailContent = () => (
     <>
       {isCapsuleLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="space-y-4 text-center">
-            <RefreshCw className="h-10 w-10 animate-spin text-primary mx-auto" />
-            <p className="text-muted-foreground">Loading capsule details...</p>
+        <div className="space-y-6">
+          <div className="flex items-start justify-between">
+            <div>
+              <Skeleton className="h-8 w-48 mb-2" />
+              <div className="flex gap-2">
+                <Skeleton className="h-5 w-20" />
+                <Skeleton className="h-5 w-24" />
+              </div>
+              <div className="flex gap-4 mt-3">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-4 w-24" />
+              </div>
+            </div>
+            <Skeleton className="h-9 w-20" />
+          </div>
+          <Skeleton className="h-px w-full my-6" />
+          <div>
+            <Skeleton className="h-10 w-full mb-6" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="border rounded-md overflow-hidden">
+                  <Skeleton className="h-32 w-full" />
+                  <div className="p-3">
+                    <Skeleton className="h-5 w-3/4 mb-2" />
+                    <Skeleton className="h-4 w-1/2" />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       ) : capsule ? (
@@ -380,5 +421,7 @@ const MoodCapsuleDetail: React.FC<MoodCapsuleDetailProps> = ({
     </Sheet>
   );
 };
+
+});
 
 export default MoodCapsuleDetail;
