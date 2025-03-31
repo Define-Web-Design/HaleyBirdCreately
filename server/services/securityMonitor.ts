@@ -328,15 +328,29 @@ class SecurityMonitorService {
           break;
           
         case 'cross-platform':
-          // No specific issues for this type
+          // Check for platform-specific compliance issues
+          recommendations.push('Ensure content meets platform-specific guidelines and maintains ownership attribution');
           break;
           
         default:
           recommendations.push('Unknown enhancement type. Verify it complies with usage terms.');
       }
       
-      // Add a generic legal recommendation
+      // Add legal recommendations and watermarking requirements
       recommendations.push('Always review AI-generated content before publishing');
+      recommendations.push('Include copyright notices in all published versions');
+      
+      // Apply digital watermarking flag
+      content.requiresWatermarking = true;
+      
+      // Record this activity for security audit
+      this.logSecurityActivity({
+        activityType: 'ai-enhancement',
+        contentId: contentId,
+        enhancementType: enhancementType,
+        timestamp: new Date().toISOString(),
+        userId: content.userId || 0
+      });
       
     } catch (error) {
       console.error('Error validating AI enhanced content:', error);
@@ -345,6 +359,54 @@ class SecurityMonitorService {
     }
     
     return { valid, issues, recommendations };
+  }
+  
+  /**
+   * Log security-related activities for audit purposes
+   */
+  async logSecurityActivity(activity: any) {
+    try {
+      // In a real implementation, this would save to a secure database
+      console.log('[Security Audit]', JSON.stringify(activity));
+      
+      // Report high-risk activities to security monitoring
+      if (activity.activityType === 'unauthorized-access' || 
+          activity.activityType === 'content-scraping' ||
+          activity.activityType === 'ownership-violation') {
+        
+        // Trigger security alert
+        this.triggerSecurityAlert({
+          alertType: 'high-risk',
+          details: activity,
+          timestamp: new Date().toISOString()
+        });
+      }
+    } catch (error) {
+      console.error('Failed to log security activity:', error);
+    }
+  }
+  
+  /**
+   * Trigger a security alert for administrator attention
+   */
+  async triggerSecurityAlert(alert: any) {
+    try {
+      // In a real implementation, this would:
+      // 1. Save to database
+      // 2. Send notifications to administrators
+      // 3. Potentially block further similar actions
+      
+      console.error('[SECURITY ALERT]', JSON.stringify(alert));
+      
+      // Return alert ID for reference
+      return {
+        alertId: `alert-${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        status: 'triggered'
+      };
+    } catch (error) {
+      console.error('Failed to trigger security alert:', error);
+    }
   }
 }
 

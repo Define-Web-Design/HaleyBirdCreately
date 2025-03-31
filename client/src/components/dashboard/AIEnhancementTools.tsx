@@ -1,94 +1,6 @@
-import { Link } from 'wouter';
-import ToolCard from '@/components/ui/tool-card';
-import { ENHANCEMENT_TOOLS } from '@/lib/constants';
-import { ToolCard as ToolCardType } from '@/lib/types';
 
-interface AIEnhancementToolsProps {
-  onToolSelect?: (toolName: string) => void;
-}
-
-const AIEnhancementTools = ({ onToolSelect }: AIEnhancementToolsProps) => {
-  // Prepare tools with click handlers
-  const tools: ToolCardType[] = ENHANCEMENT_TOOLS.map(tool => ({
-    ...tool,
-    onClick: () => onToolSelect?.(tool.title),
-    buttonText: tool.title === 'Mood Board Generator' ? 'Create Mood Board' : 
-                tool.title === 'Caption Generator' ? 'Generate New Caption' : 
-                'Adapt Content'
-  }));
-
-  return (
-    <section className="mb-8 animate-slide-up" style={{ animationDelay: '0.3s' }}>
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-['SF_Pro_Display'] font-semibold">AI Enhancement Tools</h2>
-        <Link href="/ai-enhancement" className="text-sm text-primary hover:text-primary/80 transition-colors">
-          View All <i className="fas fa-chevron-right ml-1"></i>
-        </Link>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Mood Board Generator */}
-        <ToolCard tool={tools[0]}>
-          <div className="grid grid-cols-3 gap-2 mt-2 mb-4">
-            <div className="aspect-square rounded bg-gray-200 dark:bg-gray-700 overflow-hidden">
-              <img src="https://images.unsplash.com/photo-1518098268026-4e89f1a2cd8e?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80" alt="Mood inspiration" className="w-full h-full object-cover" />
-            </div>
-            <div className="aspect-square rounded bg-gray-200 dark:bg-gray-700 overflow-hidden">
-              <img src="https://images.unsplash.com/photo-1490750967868-88aa4486c946?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80" alt="Mood inspiration" className="w-full h-full object-cover" />
-            </div>
-            <div className="aspect-square rounded bg-gray-200 dark:bg-gray-700 overflow-hidden">
-              <img src="https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80" alt="Mood inspiration" className="w-full h-full object-cover" />
-            </div>
-          </div>
-        </ToolCard>
-        
-        {/* Caption Generator */}
-        <ToolCard tool={tools[1]}>
-          <div className="bg-white dark:bg-gray-900 rounded-lg p-3 mb-4 text-sm">
-            <p className="font-medium mb-1">Recent Generation:</p>
-            <p className="text-gray-600 dark:text-gray-300">
-              "Embracing minimalism isn't just about aesthetics—it's a lifestyle that brings clarity to both your space and mind. #MinimalistLiving #IntentionalDesign"
-            </p>
-            <div className="flex justify-end mt-2">
-              <button className="text-primary text-xs transition-colors hover:text-primary/80">
-                <i className="far fa-copy mr-1"></i> Copy
-              </button>
-            </div>
-          </div>
-        </ToolCard>
-        
-        {/* Cross-Platform Adapter */}
-        <ToolCard tool={tools[2]}>
-          <div className="grid grid-cols-3 gap-3 mb-4">
-            <div className="text-center">
-              <div className="w-12 h-12 rounded-full bg-white dark:bg-gray-700 mx-auto flex items-center justify-center">
-                <i className="fab fa-instagram text-xl text-pink-600"></i>
-              </div>
-              <p className="text-xs mt-1">Instagram</p>
-            </div>
-            <div className="text-center">
-              <div className="w-12 h-12 rounded-full bg-white dark:bg-gray-700 mx-auto flex items-center justify-center">
-                <i className="fab fa-tiktok text-xl text-black dark:text-white"></i>
-              </div>
-              <p className="text-xs mt-1">TikTok</p>
-            </div>
-            <div className="text-center">
-              <div className="w-12 h-12 rounded-full bg-white dark:bg-gray-700 mx-auto flex items-center justify-center">
-                <i className="fab fa-pinterest text-xl text-red-600"></i>
-              </div>
-              <p className="text-xs mt-1">Pinterest</p>
-            </div>
-          </div>
-        </ToolCard>
-      </div>
-    </section>
-  );
-};
-
-export default AIEnhancementTools;
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent } from '../ui/card';
-import { ENHANCEMENT_TOOLS } from '../../lib/constants';
 import { Badge } from '../ui/badge';
 
 interface AIEnhancementToolProps {
@@ -96,18 +8,95 @@ interface AIEnhancementToolProps {
   selectedTool: string | null;
 }
 
-const AIEnhancementTool: React.FC<AIEnhancementToolProps> = ({ onSelectTool, selectedTool }) => {
+interface ToolCardType {
+  title: string;
+  description: string;
+  icon: string;
+  iconGradient: string;
+  animation: string;
+  isNew?: boolean;
+  onClick?: () => void;
+  buttonText?: string;
+}
+
+// Define enhancement tools
+const ENHANCEMENT_TOOLS = [
+  {
+    title: 'Caption Generator',
+    description: 'AI-powered caption generation with ownership watermarking',
+    icon: 'fas fa-comment-dots',
+    iconGradient: 'bg-gradient-to-r from-purple-500 to-indigo-600',
+    animation: 'hover:scale-105 transition-transform',
+    isNew: false
+  },
+  {
+    title: 'Mood Board Generator',
+    description: 'Create visual mood boards from your content with copyright protection',
+    icon: 'fas fa-palette',
+    iconGradient: 'bg-gradient-to-r from-blue-500 to-cyan-600',
+    animation: 'hover:scale-105 transition-transform',
+    isNew: true
+  },
+  {
+    title: 'Cross-Platform Adapter',
+    description: 'Adapt content for different platforms while maintaining ownership',
+    icon: 'fas fa-exchange-alt',
+    iconGradient: 'bg-gradient-to-r from-green-500 to-teal-600',
+    animation: 'hover:scale-105 transition-transform',
+    isNew: false
+  },
+  {
+    title: 'Sentiment Analyzer',
+    description: 'Analyze emotional tone of your content',
+    icon: 'fas fa-chart-line',
+    iconGradient: 'bg-gradient-to-r from-amber-500 to-orange-600',
+    animation: 'hover:scale-105 transition-transform',
+    isNew: false
+  },
+  {
+    title: 'Legal Compliance Check',
+    description: 'Verify content meets legal requirements and ownership standards',
+    icon: 'fas fa-gavel',
+    iconGradient: 'bg-gradient-to-r from-red-500 to-pink-600',
+    animation: 'hover:scale-105 transition-transform',
+    isNew: true
+  },
+  {
+    title: 'Branded Content Template',
+    description: 'Create templates with embedded ownership information',
+    icon: 'fas fa-copyright',
+    iconGradient: 'bg-gradient-to-r from-violet-500 to-purple-600',
+    animation: 'hover:scale-105 transition-transform',
+    isNew: false
+  }
+];
+
+interface AIEnhancementToolsProps {
+  onToolSelect?: (toolName: string) => void;
+}
+
+const AIEnhancementTools = ({ onToolSelect }: AIEnhancementToolsProps) => {
+  const [selectedTool, setSelectedTool] = useState<string | null>(null);
+  
+  // Handle tool selection
+  const handleSelectTool = (toolName: string) => {
+    setSelectedTool(toolName);
+    onToolSelect?.(toolName);
+  };
+  
   return (
     <div className="space-y-3">
       <h3 className="text-lg font-medium">AI Enhancement Tools</h3>
-      <p className="text-sm text-muted-foreground">Enhance your content with AI-powered tools</p>
+      <p className="text-sm text-muted-foreground">
+        Enhance your content with AI-powered tools while maintaining full ownership and copyright protection
+      </p>
       
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mt-4">
         {ENHANCEMENT_TOOLS.map((tool) => (
           <Card 
             key={tool.title}
             className={`cursor-pointer transition-all ${selectedTool === tool.title ? 'ring-2 ring-primary' : 'hover:bg-accent/50'} ${tool.animation}`}
-            onClick={() => onSelectTool(tool.title)}
+            onClick={() => handleSelectTool(tool.title)}
           >
             <CardContent className="p-3">
               <div className="flex items-center gap-3">
@@ -128,8 +117,17 @@ const AIEnhancementTool: React.FC<AIEnhancementToolProps> = ({ onSelectTool, sel
           </Card>
         ))}
       </div>
+      
+      {selectedTool && (
+        <div className="mt-4 p-3 bg-muted/50 rounded-md border border-border">
+          <p className="text-xs text-muted-foreground">
+            <span className="font-medium">© Legal Notice:</span> All content generated through this tool will include 
+            embedded ownership information and digital watermarks. Your intellectual property rights are protected.
+          </p>
+        </div>
+      )}
     </div>
   );
 };
 
-export default AIEnhancementTool;
+export default AIEnhancementTools;

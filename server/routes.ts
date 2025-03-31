@@ -1246,6 +1246,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     try {
+      // Check if user has accepted legal terms
+      const userId = 1; // In a real app, get from authenticated session
+      const legalStatus = await storage.getLegalAcceptanceByUser(userId, 'terms');
+      
+      if (!legalStatus) {
+        return res.status(403).json({
+          success: false,
+          message: 'You must accept the terms of service before using AI enhancement tools',
+          requiresLegalAcceptance: true
+        });
+      }
+      
       // Validate the request for security and ownership
       const validation = await securityMonitor.validateAIEnhancedContent(contentId, 'cross-platform');
       
@@ -1268,6 +1280,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
+      // Record this usage for security monitoring
+      await securityMonitor.logSecurityActivity({
+        activityType: 'ai-enhancement-usage',
+        contentId,
+        enhancementType: 'cross-platform',
+        userId,
+        platforms,
+        timestamp: new Date().toISOString()
+      });
+      
       // Generate platform-specific versions
       const platformVersions = {};
       
@@ -1278,29 +1300,145 @@ export async function registerRoutes(app: Express): Promise<Server> {
           hashtags: content.tags?.map(tag => `#${tag}`) || ['#creative', '#content'],
           recommendedImageSize: getPlatformImageSize(platform),
           characterLimit: getPlatformCharLimit(platform),
-          bestTimeToPost: getPlatformBestTime(platform)
+          bestTimeToPost: getPlatformBestTime(platform),
+          // Add ownership watermarking
+          watermark: {
+            visible: platform !== 'twitter', // Some platforms may have limitations
+            text: `© ${new Date().getFullYear()} All Rights Reserved`,
+            position: 'bottom-right'
+          }
         };
       }
       
-      // Add watermarking and ownership information
+      // Generate a unique asset ID for verification
+      const assetId = `ai-${Date.now()}-${contentId}`;
+      
+      // Register this asset in ownership database for future verification
+      await storage.registerAssetOwnership({
+        assetId,
+        assetType: 'ai-enhanced-content',
+        contentId,
+        userId,
+        createdAt: new Date(),
+        verificationToken: `verify-${Math.random().toString(36).substring(2, 15)}`,
+        verificationStatus: true
+      });
+      
+      // Add comprehensive watermarking and ownership information
       const response = {
         success: true,
         platformVersions,
         recommendations: validation.recommendations,
         ownershipInfo: {
+          assetId,
           ownerId: content.userId,
           timestamp: new Date().toISOString(),
-          notice: "© 2023 All Rights Reserved. This content is proprietary."
+          verificationUrl: `/api/security/verify-asset?assetId=${assetId}`,
+          notice: `© ${new Date().getFullYear()} All Rights Reserved. This content is proprietary and protected by intellectual property law.`,
+          termsOfUse: "Unauthorized reproduction, distribution, or modification is prohibited."
         }
       };
       
       res.json(response);
     } catch (error) {
       console.error('Cross-platform adaptation error:', error);
+      
+      // Log the error for security monitoring
+      await securityMonitor.logSecurityActivity({
+        activityType: 'ai-enhancement-error',
+        errorType: error.name,
+        errorMessage: error.message,
+        timestamp: new Date().toISOString()
+      });
+      
       res.status(500).json({ 
         success: false, 
         message: 'Failed to generate cross-platform adaptations',
         error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  });
+  
+  // New routes for security and ownership verification
+  
+  // Verify content ownership
+  app.get('/api/security/verify-content-ownership', async (req, res) => {
+    const { contentId, verificationToken } = req.query;
+    
+    if (!contentId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Content ID is required'
+      });
+    }
+    
+    try {
+      // In a real implementation, this would check the ownership database
+      const isVerified = true;
+      const ownerInfo = {
+        userId: 1,
+        ownershipTimestamp: new Date().toISOString(),
+        verificationLevel: 'certified'
+      };
+      
+      return res.json({
+        success: true,
+        verified: isVerified,
+        ownerInfo,
+        verificationTimestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Ownership verification error:', error);
+      
+      return res.status(500).json({
+        success: false,
+        message: 'Error verifying content ownership'
+      });
+    }
+  });
+  
+  // Report unauthorized usage
+  app.post('/api/security/report-unauthorized-usage', async (req, res) => {
+    const { contentId, reportType, reportDetails, reporterContact } = req.body;
+    
+    if (!contentId || !reportType) {
+      return res.status(400).json({
+        success: false,
+        message: 'Content ID and report type are required'
+      });
+    }
+    
+    try {
+      // Log the security incident
+      await securityMonitor.logSecurityActivity({
+        activityType: 'unauthorized-usage-report',
+        contentId,
+        reportType,
+        reportDetails,
+        reporterContact,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Trigger high-priority security alert
+      await securityMonitor.triggerSecurityAlert({
+        alertType: 'ownership-violation',
+        severity: 'high',
+        contentId,
+        details: reportDetails
+      });
+      
+      return res.json({
+        success: true,
+        reportId: `report-${Date.now()}`,
+        message: 'Your report has been submitted and will be investigated',
+        nextSteps: 'Our team will review this report and may contact you for additional information.'
+      });
+    } catch (error) {
+      console.error('Error reporting unauthorized usage:', error);
+      
+      return res.status(500).json({
+        success: false,
+        message: 'Error submitting report'
       });
     }
   });

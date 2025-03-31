@@ -1,48 +1,20 @@
 
-import { useState } from 'react';
-import { useToast } from '../components/ui/use-toast';
-import { 
-  Card, CardContent, CardHeader, 
-  CardTitle, CardDescription 
-} from '../components/ui/card';
+import React, { useState } from 'react';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { Badge } from '../components/ui/badge';
-import { Textarea } from '../components/ui/textarea';
-import { CheckCircle, Image } from 'lucide-react';
-import { ENHANCEMENT_TOOLS } from '../lib/constants';
+import { useToast } from '../components/ui/use-toast';
+import AIEnhancementTools from '../components/dashboard/AIEnhancementTools';
+import { Separator } from '../components/ui/separator';
+import { LegalAcceptanceModal } from '../components/legal/LegalAcceptanceModal';
 
-// Mock content items for demonstration purposes
-const mockContentItems = [
-  {
-    id: 1,
-    title: "Spring Collection Photoshoot",
-    description: "Professional photos from our latest collection shoot",
-    imageUrl: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
-    tags: ["fashion", "product", "spring"]
-  },
-  {
-    id: 2,
-    title: "Brand Colors 2025",
-    description: "Official brand color palette for next year's campaigns",
-    imageUrl: "https://images.unsplash.com/photo-1513364776144-60967b0f800f?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
-    tags: ["branding", "colors", "design"]
-  },
-  {
-    id: 3,
-    title: "Customer Testimonial Clips",
-    description: "Video testimonials from our top customers",
-    imageUrl: "https://images.unsplash.com/photo-1496902526517-c0f2cb8fdb6a?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
-    tags: ["video", "testimonial", "customers"]
-  }
+// Sample content items for demonstration
+const SAMPLE_CONTENT = [
+  { id: 1, title: 'Summer Landscape', type: 'image', thumbnail: 'https://images.unsplash.com/photo-1523712999610-f77fbcfc3843?w=300&h=200&fit=crop' },
+  { id: 2, title: 'Urban Photography', type: 'image', thumbnail: 'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=300&h=200&fit=crop' },
+  { id: 3, title: 'Creative Portrait', type: 'image', thumbnail: 'https://images.unsplash.com/photo-1518481852452-9415f262bbe4?w=300&h=200&fit=crop' },
+  { id: 4, title: 'Product Showcase', type: 'image', thumbnail: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=200&fit=crop' }
 ];
-
-// Example enhancement results
-const mockEnhancementResults = {
-  caption: "Experience our vibrant Spring Collection that combines bold colors with sustainable fabrics. Perfect for the modern professional who values both style and environmental responsibility. #SpringFashion #SustainableStyle #NewCollection",
-  tags: ["spring", "sustainable", "professional", "vibrant", "modern", "collection", "fashion", "style"],
-  colorPalette: ["#E63946", "#F1FAEE", "#A8DADC", "#457B9D", "#1D3557"]
-};
 
 const AIEnhancement = () => {
   const { toast } = useToast();
@@ -50,6 +22,8 @@ const AIEnhancement = () => {
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [showResults, setShowResults] = useState(false);
+  const [showLegalModal, setShowLegalModal] = useState(false);
+  const [hasAcceptedLegal, setHasAcceptedLegal] = useState(false);
   
   // Handle content selection
   const handleSelectContent = (id: number) => {
@@ -65,9 +39,27 @@ const AIEnhancement = () => {
   const handleSelectTool = (toolTitle: string) => {
     setSelectedTool(toolTitle);
     setShowResults(false);
+    
+    // Check if legal terms have been accepted before allowing tool use
+    if (!hasAcceptedLegal) {
+      setShowLegalModal(true);
+      return;
+    }
+    
     toast({
       title: "Tool Selected",
       description: `${toolTitle} tool selected`,
+    });
+  };
+  
+  // Handle legal terms acceptance
+  const handleLegalAcceptance = () => {
+    setHasAcceptedLegal(true);
+    setShowLegalModal(false);
+    
+    toast({
+      title: "Terms Accepted",
+      description: "You have accepted the legal terms for AI enhancement tools",
     });
   };
   
@@ -82,230 +74,232 @@ const AIEnhancement = () => {
       return;
     }
     
+    // Check again for legal acceptance
+    if (!hasAcceptedLegal) {
+      setShowLegalModal(true);
+      return;
+    }
+    
     setIsProcessing(true);
     
-    // Simulate processing delay
+    // Simulate processing delay with API call
     setTimeout(() => {
       setIsProcessing(false);
       setShowResults(true);
       toast({
         title: "Enhancement Complete",
-        description: `${selectedTool} has been applied to your content`,
+        description: `${selectedTool} has been applied to your content with ownership protection`,
       });
     }, 2500);
   };
   
+  // Sample result content based on selected tool
+  const generateResultContent = () => {
+    if (!selectedTool || !selectedContent) return null;
+    
+    const content = SAMPLE_CONTENT.find(c => c.id === selectedContent);
+    
+    switch (selectedTool) {
+      case 'Caption Generator':
+        return (
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Generated Caption</h3>
+            <p>Experience the vibrant essence of creativity captured in this moment. #inspiration #creativity #vision</p>
+            <div className="text-xs text-muted-foreground p-2 bg-muted rounded-md">
+              <span className="font-medium">© 2023 All Rights Reserved.</span> This content is protected by digital watermarking and ownership verification.
+            </div>
+          </div>
+        );
+        
+      case 'Mood Board Generator':
+        return (
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Generated Mood Board</h3>
+            <div className="grid grid-cols-2 gap-2">
+              <img src="https://images.unsplash.com/photo-1523712999610-f77fbcfc3843?w=150&h=150&fit=crop" alt="Mood 1" className="rounded-md" />
+              <img src="https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=150&h=150&fit=crop" alt="Mood 2" className="rounded-md" />
+              <img src="https://images.unsplash.com/photo-1518481852452-9415f262bbe4?w=150&h=150&fit=crop" alt="Mood 3" className="rounded-md" />
+              <img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=150&h=150&fit=crop" alt="Mood 4" className="rounded-md" />
+            </div>
+            <div className="flex gap-2 flex-wrap">
+              <div className="w-10 h-10 rounded-full bg-blue-500"></div>
+              <div className="w-10 h-10 rounded-full bg-indigo-500"></div>
+              <div className="w-10 h-10 rounded-full bg-purple-500"></div>
+              <div className="w-10 h-10 rounded-full bg-pink-500"></div>
+            </div>
+            <div className="text-xs text-muted-foreground p-2 bg-muted rounded-md">
+              <span className="font-medium">© 2023 All Rights Reserved.</span> This mood board includes embedded ownership data and is protected by copyright.
+            </div>
+          </div>
+        );
+        
+      case 'Cross-Platform Adapter':
+        return (
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Platform Adaptations</h3>
+            <div className="space-y-3">
+              <div className="p-2 border rounded-md">
+                <h4 className="text-sm font-medium">Instagram</h4>
+                <p className="text-xs">Experience the vibrant essence of creativity captured in this moment. #inspiration #creativity</p>
+                <p className="text-xs text-muted-foreground">1080x1080px • Max 30 hashtags</p>
+              </div>
+              <div className="p-2 border rounded-md">
+                <h4 className="text-sm font-medium">Twitter</h4>
+                <p className="text-xs">Capturing creativity in its purest form. What inspires you today? #creativity</p>
+                <p className="text-xs text-muted-foreground">1200x675px • 280 character limit</p>
+              </div>
+            </div>
+            <div className="text-xs text-muted-foreground p-2 bg-muted rounded-md">
+              <span className="font-medium">© 2023 All Rights Reserved.</span> These adaptations include digital ownership signatures.
+            </div>
+          </div>
+        );
+        
+      default:
+        return (
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">AI Enhancement Complete</h3>
+            <p>Your content has been enhanced with {selectedTool}.</p>
+            <div className="text-xs text-muted-foreground p-2 bg-muted rounded-md">
+              <span className="font-medium">© 2023 All Rights Reserved.</span> This content is protected by intellectual property safeguards.
+            </div>
+          </div>
+        );
+    }
+  };
+  
   return (
     <div className="container py-6 max-w-7xl mx-auto">
-      <div className="flex flex-col space-y-2">
-        <h1 className="text-2xl font-bold">AI Enhancement Studio</h1>
-        <p className="text-muted-foreground">
-          Transform your content with AI-powered creative tools
-        </p>
-      </div>
+      <h1 className="text-3xl font-bold mb-6">AI Enhancement Studio</h1>
+      <p className="text-muted-foreground mb-6">
+        Enhance your content with AI while maintaining full ownership rights and intellectual property protection.
+      </p>
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-        {/* Left section - Content selection */}
-        <div className="space-y-4">
-          <h2 className="text-lg font-medium">Select Content</h2>
-          <p className="text-sm text-muted-foreground">Choose content to enhance</p>
-          
-          <Tabs defaultValue="recent">
-            <TabsList>
-              <TabsTrigger value="recent">Recent</TabsTrigger>
-              <TabsTrigger value="archived">Archived</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="recent" className="space-y-4 pt-4">
-              {mockContentItems.map((item) => (
-                <Card 
-                  key={item.id}
-                  className={`cursor-pointer transition-all ${selectedContent === item.id ? 'ring-2 ring-primary' : 'hover:bg-accent/50'}`}
-                  onClick={() => handleSelectContent(item.id)}
-                >
-                  <CardContent className="p-3 flex items-center gap-3">
-                    <div className="h-16 w-16 rounded bg-muted overflow-hidden flex-shrink-0">
-                      <img src={item.imageUrl} alt={item.title} className="h-full w-full object-cover" />
-                    </div>
-                    <div>
-                      <h3 className="font-medium">{item.title}</h3>
-                      <p className="text-xs text-muted-foreground line-clamp-1">{item.description}</p>
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {item.tags.map((tag) => (
-                          <Badge key={tag} variant="outline" className="text-xs py-0">
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </TabsContent>
-            
-            <TabsContent value="archived" className="pt-4">
-              <Card>
-                <CardContent className="p-8 text-center">
-                  <p className="text-muted-foreground">No archived content found</p>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </div>
+      <Tabs defaultValue="content" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="content">Content Selection</TabsTrigger>
+          <TabsTrigger value="tools">AI Tools</TabsTrigger>
+          <TabsTrigger value="results" disabled={!showResults}>Results</TabsTrigger>
+        </TabsList>
         
-        {/* Middle section - Tools */}
-        <div className="space-y-4">
-          <h2 className="text-lg font-medium">Enhancement Tools</h2>
-          <p className="text-sm text-muted-foreground">Select a tool to enhance your content</p>
-          
-          <div className="space-y-3">
-            {ENHANCEMENT_TOOLS.map((tool) => (
-              <Card 
-                key={tool.title}
-                className={`cursor-pointer transition-all ${selectedTool === tool.title ? 'ring-2 ring-primary' : 'hover:bg-accent/50'} ${tool.animation}`}
-                onClick={() => handleSelectTool(tool.title)}
+        <TabsContent value="content" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Select Content</CardTitle>
+              <CardDescription>Choose content to enhance with AI tools</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                {SAMPLE_CONTENT.map(item => (
+                  <div 
+                    key={item.id}
+                    className={`cursor-pointer overflow-hidden rounded-lg border transition-all ${selectedContent === item.id ? 'ring-2 ring-primary' : 'hover:shadow-md'}`}
+                    onClick={() => handleSelectContent(item.id)}
+                  >
+                    <img src={item.thumbnail} alt={item.title} className="w-full h-40 object-cover" />
+                    <div className="p-3">
+                      <h3 className="font-medium text-sm">{item.title}</h3>
+                      <p className="text-xs text-muted-foreground">{item.type}</p>
+                    </div>
+                    <div className="p-2 bg-muted/30 text-xs">
+                      <span className="font-medium">© Protected</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="tools" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>AI Enhancement Tools</CardTitle>
+              <CardDescription>
+                Select a tool to enhance your content with AI-powered features
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <AIEnhancementTools onToolSelect={handleSelectTool} />
+            </CardContent>
+            <CardFooter className="flex justify-between">
+              <Button variant="outline" onClick={() => setSelectedTool(null)}>Reset</Button>
+              <Button 
+                disabled={!selectedContent || !selectedTool || isProcessing} 
+                onClick={handleGenerateEnhancement}
               >
-                <CardContent className="p-3">
-                  <div className="flex items-center gap-3">
-                    <div className={`p-3 rounded-lg ${tool.iconGradient} text-white`}>
-                      <i className={`${tool.icon} text-lg`}></i>
-                    </div>
-                    <div>
-                      <h3 className="font-medium flex items-center">
-                        {tool.title}
-                        {tool.isNew && (
-                          <Badge className="ml-2 bg-primary text-white text-xs">New</Badge>
-                        )}
-                      </h3>
-                      <p className="text-xs text-muted-foreground mt-1">{tool.description}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
+                {isProcessing ? 'Processing...' : 'Generate Enhancement'}
+              </Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
         
-        {/* Right section - Results */}
-        <div className="space-y-4">
-          <h2 className="text-lg font-medium">Enhancement Results</h2>
-          <p className="text-sm text-muted-foreground">Preview AI-generated enhancements</p>
-          
-          {!showResults ? (
-            <Card className="h-[400px] flex items-center justify-center">
-              <CardContent className="text-center">
-                <Image className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-medium">No Results Yet</h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Select content and a tool, then generate enhancements
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <CheckCircle className="h-5 w-5 text-green-500" />
-                  Enhancement Complete
-                </CardTitle>
-                <CardDescription>
-                  {selectedTool} results for "{mockContentItems.find(i => i.id === selectedContent)?.title}"
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {selectedTool === "Caption Generator" && (
-                  <div className="space-y-2">
-                    <h4 className="text-sm font-medium">Generated Caption:</h4>
-                    <Textarea 
-                      readOnly 
-                      value={mockEnhancementResults.caption} 
-                      className="h-32"
-                    />
-                    <div className="pt-2">
-                      <h4 className="text-sm font-medium mb-2">Suggested Hashtags:</h4>
-                      <div className="flex flex-wrap gap-1">
-                        {mockEnhancementResults.tags.map((tag) => (
-                          <Badge key={tag} className="bg-blue-100 text-blue-800 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300">
-                            #{tag}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                {selectedTool === "Mood Board Generator" && (
-                  <div className="space-y-2">
-                    <h4 className="text-sm font-medium">Generated Mood Board:</h4>
-                    <div className="grid grid-cols-2 gap-2">
-                      {[1, 2, 3, 4].map((num) => (
-                        <div key={num} className="aspect-square rounded-md bg-muted overflow-hidden">
-                          <img 
-                            src={`https://source.unsplash.com/random/300x300?mood=${num}`} 
-                            alt={`Mood image ${num}`}
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
-                      ))}
-                    </div>
-                    <div className="pt-2">
-                      <h4 className="text-sm font-medium mb-2">Color Palette:</h4>
-                      <div className="flex space-x-2">
-                        {mockEnhancementResults.colorPalette.map((color, idx) => (
-                          <div 
-                            key={idx} 
-                            className="h-8 w-8 rounded-full border" 
-                            style={{ backgroundColor: color }}
-                            title={color}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                {selectedTool === "Cross-Platform Adapter" && (
-                  <div className="space-y-4">
-                    <div>
-                      <h4 className="text-sm font-medium mb-2">Instagram Version:</h4>
-                      <div className="rounded-md bg-muted p-3">
-                        <p className="text-sm">Caption optimized for Instagram with emojis and hashtags.</p>
-                        <div className="mt-2 text-xs text-muted-foreground">
-                          Character count: 217/2200
+        <TabsContent value="results" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Enhancement Results</CardTitle>
+              <CardDescription>
+                Your content has been enhanced with AI while maintaining ownership protection
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {showResults ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h3 className="text-lg font-medium mb-3">Original Content</h3>
+                    {selectedContent && (
+                      <div className="overflow-hidden rounded-lg border">
+                        <img 
+                          src={SAMPLE_CONTENT.find(c => c.id === selectedContent)?.thumbnail} 
+                          alt="Original content" 
+                          className="w-full h-40 object-cover" 
+                        />
+                        <div className="p-3">
+                          <h3 className="font-medium text-sm">
+                            {SAMPLE_CONTENT.find(c => c.id === selectedContent)?.title}
+                          </h3>
                         </div>
                       </div>
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-medium mb-2">Twitter/X Version:</h4>
-                      <div className="rounded-md bg-muted p-3">
-                        <p className="text-sm">Our Spring Collection brings vibrant sustainable fashion for the modern professional. Check it out! #SpringFashion</p>
-                        <div className="mt-2 text-xs text-muted-foreground">
-                          Character count: 124/280
-                        </div>
-                      </div>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-lg font-medium mb-3">Enhanced Content</h3>
+                    <div className="p-4 border rounded-lg">
+                      {generateResultContent()}
                     </div>
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-          
-          <Button 
-            className="w-full"
-            disabled={!selectedContent || !selectedTool || isProcessing}
-            onClick={handleGenerateEnhancement}
-          >
-            {isProcessing ? (
-              <>
-                <span className="animate-spin mr-2">⟳</span>
-                Processing...
-              </>
-            ) : (
-              'Generate Enhancement'
-            )}
-          </Button>
-        </div>
-      </div>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <p>No results available. Please select content and a tool to generate enhancements.</p>
+                </div>
+              )}
+            </CardContent>
+            <CardFooter>
+              <div className="w-full">
+                <Separator className="mb-4" />
+                <div className="text-xs text-muted-foreground p-3 bg-muted rounded-md">
+                  <span className="font-medium">Legal & Security Notice:</span> All AI-enhanced content includes 
+                  embedded ownership information, digital watermarks, and usage rights protection. Any unauthorized 
+                  reproduction, distribution, or modification is strictly prohibited and may result in legal action.
+                </div>
+              </div>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+      </Tabs>
+      
+      {/* Legal Acceptance Modal */}
+      {showLegalModal && (
+        <LegalAcceptanceModal 
+          isOpen={showLegalModal} 
+          onClose={() => setShowLegalModal(false)}
+          onAccept={handleLegalAcceptance}
+          title="AI Enhancement Legal Terms"
+          description="Please review and accept the terms for using AI enhancement tools"
+        />
+      )}
     </div>
   );
 };
