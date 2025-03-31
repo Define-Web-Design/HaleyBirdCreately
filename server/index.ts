@@ -60,13 +60,8 @@ app.use((req, res, next) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
 
-    console.error(`Error: ${status} - ${message}`);
-    console.error(err.stack);
-    
-    // Only send response if headers haven't been sent yet
-    if (!res.headersSent) {
-      res.status(status).json({ message });
-    }
+    res.status(status).json({ message });
+    throw err;
   });
 
   // importantly only setup vite in development and after
@@ -78,20 +73,33 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // Use port 3001 for Replit environments
-  const port = process.env.PORT || 3001;
+  // Try to use port 5000 first (recommended for Replit), then fall back to alternatives
+  const tryPorts = [5000, 3000, 3001, 8080];
+  let currentPortIndex = 0;
   
-  server.listen({
-    port: parseInt(port.toString()),
-    host: "0.0.0.0",
-  }).on('error', (e: any) => {
-    if (e.code === 'EADDRINUSE') {
-      log(`Port ${port} is in use. Please free up this port or specify a different port via PORT env variable.`);
-      throw e;
-    } else {
-      throw e;
-    }
-  }).on('listening', () => {
-    log(`serving on port ${port}`);
-  });
+  function listenOnPort(portIndex: number) {
+    const port = process.env.PORT ? parseInt(process.env.PORT) : tryPorts[portIndex];
+    
+    server.listen({
+      port,
+      host: "0.0.0.0",
+    }).on('error', (e: any) => {
+      if (e.code === 'EADDRINUSE') {
+        currentPortIndex++;
+        if (currentPortIndex < tryPorts.length) {
+          log(`Port ${port} is in use, trying port ${tryPorts[currentPortIndex]} instead...`);
+          listenOnPort(currentPortIndex);
+        } else {
+          log('All predefined ports are in use. Please free up a port or specify a different port via PORT env variable.');
+          throw e;
+        }
+      } else {
+        throw e;
+      }
+    }).on('listening', () => {
+      log(`serving on port ${port}`);
+    });
+  }
+  
+  listenOnPort(currentPortIndex);
 })();

@@ -75,13 +75,31 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [isGeneratingCaption, setIsGeneratingCaption] = useState(false);
   const isEditMode = !!capsule;
-
+  
   // Fetch content for content selection
-  const { data: contentItems = [] } = useQuery({
+  const { data: contentItems = [], isLoading: isContentLoading, error: contentError } = useQuery({
     queryKey: ['/api/content'],
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
-
+  
+  // Show loading indicator when content is loading
+  React.useEffect(() => {
+    if (isContentLoading) {
+      toast({
+        title: "Loading Content",
+        description: "Fetching available content items...",
+      });
+    }
+    
+    if (contentError) {
+      toast({
+        title: "Error Loading Content",
+        description: "Could not load content items. Please try refreshing.",
+        variant: "destructive",
+      });
+    }
+  }, [isContentLoading, contentError, toast]);
+  
   // Initialize form with existing data or defaults
   const form = useForm<MoodCapsuleFormData>({
     resolver: zodResolver(moodCapsuleSchema),
@@ -94,10 +112,10 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
       thumbnailUrl: capsule?.thumbnailUrl || '',
     },
   });
-
+  
   const { formState } = form;
   const { isSubmitting, isDirty } = formState;
-
+  
   // Available emotional tones
   const emotionalTones = [
     { label: 'Joyful', value: 'joyful' },
@@ -109,7 +127,7 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
     { label: 'Powerful', value: 'powerful' },
     { label: 'Mysterious', value: 'mysterious' },
   ];
-
+  
   // Available caption tones
   const captionTones = [
     { label: 'Balanced', value: 'balanced' },
@@ -120,7 +138,7 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
     { label: 'Humorous', value: 'humorous' },
     { label: 'Inspirational', value: 'inspirational' },
   ];
-
+  
   // Submit form
   const onSubmit = async (data: MoodCapsuleFormData) => {
     try {
@@ -131,7 +149,7 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
           method: 'PUT',
           data,
         });
-
+        
         toast({
           title: 'Mood Capsule Updated',
           description: `"${data.name}" has been successfully updated`,
@@ -143,13 +161,13 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
           method: 'POST',
           data,
         });
-
+        
         toast({
           title: 'Mood Capsule Created',
           description: `"${data.name}" has been successfully created`,
         });
       }
-
+      
       // Invalidate cache and call success callback
       queryClient.invalidateQueries({ queryKey: ['/api/mood-capsules'] });
       onSuccess();
@@ -162,7 +180,7 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
       });
     }
   };
-
+  
   // Handle cancel with confirmation if form is dirty
   const handleCancel = () => {
     if (isDirty) {
@@ -171,13 +189,13 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
       onCancel();
     }
   };
-
+  
   // Generate AI caption based on selected content
   const generateCaption = async () => {
     const contentIds = form.getValues('contentIds');
     const emotionalTone = form.getValues('emotionalTone');
     const captionTone = form.getValues('captionTone');
-
+    
     if (!contentIds || contentIds.length === 0) {
       toast({
         title: 'No Content Selected',
@@ -186,9 +204,9 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
       });
       return;
     }
-
+    
     setIsGeneratingCaption(true);
-
+    
     try {
       // Explicitly type the response
       const response = await apiRequest<{ success: boolean; caption: string }>({
@@ -200,10 +218,10 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
           captionTone,
         },
       });
-
+      
       if (response && response.success && response.caption) {
         form.setValue('description', response.caption);
-
+        
         toast({
           title: 'Caption Generated',
           description: 'AI has generated a caption based on your content and mood',
@@ -221,7 +239,7 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
       setIsGeneratingCaption(false);
     }
   };
-
+  
   return (
     <>
       <Card>
@@ -251,7 +269,7 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
                   </FormItem>
                 )}
               />
-
+              
               {/* Emotional Tone */}
               <FormField
                 control={form.control}
@@ -267,11 +285,32 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
                           render={({ field: { onChange, value } }) => {
                             // Emotional Tone is a string in the schema, convert to array for MultiSelect
                             // and back to comma-separated string for storage
-                            const selectedValues = value ? value.split(',').filter(v => v !== '').map(val => ({
-                              label: emotionalTones.find(tone => tone.value === val)?.label || val,
-                              value: val
-                            })) : [];
-
+                            let selectedValues: { label: string, value: string }[] = [];
+                            
+                            try {
+                              // Handle both comma-separated string or direct value formats
+                              if (value) {
+                                if (value.includes(',')) {
+                                  selectedValues = value.split(',')
+                                    .filter(v => v !== '')
+                                    .map(val => ({
+                                      label: emotionalTones.find(tone => tone.value === val)?.label || val,
+                                      value: val
+                                    }));
+                                } else {
+                                  // Single value case
+                                  const foundTone = emotionalTones.find(tone => tone.value === value);
+                                  if (foundTone) {
+                                    selectedValues = [{ label: foundTone.label, value: foundTone.value }];
+                                  }
+                                }
+                              }
+                            } catch (err) {
+                              console.error('Error parsing emotional tones:', err);
+                              // Fallback to empty array
+                              selectedValues = [];
+                            }
+                            
                             return (
                               <MultiSelect
                                 options={emotionalTones}
@@ -287,9 +326,6 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
                                 }}
                                 placeholder="Select emotional tones..."
                                 className="w-full"
-                                aria-label="Emotional tone selection"
-                                id="emotional-tones-select"
-                                isRequired={true}
                               />
                             );
                           }}
@@ -303,7 +339,7 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
                   </FormItem>
                 )}
               />
-
+              
               {/* Caption Tone */}
               <FormField
                 control={form.control}
@@ -339,7 +375,7 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
                   </FormItem>
                 )}
               />
-
+              
               {/* Description / Caption */}
               <FormField
                 control={form.control}
@@ -376,7 +412,7 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
                   </FormItem>
                 )}
               />
-
+              
               {/* Content Selection */}
               <FormField
                 control={form.control}
@@ -391,20 +427,26 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
                           control={form.control}
                           render={({ field: { onChange, value } }) => {
                             // Convert contentItems to expected MultiSelect options format
-                            const contentOptions = (contentItems as ContentItem[]).map(item => ({
-                              label: item.title,
-                              value: item.id.toString(),
-                            }));
-
+                            const contentOptions = Array.isArray(contentItems) 
+                              ? (contentItems as ContentItem[]).map(item => ({
+                                  label: item.title || `Item ${item.id}`,
+                                  value: item.id.toString(),
+                                }))
+                              : [];
+                            
                             // Map the array of numbers to Option objects for MultiSelect
-                            const selectedItems = (value || []).map(id => {
-                              const item = (contentItems as ContentItem[]).find(item => item.id === id);
-                              return {
-                                label: item?.title || `Content #${id}`,
-                                value: id.toString(),
-                              };
-                            });
-
+                            const selectedItems = Array.isArray(value)
+                              ? value.map(id => {
+                                  const item = Array.isArray(contentItems) 
+                                    ? (contentItems as ContentItem[]).find(item => item.id === id)
+                                    : null;
+                                  return {
+                                    label: item?.title || `Content #${id}`,
+                                    value: id.toString(),
+                                  };
+                                })
+                              : [];
+                            
                             return (
                               <MultiSelect
                                 options={contentOptions}
@@ -415,9 +457,6 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
                                 }}
                                 placeholder="Select content items..."
                                 className="w-full"
-                                aria-label="Content selection"
-                                id="content-select"
-                                isRequired={true}
                               />
                             );
                           }}
@@ -431,7 +470,7 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
                   </FormItem>
                 )}
               />
-
+              
               {/* Thumbnail URL */}
               <FormField
                 control={form.control}
@@ -449,7 +488,7 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
                   </FormItem>
                 )}
               />
-
+              
               {/* Form buttons */}
               <div className="flex justify-end space-x-4 pt-4">
                 <Button
@@ -475,7 +514,7 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
           </Form>
         </CardContent>
       </Card>
-
+      
       {/* Confirmation Dialog */}
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <AlertDialogContent>
