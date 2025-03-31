@@ -10,6 +10,7 @@ import { useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/use-toast';
 import { verifyContentIntegrity } from '@/lib/security-verification';
+import TaskVerificationDashboard from './TaskVerificationDashboard'; // Import added
 
 interface EvolutionPoints {
   userId: number;
@@ -713,7 +714,7 @@ export function CapabilitiesCard({ className }: CardProps) {
         <Button 
           variant="outline" 
           size="sm" 
-          className="w-full flex items-center space-x-2" 
+          className="w-full flexitems-center space-x-2" 
           onClick={handleUpgradeCapability}
           disabled={!capabilities.find(c => c.isUnlocked === true)}
         >
@@ -906,15 +907,14 @@ export default function CreativeSymbiosisSection() {
 
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          <div className="h-full">
-            <EvolutionProgressCard className="h-full" />
-          </div>
-          <div className="h-full">
-            <CapabilitiesCard className="h-full" />
-          </div>
-          <div className="h-full">
-            <CreativeHistoryCard className="h-full" />
-          </div>
+          <EvolutionProgressCard className="h-full" />
+          <CapabilitiesCard className="h-full" />
+          <CreativeHistoryCard className="h-full" />
+        </div>
+
+        <div className="mt-8">
+          <h2 className="text-2xl font-bold mb-4">Task Verification</h2>
+          <TaskVerificationDashboard />
         </div>
       </div>
 

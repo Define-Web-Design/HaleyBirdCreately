@@ -1,127 +1,92 @@
 
 /**
- * Checkpoint Manager
- * 
- * Ensures all tasks are thoroughly verified and completed before allowing
- * checkpoints to be created. Integrates with the validation coordinator.
+ * Checkpoint Management System
+ * Ensures all tasks are verified before allowing checkpoints to be created
  */
 
-import { validateBeforeCheckpoint, generateValidationReport } from './validation-coordinator';
+import { TaskVerification } from './task-verification';
 
-interface CheckpointInfo {
+interface Checkpoint {
   id: string;
-  name: string;
+  timestamp: string;
   description: string;
-  timestamp: Date;
-  validationReport: string;
-  files: string[];
-  user: string;
+  tasks: string[];
+  verificationStatus: {
+    allTasksCompleted: boolean;
+    completedTaskCount: number;
+    totalTaskCount: number;
+  };
 }
 
-// Store checkpoints
-const checkpoints: CheckpointInfo[] = [];
+// Store checkpoints in memory (in a real app, this would use persistent storage)
+const checkpoints: Checkpoint[] = [];
 
 /**
- * Attempt to create a checkpoint, but only if all validations pass
+ * Create a new checkpoint if all tasks are verified
  */
-export async function createCheckpoint(name: string, description: string, files: string[]): Promise<{
+export async function createCheckpoint(description: string): Promise<{
   success: boolean;
+  checkpoint?: Checkpoint;
   message: string;
-  checkpointId?: string;
 }> {
-  console.log(`Attempting to create checkpoint: ${name}`);
+  // First verify all tasks
+  const verificationResult = await TaskVerification.verifyAllTasks();
   
-  // Run thorough validation
-  const validationPassed = await validateBeforeCheckpoint(description);
-  
-  if (!validationPassed) {
-    console.error('Cannot create checkpoint: Validation failed');
+  if (!verificationResult.completed) {
     return {
       success: false,
-      message: 'Checkpoint creation blocked: One or more validations failed. Please fix all issues before creating a checkpoint.'
+      message: `Cannot create checkpoint: ${verificationResult.blockers.length} tasks not completed. ${verificationResult.blockers.join('; ')}`
     };
   }
   
-  // Validation passed, create the checkpoint
-  const checkpointId = `cp-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-  
-  const checkpoint: CheckpointInfo = {
-    id: checkpointId,
-    name,
+  // All tasks completed, create checkpoint
+  const checkpoint: Checkpoint = {
+    id: `cp_${Date.now()}`,
+    timestamp: new Date().toISOString(),
     description,
-    timestamp: new Date(),
-    validationReport: generateValidationReport(`session-${Date.now()}`),
-    files,
-    user: 'current-user' // In a real app, this would be the actual user
+    tasks: verificationResult.taskResults.map(t => t.taskId),
+    verificationStatus: {
+      allTasksCompleted: true,
+      completedTaskCount: verificationResult.taskResults.length,
+      totalTaskCount: verificationResult.taskResults.length
+    }
   };
   
   checkpoints.push(checkpoint);
   
-  console.log(`Checkpoint created: ${name} (${checkpointId})`);
-  
   return {
     success: true,
-    message: `Checkpoint "${name}" created successfully after passing all validations.`,
-    checkpointId
+    checkpoint,
+    message: `Checkpoint "${description}" created successfully with ${checkpoint.verificationStatus.completedTaskCount} verified tasks`
   };
 }
 
 /**
- * Get a list of all checkpoints
+ * Get list of all checkpoints
  */
-export function getCheckpoints(): CheckpointInfo[] {
+export function getCheckpoints(): Checkpoint[] {
   return [...checkpoints];
 }
 
 /**
  * Get a specific checkpoint by ID
  */
-export function getCheckpoint(id: string): CheckpointInfo | undefined {
+export function getCheckpointById(id: string): Checkpoint | undefined {
   return checkpoints.find(cp => cp.id === id);
 }
 
 /**
- * Delete a checkpoint
+ * Clear all checkpoints
  */
-export function deleteCheckpoint(id: string): boolean {
-  const initialLength = checkpoints.length;
-  const index = checkpoints.findIndex(cp => cp.id === id);
-  
-  if (index >= 0) {
-    checkpoints.splice(index, 1);
-    return true;
-  }
-  
-  return false;
+export function clearCheckpoints(): void {
+  checkpoints.length = 0;
 }
 
-/**
- * Verify all tasks are completed before attempting to create a checkpoint
- */
-export async function verifyWorkflowCompletion(
-  taskIds: string[], 
-  description: string
-): Promise<{
-  completed: boolean;
-  message: string;
-  pendingTasks: string[];
-}> {
-  // In a real implementation, this would check task statuses from a task tracking system
-  // For this example, we'll just use the validation system as a proxy
-  
-  const validationPassed = await validateBeforeCheckpoint(description);
-  
-  if (!validationPassed) {
-    return {
-      completed: false,
-      message: 'Workflow is not fully completed. Some tasks still need attention.',
-      pendingTasks: ['Validation failed - see validation report for details']
-    };
-  }
-  
-  return {
-    completed: true,
-    message: 'All workflow tasks completed successfully and verified.',
-    pendingTasks: []
-  };
-}
+export const CheckpointManager = {
+  createCheckpoint,
+  getCheckpoints,
+  getCheckpointById,
+  clearCheckpoints
+};
+
+export default CheckpointManager;

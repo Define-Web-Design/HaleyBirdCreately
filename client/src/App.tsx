@@ -20,6 +20,7 @@ import CrossPlatformTools from "./pages/cross-platform-tools";
 import NavigationTest from "./pages/nav-test";
 import NotFound from "./pages/not-found";
 import Profile from './components/profile/Profile';
+import { TaskVerificationProvider } from "./context/task-verification-context"; // Added import
 
 
 import { AutoDismissToaster } from './components/ui/auto-dismiss-toaster';
@@ -64,8 +65,10 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Router />
-      <AutoDismissToaster defaultDuration={5000} />
+      <TaskVerificationProvider> {/* Added TaskVerificationProvider */}
+        <Router />
+        <AutoDismissToaster defaultDuration={5000} />
+      </TaskVerificationProvider> {/* Closed TaskVerificationProvider */}
     </QueryClientProvider>
   );
 }
