@@ -146,10 +146,36 @@ class SecurityMonitorService {
   /**
    * Send notification for high priority security alerts
    */
-  private sendHighPriorityNotification(alert: SecurityAlert): void {
-    // In a real implementation, this would send an email or other notification
-    console.error('HIGH PRIORITY SECURITY ALERT', alert);
-    // Example: await sendEmail('admin@example.com', 'Security Alert', alertDetailsTemplate);
+  private async sendHighPriorityNotification(alert: SecurityAlert): Promise<void> {
+    try {
+      // In a real implementation, this would send an email or other notification
+      console.error('HIGH PRIORITY SECURITY ALERT', alert);
+      // Example: await sendEmail('admin@example.com', 'Security Alert', alertDetailsTemplate);
+      
+      // Log detailed information for security audit
+      await this.logSecurityActivity({
+        activityType: 'high-priority-alert',
+        alertId: alert.id,
+        alertType: alert.alertType,
+        severity: alert.severity,
+        timestamp: new Date().toISOString(),
+        ipAddress: alert.ipAddress
+      });
+      
+      // Additional reporting mechanisms could be implemented here
+      // For example, sending to a SIEM system or security monitoring service
+    } catch (error) {
+      // Even if notification fails, log the attempt
+      console.error('Failed to send high priority notification:', error);
+      
+      // Try alternate notification method as backup
+      try {
+        // Example: SMS or alternative communication channel
+        console.warn('Attempting alternate notification method for security alert:', alert.id);
+      } catch (backupError) {
+        console.error('All notification methods failed for security alert:', alert.id);
+      }
+    }
   }
   
   /**

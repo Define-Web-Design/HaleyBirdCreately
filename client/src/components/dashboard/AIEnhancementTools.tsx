@@ -1,7 +1,8 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '../ui/card';
 import { Badge } from '../ui/badge';
+import { useToast } from '../../hooks/use-toast';
 
 interface AIEnhancementToolProps {
   onSelectTool: (toolName: string) => void;
@@ -15,7 +16,6 @@ interface ToolCardType {
   iconGradient: string;
   animation: string;
   isNew?: boolean;
-  onClick?: () => void;
   buttonText?: string;
 }
 
@@ -76,12 +76,44 @@ interface AIEnhancementToolsProps {
 }
 
 const AIEnhancementTools = ({ onToolSelect }: AIEnhancementToolsProps) => {
+  const { toast } = useToast();
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Reset error when tool is changed
+  useEffect(() => {
+    if (error) setError(null);
+  }, [selectedTool]);
   
   // Handle tool selection
   const handleSelectTool = (toolName: string) => {
-    setSelectedTool(toolName);
-    onToolSelect?.(toolName);
+    try {
+      setIsLoading(true);
+      
+      // Simulate loading time for tool initialization
+      setTimeout(() => {
+        setSelectedTool(toolName);
+        onToolSelect?.(toolName);
+        
+        toast({
+          title: "Tool Selected",
+          description: `${toolName} is ready to use`,
+          variant: "default"
+        });
+        
+        setIsLoading(false);
+      }, 300);
+    } catch (err) {
+      setError("Failed to initialize tool. Please try again.");
+      setIsLoading(false);
+      
+      toast({
+        title: "Tool Error",
+        description: "Could not initialize the selected tool",
+        variant: "destructive"
+      });
+    }
   };
   
   return (
@@ -91,12 +123,20 @@ const AIEnhancementTools = ({ onToolSelect }: AIEnhancementToolsProps) => {
         Enhance your content with AI-powered tools while maintaining full ownership and copyright protection
       </p>
       
+      {error && (
+        <div className="p-3 bg-destructive/10 text-destructive rounded-md text-sm">
+          {error}
+        </div>
+      )}
+      
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mt-4">
         {ENHANCEMENT_TOOLS.map((tool) => (
           <Card 
             key={tool.title}
-            className={`cursor-pointer transition-all ${selectedTool === tool.title ? 'ring-2 ring-primary' : 'hover:bg-accent/50'} ${tool.animation}`}
-            onClick={() => handleSelectTool(tool.title)}
+            className={`cursor-pointer transition-all ${
+              isLoading ? 'opacity-70 pointer-events-none' : ''
+            } ${selectedTool === tool.title ? 'ring-2 ring-primary' : 'hover:bg-accent/50'} ${tool.animation}`}
+            onClick={() => !isLoading && handleSelectTool(tool.title)}
           >
             <CardContent className="p-3">
               <div className="flex items-center gap-3">
@@ -124,6 +164,14 @@ const AIEnhancementTools = ({ onToolSelect }: AIEnhancementToolsProps) => {
             <span className="font-medium">© Legal Notice:</span> All content generated through this tool will include 
             embedded ownership information and digital watermarks. Your intellectual property rights are protected.
           </p>
+        </div>
+      )}
+      
+      {/* Tool loading state */}
+      {isLoading && (
+        <div className="flex items-center justify-center p-4">
+          <div className="animate-spin h-5 w-5 border-2 border-primary border-t-transparent rounded-full mr-2" />
+          <span className="text-sm">Initializing tool...</span>
         </div>
       )}
     </div>

@@ -82,15 +82,30 @@ const AIEnhancement = () => {
     
     setIsProcessing(true);
     
-    // Simulate processing delay with API call
-    setTimeout(() => {
+    // Simulate API call to generate enhancement
+    try {
+      // In a real implementation, this would be an actual API call
+      // Example: const response = await fetch('/api/ai/enhance', { method: 'POST', body: JSON.stringify({...}) })
+      
+      // Simulate processing delay
+      setTimeout(() => {
+        setIsProcessing(false);
+        setShowResults(true);
+        toast({
+          title: "Enhancement Complete",
+          description: `${selectedTool} has been applied to your content with ownership protection`,
+        });
+      }, 2500);
+    } catch (error) {
+      console.error('Enhancement generation error:', error);
       setIsProcessing(false);
-      setShowResults(true);
+      
       toast({
-        title: "Enhancement Complete",
-        description: `${selectedTool} has been applied to your content with ownership protection`,
+        title: "Enhancement Failed",
+        description: "There was an error generating your enhancement. Please try again.",
+        variant: "destructive"
       });
-    }, 2500);
+    }
   };
   
   // Sample result content based on selected tool
