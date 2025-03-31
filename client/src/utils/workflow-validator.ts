@@ -1,397 +1,417 @@
 
 /**
  * Comprehensive workflow validation system
- * Ensures all requested tasks are completed before allowing checkpoints
+ * Ensures all tasks in a workflow are completed and verified before checkpointing
  */
 
+import { runFullSystemValidation, ValidationReport } from './consolidated-validation';
 import { validateImplementation } from './validate-implementation';
-import { runFullSystemValidation } from './consolidated-validation';
 import { verifyPageLinks, runAccessibilityAudit, testKeyboardNavigation } from './navigation-tester';
 import { validateApiEndpoints } from './api-validator';
 
 export interface WorkflowTask {
   id: string;
-  description: string;
-  category: 'navigation' | 'content' | 'design' | 'backend' | 'accessibility' | 'security' | 'testing' | 'other';
-  status: 'pending' | 'in-progress' | 'completed' | 'failed';
-  validationFunction?: () => Promise<boolean>;
-  dependencies?: string[]; // IDs of tasks that must be completed before this one
-  errorDetails?: string;
-  startTime?: number;
-  endTime?: number;
-}
-
-export interface WorkflowSession {
-  id: string;
   name: string;
-  createdAt: number;
-  tasks: WorkflowTask[];
-  checkpoint?: {
-    id: string;
-    createdAt: number;
-    status: 'pending' | 'created' | 'failed';
-    message?: string;
-  };
-  status: 'in-progress' | 'completed' | 'failed';
+  category: 'UI' | 'Navigation' | 'Accessibility' | 'API' | 'Security' | 'Content' | 'Performance' | 'Other';
+  status: 'pending' | 'in-progress' | 'completed' | 'failed';
+  dependencies?: string[];
+  validationFunction?: () => Promise<boolean>;
+  details?: any;
 }
 
-// Current active workflow session
-let activeWorkflowSession: WorkflowSession | null = null;
-
-/**
- * Initialize a new workflow session
- */
-export function initializeWorkflowSession(name: string): WorkflowSession {
-  const session: WorkflowSession = {
-    id: `workflow-${Date.now()}`,
-    name,
-    createdAt: Date.now(),
-    tasks: [],
-    status: 'in-progress'
-  };
-  
-  activeWorkflowSession = session;
-  console.log(`Initialized workflow session: ${name}`);
-  return session;
+export interface WorkflowVerificationResult {
+  allTasksCompleted: boolean;
+  pendingTasks: WorkflowTask[];
+  completedTasks: WorkflowTask[];
+  failedTasks: WorkflowTask[];
+  validationReport?: ValidationReport;
+  timestamp: string;
 }
 
 /**
- * Add a task to the current workflow session
+ * Track and verify the status of all workflow tasks
  */
-export function addWorkflowTask(task: Omit<WorkflowTask, 'id' | 'status' | 'startTime'>): string {
-  if (!activeWorkflowSession) {
-    throw new Error('No active workflow session. Call initializeWorkflowSession first.');
-  }
-  
-  const taskId = `task-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-  const newTask: WorkflowTask = {
-    ...task,
-    id: taskId,
-    status: 'pending',
-    startTime: Date.now()
-  };
-  
-  activeWorkflowSession.tasks.push(newTask);
-  console.log(`Added task: ${task.description}`);
-  return taskId;
-}
+export class WorkflowValidator {
+  private tasks: Map<string, WorkflowTask> = new Map();
+  private lastVerificationResult: WorkflowVerificationResult | null = null;
 
-/**
- * Start a task by ID
- */
-export function startWorkflowTask(taskId: string): void {
-  if (!activeWorkflowSession) {
-    throw new Error('No active workflow session. Call initializeWorkflowSession first.');
+  /**
+   * Add a new task to the workflow
+   */
+  addTask(task: WorkflowTask): void {
+    this.tasks.set(task.id, task);
   }
-  
-  const task = activeWorkflowSession.tasks.find(t => t.id === taskId);
-  if (!task) {
-    throw new Error(`Task with ID ${taskId} not found.`);
+
+  /**
+   * Add multiple tasks to the workflow
+   */
+  addTasks(tasks: WorkflowTask[]): void {
+    tasks.forEach(task => this.addTask(task));
   }
-  
-  // Check if dependencies are completed
-  if (task.dependencies && task.dependencies.length > 0) {
-    const pendingDependencies = task.dependencies.filter(depId => {
-      const depTask = activeWorkflowSession?.tasks.find(t => t.id === depId);
-      return !depTask || depTask.status !== 'completed';
-    });
-    
-    if (pendingDependencies.length > 0) {
-      console.warn(`Cannot start task ${taskId}. Dependencies not completed: ${pendingDependencies.join(', ')}`);
-      return;
+
+  /**
+   * Update the status of a task
+   */
+  updateTaskStatus(taskId: string, status: 'pending' | 'in-progress' | 'completed' | 'failed', details?: any): void {
+    const task = this.tasks.get(taskId);
+    if (task) {
+      task.status = status;
+      if (details) {
+        task.details = details;
+      }
     }
   }
-  
-  task.status = 'in-progress';
-  task.startTime = Date.now();
-  console.log(`Started task: ${task.description}`);
-}
 
-/**
- * Complete a task by ID
- */
-export async function completeWorkflowTask(taskId: string, validateTask = true): Promise<boolean> {
-  if (!activeWorkflowSession) {
-    throw new Error('No active workflow session. Call initializeWorkflowSession first.');
+  /**
+   * Get all tasks with a specific status
+   */
+  getTasksByStatus(status: 'pending' | 'in-progress' | 'completed' | 'failed'): WorkflowTask[] {
+    return Array.from(this.tasks.values()).filter(task => task.status === status);
   }
-  
-  const task = activeWorkflowSession.tasks.find(t => t.id === taskId);
-  if (!task) {
-    throw new Error(`Task with ID ${taskId} not found.`);
+
+  /**
+   * Validate that all dependencies for a task are completed
+   */
+  private areDependenciesMet(taskId: string): boolean {
+    const task = this.tasks.get(taskId);
+    if (!task || !task.dependencies || task.dependencies.length === 0) {
+      return true;
+    }
+
+    return task.dependencies.every(depId => {
+      const depTask = this.tasks.get(depId);
+      return depTask && depTask.status === 'completed';
+    });
   }
-  
-  // If the task has a validation function and validation is enabled, run it
-  if (validateTask && task.validationFunction) {
+
+  /**
+   * Verify all tasks in the workflow are completed
+   */
+  async verifyAllTasksCompleted(): Promise<WorkflowVerificationResult> {
+    const pendingTasks = this.getTasksByStatus('pending');
+    const inProgressTasks = this.getTasksByStatus('in-progress');
+    const completedTasks = this.getTasksByStatus('completed');
+    const failedTasks = this.getTasksByStatus('failed');
+
+    const allTasksCompleted = pendingTasks.length === 0 && inProgressTasks.length === 0 && failedTasks.length === 0;
+
+    // Run validation functions for completed tasks to double-check
+    for (const task of completedTasks) {
+      if (task.validationFunction) {
+        try {
+          const isValid = await task.validationFunction();
+          if (!isValid) {
+            this.updateTaskStatus(task.id, 'failed', { reason: 'Validation function failed' });
+            failedTasks.push(task);
+            completedTasks.splice(completedTasks.indexOf(task), 1);
+          }
+        } catch (error) {
+          this.updateTaskStatus(task.id, 'failed', { reason: 'Validation function threw error', error: error.message });
+          failedTasks.push(task);
+          completedTasks.splice(completedTasks.indexOf(task), 1);
+        }
+      }
+    }
+
+    // Additionally run a full system validation
+    let validationReport: ValidationReport | undefined;
     try {
-      const validationResult = await task.validationFunction();
+      validationReport = await runFullSystemValidation();
       
-      if (!validationResult) {
-        task.status = 'failed';
-        task.errorDetails = 'Task validation failed';
-        console.error(`Task validation failed: ${task.description}`);
-        return false;
+      // If system validation fails, mark workflow as failed
+      if (!validationReport.overallSuccess) {
+        for (const section of validationReport.sections) {
+          if (!section.success) {
+            // Find tasks related to this section and mark as failed
+            const relatedTasks = Array.from(this.tasks.values()).filter(
+              task => task.category.toLowerCase() === section.name.toLowerCase()
+            );
+            
+            for (const task of relatedTasks) {
+              this.updateTaskStatus(task.id, 'failed', { 
+                reason: 'System validation failed for this category',
+                details: section.details 
+              });
+            }
+          }
+        }
       }
     } catch (error) {
-      task.status = 'failed';
-      task.errorDetails = `Validation error: ${error.message || error}`;
-      console.error(`Task validation error: ${task.description}`, error);
-      return false;
+      console.error('Error running system validation:', error);
     }
-  }
-  
-  task.status = 'completed';
-  task.endTime = Date.now();
-  console.log(`Completed task: ${task.description}`);
-  return true;
-}
 
-/**
- * Checks if all tasks in the workflow are completed
- */
-export function areAllTasksCompleted(): boolean {
-  if (!activeWorkflowSession) {
-    throw new Error('No active workflow session. Call initializeWorkflowSession first.');
-  }
-  
-  const pendingTasks = activeWorkflowSession.tasks.filter(
-    task => task.status !== 'completed'
-  );
-  
-  return pendingTasks.length === 0;
-}
+    // Update the verification result
+    const result: WorkflowVerificationResult = {
+      allTasksCompleted: allTasksCompleted && (validationReport?.overallSuccess || false),
+      pendingTasks,
+      completedTasks,
+      failedTasks,
+      validationReport,
+      timestamp: new Date().toISOString()
+    };
 
-/**
- * Validate that a workflow can be checkpointed
- * Ensures all tasks are completed and passes final validation
- */
-export async function validateWorkflowForCheckpoint(): Promise<{
-  canCheckpoint: boolean;
-  pendingTasks: WorkflowTask[];
-  validationReport?: any;
-}> {
-  if (!activeWorkflowSession) {
-    throw new Error('No active workflow session. Call initializeWorkflowSession first.');
+    this.lastVerificationResult = result;
+    return result;
   }
-  
-  // Check for any tasks that are not completed
-  const pendingTasks = activeWorkflowSession.tasks.filter(
-    task => task.status !== 'completed'
-  );
-  
-  if (pendingTasks.length > 0) {
-    console.warn('Cannot create checkpoint: Some tasks are still pending.');
-    return {
-      canCheckpoint: false,
-      pendingTasks
-    };
-  }
-  
-  // Run a comprehensive validation as a final check
-  try {
-    console.log('Running comprehensive validation before checkpoint...');
-    
-    // Use existing validation utilities
-    const validationReport = await runFullSystemValidation();
-    
-    // If validation failed, return false
-    if (!validationReport.overallSuccess) {
-      console.error('Comprehensive validation failed. Cannot create checkpoint.');
-      return {
-        canCheckpoint: false,
-        pendingTasks: [],
-        validationReport
-      };
-    }
-    
-    console.log('Comprehensive validation passed. Workflow can be checkpointed.');
-    return {
-      canCheckpoint: true,
-      pendingTasks: [],
-      validationReport
-    };
-  } catch (error) {
-    console.error('Error during validation:', error);
-    return {
-      canCheckpoint: false,
-      pendingTasks: [],
-      validationReport: {
-        error: error.message || 'Unknown error during validation'
+
+  /**
+   * Verify that a specific set of tasks are all completed
+   */
+  async verifyTasksCompleted(taskIds: string[]): Promise<boolean> {
+    for (const taskId of taskIds) {
+      const task = this.tasks.get(taskId);
+      if (!task || task.status !== 'completed') {
+        return false;
       }
-    };
-  }
-}
 
-/**
- * Create a checkpoint for the workflow session
- */
-export async function createWorkflowCheckpoint(message?: string): Promise<boolean> {
-  if (!activeWorkflowSession) {
-    throw new Error('No active workflow session. Call initializeWorkflowSession first.');
+      // Verify the task with its validation function if provided
+      if (task.validationFunction) {
+        try {
+          const isValid = await task.validationFunction();
+          if (!isValid) {
+            this.updateTaskStatus(taskId, 'failed', { reason: 'Validation function failed' });
+            return false;
+          }
+        } catch (error) {
+          this.updateTaskStatus(taskId, 'failed', { reason: 'Validation function threw error', error: error.message });
+          return false;
+        }
+      }
+    }
+
+    return true;
   }
-  
-  // Validate that all tasks are completed
-  const { canCheckpoint, pendingTasks, validationReport } = await validateWorkflowForCheckpoint();
-  
-  if (!canCheckpoint) {
-    console.error('Cannot create checkpoint: Validation failed.');
+
+  /**
+   * Create a verification report for all tasks
+   */
+  async generateVerificationReport(): Promise<string> {
+    const result = await this.verifyAllTasksCompleted();
     
-    if (pendingTasks.length > 0) {
-      console.error('Pending tasks:');
-      pendingTasks.forEach(task => {
-        console.error(`- ${task.description} (${task.status})`);
+    let report = `# Workflow Verification Report\n\n`;
+    report += `## Overall Status: ${result.allTasksCompleted ? 'COMPLETED ✓' : 'INCOMPLETE ✗'}\n\n`;
+    report += `Timestamp: ${result.timestamp}\n\n`;
+    
+    // Summary of task status
+    report += `## Task Status Summary\n\n`;
+    report += `- Total Tasks: ${this.tasks.size}\n`;
+    report += `- Completed: ${result.completedTasks.length}\n`;
+    report += `- Pending: ${result.pendingTasks.length}\n`;
+    report += `- In Progress: ${this.getTasksByStatus('in-progress').length}\n`;
+    report += `- Failed: ${result.failedTasks.length}\n\n`;
+    
+    // List failed tasks
+    if (result.failedTasks.length > 0) {
+      report += `## Failed Tasks\n\n`;
+      result.failedTasks.forEach(task => {
+        report += `### ${task.name} (${task.id})\n`;
+        report += `- Category: ${task.category}\n`;
+        if (task.details) {
+          report += `- Failure Reason: ${task.details.reason || 'Unknown'}\n`;
+          if (task.details.error) {
+            report += `- Error: ${task.details.error}\n`;
+          }
+        }
+        report += `\n`;
       });
     }
     
-    activeWorkflowSession.checkpoint = {
-      id: `checkpoint-${Date.now()}`,
-      createdAt: Date.now(),
-      status: 'failed',
-      message: 'Validation failed'
-    };
+    // List pending tasks
+    if (result.pendingTasks.length > 0) {
+      report += `## Pending Tasks\n\n`;
+      result.pendingTasks.forEach(task => {
+        report += `- ${task.name} (${task.id}): ${task.category}\n`;
+      });
+      report += `\n`;
+    }
     
-    return false;
+    // Include system validation results
+    if (result.validationReport) {
+      report += `## System Validation\n\n`;
+      report += `- Overall Success: ${result.validationReport.overallSuccess ? 'Yes' : 'No'}\n\n`;
+      
+      report += `### Validation Sections\n\n`;
+      result.validationReport.sections.forEach(section => {
+        report += `- ${section.name}: ${section.success ? 'PASSED' : 'FAILED'}\n`;
+      });
+      
+      if (result.validationReport.recommendations.length > 0) {
+        report += `\n### Recommendations\n\n`;
+        result.validationReport.recommendations.forEach(rec => {
+          report += `- ${rec}\n`;
+        });
+      }
+    }
+    
+    return report;
   }
-  
-  // Create the checkpoint
-  activeWorkflowSession.checkpoint = {
-    id: `checkpoint-${Date.now()}`,
-    createdAt: Date.now(),
-    status: 'created',
-    message: message || 'Workflow completed successfully'
-  };
-  
-  activeWorkflowSession.status = 'completed';
-  
-  console.log('Checkpoint created successfully.');
-  console.log(activeWorkflowSession.checkpoint.message);
-  
-  return true;
-}
 
-/**
- * Get a summary of the current workflow session
- */
-export function getWorkflowSummary(): {
-  session: WorkflowSession | null;
-  completedTasks: number;
-  totalTasks: number;
-  pendingTasks: WorkflowTask[];
-  duration: number;
-} {
-  if (!activeWorkflowSession) {
+  /**
+   * Determine if it's safe to create a checkpoint
+   */
+  async canCreateCheckpoint(): Promise<{
+    safe: boolean;
+    reason?: string;
+    verificationResult: WorkflowVerificationResult;
+  }> {
+    const result = await this.verifyAllTasksCompleted();
+    
+    if (!result.allTasksCompleted) {
+      return {
+        safe: false,
+        reason: `Workflow is incomplete. ${result.pendingTasks.length} pending tasks, ${result.failedTasks.length} failed tasks.`,
+        verificationResult: result
+      };
+    }
+    
+    // Additional checks for system validation
+    if (result.validationReport && !result.validationReport.overallSuccess) {
+      return {
+        safe: false,
+        reason: 'System validation failed. See validation report for details.',
+        verificationResult: result
+      };
+    }
+    
     return {
-      session: null,
-      completedTasks: 0,
-      totalTasks: 0,
-      pendingTasks: [],
-      duration: 0
+      safe: true,
+      verificationResult: result
     };
   }
-  
-  const completedTasks = activeWorkflowSession.tasks.filter(
-    task => task.status === 'completed'
-  ).length;
-  
-  const pendingTasks = activeWorkflowSession.tasks.filter(
-    task => task.status !== 'completed'
-  );
-  
-  const duration = Date.now() - activeWorkflowSession.createdAt;
-  
-  return {
-    session: activeWorkflowSession,
-    completedTasks,
-    totalTasks: activeWorkflowSession.tasks.length,
-    pendingTasks,
-    duration
-  };
-}
 
-/**
- * Generate predefined validation functions for common task types
- */
-export const validationFunctions = {
-  // Navigation validation
-  validateNavigation: () => async (): Promise<boolean> => {
-    const results = await verifyPageLinks();
-    return results.potentialBrokenLinks.length === 0;
-  },
-  
-  // Accessibility validation
-  validateAccessibility: () => async (): Promise<boolean> => {
-    const results = await runAccessibilityAudit();
-    return results.score >= 80; // 80% threshold
-  },
-  
-  // Keyboard navigation validation
-  validateKeyboardNavigation: () => async (): Promise<boolean> => {
-    const results = await testKeyboardNavigation();
-    return results.success;
-  },
-  
-  // API validation
-  validateApi: () => async (): Promise<boolean> => {
-    const results = await validateApiEndpoints();
-    return results.success;
-  },
-  
-  // Comprehensive validation
-  validateAll: () => async (): Promise<boolean> => {
-    const results = await validateImplementation();
-    return results.success;
+  /**
+   * Create default task validation functions
+   */
+  static createDefaultValidationFunction(category: string): () => Promise<boolean> {
+    switch (category.toLowerCase()) {
+      case 'navigation':
+        return async () => {
+          const navResult = await verifyPageLinks();
+          return navResult.potentialBrokenLinks.length === 0;
+        };
+      
+      case 'accessibility':
+        return async () => {
+          const a11yResult = await runAccessibilityAudit();
+          return a11yResult.score >= 80; // 80% threshold
+        };
+        
+      case 'api':
+        return async () => {
+          const apiResult = await validateApiEndpoints();
+          return apiResult.success;
+        };
+        
+      case 'ui':
+        return async () => {
+          const keyboardResult = await testKeyboardNavigation();
+          return keyboardResult.success;
+        };
+        
+      default:
+        // Default validation just returns true
+        return async () => true;
+    }
   }
-};
 
-/**
- * Create a workflow with common validation tasks
- */
-export function createStandardWorkflow(name: string): WorkflowSession {
-  const session = initializeWorkflowSession(name);
-  
-  // Add standard validation tasks
-  addWorkflowTask({
-    description: 'Validate page navigation',
-    category: 'navigation',
-    validationFunction: validationFunctions.validateNavigation()
-  });
-  
-  addWorkflowTask({
-    description: 'Validate accessibility',
-    category: 'accessibility',
-    validationFunction: validationFunctions.validateAccessibility()
-  });
-  
-  addWorkflowTask({
-    description: 'Validate keyboard navigation',
-    category: 'accessibility',
-    validationFunction: validationFunctions.validateKeyboardNavigation()
-  });
-  
-  addWorkflowTask({
-    description: 'Validate API endpoints',
-    category: 'backend',
-    validationFunction: validationFunctions.validateApi()
-  });
-  
-  return session;
+  /**
+   * Create predefined workflow tasks based on common requirements
+   */
+  static createDefaultWorkflowTasks(): WorkflowTask[] {
+    return [
+      {
+        id: 'nav-links',
+        name: 'Navigation Links',
+        category: 'Navigation',
+        status: 'pending',
+        validationFunction: WorkflowValidator.createDefaultValidationFunction('navigation')
+      },
+      {
+        id: 'a11y',
+        name: 'Accessibility Compliance',
+        category: 'Accessibility',
+        status: 'pending',
+        validationFunction: WorkflowValidator.createDefaultValidationFunction('accessibility')
+      },
+      {
+        id: 'api-endpoints',
+        name: 'API Endpoints',
+        category: 'API',
+        status: 'pending',
+        validationFunction: WorkflowValidator.createDefaultValidationFunction('api')
+      },
+      {
+        id: 'keyboard-nav',
+        name: 'Keyboard Navigation',
+        category: 'UI',
+        status: 'pending',
+        validationFunction: WorkflowValidator.createDefaultValidationFunction('ui')
+      },
+      {
+        id: 'content-integrity',
+        name: 'Content Integrity',
+        category: 'Content',
+        status: 'pending'
+      },
+      {
+        id: 'error-handling',
+        name: 'Error Handling',
+        category: 'UI',
+        status: 'pending'
+      },
+      {
+        id: 'security',
+        name: 'Security Measures',
+        category: 'Security',
+        status: 'pending'
+      }
+    ];
+  }
 }
 
-// Example usage:
-// const workflow = createStandardWorkflow('Feature Implementation');
-// 
-// // Add custom tasks
-// const customTaskId = addWorkflowTask({
-//   description: 'Implement new feature',
-//   category: 'other'
-// });
-// 
-// // Later, when the task is completed
-// await completeWorkflowTask(customTaskId);
-// 
-// // When all tasks are done, validate and create checkpoint
-// if (areAllTasksCompleted()) {
-//   const validationResult = await validateWorkflowForCheckpoint();
-//   if (validationResult.canCheckpoint) {
-//     await createWorkflowCheckpoint('Feature implemented successfully');
-//   }
-// }
+/**
+ * Run the workflow validation and display the results
+ */
+export async function runWorkflowValidation(workflowTasks: WorkflowTask[]): Promise<boolean> {
+  const validator = new WorkflowValidator();
+  validator.addTasks(workflowTasks);
+  
+  // Simulate some tasks being completed
+  const result = await validator.verifyAllTasksCompleted();
+  
+  console.log('='.repeat(80));
+  console.log(`WORKFLOW VALIDATION: ${result.allTasksCompleted ? 'PASSED' : 'FAILED'}`);
+  console.log('='.repeat(80));
+  
+  console.log(`Completed Tasks: ${result.completedTasks.length}/${validator.getTasksByStatus('completed').length + 
+    validator.getTasksByStatus('pending').length + 
+    validator.getTasksByStatus('in-progress').length + 
+    validator.getTasksByStatus('failed').length}`);
+  
+  if (result.pendingTasks.length > 0) {
+    console.log('\nPending Tasks:');
+    result.pendingTasks.forEach(task => {
+      console.log(`- ${task.name} (${task.category})`);
+    });
+  }
+  
+  if (result.failedTasks.length > 0) {
+    console.log('\nFailed Tasks:');
+    result.failedTasks.forEach(task => {
+      console.log(`- ${task.name} (${task.category}): ${task.details?.reason || 'Unknown error'}`);
+    });
+  }
+  
+  const checkpointStatus = await validator.canCreateCheckpoint();
+  console.log('\nCheckpoint Status:');
+  console.log(`- Safe to create checkpoint: ${checkpointStatus.safe ? 'YES' : 'NO'}`);
+  if (!checkpointStatus.safe && checkpointStatus.reason) {
+    console.log(`- Reason: ${checkpointStatus.reason}`);
+  }
+  
+  return result.allTasksCompleted;
+}
+
+// Usage example:
+// const defaultTasks = WorkflowValidator.createDefaultWorkflowTasks();
+// runWorkflowValidation(defaultTasks);

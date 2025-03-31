@@ -55,7 +55,7 @@ localPort = 8425
 externalPort = 3002
 
 [workflows]
-runButton = "Comprehensive Task Verification"
+runButton = "Simultaneous Task Verification"
 
 [[workflows.workflow]]
 name = "Project"
@@ -762,3 +762,130 @@ args = "# Run the comprehensive validation utility"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "node -e \"const { createStandardWorkflow, addWorkflowTask, completeWorkflowTask, validateWorkflowForCheckpoint, createWorkflowCheckpoint } = require('./client/src/utils/workflow-validator.js'); const { createVerifiedCheckpoint } = require('./client/src/utils/checkpoint-manager.js'); async function run() { const workflow = createStandardWorkflow('Full System Validation'); const taskId = addWorkflowTask({ description: 'Validate all implemented tasks', category: 'testing' }); await completeWorkflowTask(taskId); const result = await validateWorkflowForCheckpoint(); console.log(JSON.stringify(result, null, 2)); if (result.canCheckpoint) { await createWorkflowCheckpoint('All tasks validated successfully'); } } run();\""
+
+[[workflows.workflow]]
+name = "Task Verification and Checkpoint"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Kill any running processes first"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pkill -f node || true"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run comprehensive validation"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node -e \"const { runWorkflowValidation } = require('./client/src/utils/workflow-validator.js'); const { WorkflowValidator } = require('./client/src/utils/workflow-validator.js'); runWorkflowValidation(WorkflowValidator.createDefaultWorkflowTasks());\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Generate checkpoint verification report"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node -e \"const { checkpointManager } = require('./client/src/utils/checkpoint-manager.js'); checkpointManager.generateVerificationReport().then(report => console.log(report));\""
+
+[[workflows.workflow]]
+name = "Create Verified Checkpoint"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run the task verification CLI to ensure all tasks are completed"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node -e \"require('./client/src/utils/task-verification-cli.js').verify();\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Only proceed to checkpoint if verification passes"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node -e \"const { checkpointManager } = require('./client/src/utils/checkpoint-manager.js'); checkpointManager.tryCreateCheckpoint('Verified Checkpoint', 'All tasks verified and validated successfully').then(result => { console.log(result.message); process.exit(result.success ? 0 : 1); });\""
+
+[[workflows.workflow]]
+name = "Simultaneous Task Verification"
+author = 40896524
+mode = "parallel"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run code quality checks"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run lint"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npx tsc --noEmit"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run accessibility audit"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node -e \"const { runAccessibilityAudit } = require('./client/src/utils/navigation-tester.js'); runAccessibilityAudit().then(results => console.log(JSON.stringify(results, null, 2)));\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Check navigation links"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node -e \"const { verifyPageLinks } = require('./client/src/utils/navigation-tester.js'); verifyPageLinks().then(results => console.log(JSON.stringify(results, null, 2)));\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run API validation"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node -e \"const { validateApiEndpoints } = require('./client/src/utils/api-validator.js'); validateApiEndpoints().then(results => console.log(JSON.stringify(results, null, 2)));\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run comprehensive validation"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node -e \"require('./client/src/utils/consolidated-validation.js').runFullSystemValidation().then(report => { require('./client/src/utils/consolidated-validation.js').displayFullValidationResults(report); });\""

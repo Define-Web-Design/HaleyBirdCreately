@@ -292,6 +292,103 @@ export async function saveValidationReport(report: ValidationReport, filePath?: 
   }
 }
 
+/**
+ * Verify that all requested tasks are completed and validated
+ * @param tasks List of task descriptions to verify
+ * @returns Whether all tasks are verified as complete
+ */
+export async function verifyAllTasksCompleted(tasks: string[]): Promise<{
+  allCompleted: boolean;
+  incompleteTaskDetails: Array<{task: string, status: string, reason?: string}>;
+}> {
+  console.log(`Verifying completion of ${tasks.length} tasks...`);
+  
+  // Run full system validation
+  const validationReport = await runFullSystemValidation();
+  
+  const incompleteTaskDetails: Array<{task: string, status: string, reason?: string}> = [];
+  
+  // Map tasks to validation sections
+  for (const task of tasks) {
+    let taskVerified = false;
+    let matchingSection = '';
+    let reason = '';
+    
+    // Look for a matching validation section
+    for (const section of validationReport.sections) {
+      if (task.toLowerCase().includes(section.name.toLowerCase()) || 
+          section.name.toLowerCase().includes(task.toLowerCase())) {
+        matchingSection = section.name;
+        taskVerified = section.success;
+        
+        if (!taskVerified) {
+          reason = `Failed validation in ${section.name} section`;
+        }
+        break;
+      }
+    }
+    
+    if (!matchingSection) {
+      // If no matching section, mark as unverified
+      taskVerified = false;
+      reason = 'No matching validation section found';
+    }
+    
+    if (!taskVerified) {
+      incompleteTaskDetails.push({
+        task,
+        status: 'incomplete',
+        reason
+      });
+    }
+  }
+  
+  const allCompleted = incompleteTaskDetails.length === 0;
+  
+  return {
+    allCompleted,
+    incompleteTaskDetails
+  };
+}
+
+/**
+ * Determine if it's safe to create a checkpoint based on all task verification
+ */
+export async function isSafeToCreateCheckpoint(): Promise<{
+  safe: boolean;
+  reason?: string;
+  report: ValidationReport;
+}> {
+  // Run full system validation
+  const report = await runFullSystemValidation();
+  
+  if (!report.overallSuccess) {
+    return {
+      safe: false,
+      reason: 'System validation failed. Please fix all issues before creating a checkpoint.',
+      report
+    };
+  }
+  
+  // Specific checks for critical issues
+  const criticalSections = ['Accessibility Audit', 'API Endpoint Validation', 'Navigation Validation'];
+  
+  for (const section of report.sections) {
+    if (criticalSections.includes(section.name) && !section.success) {
+      return {
+        safe: false,
+        reason: `Critical section "${section.name}" failed validation. Please fix before proceeding.`,
+        report
+      };
+    }
+  }
+  
+  return {
+    safe: true,
+    report
+  };
+}
+
 // Import the task validation orchestrator
 import { taskOrchestrator, TaskRequest } from './task-validation-orchestrator';
 import { runValidationFromInstruction, runValidationWorkflow } from './validation-runner';
