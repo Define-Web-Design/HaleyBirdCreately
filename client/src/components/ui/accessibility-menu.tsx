@@ -33,28 +33,17 @@ export const AccessibilityMenu = ({ className }: AccessibilityMenuProps) => {
   const [highContrast, setHighContrast] = useState(false);
   const [fontSize, setFontSize] = useState(16);
   const [colorMode, setColorMode] = useState<ColorBlindnessMode>('normal');
-  const [reducedMotion, setReducedMotion] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
-  
+
   // Initialize from localStorage on component mount
   useEffect(() => {
     const storedHighContrast = localStorage.getItem('highContrast') === 'true';
     const storedFontSize = parseInt(localStorage.getItem('fontSize') || '16');
     const storedColorMode = localStorage.getItem('colorBlindnessMode') as ColorBlindnessMode || 'normal';
-    const storedReducedMotion = localStorage.getItem('reducedMotion') === 'true';
     
     setHighContrast(storedHighContrast);
     setFontSize(storedFontSize);
     setColorMode(storedColorMode);
-    setReducedMotion(storedReducedMotion || window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   }, []);
-  
-  // Announce changes to screen reader
-  useEffect(() => {
-    if (menuOpen) {
-      announceToScreenReader('Accessibility menu opened', 'polite');
-    }
-  }, [menuOpen]);
 
   const handleHighContrastChange = (checked: boolean) => {
     setHighContrast(checked);
@@ -75,83 +64,36 @@ export const AccessibilityMenu = ({ className }: AccessibilityMenuProps) => {
     localStorage.setItem('colorBlindnessMode', mode);
   };
 
-  const handleReducedMotionChange = (checked: boolean) => {
-    setReducedMotion(checked);
-    if (checked) {
-      document.documentElement.classList.add('reduced-motion');
-    } else {
-      document.documentElement.classList.remove('reduced-motion');
-    }
-    localStorage.setItem('reducedMotion', checked.toString());
-    announceToScreenReader(`Reduced motion ${checked ? 'enabled' : 'disabled'}`, 'polite');
-  };
-
   return (
-    <DropdownMenu onOpenChange={setMenuOpen}>
+    <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className={className} 
-          aria-label="Accessibility Settings"
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              setMenuOpen(!menuOpen);
-            }
-          }}
-        >
+        <Button variant="ghost" size="icon" className={`${className} hover:bg-apple-blue/10 hover:text-apple-blue transition-all`} aria-label="Accessibility Settings">
           <Settings className="h-[1.2rem] w-[1.2rem]" />
           <span className="sr-only">Accessibility Settings</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent 
-        align="end" 
-        className="w-[280px]"
-        aria-label="Accessibility settings menu"
-      >
-        <DropdownMenuLabel>Accessibility Settings</DropdownMenuLabel>
-        <DropdownMenuSeparator />
+      <DropdownMenuContent align="end" className="w-[280px] glass-panel border border-white/20 shadow-lg">
+        <DropdownMenuLabel className="text-foreground/90 font-medium">Accessibility Settings</DropdownMenuLabel>
+        <DropdownMenuSeparator className="bg-white/10" />
         
-        <div className="p-2 space-y-4">
-          <div className="flex items-center justify-between">
+        <div className="p-2">
+          <div className="flex items-center justify-between mb-3 p-1 hover:bg-white/5 rounded-md transition-colors">
             <div className="flex items-center gap-2">
-              <MoonStar className="h-4 w-4" />
-              <Label htmlFor="high-contrast">High Contrast</Label>
+              <MoonStar className="h-4 w-4 text-apple-indigo" />
+              <Label htmlFor="high-contrast" className="text-foreground/90">High Contrast</Label>
             </div>
             <Switch 
               id="high-contrast" 
               checked={highContrast} 
               onCheckedChange={handleHighContrastChange}
-              aria-checked={highContrast}
-              aria-describedby="high-contrast-description"
+              className="data-[state=checked]:bg-apple-indigo"
             />
-            <span id="high-contrast-description" className="sr-only">
-              {highContrast ? 'High contrast is enabled' : 'High contrast is disabled'}
-            </span>
           </div>
           
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Settings className="h-4 w-4" />
-              <Label htmlFor="reduced-motion">Reduced Motion</Label>
-            </div>
-            <Switch 
-              id="reduced-motion" 
-              checked={reducedMotion} 
-              onCheckedChange={handleReducedMotionChange}
-              aria-checked={reducedMotion}
-              aria-describedby="reduced-motion-description"
-            />
-            <span id="reduced-motion-description" className="sr-only">
-              {reducedMotion ? 'Reduced motion is enabled' : 'Reduced motion is disabled'}
-            </span>
-          </div>
-          
-          <div>
+          <div className="mb-4 p-1 hover:bg-white/5 rounded-md transition-colors">
             <div className="flex items-center gap-2 mb-2">
-              <Type className="h-4 w-4" />
-              <Label htmlFor="font-size">Font Size: {fontSize}px</Label>
+              <Type className="h-4 w-4 text-apple-blue" />
+              <Label htmlFor="font-size" className="text-foreground/90">Font Size: {fontSize}px</Label>
             </div>
             <Slider
               id="font-size"
@@ -160,30 +102,21 @@ export const AccessibilityMenu = ({ className }: AccessibilityMenuProps) => {
               max={24}
               step={1}
               onValueChange={handleFontSizeChange}
-              aria-valuemin={12}
-              aria-valuemax={24}
-              aria-valuenow={fontSize}
-              aria-valuetext={`${fontSize} pixels`}
+              className="[&>[data-state=checked]]:bg-apple-blue"
             />
           </div>
           
-          <div className="space-y-2">
+          <div className="space-y-2 p-1 hover:bg-white/5 rounded-md transition-colors">
             <div className="flex items-center gap-2">
-              <Eye className="h-4 w-4" />
-              <Label id="color-vision-label">Color Vision Mode</Label>
+              <Eye className="h-4 w-4 text-apple-green" />
+              <Label className="text-foreground/90">Color Vision Mode</Label>
             </div>
-            <div 
-              className="grid grid-cols-2 gap-2" 
-              role="radiogroup" 
-              aria-labelledby="color-vision-label"
-            >
+            <div className="grid grid-cols-2 gap-2">
               <Button 
                 size="sm" 
                 variant={colorMode === 'normal' ? 'default' : 'outline'}
                 onClick={() => handleColorModeChange('normal')}
-                className="w-full"
-                aria-checked={colorMode === 'normal'}
-                role="radio"
+                className={`w-full ${colorMode === 'normal' ? 'bg-apple-green text-white border-apple-green hover:bg-apple-green/90' : 'hover:border-apple-green/50 hover:text-apple-green'}`}
               >
                 Normal
               </Button>
@@ -191,9 +124,7 @@ export const AccessibilityMenu = ({ className }: AccessibilityMenuProps) => {
                 size="sm" 
                 variant={colorMode === 'protanopia' ? 'default' : 'outline'}
                 onClick={() => handleColorModeChange('protanopia')}
-                className="w-full"
-                aria-checked={colorMode === 'protanopia'}
-                role="radio"
+                className={`w-full ${colorMode === 'protanopia' ? 'bg-apple-red text-white border-apple-red hover:bg-apple-red/90' : 'hover:border-apple-red/50 hover:text-apple-red'}`}
               >
                 Protanopia
               </Button>
@@ -201,9 +132,7 @@ export const AccessibilityMenu = ({ className }: AccessibilityMenuProps) => {
                 size="sm" 
                 variant={colorMode === 'deuteranopia' ? 'default' : 'outline'}
                 onClick={() => handleColorModeChange('deuteranopia')}
-                className="w-full"
-                aria-checked={colorMode === 'deuteranopia'}
-                role="radio"
+                className={`w-full ${colorMode === 'deuteranopia' ? 'bg-apple-orange text-white border-apple-orange hover:bg-apple-orange/90' : 'hover:border-apple-orange/50 hover:text-apple-orange'}`}
               >
                 Deuteranopia
               </Button>
@@ -211,9 +140,7 @@ export const AccessibilityMenu = ({ className }: AccessibilityMenuProps) => {
                 size="sm" 
                 variant={colorMode === 'tritanopia' ? 'default' : 'outline'}
                 onClick={() => handleColorModeChange('tritanopia')}
-                className="w-full"
-                aria-checked={colorMode === 'tritanopia'}
-                role="radio"
+                className={`w-full ${colorMode === 'tritanopia' ? 'bg-apple-purple text-white border-apple-purple hover:bg-apple-purple/90' : 'hover:border-apple-purple/50 hover:text-apple-purple'}`}
               >
                 Tritanopia
               </Button>

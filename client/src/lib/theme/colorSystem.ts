@@ -1,97 +1,263 @@
 
-/**
- * Custom color system with CMYK-inspired vibrant colors
- * Creates a unique visual identity while maintaining professional appeal
- */
+// Apple-inspired color system
 
-// Core vibrant palette inspired by CMYK but with unique twists
-export const CORE_PALETTE = {
-  // Primary colors
-  PURPLE: {
-    main: "#6200EA", // Deep purple for primary actions/brand
-    light: "#B388FF",
-    dark: "#4A148C",
-    ambient: "rgba(98, 0, 234, 0.15)"
+// Standard Apple UI colors
+export const appleColors = {
+  blue: {
+    light: '#007AFF',
+    dark: '#0A84FF',
+    lightAlpha: (alpha: number) => `rgba(0, 122, 255, ${alpha})`,
+    darkAlpha: (alpha: number) => `rgba(10, 132, 255, ${alpha})`,
   },
-  MAGENTA: {
-    main: "#FF4081", // Energetic magenta (inspired by CMYK magenta but unique)
-    light: "#FF80AB",
-    dark: "#C51162",
-    ambient: "rgba(255, 64, 129, 0.15)"
+  green: {
+    light: '#34C759',
+    dark: '#30D158',
+    lightAlpha: (alpha: number) => `rgba(52, 199, 89, ${alpha})`,
+    darkAlpha: (alpha: number) => `rgba(48, 209, 88, ${alpha})`,
   },
-  CYAN: {
-    main: "#00BCD4", // Refreshing cyan (inspired by CMYK cyan)
-    light: "#80DEEA",
-    dark: "#006064",
-    ambient: "rgba(0, 188, 212, 0.15)"
+  indigo: {
+    light: '#5856D6',
+    dark: '#5E5CE6',
+    lightAlpha: (alpha: number) => `rgba(88, 86, 214, ${alpha})`,
+    darkAlpha: (alpha: number) => `rgba(94, 92, 230, ${alpha})`,
   },
-  YELLOW: {
-    main: "#FFAB00", // Vibrant yellow (inspired by CMYK yellow but warmer)
-    light: "#FFD740",
-    dark: "#FF6F00",
-    ambient: "rgba(255, 171, 0, 0.15)"
+  orange: {
+    light: '#FF9500',
+    dark: '#FF9F0A',
+    lightAlpha: (alpha: number) => `rgba(255, 149, 0, ${alpha})`,
+    darkAlpha: (alpha: number) => `rgba(255, 159, 10, ${alpha})`,
   },
-  GREEN: {
-    main: "#00E676", // Energetic green accent
-    light: "#69F0AE",
-    dark: "#00C853",
-    ambient: "rgba(0, 230, 118, 0.15)"
+  pink: {
+    light: '#FF2D55',
+    dark: '#FF375F',
+    lightAlpha: (alpha: number) => `rgba(255, 45, 85, ${alpha})`,
+    darkAlpha: (alpha: number) => `rgba(255, 55, 95, ${alpha})`,
   },
+  purple: {
+    light: '#AF52DE',
+    dark: '#BF5AF2',
+    lightAlpha: (alpha: number) => `rgba(175, 82, 222, ${alpha})`,
+    darkAlpha: (alpha: number) => `rgba(191, 90, 242, ${alpha})`,
+  },
+  red: {
+    light: '#FF3B30',
+    dark: '#FF453A',
+    lightAlpha: (alpha: number) => `rgba(255, 59, 48, ${alpha})`,
+    darkAlpha: (alpha: number) => `rgba(255, 69, 58, ${alpha})`,
+  },
+  teal: {
+    light: '#5AC8FA',
+    dark: '#64D2FF',
+    lightAlpha: (alpha: number) => `rgba(90, 200, 250, ${alpha})`,
+    darkAlpha: (alpha: number) => `rgba(100, 210, 255, ${alpha})`,
+  },
+  yellow: {
+    light: '#FFCC00',
+    dark: '#FFD60A',
+    lightAlpha: (alpha: number) => `rgba(255, 204, 0, ${alpha})`,
+    darkAlpha: (alpha: number) => `rgba(255, 214, 10, ${alpha})`,
+  },
+  gray: {
+    light: {
+      1: '#8E8E93',
+      2: '#AEAEB2',
+      3: '#C7C7CC',
+      4: '#D1D1D6',
+      5: '#E5E5EA',
+      6: '#F2F2F7',
+    },
+    dark: {
+      1: '#8E8E93',
+      2: '#636366',
+      3: '#48484A',
+      4: '#3A3A3C',
+      5: '#2C2C2E',
+      6: '#1C1C1E',
+    },
+  },
+};
+
+// System colors for backgrounds and text
+export const systemColors = {
+  light: {
+    background: '#FFFFFF',
+    secondaryBackground: '#F2F2F7',
+    tertiaryBackground: '#E5E5EA',
+    groupedBackground: '#F2F2F7',
+    label: '#000000',
+    secondaryLabel: 'rgba(60, 60, 67, 0.6)',
+    tertiaryLabel: 'rgba(60, 60, 67, 0.3)',
+    quaternaryLabel: 'rgba(60, 60, 67, 0.18)',
+    fill: 'rgba(120, 120, 128, 0.2)',
+    secondaryFill: 'rgba(120, 120, 128, 0.16)',
+    tertiaryFill: 'rgba(118, 118, 128, 0.12)',
+    quaternaryFill: 'rgba(116, 116, 128, 0.08)',
+    separator: 'rgba(60, 60, 67, 0.29)',
+    opaqueSeparator: '#C6C6C8',
+    link: '#007AFF',
+    darkText: '#000000',
+    lightText: '#FFFFFF',
+    systemBackground: '#FFFFFF',
+    secondarySystemBackground: '#F2F2F7',
+    tertiarySystemBackground: '#FFFFFF',
+    systemGroupedBackground: '#F2F2F7',
+    secondarySystemGroupedBackground: '#FFFFFF',
+    tertiarySystemGroupedBackground: '#F2F2F7',
+  },
+  dark: {
+    background: '#000000',
+    secondaryBackground: '#1C1C1E',
+    tertiaryBackground: '#2C2C2E',
+    groupedBackground: '#1C1C1E',
+    label: '#FFFFFF',
+    secondaryLabel: 'rgba(235, 235, 245, 0.6)',
+    tertiaryLabel: 'rgba(235, 235, 245, 0.3)',
+    quaternaryLabel: 'rgba(235, 235, 245, 0.16)',
+    fill: 'rgba(120, 120, 128, 0.36)',
+    secondaryFill: 'rgba(120, 120, 128, 0.32)',
+    tertiaryFill: 'rgba(118, 118, 128, 0.24)',
+    quaternaryFill: 'rgba(116, 116, 128, 0.18)',
+    separator: 'rgba(84, 84, 88, 0.6)',
+    opaqueSeparator: '#38383A',
+    link: '#0984FF',
+    darkText: '#000000',
+    lightText: '#FFFFFF',
+    systemBackground: '#000000',
+    secondarySystemBackground: '#1C1C1E',
+    tertiarySystemBackground: '#2C2C2E',
+    systemGroupedBackground: '#000000',
+    secondarySystemGroupedBackground: '#1C1C1E',
+    tertiarySystemGroupedBackground: '#2C2C2E',
+  },
+};
+
+// Generate color with transparency
+export const withOpacity = (color: string, opacity: number): string => {
+  // Convert hex to rgba
+  if (color.startsWith('#')) {
+    const r = parseInt(color.slice(1, 3), 16);
+    const g = parseInt(color.slice(3, 5), 16);
+    const b = parseInt(color.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+  }
   
-  // Neutrals
-  NEUTRAL: {
-    white: "#FFFFFF",
-    light: "#F5F7FA",
-    medium: "#B0BEC5",
-    dark: "#37474F",
-    black: "#121212"
+  // Already rgba or other format, try to extract and replace opacity
+  if (color.startsWith('rgba')) {
+    return color.replace(/rgba\((\d+),\s*(\d+),\s*(\d+),\s*[\d.]+\)/, `rgba($1, $2, $3, ${opacity})`);
   }
-};
-
-// Functional color mapping
-export const FUNCTIONAL_COLORS = {
-  primary: CORE_PALETTE.PURPLE.main,
-  secondary: CORE_PALETTE.MAGENTA.main,
-  accent: CORE_PALETTE.GREEN.main,
-  info: CORE_PALETTE.CYAN.main,
-  warning: CORE_PALETTE.YELLOW.main,
-  success: CORE_PALETTE.GREEN.main,
-  error: "#F44336" // Rich red for errors
-};
-
-// Ambient lighting effect helpers
-export const createAmbientGlow = (color: string, intensity = 0.15) => {
-  return `0 0 20px ${intensity * 100}% ${color}`;
-};
-
-// Interactive state colors
-export const INTERACTIVE_STATES = {
-  hover: {
-    opacity: 0.85,
-    scale: 1.02,
-    transition: "0.2s cubic-bezier(0.4, 0, 0.2, 1)"
-  },
-  active: {
-    opacity: 0.7,
-    scale: 0.97,
-    transition: "0.1s cubic-bezier(0.4, 0, 0.2, 1)"
-  },
-  focus: {
-    outlineColor: CORE_PALETTE.PURPLE.light,
-    outlineWidth: "2px",
-    outlineOffset: "2px"
+  
+  if (color.startsWith('rgb')) {
+    return color.replace(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/, `rgba($1, $2, $3, ${opacity})`);
   }
+  
+  // For other formats, just return with desired opacity
+  return `${color}${Math.round(opacity * 100)}%`;
 };
 
-// Gradient presets
-export const GRADIENTS = {
-  purpleMagenta: `linear-gradient(135deg, ${CORE_PALETTE.PURPLE.main} 0%, ${CORE_PALETTE.MAGENTA.main} 100%)`,
-  cyanGreen: `linear-gradient(135deg, ${CORE_PALETTE.CYAN.main} 0%, ${CORE_PALETTE.GREEN.main} 100%)`,
-  yellowCyan: `linear-gradient(135deg, ${CORE_PALETTE.YELLOW.main} 0%, ${CORE_PALETTE.CYAN.main} 100%)`,
-  vibrantRainbow: `linear-gradient(135deg, 
-    ${CORE_PALETTE.PURPLE.main} 0%, 
-    ${CORE_PALETTE.MAGENTA.main} 25%, 
-    ${CORE_PALETTE.YELLOW.main} 50%, 
-    ${CORE_PALETTE.CYAN.main} 75%, 
-    ${CORE_PALETTE.GREEN.main} 100%)`
+// Generate CSS variables for all colors
+export const generateColorVariables = (isDark: boolean = false): Record<string, string> => {
+  const variables: Record<string, string> = {};
+  const mode = isDark ? 'dark' : 'light';
+  
+  // Add system colors
+  Object.entries(systemColors[mode]).forEach(([key, value]) => {
+    variables[`--system-${key}`] = value;
+  });
+  
+  // Add Apple UI colors
+  Object.entries(appleColors).forEach(([colorName, colorValues]) => {
+    if (typeof colorValues === 'object' && !Array.isArray(colorValues)) {
+      if ('light' in colorValues && 'dark' in colorValues) {
+        variables[`--apple-${colorName}`] = colorValues[mode];
+      }
+    }
+  });
+  
+  // Add gray scales
+  Object.entries(appleColors.gray[mode]).forEach(([level, value]) => {
+    variables[`--gray-${level}`] = value;
+  });
+  
+  return variables;
+};
+
+// Generate a mood-based color palette
+export const generateMoodPalette = (mood: string): Record<string, string> => {
+  switch (mood.toLowerCase()) {
+    case 'calm':
+    case 'peaceful':
+    case 'relaxed':
+      return {
+        primary: appleColors.blue.light,
+        secondary: appleColors.teal.light,
+        accent: appleColors.purple.light,
+        background: '#F8FBFF',
+        text: '#2C3E50',
+      };
+      
+    case 'energetic':
+    case 'vibrant':
+    case 'excited':
+      return {
+        primary: appleColors.orange.light,
+        secondary: appleColors.yellow.light,
+        accent: appleColors.pink.light,
+        background: '#FFFAF0',
+        text: '#2C3E50',
+      };
+      
+    case 'focused':
+    case 'productive':
+    case 'determined':
+      return {
+        primary: appleColors.indigo.light,
+        secondary: appleColors.blue.light,
+        accent: appleColors.purple.light,
+        background: '#F9F9F9',
+        text: '#2C3E50',
+      };
+      
+    case 'creative':
+    case 'inspired':
+    case 'imaginative':
+      return {
+        primary: appleColors.purple.light,
+        secondary: appleColors.pink.light,
+        accent: appleColors.indigo.light,
+        background: '#FDF8FF',
+        text: '#2C3E50',
+      };
+      
+    case 'happy':
+    case 'joyful':
+    case 'positive':
+      return {
+        primary: appleColors.yellow.light,
+        secondary: appleColors.green.light,
+        accent: appleColors.orange.light,
+        background: '#FFFEF0',
+        text: '#2C3E50',
+      };
+      
+    case 'serious':
+    case 'professional':
+    case 'formal':
+      return {
+        primary: appleColors.blue.light,
+        secondary: appleColors.gray.light[1],
+        accent: appleColors.teal.light,
+        background: '#FFFFFF',
+        text: '#2C3E50',
+      };
+      
+    default:
+      // Default to a neutral palette
+      return {
+        primary: appleColors.blue.light,
+        secondary: appleColors.gray.light[1],
+        accent: appleColors.teal.light,
+        background: '#FFFFFF',
+        text: '#2C3E50',
+      };
+  }
 };

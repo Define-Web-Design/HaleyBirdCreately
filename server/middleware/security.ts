@@ -93,16 +93,37 @@ export const securityHeaders = (_req: Request, res: Response, next: NextFunction
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('X-XSS-Protection', '1; mode=block');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), notifications=(), autoplay=(), payment=()');
   
-  // Add Content-Security-Policy for additional protection
+  // Add Strict-Transport-Security header
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+  
+  // Add X-Download-Options for IE
+  res.setHeader('X-Download-Options', 'noopen');
+  
+  // Add X-Permitted-Cross-Domain-Policies
+  res.setHeader('X-Permitted-Cross-Domain-Policies', 'none');
+  
+  // Add Cross-Origin-Embedder-Policy
+  res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
+  
+  // Add Cross-Origin-Opener-Policy
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+  
+  // Add Cross-Origin-Resource-Policy
+  res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
+  
+  // Add Feature-Policy
+  res.setHeader('Feature-Policy', 'accelerometer none; camera none; geolocation none; gyroscope none; magnetometer none; microphone none; payment none; usb none');
+  
+  // Add Content-Security-Policy for additional protection with improved policies
   res.setHeader('Content-Security-Policy', `
     default-src 'self';
     script-src 'self' 'unsafe-inline' 'unsafe-eval';
     style-src 'self' 'unsafe-inline';
-    img-src 'self' data: blob:;
+    img-src 'self' data: blob: https://images.unsplash.com;
     font-src 'self';
-    connect-src 'self';
+    connect-src 'self' https://api.openai.com;
     media-src 'self';
     object-src 'none';
     frame-src 'self';
@@ -110,6 +131,8 @@ export const securityHeaders = (_req: Request, res: Response, next: NextFunction
     base-uri 'self';
     form-action 'self';
     frame-ancestors 'none';
+    upgrade-insecure-requests;
+    block-all-mixed-content;
   `.replace(/\s+/g, ' ').trim());
   
   next();

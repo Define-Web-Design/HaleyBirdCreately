@@ -55,7 +55,7 @@ localPort = 8425
 externalPort = 3002
 
 [workflows]
-runButton = "Development Server"
+runButton = "Run Development Server"
 
 [[workflows.workflow]]
 name = "Project"
@@ -607,6 +607,19 @@ args = "node -e \"require('./client/src/utils/validate-implementation.js').valid
 
 [[workflows.workflow]]
 name = "Development Server"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pkill -f node || true"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
+
+[[workflows.workflow]]
+name = "Run Development Server"
 author = 40896524
 mode = "sequential"
 

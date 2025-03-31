@@ -1,89 +1,124 @@
 
-import React, { useState } from "react";
-import { cn } from "@/lib/utils";
-import { Card, CardContent, CardHeader, CardFooter } from "./card";
+import React, { useState, useEffect, useRef } from 'react';
+import { cn } from '@/lib/utils';
 
-interface AmbientCardProps extends React.HTMLAttributes<HTMLDivElement> {
-  ambientColor?: string;
-  ambientIntensity?: "subtle" | "medium" | "strong";
-  interactiveGlow?: boolean;
-  glowOnHover?: boolean;
+interface AmbientCardProps {
   children: React.ReactNode;
-  contentProps?: React.HTMLAttributes<HTMLDivElement>;
-  headerProps?: React.HTMLAttributes<HTMLDivElement>;
-  footerProps?: React.HTMLAttributes<HTMLDivElement>;
-  header?: React.ReactNode;
-  footer?: React.ReactNode;
+  className?: string;
+  glareEffect?: boolean;
+  tiltEffect?: boolean;
+  colorShift?: boolean;
+  intensity?: 'subtle' | 'medium' | 'strong';
+  baseColor?: string;
 }
 
 export const AmbientCard = ({
-  className,
-  ambientColor = "var(--ambient-glow-primary)",
-  ambientIntensity = "medium",
-  interactiveGlow = true,
-  glowOnHover = true,
   children,
-  contentProps,
-  headerProps,
-  footerProps,
-  header,
-  footer,
-  ...props
+  className,
+  glareEffect = true,
+  tiltEffect = true,
+  colorShift = true,
+  intensity = 'medium',
+  baseColor,
 }: AmbientCardProps) => {
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [rotation, setRotation] = useState({ x: 0, y: 0 });
+  const [glarePosition, setGlarePosition] = useState({ x: 50, y: 50 });
   const [isHovering, setIsHovering] = useState(false);
 
-  // Calculate intensity based on prop
-  const getIntensityValue = () => {
-    switch (ambientIntensity) {
-      case "subtle": return "0.1";
-      case "strong": return "0.3";
-      default: return "0.2";
+  // Determine the intensity multiplier
+  const intensityMultiplier = {
+    subtle: 0.5,
+    medium: 1,
+    strong: 1.5,
+  }[intensity];
+
+  // Calculate max rotation amount based on intensity
+  const maxRotation = 3 * intensityMultiplier;
+
+  // Handle mouse movement over the card
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!cardRef.current || !tiltEffect) return;
+
+    const rect = cardRef.current.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    
+    // Calculate distance from center as a percentage
+    const distanceX = (e.clientX - centerX) / (rect.width / 2);
+    const distanceY = (e.clientY - centerY) / (rect.height / 2);
+    
+    // Calculate rotation based on mouse position
+    setRotation({
+      x: -distanceY * maxRotation,
+      y: distanceX * maxRotation,
+    });
+    
+    // Update glare position
+    if (glareEffect) {
+      const glareX = ((e.clientX - rect.left) / rect.width) * 100;
+      const glareY = ((e.clientY - rect.top) / rect.height) * 100;
+      setGlarePosition({ x: glareX, y: glareY });
     }
   };
 
-  // Handle mouse move for interactive glow effect
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!interactiveGlow) return;
-    
-    const rect = e.currentTarget.getBoundingClientRect();
-    setMousePosition({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top
-    });
+  // Reset card position on mouse leave
+  const handleMouseLeave = () => {
+    setIsHovering(false);
+    setRotation({ x: 0, y: 0 });
+    setGlarePosition({ x: 50, y: 50 });
   };
 
-  // Dynamic styles for the card
-  const cardStyle = {
-    position: "relative",
-    overflow: "hidden",
-    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-    ...(glowOnHover && isHovering ? {
-      boxShadow: `0 0 25px ${getIntensityValue()} ${ambientColor}`,
-    } : {}),
-    ...(interactiveGlow && isHovering ? {
-      background: `radial-gradient(circle at ${mousePosition.x}px ${mousePosition.y}px, 
-                  rgba(255, 255, 255, 0.1) 0%, 
-                  rgba(255, 255, 255, 0) 70%)`,
-    } : {})
-  } as React.CSSProperties;
+  // Initialize the color based on props
+  const defaultColor = baseColor || 'rgba(255, 255, 255, 0.08)';
+  
+  // Color shift styles based on rotation
+  const colorShiftStyle = colorShift ? {
+    background: `
+      linear-gradient(
+        135deg,
+        ${isHovering ? 'rgba(255, 255, 255, 0.15)' : defaultColor}, 
+        ${isHovering 
+          ? `rgba(${120 + rotation.x * 5}, ${140 + rotation.y * 5}, ${200 + (rotation.x + rotation.y) * 5}, 0.1)` 
+          : defaultColor}
+      )
+    `,
+  } : {};
 
   return (
-    <Card
-      className={cn("relative transform transition-all duration-300", 
-        glowOnHover && "hover:scale-[1.02]",
-        className)}
-      style={cardStyle}
+    <div
+      ref={cardRef}
+      className={cn(
+        'overflow-hidden rounded-xl border border-white/20 bg-opacity-50 p-6 backdrop-blur-lg transition-all duration-300',
+        isHovering && tiltEffect ? 'shadow-xl' : 'shadow-md',
+        className
+      )}
+      style={{
+        transform: tiltEffect ? `perspective(1000px) rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)` : undefined,
+        ...colorShiftStyle
+      }}
       onMouseMove={handleMouseMove}
       onMouseEnter={() => setIsHovering(true)}
-      onMouseLeave={() => setIsHovering(false)}
-      {...props}
+      onMouseLeave={handleMouseLeave}
     >
-      {header && <CardHeader {...headerProps}>{header}</CardHeader>}
-      <CardContent {...contentProps}>{children}</CardContent>
-      {footer && <CardFooter {...footerProps}>{footer}</CardFooter>}
-    </Card>
+      {/* Glare effect overlay */}
+      {glareEffect && (
+        <div
+          className="absolute inset-0 z-10 pointer-events-none"
+          style={{
+            background: isHovering 
+              ? `radial-gradient(circle at ${glarePosition.x}% ${glarePosition.y}%, rgba(255, 255, 255, ${0.15 * intensityMultiplier}), transparent 50%)`
+              : 'none',
+            opacity: isHovering ? 1 : 0,
+            transition: 'opacity 0.3s ease',
+          }}
+        />
+      )}
+      
+      {/* Card content */}
+      <div className="relative z-20">
+        {children}
+      </div>
+    </div>
   );
 };
-
-export default AmbientCard;

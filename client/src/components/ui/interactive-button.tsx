@@ -1,117 +1,140 @@
 
-import React, { useState } from "react";
-import { Button, ButtonProps } from "./button";
+import * as React from "react";
+import { VariantProps, cva } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
-interface InteractiveButtonProps extends ButtonProps {
-  glowColor?: string;
-  glowIntensity?: "subtle" | "medium" | "strong";
-  pressEffect?: boolean;
-  rippleEffect?: boolean;
-  pulseOnMount?: boolean;
+const interactiveButtonVariants = cva(
+  "relative inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  {
+    variants: {
+      variant: {
+        default: "bg-apple-blue text-white hover:bg-apple-blue/90 active:scale-[0.98] shadow-sm",
+        destructive: "bg-apple-red text-white hover:bg-apple-red/90 active:scale-[0.98] shadow-sm",
+        outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground active:scale-[0.98]",
+        secondary: "bg-apple-indigo text-white hover:bg-apple-indigo/90 active:scale-[0.98] shadow-sm",
+        ghost: "hover:bg-accent hover:text-accent-foreground active:scale-[0.98]",
+        link: "text-apple-blue underline-offset-4 hover:underline active:scale-[0.98]",
+        primary: "bg-gradient-to-br from-apple-blue to-apple-blue/80 text-white hover:opacity-90 active:scale-[0.98] shadow-md hover:shadow-lg",
+        glass: "bg-white/30 backdrop-blur-lg border border-white/20 text-foreground shadow-sm hover:bg-white/40 active:scale-[0.98]",
+        elevated: "bg-white shadow-md border border-gray-100 text-gray-900 hover:shadow-lg active:scale-[0.98]",
+      },
+      size: {
+        default: "h-10 px-4 py-2",
+        sm: "h-8 rounded-md px-3 text-xs",
+        lg: "h-12 rounded-md px-8",
+        icon: "h-10 w-10",
+        pill: "h-10 px-6 rounded-full",
+      },
+      magnetic: {
+        true: "magnetic-button",
+        false: "",
+      },
+      glare: {
+        true: "overflow-hidden",
+        false: "",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+      magnetic: false,
+      glare: false,
+    },
+  }
+);
+
+export interface InteractiveButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof interactiveButtonVariants> {
+  asChild?: boolean;
 }
 
-export const InteractiveButton = ({
-  className,
-  glowColor = "rgba(98, 0, 234, 0.5)",
-  glowIntensity = "medium",
-  pressEffect = true, 
-  rippleEffect = true,
-  pulseOnMount = false,
-  children,
-  ...props
-}: InteractiveButtonProps) => {
-  const [isPressed, setIsPressed] = useState(false);
-  const [ripples, setRipples] = useState<Array<{ id: number; x: number; y: number }>>([]);
-  
-  // Get CSS variable based on intensity
-  const getIntensityValue = () => {
-    switch (glowIntensity) {
-      case "subtle": return "0.2";
-      case "strong": return "0.6";
-      default: return "0.4";
-    }
-  };
-  
-  // Handle ripple effect
-  const handleMouseDown = (e: React.MouseEvent<HTMLButtonElement>) => {
-    if (rippleEffect) {
-      const button = e.currentTarget;
-      const rect = button.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
+const InteractiveButton = React.forwardRef<HTMLButtonElement, InteractiveButtonProps>(
+  ({ className, variant, size, magnetic, glare, ...props }, ref) => {
+    const [glarePosition, setGlarePosition] = React.useState({ x: "50%", y: "50%" });
+    const buttonRef = React.useRef<HTMLButtonElement>(null);
+    
+    // Handle magnetic effect
+    React.useEffect(() => {
+      if (!magnetic || !buttonRef.current) return;
       
-      const newRipple = {
-        id: Date.now(),
-        x,
-        y
+      const button = buttonRef.current;
+      
+      const handleMouseMove = (e: MouseEvent) => {
+        const rect = button.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+        
+        const maxDistance = 15; // Maximum magnetic pull in pixels
+        
+        const distanceX = (x - centerX) / (rect.width / 2) * maxDistance;
+        const distanceY = (y - centerY) / (rect.height / 2) * maxDistance;
+        
+        button.style.transform = `translate(${distanceX}px, ${distanceY}px)`;
       };
       
-      setRipples([...ripples, newRipple]);
+      const handleMouseLeave = () => {
+        button.style.transform = "translate(0, 0)";
+      };
       
-      // Remove ripple after animation completes
-      setTimeout(() => {
-        setRipples(currentRipples => 
-          currentRipples.filter(ripple => ripple.id !== newRipple.id)
-        );
-      }, 600);
-    }
+      button.addEventListener("mousemove", handleMouseMove);
+      button.addEventListener("mouseleave", handleMouseLeave);
+      
+      return () => {
+        button.removeEventListener("mousemove", handleMouseMove);
+        button.removeEventListener("mouseleave", handleMouseLeave);
+      };
+    }, [magnetic]);
     
-    if (pressEffect) {
-      setIsPressed(true);
-    }
-  };
-  
-  // Handle button release
-  const handleMouseUp = () => {
-    if (pressEffect) {
-      setIsPressed(false);
-    }
-  };
-
-  return (
-    <Button
-      className={cn(
-        "relative overflow-hidden transition-all", 
-        isPressed && pressEffect && "transform scale-[0.97]",
-        pulseOnMount && "animate-pulse",
-        className
-      )}
-      style={{
-        boxShadow: isPressed ? `0 0 12px ${getIntensityValue()} ${glowColor}` : undefined
-      }}
-      onMouseDown={handleMouseDown}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
-      {...props}
-    >
-      {ripples.map(ripple => (
-        <span
-          key={ripple.id}
-          className="absolute rounded-full bg-white opacity-25 animate-ripple pointer-events-none"
-          style={{
-            left: ripple.x,
-            top: ripple.y,
-            width: "120px",
-            height: "120px",
-            marginLeft: "-60px",
-            marginTop: "-60px",
-            transform: "scale(0)",
-            animation: "ripple 0.6s linear"
-          }}
-        />
-      ))}
-      {children}
-      <style jsx>{`
-        @keyframes ripple {
-          to {
-            transform: scale(2.5);
-            opacity: 0;
-          }
+    // Handle glare effect
+    const handleMouseMove = (e: React.MouseEvent<HTMLButtonElement>) => {
+      if (!glare) return;
+      
+      const rect = e.currentTarget.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * 100;
+      const y = ((e.clientY - rect.top) / rect.height) * 100;
+      
+      setGlarePosition({ x: `${x}%`, y: `${y}%` });
+    };
+    
+    // Combine refs
+    const combinedRef = (node: HTMLButtonElement) => {
+      if (ref) {
+        if (typeof ref === 'function') {
+          ref(node);
+        } else {
+          ref.current = node;
         }
-      `}</style>
-    </Button>
-  );
-};
+      }
+      buttonRef.current = node;
+    };
 
-export default InteractiveButton;
+    return (
+      <button
+        className={cn(interactiveButtonVariants({ variant, size, magnetic, glare, className }))}
+        ref={combinedRef}
+        onMouseMove={handleMouseMove}
+        {...props}
+      >
+        {props.children}
+        
+        {/* Add glare effect if enabled */}
+        {glare && (
+          <span 
+            className="absolute inset-0 pointer-events-none transition-opacity" 
+            style={{
+              background: `radial-gradient(circle at ${glarePosition.x} ${glarePosition.y}, rgba(255, 255, 255, 0.25), transparent 80%)`,
+              opacity: 0.6,
+            }}
+          />
+        )}
+      </button>
+    );
+  }
+);
+
+InteractiveButton.displayName = "InteractiveButton";
+
+export { InteractiveButton };
