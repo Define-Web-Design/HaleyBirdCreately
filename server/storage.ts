@@ -1,1187 +1,245 @@
-import { 
-  users, type User, type InsertUser,
-  content, type Content, type InsertContent,
-  moodBoards, type MoodBoard, type InsertMoodBoard,
-  analyticsData, type AnalyticsData, type InsertAnalyticsData,
+import { eq, desc, and, gte } from 'drizzle-orm';
+import { db } from './db';
+import {
+  users, User, InsertUser,
+  content, Content, InsertContent,
+  moodBoards, MoodBoard, InsertMoodBoard,
+  analyticsData, AnalyticsData, InsertAnalyticsData,
+  platformIntegrations, PlatformIntegration,
+  userEngagement, UserEngagement, InsertUserEngagement,
+  evolutionPoints, EvolutionPoints, InsertEvolutionPoints,
+  userCapabilities, UserCapabilities, InsertUserCapabilities,
+  creativeHistory, CreativeHistory, InsertCreativeHistory,
+  colorPalettes, ColorPalette, InsertColorPalette,
+  moodCapsules, MoodCapsule, InsertMoodCapsule,
+  contentSentiment, ContentSentiment, InsertContentSentiment,
+  legalAcceptance, LegalAcceptance, InsertLegalAcceptance,
+  securityAlerts, SecurityAlert, InsertSecurityAlert,
+  accessAttempts, AccessAttempt, InsertAccessAttempt,
+  assetOwnership, AssetOwnership, InsertAssetOwnership
+} from '../shared/schema';
 
-  // Creative Symbiosis Framework types
-  userEngagement, type UserEngagement, type InsertUserEngagement,
-  evolutionPoints, type EvolutionPoints, type InsertEvolutionPoints,
-  userCapabilities, type UserCapabilities, type InsertUserCapabilities,
-  creativeHistory, type CreativeHistory, type InsertCreativeHistory,
-
-  // Color Palette types
-  colorPalettes, type ColorPalette, type InsertColorPalette,
-
-  // Mood Capsules types
-  moodCapsules, type MoodCapsule, type InsertMoodCapsule,
-  contentSentiment, type ContentSentiment, type InsertContentSentiment,
-  legalAcceptance, type LegalAcceptance, type InsertLegalAcceptance,
-  securityAlert, type SecurityAlert, type InsertSecurityAlert,
-  accessAttempt, type AccessAttempt, type InsertAccessAttempt,
-  assetOwnership, type AssetOwnership, type InsertAssetOwnership
-} from "@shared/schema";
-
-export interface IStorage {
-  // User methods
-  getUser(id: number): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
-
-  // Content methods
-  getContentByUserId(userId: number): Promise<Content[]>;
-  getArchivedContentByUserId(userId: number): Promise<Content[]>;
-  getContentById(id: number): Promise<Content | undefined>;
-  createContent(content: InsertContent): Promise<Content>;
-
-  // Mood board methods
-  getMoodBoardsByUserId(userId: number): Promise<MoodBoard[]>;
-  createMoodBoard(moodBoard: InsertMoodBoard): Promise<MoodBoard>;
-
-  // Analytics methods
-  getAnalyticsByUserId(userId: number, period: string): Promise<AnalyticsData | undefined>;
-  createAnalyticsData(data: InsertAnalyticsData): Promise<AnalyticsData>;
-
-  // Creative Symbiosis Framework methods
-
-  // User Engagement methods
-  getUserEngagementByUserId(userId: number): Promise<UserEngagement[]>;
-  trackUserEngagement(engagement: InsertUserEngagement): Promise<UserEngagement>;
-
-  // Evolution Points methods
-  getEvolutionPointsByUserId(userId: number): Promise<EvolutionPoints | undefined>;
-  createEvolutionPoints(points: InsertEvolutionPoints): Promise<EvolutionPoints>;
-  updateEvolutionPoints(userId: number, pointsToAdd: number): Promise<EvolutionPoints>;
-  refreshCreativeEnergyPoints(userId: number): Promise<EvolutionPoints>;
-
-  // User Capabilities methods
-  getUserCapabilitiesByUserId(userId: number): Promise<UserCapabilities[]>;
-  unlockUserCapability(capability: InsertUserCapabilities): Promise<UserCapabilities>;
-  upgradeCapabilityLevel(userId: number, capabilityName: string): Promise<UserCapabilities>;
-
-  // Creative History methods
-  getCreativeHistoryByUserIdAndPeriod(userId: number, period: string): Promise<CreativeHistory | undefined>;
-  createCreativeHistory(history: InsertCreativeHistory): Promise<CreativeHistory>;
-  updateCreativeHistory(userId: number, period: string, updates: Partial<InsertCreativeHistory>): Promise<CreativeHistory>;
-
-  // Color Palette methods
-  getColorPalettesByUserId(userId: number): Promise<ColorPalette[]>;
-  getColorPaletteById(id: number): Promise<ColorPalette | undefined>;
-  createColorPalette(palette: InsertColorPalette): Promise<ColorPalette>;
-  updateColorPalette(id: number, updates: Partial<InsertColorPalette>): Promise<ColorPalette>;
-  incrementColorPaletteUsage(id: number): Promise<ColorPalette>;
-  getColorPalettesByMood(mood: string): Promise<ColorPalette[]>;
-
-  // Mood Capsules methods
-  getMoodCapsulesByUserId(userId: number): Promise<MoodCapsule[]>;
-  getMoodCapsuleById(id: number): Promise<MoodCapsule | undefined>;
-  createMoodCapsule(capsule: InsertMoodCapsule): Promise<MoodCapsule>;
-  updateMoodCapsule(id: number, updates: Partial<InsertMoodCapsule>): Promise<MoodCapsule>;
-  deleteMoodCapsule(id: number): Promise<boolean>;
-  archiveMoodCapsule(id: number): Promise<MoodCapsule>;
-
-  // Content Sentiment methods
-  getContentSentimentsByUserId(userId: number): Promise<ContentSentiment[]>;
-  analyzeContentSentiment(contentIds: number[]): Promise<ContentSentiment[]>;
-  generateCaptionForMoodCapsule(contentIds: number[], emotionalTone: string, captionTone?: string): Promise<string>;
-
-  // Security and legal methods
-  recordLegalAcceptance(acceptance: InsertLegalAcceptance): Promise<LegalAcceptance>;
-  getLegalAcceptance(userId: number, documentType: string): Promise<LegalAcceptance | null>;
-  storeSecurityAlert(alert: InsertSecurityAlert): Promise<SecurityAlert>;
-  getSecurityAlerts(limit: number): Promise<SecurityAlert[]>;
-  trackAccessAttempt(attempt: InsertAccessAttempt): Promise<AccessAttempt>;
-  registerAssetOwnership(asset: InsertAssetOwnership): Promise<AssetOwnership>;
-  verifyAssetOwnership(assetId: string, watermarkHash: string): Promise<boolean>;
-}
-
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private contents: Map<number, Content>;
-  private moodBoards: Map<number, MoodBoard>;
-  private analyticsData: Map<number, AnalyticsData>;
-
-  // Creative Symbiosis Framework storage
-  private userEngagements: Map<number, UserEngagement> = new Map();
-  private evolutionPointsData: Map<number, EvolutionPoints> = new Map();
-  private userCapabilitiesData: Map<number, UserCapabilities> = new Map();
-  private creativeHistoryData: Map<number, CreativeHistory> = new Map();
-  private colorPalettesData: Map<number, ColorPalette> = new Map();
-
-  // Mood Capsules storage
-  private moodCapsulesData: Map<number, MoodCapsule> = new Map();
-  private contentSentimentsData: Map<number, ContentSentiment> = new Map();
-
-  // Legal and Security storage
-  private legalAcceptances: Map<string, LegalAcceptance> = new Map();
-  private securityAlerts: SecurityAlert[] = [];
-  private accessAttempts: Map<string, AccessAttempt> = new Map();
-  private assetOwnerships: Map<string, AssetOwnership> = new Map();
-
-  private currentUserId: number;
-  private currentContentId: number;
-  private currentMoodBoardId: number;
-  private currentAnalyticsId: number;
-  private currentEngagementId: number = 1;
-  private currentEvolutionPointsId: number = 1;
-  private currentCapabilityId: number = 1;
-  private currentCreativeHistoryId: number = 1;
-  private currentColorPaletteId: number = 1;
-  private currentMoodCapsuleId: number = 1;
-  private currentContentSentimentId: number = 1;
-  private currentLegalAcceptanceId: number = 1;
-  private currentSecurityAlertId: number = 1;
-  private currentAccessAttemptId: number = 1;
-  private currentAssetOwnershipId: number = 1;
-
-  constructor() {
-    this.users = new Map();
-    this.contents = new Map();
-    this.moodBoards = new Map();
-    this.analyticsData = new Map();
-
-    // Initialize Creative Symbiosis Framework storage
-    this.userEngagements = new Map();
-    this.evolutionPointsData = new Map();
-    this.userCapabilitiesData = new Map();
-    this.creativeHistoryData = new Map();
-    this.colorPalettesData = new Map();
-
-    // Initialize Mood Capsules storage
-    this.moodCapsulesData = new Map();
-    this.contentSentimentsData = new Map();
-
-    // Initialize legal and security storage
-    this.legalAcceptances = new Map();
-    this.securityAlerts = [];
-    this.accessAttempts = new Map();
-    this.assetOwnerships = new Map();
-
-    this.currentUserId = 1;
-    this.currentContentId = 1;
-    this.currentMoodBoardId = 1;
-    this.currentAnalyticsId = 1;
-    this.currentEngagementId = 1;
-    this.currentEvolutionPointsId = 1;
-    this.currentCapabilityId = 1;
-    this.currentCreativeHistoryId = 1;
-    this.currentColorPaletteId = 1;
-    this.currentMoodCapsuleId = 1;
-    this.currentContentSentimentId = 1;
-    this.currentLegalAcceptanceId = 1;
-    this.currentSecurityAlertId = 1;
-    this.currentAccessAttemptId = 1;
-    this.currentAssetOwnershipId = 1;
-
-    // Initialize with mock data
-    this.initializeMockData();
+class Storage {
+  // User functions
+  async createUser(userData: InsertUser): Promise<User> {
+    const createdUsers = await db.insert(users).values(userData).returning();
+    return createdUsers[0];
   }
 
-  private initializeMockData() {
-    // Create a mock user
-    const mockUser: User = {
-      id: this.currentUserId,
-      username: "demo_user",
-      password: "password123",
-      displayName: "Creative Creator",
-      email: "creator@example.com",
-      avatar: "https://i.pravatar.cc/150?u=demo_user",
-      role: "creator",
-      phone: null,
-      resetToken: null,
-      resetTokenExpiry: null,
-      lastLogin: null,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    this.users.set(mockUser.id, mockUser);
-
-    // Create mock content
-    const contentStatuses = ["Draft", "Scheduled", "Posted"];
-    const platforms = ["Instagram", "TikTok", "Pinterest", "Twitter"];
-
-    for (let i = 0; i < 8; i++) {
-      const contentItem: Content = {
-        id: this.currentContentId++,
-        userId: mockUser.id,
-        title: `Sample Content ${i + 1}`,
-        description: `This is a sample content description for item ${i + 1}`,
-        imageUrl: `https://picsum.photos/seed/${i + 100}/400/300`,
-        status: contentStatuses[i % contentStatuses.length] as 'Draft' | 'Scheduled' | 'Posted',
-        platform: platforms[i % platforms.length],
-        engagement: Math.floor(Math.random() * 1000),
-        aiSentiment: Math.floor(Math.random() * 100),
-        aiPrediction: Math.floor(Math.random() * 100),
-        tags: ["sample", `tag${i}`, "content"],
-        createdAt: new Date(Date.now() - i * 24 * 60 * 60 * 1000),
-        scheduledFor: i % 2 === 0 ? new Date(Date.now() + i * 24 * 60 * 60 * 1000) : null,
-        postedAt: i % 3 === 0 ? new Date(Date.now() - i * 12 * 60 * 60 * 1000) : null
-      };
-      this.contents.set(contentItem.id, contentItem);
-    }
-
-    // Create mock mood boards
-    const moodBoardThemes = ["Summer Vibes", "Minimalist", "Bold Colors", "Nature Inspired"];
-
-    for (let i = 0; i < 4; i++) {
-      const moodBoard: MoodBoard = {
-        id: this.currentMoodBoardId++,
-        userId: mockUser.id,
-        title: moodBoardThemes[i],
-        description: `A collection of ${moodBoardThemes[i].toLowerCase()} inspiration`,
-        images: [
-          `https://picsum.photos/seed/${i + 200}/400/300`,
-          `https://picsum.photos/seed/${i + 201}/400/300`,
-          `https://picsum.photos/seed/${i + 202}/400/300`
-        ],
-        tags: [moodBoardThemes[i].toLowerCase().replace(" ", "-"), "inspiration", "design"],
-        createdAt: new Date(Date.now() - i * 48 * 60 * 60 * 1000)
-      };
-      this.moodBoards.set(moodBoard.id, moodBoard);
-    }
-
-    // Create mock analytics data
-    const periods = ["daily", "weekly", "monthly"];
-
-    for (let i = 0; i < 3; i++) {
-      const analyticsItem: AnalyticsData = {
-        id: this.currentAnalyticsId++,
-        userId: mockUser.id,
-        period: periods[i],
-        engagementRate: 5 + Math.floor(Math.random() * 15),
-        growthRate: 2 + Math.floor(Math.random() * 8),
-        topPerforming: {
-          posts: [
-            {
-              id: i + 1,
-              title: `Top Performing Content ${i + 1}`,
-              thumbnail: `https://picsum.photos/seed/${i + 300}/100/100`,
-              likes: 100 + Math.floor(Math.random() * 900),
-              comments: 10 + Math.floor(Math.random() * 90),
-              growth: 5 + Math.floor(Math.random() * 25)
-            }
-          ]
-        },
-        predictions: {
-          growthRate: 3 + Math.floor(Math.random() * 7),
-          nextThirtyDays: 10 + Math.floor(Math.random() * 20),
-          recommendedActions: [
-            "Post more consistently",
-            "Engage with trending hashtags",
-            "Respond to comments more quickly"
-          ]
-        },
-        date: new Date()
-      };
-      this.analyticsData.set(analyticsItem.id, analyticsItem);
-    }
-
-    // Create mock Creative Symbiosis data
-
-    // User engagement data
-    const engagementTypes = ["content_created", "tool_used", "feature_explored", "feedback_given"];
-    for (let i = 0; i < 5; i++) {
-      const engagement: UserEngagement = {
-        id: this.currentEngagementId++,
-        userId: mockUser.id,
-        engagementType: engagementTypes[i % engagementTypes.length],
-        engagementDetails: {
-          location: i % 2 === 0 ? "dashboard" : "content_editor",
-          duration: 5 + Math.floor(Math.random() * 25),
-          outcome: i % 3 === 0 ? "completed" : "in_progress"
-        },
-        points: 1,
-        createdAt: new Date(Date.now() - i * 12 * 60 * 60 * 1000)
-      };
-      this.userEngagements.set(engagement.id, engagement);
-    }
-
-    // Evolution points data
-    const evolutionTiers = ["starter", "growing", "established", "advanced", "expert"];
-    const pointsData: EvolutionPoints = {
-      id: this.currentEvolutionPointsId++,
-      userId: mockUser.id,
-      totalPoints: 250,
-      currentTier: evolutionTiers[1], // growing
-      nextMilestone: 500,
-      creativeEnergyPoints: 75,
-      lastPointsUpdate: new Date(Date.now() - 24 * 60 * 60 * 1000),
-      updatedAt: new Date()
-    };
-    this.evolutionPointsData.set(pointsData.id, pointsData);
-
-    // User capabilities data
-    const capabilities = [
-      "basic_analysis", 
-      "content_generation", 
-      "mood_board_creation", 
-      "schedule_optimization"
-    ];
-
-    for (let i = 0; i < capabilities.length; i++) {
-      const capability: UserCapabilities = {
-        id: this.currentCapabilityId++,
-        userId: mockUser.id,
-        capabilityName: capabilities[i],
-        isUnlocked: i < 2, // First two capabilities are unlocked
-        unlockedAt: i < 2 ? new Date(Date.now() - (i + 1) * 7 * 24 * 60 * 60 * 1000) : null,
-        expiresAt: null, // Permanent capabilities
-        level: i < 2 ? 2 : 1 // First two capabilities are at level 2
-      };
-      this.userCapabilitiesData.set(capability.id, capability);
-    }
-
-    // Creative history data
-    const historyPeriods = ["weekly", "monthly", "quarterly"];
-
-    for (let i = 0; i < historyPeriods.length; i++) {
-      const history: CreativeHistory = {
-        id: this.currentCreativeHistoryId++,
-        userId: mockUser.id,
-        period: historyPeriods[i],
-        creativePatterns: {
-          preferredStyles: ["minimalist", "vibrant"],
-          commonThemes: ["nature", "technology"],
-          peakCreativeTimes: ["morning", "late evening"]
-        },
-        contentStats: {
-          totalCreated: 12 + i * 8,
-          completion: 85 - i * 5,
-          averageQualityScore: 7.5 + i * 0.5
-        },
-        growthInsights: {
-          skillsImproving: ["composition", "storytelling"],
-          areas: ["technical_details", "color_theory"],
-          recommendedResources: ["Color Theory for Creators", "Visual Storytelling Course"]
-        },
-        createdAt: new Date(Date.now() - i * 30 * 24 * 60 * 60 * 1000)
-      };
-      this.creativeHistoryData.set(history.id, history);
-    }
-
-    // Create mock color palettes
-    const moods = ["happy", "calm", "energetic", "melancholic", "professional"];
-    const colorSets = [
-      ["#FF6B6B", "#4ECDC4", "#1A535C", "#FF9F1C", "#F7FFF7"], // happy
-      ["#8AA8B0", "#A8DADC", "#E0FBFC", "#457B9D", "#1D3557"], // calm
-      ["#EF476F", "#FFD166", "#06D6A0", "#118AB2", "#073B4C"], // energetic
-      ["#2B2D42", "#8D99AE", "#EDF2F4", "#D90429", "#457B9D"], // melancholic
-      ["#194B7E", "#314E6F", "#547AA5", "#C2DBF5", "#E2EBF4"]  // professional
-    ];
-
-    for (let i = 0; i < moods.length; i++) {
-      const colorPalette: ColorPalette = {
-        id: this.currentColorPaletteId++,
-        userId: mockUser.id,
-        name: `${moods[i].charAt(0).toUpperCase() + moods[i].slice(1)} Palette`,
-        mood: moods[i],
-        colors: colorSets[i],
-        tags: [moods[i], "palette", i % 2 === 0 ? "vibrant" : "subtle"],
-        isFavorite: i < 2, // First two are favorites
-        usageCount: Math.floor(Math.random() * 10),
-        createdAt: new Date(Date.now() - i * 5 * 24 * 60 * 60 * 1000),
-        updatedAt: new Date(Date.now() - i * 3 * 24 * 60 * 60 * 1000)
-      };
-      this.colorPalettesData.set(colorPalette.id, colorPalette);
-    }
+  async getUserById(id: number): Promise<User | null> {
+    const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
+    return result.length > 0 ? result[0] : null;
   }
 
-  // User methods
-  async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+  async getUserByUsername(username: string): Promise<User | null> {
+    const result = await db.select().from(users).where(eq(users.username, username)).limit(1);
+    return result.length > 0 ? result[0] : null;
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+  async getUserByEmail(email: string): Promise<User | null> {
+    const result = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    return result.length > 0 ? result[0] : null;
   }
 
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentUserId++;
-    const user: User = { 
-      ...insertUser, 
-      id,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      // Ensure required fields have proper types
-      avatar: insertUser.avatar || null,
-      role: insertUser.role || null,
-      phone: insertUser.phone || null,
-      resetToken: null,
-      resetTokenExpiry: null,
-      lastLogin: new Date()
-    };
-    this.users.set(id, user);
-    return user;
+  async updateUser(id: number, userData: Partial<User>): Promise<User> {
+    const updatedUsers = await db
+      .update(users)
+      .set({ ...userData, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return updatedUsers[0];
   }
 
-  // Content methods
+  // Content functions
+  async createContent(contentData: InsertContent): Promise<Content> {
+    const createdContent = await db.insert(content).values(contentData).returning();
+    return createdContent[0];
+  }
+
+  async getContentById(id: number): Promise<Content | null> {
+    const result = await db.select().from(content).where(eq(content.id, id)).limit(1);
+    return result.length > 0 ? result[0] : null;
+  }
+
   async getContentByUserId(userId: number): Promise<Content[]> {
-    return Array.from(this.contents.values())
-      .filter(content => content.userId === userId && content.status !== 'Posted');
+    return await db.select().from(content).where(eq(content.userId, userId));
   }
 
-  async getArchivedContentByUserId(userId: number): Promise<Content[]> {
-    return Array.from(this.contents.values())
-      .filter(content => content.userId === userId && content.status === 'Posted');
+  async updateContent(id: number, contentData: Partial<Content>): Promise<Content> {
+    const updatedContent = await db
+      .update(content)
+      .set(contentData)
+      .where(eq(content.id, id))
+      .returning();
+    return updatedContent[0];
   }
 
-  async getContentById(id: number): Promise<Content | undefined> {
-    return this.contents.get(id);
+  // MoodBoard functions
+  async createMoodBoard(moodBoardData: InsertMoodBoard): Promise<MoodBoard> {
+    const createdMoodBoards = await db.insert(moodBoards).values(moodBoardData).returning();
+    return createdMoodBoards[0];
   }
 
-  async createContent(insertContent: InsertContent): Promise<Content> {
-    const id = this.currentContentId++;
-    const content: Content = {
-      ...insertContent,
-      id,
-      description: insertContent.description || null,
-      imageUrl: insertContent.imageUrl || null,
-      platform: insertContent.platform || null,
-      engagement: 0,
-      aiSentiment: 0,
-      aiPrediction: 0,
-      tags: insertContent.tags || null,
-      createdAt: new Date(),
-      scheduledFor: insertContent.scheduledFor || null,
-      postedAt: null
-    };
-    this.contents.set(id, content);
-    return content;
+  async getMoodBoardById(id: number): Promise<MoodBoard | null> {
+    const result = await db.select().from(moodBoards).where(eq(moodBoards.id, id)).limit(1);
+    return result.length > 0 ? result[0] : null;
   }
 
-  // Mood board methods
   async getMoodBoardsByUserId(userId: number): Promise<MoodBoard[]> {
-    return Array.from(this.moodBoards.values())
-      .filter(board => board.userId === userId);
+    return await db.select().from(moodBoards).where(eq(moodBoards.userId, userId));
   }
 
-  async createMoodBoard(insertMoodBoard: InsertMoodBoard): Promise<MoodBoard> {
-    const id = this.currentMoodBoardId++;
-    const moodBoard: MoodBoard = {
-      ...insertMoodBoard,
-      id,
-      description: insertMoodBoard.description || null,
-      tags: insertMoodBoard.tags || null,
-      images: insertMoodBoard.images || null,
-      createdAt: new Date()
-    };
-    this.moodBoards.set(id, moodBoard);
-    return moodBoard;
+  async updateMoodBoard(id: number, moodBoardData: Partial<MoodBoard>): Promise<MoodBoard> {
+    const updatedMoodBoards = await db
+      .update(moodBoards)
+      .set(moodBoardData)
+      .where(eq(moodBoards.id, id))
+      .returning();
+    return updatedMoodBoards[0];
   }
 
-  // Analytics methods
-  async getAnalyticsByUserId(userId: number, period: string): Promise<AnalyticsData | undefined> {
-    return Array.from(this.analyticsData.values())
-      .find(data => data.userId === userId && data.period === period);
+  // AnalyticsData functions
+  async createAnalyticsData(analyticsData: InsertAnalyticsData): Promise<AnalyticsData> {
+    const createdAnalyticsData = await db
+      .insert(analyticsData)
+      .values(analyticsData)
+      .returning();
+    return createdAnalyticsData[0];
   }
 
-  async createAnalyticsData(insertData: InsertAnalyticsData): Promise<AnalyticsData> {
-    const id = this.currentAnalyticsId++;
-    const data: AnalyticsData = {
-      ...insertData,
-      id,
-      engagementRate: insertData.engagementRate || null,
-      growthRate: insertData.growthRate || null,
-      topPerforming: insertData.topPerforming || null,
-      predictions: insertData.predictions || null,
-      date: new Date()
-    };
-    this.analyticsData.set(id, data);
-    return data;
+  async getAnalyticsDataByUserId(userId: number): Promise<AnalyticsData[]> {
+    return await db
+      .select()
+      .from(analyticsData)
+      .where(eq(analyticsData.userId, userId))
+      .orderBy(desc(analyticsData.date));
   }
 
-  // Creative Symbiosis Framework Methods
-
-  // User Engagement methods
-  async getUserEngagementByUserId(userId: number): Promise<UserEngagement[]> {
-    return Array.from(this.userEngagements.values())
-      .filter(engagement => engagement.userId === userId)
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()); // Sort by latest first
+  // MoodCapsule functions
+  async createMoodCapsule(capsuleData: InsertMoodCapsule): Promise<MoodCapsule> {
+    const createdCapsules = await db.insert(moodCapsules).values(capsuleData).returning();
+    return createdCapsules[0];
   }
 
-  async trackUserEngagement(engagement: InsertUserEngagement): Promise<UserEngagement> {
-    const id = this.currentEngagementId++;
-    const userEngagement: UserEngagement = {
-      ...engagement,
-      id,
-      createdAt: new Date()
-    };
-    this.userEngagements.set(id, userEngagement);
-
-    // Also update user's evolution points
-    await this.updateEvolutionPoints(engagement.userId, 5); // Award 5 points for any interaction
-
-    return userEngagement;
+  async getMoodCapsuleById(id: number): Promise<MoodCapsule | null> {
+    const result = await db.select().from(moodCapsules).where(eq(moodCapsules.id, id)).limit(1);
+    return result.length > 0 ? result[0] : null;
   }
 
-  // Evolution Points methods
-  async getEvolutionPointsByUserId(userId: number): Promise<EvolutionPoints | undefined> {
-    return Array.from(this.evolutionPointsData.values())
-      .find(points => points.userId === userId);
-  }
-
-  async createEvolutionPoints(points: InsertEvolutionPoints): Promise<EvolutionPoints> {
-    const id = this.currentEvolutionPointsId++;
-    const evolutionPoints: EvolutionPoints = {
-      ...points,
-      id,
-      lastPointsUpdate: new Date(),
-      updatedAt: new Date()
-    };
-    this.evolutionPointsData.set(id, evolutionPoints);
-    return evolutionPoints;
-  }
-
-  async updateEvolutionPoints(userId: number, pointsToAdd: number): Promise<EvolutionPoints> {
-    let userPoints = await this.getEvolutionPointsByUserId(userId);
-
-    // If user doesn't have evolution points yet, create them
-    if (!userPoints) {
-      userPoints = await this.createEvolutionPoints({
-        userId,
-        totalPoints: 0,
-        currentTier: "starter",
-        nextMilestone: 100,
-        creativeEnergyPoints: 100
-      });
-    }
-
-    // Update the points
-    const totalPoints = userPoints.totalPoints + pointsToAdd;
-
-    // Determine tier based on total points
-    let currentTier = userPoints.currentTier;
-    let nextMilestone = userPoints.nextMilestone;
-
-    if (totalPoints >= 1000) {
-      currentTier = "expert";
-      nextMilestone = 1500;
-    } else if (totalPoints >= 500) {
-      currentTier = "advanced";
-      nextMilestone = 1000;
-    } else if (totalPoints >= 250) {
-      currentTier = "established";
-      nextMilestone = 500;
-    } else if (totalPoints >= 100) {
-      currentTier = "growing";
-      nextMilestone = 250;
-    }
-
-    // Update the record
-    const updatedPoints: EvolutionPoints = {
-      ...userPoints,
-      totalPoints,
-      currentTier,
-      nextMilestone,
-      updatedAt: new Date()
-    };
-
-    this.evolutionPointsData.set(userPoints.id, updatedPoints);
-
-    return updatedPoints;
-  }
-
-  async refreshCreativeEnergyPoints(userId: number): Promise<EvolutionPoints> {
-    const userPoints = await this.getEvolutionPointsByUserId(userId);
-
-    if (!userPoints) {
-      return this.createEvolutionPoints({
-        userId,
-        totalPoints: 0,
-        currentTier: "starter",
-        nextMilestone: 100,
-        creativeEnergyPoints: 100 // Start with full energy
-      });
-    }
-
-    // Calculate how many points to regenerate based on time elapsed
-    const now = new Date();
-    const hoursElapsed = Math.floor((now.getTime() - userPoints.lastPointsUpdate.getTime()) / (1000 * 60 * 60));
-
-    // Regenerate at a rate of 5 points per hour, up to a maximum based on tier
-    const pointsToRegenerate = Math.min(hoursElapsed * 5, 100);
-
-    // Max energy depends on tier
-    let maxEnergy = 100;
-    switch (userPoints.currentTier) {
-      case "expert":
-        maxEnergy = 200;
-        break;
-      case "advanced":
-        maxEnergy = 150;
-        break;
-      case "established":
-        maxEnergy = 125;
-        break;
-      case "growing":
-        maxEnergy = 110;
-        break;
-    }
-
-    // Update energy points
-    const newEnergyPoints = Math.min(userPoints.creativeEnergyPoints + pointsToRegenerate, maxEnergy);
-
-    // Update the record
-    const updatedPoints: EvolutionPoints = {
-      ...userPoints,
-      creativeEnergyPoints: newEnergyPoints,
-      lastPointsUpdate: now,
-      updatedAt: now
-    };
-
-    this.evolutionPointsData.set(userPoints.id, updatedPoints);
-
-    return updatedPoints;
-  }
-
-  // User Capabilities methods
-  async getUserCapabilitiesByUserId(userId: number): Promise<UserCapabilities[]> {
-    return Array.from(this.userCapabilitiesData.values())
-      .filter(capability => capability.userId === userId);
-  }
-
-  async unlockUserCapability(capability: InsertUserCapabilities): Promise<UserCapabilities> {
-    const id = this.currentCapabilityId++;
-    const userCapability: UserCapabilities = {
-      ...capability,
-      id,
-      isUnlocked: true,
-      unlockedAt: new Date(),
-      level: capability.level || 1
-    };
-    this.userCapabilitiesData.set(id, userCapability);
-    return userCapability;
-  }
-
-  async upgradeCapabilityLevel(userId: number, capabilityName: string): Promise<UserCapabilities> {
-    // Find the capability
-    const capability = Array.from(this.userCapabilitiesData.values())
-      .find(cap => cap.userId === userId && cap.capabilityName === capabilityName);
-
-    if (!capability) {
-      throw new Error(`Capability ${capabilityName} not found for user ${userId}`);
-    }
-
-    // Upgrade the level
-    const updatedCapability: UserCapabilities = {
-      ...capability,
-      level: capability.level + 1,
-      updatedAt: new Date()
-    };
-
-    this.userCapabilitiesData.set(capability.id, updatedCapability);
-
-    return updatedCapability;
-  }
-
-  // Creative History methods
-  async getCreativeHistoryByUserIdAndPeriod(userId: number, period: string): Promise<CreativeHistory | undefined> {
-    return Array.from(this.creativeHistoryData.values())
-      .find(history => history.userId === userId && history.period === period);
-  }
-
-  async createCreativeHistory(history: InsertCreativeHistory): Promise<CreativeHistory> {
-    const id = this.currentCreativeHistoryId++;
-    const creativeHistory: CreativeHistory = {
-      ...history,
-      id,
-      createdAt: new Date()
-    };
-    this.creativeHistoryData.set(id, creativeHistory);
-    return creativeHistory;
-  }
-
-  async updateCreativeHistory(userId: number, period: string, updates: Partial<InsertCreativeHistory>): Promise<CreativeHistory> {
-    // Find the history record
-    const history = await this.getCreativeHistoryByUserIdAndPeriod(userId, period);
-
-    if (!history) {
-      // If not found, create a new one with the updates
-      return this.createCreativeHistory({
-        userId,
-        period,
-        ...(updates as InsertCreativeHistory)
-      });
-    }
-
-    // Update the existing record
-    const updatedHistory: CreativeHistory = {
-      ...history,
-      ...updates,
-      // Keep the original fields
-      userId: history.userId,
-      period: history.period,
-      id: history.id,
-      createdAt: history.createdAt
-    };
-
-    this.creativeHistoryData.set(history.id, updatedHistory);
-
-    return updatedHistory;
-  }
-
-  // Color Palette methods
-  async getColorPalettesByUserId(userId: number): Promise<ColorPalette[]> {
-    return Array.from(this.colorPalettesData.values())
-      .filter(palette => palette.userId === userId);
-  }
-
-  async getColorPaletteById(id: number): Promise<ColorPalette | undefined> {
-    return this.colorPalettesData.get(id);
-  }
-
-  async createColorPalette(palette: InsertColorPalette): Promise<ColorPalette> {
-    const id = this.currentColorPaletteId++;
-    const colorPalette: ColorPalette = {
-      ...palette,
-      id,
-      colors: palette.colors || [],
-      tags: palette.tags || [],
-      isFavorite: palette.isFavorite || false,
-      usageCount: 0,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    this.colorPalettesData.set(id, colorPalette);
-    return colorPalette;
-  }
-
-  async updateColorPalette(id: number, updates: Partial<InsertColorPalette>): Promise<ColorPalette> {
-    const palette = await this.getColorPaletteById(id);
-
-    if (!palette) {
-      throw new Error(`Color palette with id ${id} not found`);
-    }
-
-    const updatedPalette: ColorPalette = {
-      ...palette,
-      ...updates,
-      // Keep the original fields
-      id: palette.id,
-      userId: palette.userId,
-      usageCount: palette.usageCount,
-      createdAt: palette.createdAt,
-      updatedAt: new Date()
-    };
-
-    this.colorPalettesData.set(id, updatedPalette);
-
-    return updatedPalette;
-  }
-
-  async incrementColorPaletteUsage(id: number): Promise<ColorPalette> {
-    const palette = await this.getColorPaletteById(id);
-
-    if (!palette) {
-      throw new Error(`Color palette with id ${id} not found`);
-    }
-
-    const updatedPalette: ColorPalette = {
-      ...palette,
-      usageCount: palette.usageCount + 1,
-      updatedAt: new Date()
-    };
-
-    this.colorPalettesData.set(id, updatedPalette);
-
-    return updatedPalette;
-  }
-
-  async getColorPalettesByMood(mood: string): Promise<ColorPalette[]> {
-    return Array.from(this.colorPalettesData.values())
-      .filter(palette => palette.mood.toLowerCase() === mood.toLowerCase());
-  }
-
-  // Mood Capsules methods
   async getMoodCapsulesByUserId(userId: number): Promise<MoodCapsule[]> {
-    return Array.from(this.moodCapsulesData.values())
-      .filter(capsule => capsule.userId === userId)
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()); // Most recent first
+    return await db
+      .select()
+      .from(moodCapsules)
+      .where(eq(moodCapsules.userId, userId))
+      .orderBy(desc(moodCapsules.createdAt));
   }
 
-  async getMoodCapsuleById(id: number): Promise<MoodCapsule | undefined> {
-    return this.moodCapsulesData.get(id);
+  async updateMoodCapsule(id: number, capsuleData: Partial<MoodCapsule>): Promise<MoodCapsule> {
+    const updatedCapsules = await db
+      .update(moodCapsules)
+      .set({ ...capsuleData, updatedAt: new Date() })
+      .where(eq(moodCapsules.id, id))
+      .returning();
+    return updatedCapsules[0];
   }
 
-  async createMoodCapsule(capsule: InsertMoodCapsule): Promise<MoodCapsule> {
-    const id = this.currentMoodCapsuleId++;
-    const moodCapsule: MoodCapsule = {
-      ...capsule,
-      id,
-      description: capsule.description || null,
-      captionTone: capsule.captionTone || "balanced",
-      aiGeneratedCaption: capsule.aiGeneratedCaption || null,
-      thumbnailUrl: capsule.thumbnailUrl || null,
-      contentIds: capsule.contentIds || [],
-      isArchived: false,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    this.moodCapsulesData.set(id, moodCapsule);
-    return moodCapsule;
+  // Security and Legal functions
+  async insertLegalAcceptance(data: InsertLegalAcceptance): Promise<LegalAcceptance> {
+    const result = await db.insert(legalAcceptance).values(data).returning();
+    return result[0];
   }
 
-  async updateMoodCapsule(id: number, updates: Partial<InsertMoodCapsule>): Promise<MoodCapsule> {
-    const capsule = await this.getMoodCapsuleById(id);
-    if (!capsule) {
-      throw new Error(`Mood capsule with id ${id} not found`);
-    }
+  async getLegalAcceptanceByUser(userId: number, documentType: string): Promise<LegalAcceptance | null> {
+    const result = await db
+      .select()
+      .from(legalAcceptance)
+      .where(
+        and(
+          eq(legalAcceptance.userId, userId),
+          eq(legalAcceptance.documentType, documentType)
+        )
+      )
+      .orderBy(desc(legalAcceptance.acceptedAt))
+      .limit(1);
 
-    const updatedCapsule: MoodCapsule = {
-      ...capsule,
-      ...updates,
-      updatedAt: new Date()
-    };
-    this.moodCapsulesData.set(id, updatedCapsule);
-    return updatedCapsule;
+    return result.length > 0 ? result[0] : null;
   }
 
-  async deleteMoodCapsule(id: number): Promise<boolean> {
-    const exists = this.moodCapsulesData.has(id);
-    if (!exists) {
-      return false;
-    }
-    return this.moodCapsulesData.delete(id);
+  async insertSecurityAlert(data: InsertSecurityAlert): Promise<SecurityAlert> {
+    const result = await db.insert(securityAlerts).values(data).returning();
+    return result[0];
   }
 
-  async archiveMoodCapsule(id: number): Promise<MoodCapsule> {
-    const capsule = await this.getMoodCapsuleById(id);
-    if (!capsule) {
-      throw new Error(`Mood capsule with id ${id} not found`);
-    }
-
-    const archivedCapsule: MoodCapsule = {
-      ...capsule,
-      isArchived: true,
-      updatedAt: new Date()
-    };
-    this.moodCapsulesData.set(id, archivedCapsule);
-    return archivedCapsule;
+  async getSecurityAlerts(limit: number = 50): Promise<SecurityAlert[]> {
+    return await db
+      .select()
+      .from(securityAlerts)
+      .orderBy(desc(securityAlerts.timestamp))
+      .limit(limit);
   }
 
-  // Content Sentiment methods
-  async getContentSentimentById(contentId: number): Promise<ContentSentiment | undefined> {
-    return Array.from(this.contentSentimentsData.values())
-      .find(sentiment => sentiment.contentId === contentId);
+  async resolveSecurityAlert(id: number, notes: string): Promise<SecurityAlert> {
+    const result = await db
+      .update(securityAlerts)
+      .set({ resolved: true, resolutionNotes: notes })
+      .where(eq(securityAlerts.id, id))
+      .returning();
+
+    return result[0];
   }
 
-  async getContentSentimentsByUserId(userId: number): Promise<ContentSentiment[]> {
-    return Array.from(this.contentSentimentsData.values())
-      .filter(sentiment => sentiment.userId === userId)
-      .sort((a, b) => b.analyzedAt.getTime() - a.analyzedAt.getTime()); // Most recent first
+  async trackAccessAttempt(data: InsertAccessAttempt): Promise<AccessAttempt> {
+    const result = await db.insert(accessAttempts).values(data).returning();
+    return result[0];
   }
 
-  async createContentSentiment(sentiment: InsertContentSentiment): Promise<ContentSentiment> {
-    const id = this.currentContentSentimentId++;
-    const contentSentiment: ContentSentiment = {
-      ...sentiment,
-      id,
-      dominantEmotion: sentiment.dominantEmotion || null,
-      emotionIntensity: sentiment.emotionIntensity || 0,
-      emotionBreakdown: sentiment.emotionBreakdown || {},
-      keywords: sentiment.keywords || [],
-      analyzedAt: new Date()
-    };
-    this.contentSentimentsData.set(id, contentSentiment);
-    return contentSentiment;
+  async getRecentAccessAttempts(ipAddress: string, minutes: number = 5): Promise<AccessAttempt[]> {
+    const cutoffTime = new Date();
+    cutoffTime.setMinutes(cutoffTime.getMinutes() - minutes);
+
+    return await db
+      .select()
+      .from(accessAttempts)
+      .where(
+        and(
+          eq(accessAttempts.ipAddress, ipAddress),
+          gte(accessAttempts.timestamp, cutoffTime)
+        )
+      )
+      .orderBy(desc(accessAttempts.timestamp));
   }
 
-  async updateContentSentiment(contentId: number, updates: Partial<InsertContentSentiment>): Promise<ContentSentiment> {
-    const sentiment = await this.getContentSentimentById(contentId);
-    if (!sentiment) {
-      throw new Error(`Content sentiment for content ID ${contentId} not found`);
-    }
-
-    const updatedSentiment: ContentSentiment = {
-      ...sentiment,
-      ...updates,
-      analyzedAt: new Date()
-    };
-    this.contentSentimentsData.set(sentiment.id, updatedSentiment);
-    return updatedSentiment;
+  async insertAssetOwnership(data: InsertAssetOwnership): Promise<AssetOwnership> {
+    const result = await db.insert(assetOwnership).values(data).returning();
+    return result[0];
   }
 
-  async analyzeContentSentiment(contentIds: number[]): Promise<ContentSentiment[]> {
-    const results: ContentSentiment[] = [];
+  async getAssetOwnership(assetId: string): Promise<AssetOwnership | null> {
+    const result = await db
+      .select()
+      .from(assetOwnership)
+      .where(eq(assetOwnership.assetId, assetId))
+      .limit(1);
 
-    // Import OpenAI integration
-    const openai = (await import('./ai/openai')).default;
-
-    for (const contentId of contentIds) {
-      const content = await this.getContentById(contentId);
-      if (!content) {
-        continue;
-      }
-
-      // Check if sentiment already exists
-      let sentiment = await this.getContentSentimentById(contentId);
-
-      // If sentiment exists and is less than 1 day old, skip reanalysis
-      if (sentiment && 
-          (new Date().getTime() - sentiment.analyzedAt.getTime()) < 24 * 60 * 60 * 1000) {
-        results.push(sentiment);
-        continue;
-      }
-
-      try {
-        // Use OpenAI for sentiment analysis if configured
-        if (openai.isConfigured) {
-          // Create comprehensive prompt for emotional analysis
-          const prompt = `
-            Analyze the emotional tone of this content:
-
-            Title: ${content.title}
-            Description: ${content.description || 'No description'}
-
-            Provide a detailed emotional analysis with:
-            1. The dominant emotion (choose from: joyful, nostalgic, energetic, thoughtful, relaxed, melancholic, powerful, mysterious)
-            2. Emotional intensity on a scale of 1-100
-            3. A breakdown of all emotions present with their relative percentages
-            4. 5 key emotional keywords from the content
-          `;
-
-          const systemPrompt = `
-            You are an expert in emotional content analysis. 
-            Provide accurate and nuanced emotional analysis of creative content.
-            Return a JSON object with these keys:
-            {
-              "dominantEmotion": string (one of: joyful, nostalgic, energetic, thoughtful, relaxed, melancholic, powerful, mysterious),
-              "emotionIntensity": number (1-100),
-              "emotionBreakdown": object with emotion names as keys and percentage values as numbers,
-              "keywords": array of 5 strings representing emotional keywords from the content
-            }
-          `;
-
-          // Request AI analysis
-          const analysis = await openai.generateJsonResponse<{
-            dominantEmotion: string;
-            emotionIntensity: number;
-            emotionBreakdown: Record<string, number>;
-            keywords: string[];
-          }>(prompt, systemPrompt, { temperature: 0.4 });
-
-          // Create or update sentiment
-          if (sentiment) {
-            sentiment = await this.updateContentSentiment(contentId, {
-              dominantEmotion: analysis.dominantEmotion,
-              emotionIntensity: analysis.emotionIntensity,
-              emotionBreakdown: analysis.emotionBreakdown,
-              keywords: analysis.keywords
-            });
-          } else {
-            sentiment = await this.createContentSentiment({
-              contentId,
-              userId: content.userId,
-              dominantEmotion: analysis.dominantEmotion,
-              emotionIntensity: analysis.emotionIntensity,
-              emotionBreakdown: analysis.emotionBreakdown,
-              keywords: analysis.keywords
-            });
-          }
-
-          results.push(sentiment);
-          continue;
-        }
-      } catch (error) {
-        console.error("Error using OpenAI for sentiment analysis:", error);
-        // Fall back to basic analysis method if OpenAI fails
-      }
-
-      // Fallback: Basic analysis if OpenAI is not available or fails
-      const emotions = ["joyful", "nostalgic", "energetic", "thoughtful", "relaxed", "melancholic", "powerful", "mysterious"];
-      const randomEmotion = emotions[Math.floor(Math.random() * emotions.length)];
-      const randomIntensity = Math.floor(Math.random() * 100);
-
-      // Create a breakdown of emotions (with the dominant one having the highest value)
-      const emotionBreakdown: Record<string, number> = {};
-      emotions.forEach(emotion => {
-        emotionBreakdown[emotion] = Math.floor(Math.random() * 40);
-      });
-      emotionBreakdown[randomEmotion] += 60; // Make sure the dominant emotion has the highest value
-
-      // Extract keywords from content title and description
-      const keywordsSource = `${content.title} ${content.description || ''}`;
-      const keywords = keywordsSource
-        .toLowerCase()
-        .replace(/[^\w\s]/g, '')
-        .split(/\s+/)
-        .filter(word => word.length > 3)
-        .slice(0, 5);
-
-      // Create or update sentiment
-      if (sentiment) {
-        sentiment = await this.updateContentSentiment(contentId, {
-          dominantEmotion: randomEmotion,
-          emotionIntensity: randomIntensity,
-          emotionBreakdown,
-          keywords
-        });
-      } else {
-        sentiment = await this.createContentSentiment({
-          contentId,
-          userId: content.userId,
-          dominantEmotion: randomEmotion,
-          emotionIntensity: randomIntensity,
-          emotionBreakdown,
-          keywords
-        });
-      }
-
-      results.push(sentiment);
-    }
-
-    return results;
+    return result.length > 0 ? result[0] : null;
   }
 
-  async generateCaptionForMoodCapsule(
-    contentIds: number[], 
-    emotionalTone: string, 
-    captionTone: string
-  ): Promise<string> {
-    // Get the content items
-    const contentItems = await Promise.all(
-      contentIds.map(id => this.getContentById(id))
-    );
-    const validContentItems = contentItems.filter(item => item !== undefined) as Content[];
-
-    if (validContentItems.length === 0) {
-      return "No content found to generate a caption.";
-    }
-
-    // Import OpenAI integration
-    const openai = (await import('./ai/openai')).default;
-
-    // Get content sentiment analysis for more accurate captions
-    const sentiments = await this.analyzeContentSentiment(contentIds);
-
-    try {
-      // Use OpenAI for caption generation if configured
-      if (openai.isConfigured) {
-        // Extract content information for the AI
-        const contentSummary = validContentItems.map(item => 
-          `Title: ${item.title}
-           Description: ${item.description || 'No description'}
-           Platform: ${item.platform || 'Not specified'}`
-        ).join('\n\n');
-
-        // Get emotional keywords from sentiment analysis
-        const keywords = sentiments
-          .flatMap(s => s.keywords || [])
-          .filter((v, i, a) => a.indexOf(v) === i) // Unique values
-          .slice(0, 8)
-          .join(', ');
-
-        const prompt = `
-          Create a ${captionTone} caption for a collection of content pieces that share a ${emotionalTone} mood.
-
-          The content includes:
-          ${contentSummary}
-
-          Key emotional themes: ${keywords}
-
-          The caption should:
-          1. Capture the essence of the ${emotionalTone} emotional tone
-          2. Use a ${captionTone} writing style
-          3. Be concise but evocative (30-60 words)
-          4. Tie together the content pieces thematically
-          5. Avoid specific references to the content titles
-          6. Feel authentic and human-written, not AI-generated
-        `;
-
-        const systemPrompt = `
-          You are a professional creative writer specializing in emotional storytelling.
-          Create a compelling caption that evokes the specified emotional tone using the specified writing style.
-          Ensure the caption feels authentic, insightful, and connects emotionally with the reader.
-          Return ONLY the caption text with no additional explanations or formatting.
-        `;
-
-        // Generate AI caption
-        const caption = await openai.generateText(prompt, { temperature: 0.7 });
-        if (caption && caption.trim().length > 0) {
-          return caption.trim();
-        }
-      }
-    } catch (error) {
-      console.error("Error generating AI caption:", error);
-      // Fall back to template-based caption if AI fails
-    }
-
-    // Fallback: Template-based caption generation
-    const captionIntros: Record<string, string[]> = {
-      joyful: ["Embracing moments of pure joy", "Celebrating life's brightest moments", "Finding happiness in the everyday"],
-      nostalgic: ["Reminiscing about times gone by", "A gentle look back at cherished memories", "Treasuring the moments that shaped us"],
-      energetic: ["Capturing the vibrant spirit of life", "Embracing the dynamic energy around us", "Moving forward with unstoppable momentum"],
-      thoughtful: ["Reflecting on life's deeper meanings", "Contemplating the beauty in stillness", "Finding wisdom in quiet moments"],
-      relaxed: ["Embracing the peaceful rhythm of life", "Finding tranquility in simple moments", "Unwinding in a world of calm"],
-      melancholic: ["Finding beauty in the bittersweet moments", "Exploring the depth of emotions that shape us", "Honoring the quiet sadness that brings wisdom"],
-      powerful: ["Standing in the strength of our convictions", "Embracing the force that drives us forward", "Channeling energy that transforms our world"],
-      mysterious: ["Exploring the unknown corners of our creativity", "Embracing the enigmatic journey of discovery", "Finding wonder in the unexplained"]
-    };
-
-    const captionStyles: Record<string, (intro: string) => string> = {
-      poetic: (intro) => `${intro}, where each frame tells a story of emotion that transcends time, connecting us to the universal language of human experience.`,
-      concise: (intro) => `${intro}. Captured with intention.`,
-      balanced: (intro) => `${intro}. These moments reveal the authentic emotional landscape of a journey worth remembering.`,
-      conversational: (intro) => `${intro}. Isn't it amazing how these moments can make us feel so alive and connected? Let's cherish them together.`,
-      technical: (intro) => `${intro}. This collection demonstrates the interplay between composition, lighting, and subject matter to evoke specific emotional responses.`,
-      inspirational: (intro) => `${intro}. Through these experiences, we discover the extraordinary capacity we have to feel, transform, and inspire others.`,
-      humorous: (intro) => `${intro} - with a smile, a laugh, and the gentle reminder not to take ourselves too seriously along the way.`
-    };
-
-    // Default to balanced if tone not found
-    const defaultEmotion = "thoughtful";
-    const defaultCaptionTone = "balanced";
-
-    const introOptions = captionIntros[emotionalTone] || captionIntros[defaultEmotion];
-    const intro = introOptions[Math.floor(Math.random() * introOptions.length)];
-    const styleFunction = captionStyles[captionTone] || captionStyles[defaultCaptionTone];
-
-    return styleFunction(intro);
+  async getAllAssetOwnerships(): Promise<AssetOwnership[]> {
+    return await db.select().from(assetOwnership);
   }
 
-  // Security and Legal Methods
-  async recordLegalAcceptance(acceptance: InsertLegalAcceptance): Promise<LegalAcceptance> {
-    const id = this.currentLegalAcceptanceId++;
-    const legalAcceptance: LegalAcceptance = { ...acceptance, id, acceptedAt: new Date() };
-    this.legalAcceptances.set(`${acceptance.userId}-${acceptance.documentType}`, legalAcceptance);
-    return legalAcceptance;
-  }
+  async updateAssetVerificationStatus(id: number, status: boolean): Promise<AssetOwnership> {
+    const result = await db
+      .update(assetOwnership)
+      .set({ 
+        verificationStatus: status,
+        lastVerifiedAt: new Date()
+      })
+      .where(eq(assetOwnership.id, id))
+      .returning();
 
-  async getLegalAcceptance(userId: number, documentType: string): Promise<LegalAcceptance | null> {
-    return this.legalAcceptances.get(`${userId}-${documentType}`) || null;
-  }
-
-  async storeSecurityAlert(alert: InsertSecurityAlert): Promise<SecurityAlert> {
-    const id = this.currentSecurityAlertId++;
-    const securityAlert: SecurityAlert = { ...alert, id, createdAt: new Date() };
-    this.securityAlerts.push(securityAlert);
-    return securityAlert;
-  }
-
-  async getSecurityAlerts(limit: number): Promise<SecurityAlert[]> {
-    return this.securityAlerts.slice(0, limit);
-  }
-
-  async trackAccessAttempt(attempt: InsertAccessAttempt): Promise<AccessAttempt> {
-    const id = this.currentAccessAttemptId++;
-    const accessAttempt: AccessAttempt = { ...attempt, id, createdAt: new Date() };
-    this.accessAttempts.set(`${attempt.userId}-${attempt.timestamp}`, accessAttempt);
-    return accessAttempt;
-  }
-
-  async registerAssetOwnership(asset: InsertAssetOwnership): Promise<AssetOwnership> {
-    const id = this.currentAssetOwnershipId++;
-    const assetOwnership: AssetOwnership = { ...asset, id, registeredAt: new Date() };
-    this.assetOwnerships.set(asset.assetId, assetOwnership);
-    return assetOwnership;
-  }
-
-  async verifyAssetOwnership(assetId: string, watermarkHash: string): Promise<boolean> {
-    const ownership = this.assetOwnerships.get(assetId);
-    return ownership ? ownership.watermarkHash === watermarkHash : false;
+    return result[0];
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new Storage();

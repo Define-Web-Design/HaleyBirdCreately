@@ -21,10 +21,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Apply global security middleware
   app.use(addOwnershipHeaders);
   app.use(scrapeDetection);
-  
+
   // Apply rate limiting to all API routes
   app.use("/api", apiLimiter);
-  
+
   // Legal routes - these must be accessible without authentication
   app.get("/api/public/legal/terms", (req: Request, res: Response) => {
     res.json({
@@ -34,7 +34,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       requiresAcceptance: true
     });
   });
-  
+
   app.get("/api/public/legal/privacy", (req: Request, res: Response) => {
     res.json({
       title: "Privacy Notice & Intellectual Property Protection",
@@ -43,15 +43,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       requiresAcceptance: true
     });
   });
-  
+
   // Record terms acceptance
   app.post("/api/public/legal/accept", async (req: Request, res: Response) => {
     const { documentType, version, userId } = req.body;
-    
+
     if (!documentType || !version) {
       return res.status(400).json({ message: "Document type and version are required" });
     }
-    
+
     try {
       await storage.recordLegalAcceptance({
         userId: userId || 0,
@@ -61,13 +61,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ipAddress: req.ip,
         userAgent: req.headers["user-agent"] || "unknown"
       });
-      
+
       res.status(200).json({ success: true });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
   });
-  
+
   // Apply access validation to protected routes
   app.use("/api", validateAccess);
   // API routes prefix
@@ -959,6 +959,148 @@ export async function registerRoutes(app: Express): Promise<Server> {
         error: process.env.NODE_ENV === 'development' ? error.stack : undefined
       });
     }
+  });
+
+  // Security and Legal Routes
+  app.get('/api/security/verify-asset', async (req, res) => {
+    const { assetId } = req.query;
+
+    if (!assetId || typeof assetId !== 'string') {
+      return res.status(400).json({
+        valid: false,
+        message: 'Invalid asset ID provided'
+      });
+    }
+
+    try {
+      const asset = await storage.getAssetOwnership(assetId);
+
+      if (!asset) {
+        return res.status(404).json({
+          valid: false,
+          message: 'Asset not found or not registered in the ownership database'
+        });
+      }
+
+      return res.json({
+        valid: asset.verificationStatus,
+        assetDetails: {
+          assetId: asset.assetId,
+          assetType: asset.assetType,
+          ownerInfo: asset.ownerInfo,
+          verificationStatus: asset.verificationStatus,
+          lastVerifiedAt: asset.lastVerifiedAt
+        },
+        message: asset.verificationStatus 
+          ? 'Asset verification successful. This is an authentic asset with verified ownership.' 
+          : 'Asset verification failed. This asset may have been tampered with or modified.'
+      });
+    } catch (error) {
+      console.error('Asset verification error:', error);
+      return res.status(500).json({
+        valid: false,
+        message: 'An error occurred during verification'
+      });
+    }
+  });
+
+  app.post('/api/legal/accept', async (req, res) => {
+    const { terms, privacy } = req.body;
+    const userId = req.session?.userId;
+
+    if (!userId) {
+      return res.status(401).json({ message: 'User not authenticated' });
+    }
+
+    try {
+      // Record terms acceptance if included
+      if (terms) {
+        await storage.insertLegalAcceptance({
+          userId,
+          documentType: 'terms',
+          version: '1.0', // Should be pulled from config or DB in real app
+          acceptedAt: new Date(),
+          ipAddress: req.ip,
+          userAgent: req.headers['user-agent']
+        });
+      }
+
+      // Record privacy acceptance if included
+      if (privacy) {
+        await storage.insertLegalAcceptance({
+          userId,
+          documentType: 'privacy',
+          version: '1.0', // Should be pulled from config or DB in real app
+          acceptedAt: new Date(),
+          ipAddress: req.ip,
+          userAgent: req.headers['user-agent']
+        });
+      }
+
+      return res.json({ success: true });
+    } catch (error) {
+      console.error('Error recording legal acceptance:', error);
+      return res.status(500).json({ message: 'Failed to record acceptance' });
+    }
+  });
+
+  app.get('/api/legal/status', async (req, res) => {
+    const userId = req.session?.userId;
+
+    if (!userId) {
+      return res.status(401).json({ message: 'User not authenticated' });
+    }
+
+    try {
+      // Check terms acceptance
+      const termsAcceptance = await storage.getLegalAcceptanceByUser(userId, 'terms');
+
+      // Check privacy acceptance
+      const privacyAcceptance = await storage.getLegalAcceptanceByUser(userId, 'privacy');
+
+      return res.json({
+        termsAccepted: !!termsAcceptance,
+        termsVersion: termsAcceptance?.version || null,
+        privacyAccepted: !!privacyAcceptance,
+        privacyVersion: privacyAcceptance?.version || null
+      });
+    } catch (error) {
+      console.error('Error checking legal acceptance status:', error);
+      return res.status(500).json({ message: 'Failed to retrieve legal status' });
+    }
+  });
+
+  // Security alerts endpoint for administrators
+  app.get('/api/security/alerts', async (req, res) => {
+    // In a real app, this would check admin permissions
+    const userId = req.session?.userId;
+
+    if (!userId) {
+      return res.status(401).json({ message: 'User not authenticated' });
+    }
+
+    try {
+      // Get the user to check if admin
+      const user = await storage.getUserById(userId);
+
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ message: 'Unauthorized access to security alerts' });
+      }
+
+      const alerts = await storage.getSecurityAlerts(50);
+      return res.json({ alerts });
+    } catch (error) {
+      console.error('Error retrieving security alerts:', error);
+      return res.status(500).json({ message: 'Failed to retrieve security alerts' });
+    }
+  });
+
+  // Example API routes
+  app.get('/api/hello', (req, res) => {
+    res.json({ 
+      message: 'Hello from server!',
+      ownershipNotice: "© 2023 All Rights Reserved. This content is proprietary."
+    });
   });
 
   const httpServer = createServer(app);

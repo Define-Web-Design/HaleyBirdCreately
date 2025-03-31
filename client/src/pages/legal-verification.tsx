@@ -1,152 +1,134 @@
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Separator } from '@/components/ui/separator';
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardFooter, 
+  CardHeader, 
+  CardTitle 
+} from '@/components/ui/card';
+import withLegalVerification from '@/components/hoc/withLegalVerification';
 
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import TermsOfService from '@/components/legal/TermsOfService';
-import PrivacyNotice from '@/components/legal/PrivacyNotice';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Shield, AlertTriangle } from 'lucide-react';
-
-export default function LegalVerification() {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const [termsAccepted, setTermsAccepted] = useState<boolean>(false);
-  const [privacyAccepted, setPrivacyAccepted] = useState<boolean>(false);
-  const [activeTab, setActiveTab] = useState<string>('terms');
-  
-  // The route to redirect to after acceptance
-  const redirectPath = new URLSearchParams(location.search).get('redirect') || '/dashboard';
-  
-  // Check if user has already accepted the terms
-  useEffect(() => {
-    const checkLegalAcceptance = async () => {
-      try {
-        // In a real implementation, this would check if the user has already accepted
-        // the current versions of the legal documents
-        const termsAcceptanceStatus = localStorage.getItem('termsAccepted');
-        const privacyAcceptanceStatus = localStorage.getItem('privacyAccepted');
-        
-        if (termsAcceptanceStatus && privacyAcceptanceStatus) {
-          // If already accepted, redirect to the intended destination
-          navigate(redirectPath);
-        }
-      } catch (error) {
-        console.error('Error checking legal acceptance:', error);
-      }
+function LegalVerificationPage() {
+  const [assetId, setAssetId] = useState('');
+  const [verificationResult, setVerificationResult] = useState<null | {
+    valid: boolean;
+    assetDetails?: {
+      assetId: string;
+      assetType: string;
+      ownerInfo: string;
+      verificationStatus: boolean;
+      lastVerifiedAt: string;
     };
-    
-    checkLegalAcceptance();
-  }, [navigate, redirectPath]);
-  
-  const handleTermsAccept = async () => {
+    message: string;
+  }>(null);
+
+  const handleVerification = async () => {
+    if (!assetId.trim()) {
+      return;
+    }
+
     try {
-      // Record terms acceptance
-      await fetch('/api/public/legal/accept', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          documentType: 'terms',
-          version: '1.0.0',
-        }),
-      });
-      
-      // Update local state
-      setTermsAccepted(true);
-      localStorage.setItem('termsAccepted', 'true');
-      
-      // Switch to privacy tab if not yet accepted
-      if (!privacyAccepted) {
-        setActiveTab('privacy');
-      } else {
-        // If both accepted, redirect
-        navigate(redirectPath);
-      }
+      const response = await fetch(`/api/security/verify-asset?assetId=${encodeURIComponent(assetId)}`);
+      const data = await response.json();
+      setVerificationResult(data);
     } catch (error) {
-      console.error('Error accepting terms:', error);
-    }
-  };
-  
-  const handlePrivacyAccept = async () => {
-    try {
-      // Record privacy acceptance
-      await fetch('/api/public/legal/accept', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          documentType: 'privacy',
-          version: '1.0.0',
-        }),
+      console.error('Verification error:', error);
+      setVerificationResult({
+        valid: false,
+        message: 'An error occurred during verification. Please try again.'
       });
-      
-      // Update local state
-      setPrivacyAccepted(true);
-      localStorage.setItem('privacyAccepted', 'true');
-      
-      // If terms also accepted, redirect
-      if (termsAccepted) {
-        navigate(redirectPath);
-      } else {
-        // Switch to terms tab if not yet accepted
-        setActiveTab('terms');
-      }
-    } catch (error) {
-      console.error('Error accepting privacy notice:', error);
     }
   };
-  
-  const handleTermsDecline = () => {
-    // Show confirmation and then redirect to a public page
-    if (confirm('You must accept the Terms of Service to continue. Do you want to leave the platform?')) {
-      window.location.href = 'https://example.com';
-    }
-  };
-  
+
   return (
-    <div className="container py-10 max-w-5xl">
-      <div className="mb-8 text-center">
-        <div className="inline-block p-3 rounded-full bg-primary/10 mb-4">
-          <Shield className="h-10 w-10 text-primary" />
-        </div>
-        <h1 className="text-3xl font-bold mb-2">Legal Verification Required</h1>
-        <p className="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-          Before you can access the platform, you must review and accept our Terms of Service 
-          and Privacy Notice & Intellectual Property Protection statement.
+    <div className="container py-8 space-y-8">
+      <div className="max-w-3xl mx-auto">
+        <h1 className="text-3xl font-bold">Ownership Verification</h1>
+        <p className="text-gray-500 dark:text-gray-400 mt-2">
+          Verify the ownership and integrity of any asset within our platform
         </p>
+
+        <Card className="mt-8">
+          <CardHeader>
+            <CardTitle>Asset Verification</CardTitle>
+            <CardDescription>
+              Enter the Asset ID to verify ownership and authenticity
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex space-x-2">
+              <Input
+                placeholder="Enter Asset ID"
+                value={assetId}
+                onChange={(e) => setAssetId(e.target.value)}
+                className="flex-1"
+              />
+              <Button onClick={handleVerification}>Verify</Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {verificationResult && (
+          <Card className={`mt-6 ${
+            verificationResult.valid 
+              ? 'border-green-500 dark:border-green-700' 
+              : 'border-red-500 dark:border-red-700'
+          }`}>
+            <CardHeader>
+              <CardTitle className={
+                verificationResult.valid 
+                  ? 'text-green-600 dark:text-green-400' 
+                  : 'text-red-600 dark:text-red-400'
+              }>
+                {verificationResult.valid ? 'Verification Successful' : 'Verification Failed'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>{verificationResult.message}</p>
+
+              {verificationResult.assetDetails && (
+                <div className="mt-4 space-y-2">
+                  <p><strong>Asset ID:</strong> {verificationResult.assetDetails.assetId}</p>
+                  <p><strong>Asset Type:</strong> {verificationResult.assetDetails.assetType}</p>
+                  <p><strong>Owner:</strong> {verificationResult.assetDetails.ownerInfo}</p>
+                  <p><strong>Last Verified:</strong> {new Date(verificationResult.assetDetails.lastVerifiedAt).toLocaleString()}</p>
+                </div>
+              )}
+            </CardContent>
+            <CardFooter className="text-sm text-gray-500">
+              All platform assets contain embedded ownership information and are regularly monitored for unauthorized usage.
+            </CardFooter>
+          </Card>
+        )}
+
+        <Separator className="my-8" />
+
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold">About Our Verification System</h2>
+          <p>
+            Our platform employs advanced digital watermarking and ownership verification technologies to ensure 
+            the integrity and authenticity of all content. Each asset in our system contains:
+          </p>
+
+          <ul className="list-disc pl-6 space-y-2">
+            <li>Unique cryptographic signatures that validate ownership</li>
+            <li>Embedded metadata that tracks the asset's origin and permissions</li>
+            <li>Tamper-proof watermarks that can be verified but not easily removed</li>
+          </ul>
+
+          <p className="text-sm bg-gray-100 dark:bg-gray-800 p-4 rounded-md">
+            <strong>IMPORTANT:</strong> Unauthorized reproduction, distribution, or use of any platform 
+            assets constitutes copyright infringement and is subject to legal action. All assets are 
+            continuously monitored for unauthorized usage across the internet.
+          </p>
+        </div>
       </div>
-      
-      <Alert className="mb-6 border-amber-500/50 bg-amber-500/10">
-        <AlertTriangle className="h-5 w-5 text-amber-500" />
-        <AlertTitle className="text-amber-500">Important Notice</AlertTitle>
-        <AlertDescription>
-          All content, functionality, and intellectual property within this platform are protected by copyright 
-          and other laws. Unauthorized use is strictly prohibited and may result in legal action.
-        </AlertDescription>
-      </Alert>
-      
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-2 mb-6">
-          <TabsTrigger value="terms" className="text-base py-3">
-            Terms of Service
-            {termsAccepted && <span className="ml-2 text-green-500">✓</span>}
-          </TabsTrigger>
-          <TabsTrigger value="privacy" className="text-base py-3">
-            Privacy & IP Protection
-            {privacyAccepted && <span className="ml-2 text-green-500">✓</span>}
-          </TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="terms">
-          <TermsOfService onAccept={handleTermsAccept} onDecline={handleTermsDecline} />
-        </TabsContent>
-        
-        <TabsContent value="privacy">
-          <PrivacyNotice onAccept={handlePrivacyAccept} />
-        </TabsContent>
-      </Tabs>
     </div>
   );
 }
+
+export default withLegalVerification(LegalVerificationPage);
