@@ -55,7 +55,7 @@ localPort = 8425
 externalPort = 3002
 
 [workflows]
-runButton = "Run Application"
+runButton = "Start Development Server"
 
 [[workflows.workflow]]
 name = "Project"
@@ -156,11 +156,11 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd client && npm run dev"
+args = "pkill -f node || true"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd server && npm run dev"
+args = "npm run dev"
 
 [[workflows.workflow]]
 name = "Start Full Stack"
