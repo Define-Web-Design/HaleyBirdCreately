@@ -55,7 +55,7 @@ localPort = 8425
 externalPort = 3002
 
 [workflows]
-runButton = "Comprehensive Validation"
+runButton = "Comprehensive Task Validation"
 
 [[workflows.workflow]]
 name = "Project"
@@ -499,6 +499,107 @@ args = ""
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "# Run the comprehensive validation"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node -e \"require('./client/src/utils/validate-implementation.js').validateImplementation().then(require('./client/src/utils/validate-implementation.js').displayValidationResults)\""
+
+[[workflows.workflow]]
+name = "Comprehensive Task Validation"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Kill any running processes first"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pkill -f node || true"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Start with code quality checks"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run lint"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npx tsc --noEmit"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Validate security implementation"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node -e \"const { securityMonitor } = require('./server/services/securityMonitor.js'); securityMonitor.validateAssetIntegrity().then(results => console.log(JSON.stringify(results, null, 2)))\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run navigation and link validation "
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node -e \"const { verifyPageLinks } = require('./client/src/utils/navigation-tester.js'); verifyPageLinks().then(results => console.log(JSON.stringify(results, null, 2)))\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run accessibility audit"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node -e \"const { runAccessibilityAudit } = require('./client/src/utils/navigation-tester.js'); runAccessibilityAudit().then(results => console.log(JSON.stringify(results, null, 2)))\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Validate API endpoints"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node -e \"const { validateApiEndpoints, generateApiValidationReport } = require('./client/src/utils/api-validator.js'); validateApiEndpoints().then(results => { console.log(generateApiValidationReport(results.results)); })\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run keyboard navigation test"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node -e \"const { testKeyboardNavigation } = require('./client/src/utils/navigation-tester.js'); testKeyboardNavigation().then(results => console.log(JSON.stringify(results, null, 2)))\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run the comprehensive validation and display detailed report"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"

@@ -39,7 +39,7 @@ import {
   MessagesSquare,
   Sparkles
 } from 'lucide-react';
-import { useMediaQuery } from '@/lib/hooks/use-media-query';
+import useMediaQuery from '@/lib/hooks/use-media-query';
 import { motion } from 'framer-motion';
 
 interface MoodCapsuleDetailProps {
@@ -60,7 +60,7 @@ const MoodCapsuleDetail: React.FC<MoodCapsuleDetailProps> = React.memo(({
   const isDesktop = useMediaQuery("(min-width: 768px)");
   const [activeTab, setActiveTab] = React.useState("content");
   const [isRegeneratingCaption, setIsRegeneratingCaption] = React.useState(false);
-  
+
   // Fetch the specific mood capsule
   const { data: capsule, isLoading: isCapsuleLoading, error: capsuleError } = useQuery<MoodCapsule>({
     queryKey: [`/api/mood-capsules/${capsuleId}`],
@@ -74,7 +74,7 @@ const MoodCapsuleDetail: React.FC<MoodCapsuleDetailProps> = React.memo(({
       });
     }
   });
-  
+
   // Fetch content items for this capsule
   const { data: content = [], isLoading: isContentLoading, error: contentError } = useQuery<ContentItem[]>({
     queryKey: [`/api/content/by-capsule/${capsuleId}`],
@@ -88,13 +88,13 @@ const MoodCapsuleDetail: React.FC<MoodCapsuleDetailProps> = React.memo(({
       });
     }
   });
-  
+
   // Handle the regeneration of AI caption
   const handleRegenerateCaption = async () => {
     if (!capsule) return;
-    
+
     setIsRegeneratingCaption(true);
-    
+
     try {
       // Implementation would connect to API for caption generation
       toast({
@@ -111,20 +111,20 @@ const MoodCapsuleDetail: React.FC<MoodCapsuleDetailProps> = React.memo(({
       setIsRegeneratingCaption(false);
     }
   };
-  
+
   // Handle copy caption to clipboard
   const handleCopyCaption = () => {
     if (!capsule?.description) return;
-    
+
     navigator.clipboard.writeText(capsule.description);
     toast({
       title: "Caption Copied",
       description: "Caption has been copied to clipboard",
     });
   };
-  
+
   if (!isOpen) return null;
-  
+
   const DetailContent = () => (
     <>
       {isCapsuleLoading ? (
@@ -165,7 +165,7 @@ const MoodCapsuleDetail: React.FC<MoodCapsuleDetailProps> = React.memo(({
           <div>
             <div className="flex justify-between items-start">
               <h2 className="text-2xl font-semibold">{capsule.name}</h2>
-              
+
               <div className="flex space-x-2">
                 <Button 
                   variant="outline" 
@@ -177,23 +177,23 @@ const MoodCapsuleDetail: React.FC<MoodCapsuleDetailProps> = React.memo(({
                 </Button>
               </div>
             </div>
-            
+
             <div className="flex flex-wrap gap-2 mt-2">
               <Badge variant="outline" className="capitalize">
                 {capsule.emotionalTone}
               </Badge>
-              
+
               {capsule.captionTone && (
                 <Badge variant="outline" className="capitalize">
                   {capsule.captionTone} tone
                 </Badge>
               )}
-              
+
               {capsule.isArchived && (
                 <Badge variant="secondary">Archived</Badge>
               )}
             </div>
-            
+
             <div className="flex items-center text-muted-foreground text-sm mt-3 space-x-4">
               <div className="flex items-center">
                 <Calendar className="mr-1 h-4 w-4" />
@@ -209,16 +209,16 @@ const MoodCapsuleDetail: React.FC<MoodCapsuleDetailProps> = React.memo(({
               </div>
             </div>
           </div>
-          
+
           <Separator />
-          
+
           {/* Tabs for content and caption */}
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="content">Content</TabsTrigger>
               <TabsTrigger value="caption">AI Caption</TabsTrigger>
             </TabsList>
-            
+
             {/* Content Tab */}
             <TabsContent value="content" className="space-y-4 pt-4">
               {isContentLoading ? (
@@ -249,7 +249,7 @@ const MoodCapsuleDetail: React.FC<MoodCapsuleDetailProps> = React.memo(({
                           <ImageIcon className="h-8 w-8 text-muted-foreground" />
                         </div>
                       )}
-                      
+
                       <div className="p-3">
                         <h4 className="font-medium">{item.title}</h4>
                         {item.platform && (
@@ -275,7 +275,7 @@ const MoodCapsuleDetail: React.FC<MoodCapsuleDetailProps> = React.memo(({
                 </div>
               )}
             </TabsContent>
-            
+
             {/* Caption Tab */}
             <TabsContent value="caption" className="space-y-4 pt-4">
               {capsule.description ? (
@@ -309,13 +309,13 @@ const MoodCapsuleDetail: React.FC<MoodCapsuleDetailProps> = React.memo(({
                       </Button>
                     </div>
                   </div>
-                  
+
                   <div className="bg-muted/40 p-4 rounded-md relative">
                     <blockquote className="italic text-muted-foreground">
                       "{capsule.description}"
                     </blockquote>
                   </div>
-                  
+
                   <div className="text-sm text-muted-foreground">
                     <p>Emotional Tone: <span className="capitalize">{capsule.emotionalTone}</span></p>
                     <p>Caption Style: <span className="capitalize">{capsule.captionTone || 'Balanced'}</span></p>
@@ -353,7 +353,7 @@ const MoodCapsuleDetail: React.FC<MoodCapsuleDetailProps> = React.memo(({
       )}
     </>
   );
-  
+
   // Render as Dialog on desktop, Sheet on mobile
   return isDesktop ? (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -364,9 +364,9 @@ const MoodCapsuleDetail: React.FC<MoodCapsuleDetailProps> = React.memo(({
             View and manage this mood capsule
           </DialogDescription>
         </DialogHeader>
-        
+
         <DetailContent />
-        
+
         <DialogFooter className="flex justify-end sm:justify-between mt-6">
           <Button 
             variant="outline" 
@@ -374,7 +374,7 @@ const MoodCapsuleDetail: React.FC<MoodCapsuleDetailProps> = React.memo(({
           >
             Close
           </Button>
-          
+
           {capsule && (
             <Button 
               onClick={() => onEdit(capsule)}
@@ -395,11 +395,11 @@ const MoodCapsuleDetail: React.FC<MoodCapsuleDetailProps> = React.memo(({
             View and manage this mood capsule
           </SheetDescription>
         </SheetHeader>
-        
+
         <div className="mt-6">
           <DetailContent />
         </div>
-        
+
         <div className="flex justify-between items-center mt-8">
           <Button 
             variant="outline" 
@@ -407,7 +407,7 @@ const MoodCapsuleDetail: React.FC<MoodCapsuleDetailProps> = React.memo(({
           >
             Close
           </Button>
-          
+
           {capsule && (
             <Button 
               onClick={() => onEdit(capsule)}
@@ -421,7 +421,5 @@ const MoodCapsuleDetail: React.FC<MoodCapsuleDetailProps> = React.memo(({
     </Sheet>
   );
 };
-
-});
 
 export default MoodCapsuleDetail;

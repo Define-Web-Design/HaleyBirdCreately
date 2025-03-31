@@ -52,7 +52,19 @@ export async function validateImplementation(): Promise<{
       '/',
       '/mood-capsules',
       '/color-palettes',
-      '/content-library'
+      '/content-library',
+      '/ai-enhancement',
+      '/analytics',
+      '/apple-photos',
+      '/content-calendar',
+      '/creative-prompts',
+      '/creative-symbiosis',
+      '/cross-platform-tools',
+      '/dashboard',
+      '/legal-verification',
+      '/mood-boards',
+      '/nav-test',
+      '/platform-integrations'
     ];
     
     for (const page of pagesToCheck) {
@@ -93,6 +105,18 @@ export async function validateImplementation(): Promise<{
       success = false;
       const failedCount = apiResults.results.filter(r => !r.valid).length;
       issues.push(`${failedCount} API endpoints failed validation`);
+    }
+    
+    // Additional validation: Error handling
+    console.log('Step 8: Validating error handling...');
+    const errorHandlingResults = await validateErrorHandling();
+    
+    if (!errorHandlingResults.success) {
+      success = false;
+      issues.push(`Error handling validation failed: ${errorHandlingResults.issues.length} issues found`);
+      errorHandlingResults.issues.forEach(issue => {
+        issues.push(`Error handling issue: ${issue}`);
+      });
     }
     
     // Generate comprehensive report
@@ -228,3 +252,79 @@ export function displayValidationResults(results: {
 
 // To run the validation, use:
 // validateImplementation().then(displayValidationResults);
+
+
+/**
+ * Validate error handling across the application
+ * @returns Promise with validation results
+ */
+async function validateErrorHandling(): Promise<{
+  success: boolean;
+  issues: string[];
+  recommendations: string[];
+}> {
+  console.log('Starting error handling validation...');
+  
+  const issues: string[] = [];
+  const recommendations: string[] = [];
+  
+  try {
+    // Check for error boundary components
+    const hasErrorBoundary = document.querySelectorAll('[data-error-boundary]').length > 0;
+    
+    if (!hasErrorBoundary) {
+      issues.push('No error boundary components found');
+      recommendations.push('Implement error boundary components to gracefully handle UI errors');
+    }
+    
+    // Check for try-catch blocks in components (simple heuristic)
+    // In a real implementation, this would be a static code analysis
+    const hasTryCatch = document.querySelectorAll('[data-error-handled]').length > 0;
+    
+    if (!hasTryCatch) {
+      issues.push('Limited error handling in components');
+      recommendations.push('Add try-catch blocks to critical component functions');
+    }
+    
+    // Check for toast error handling
+    const hasToastErrorHandling = document.querySelectorAll('[data-toast-error]').length > 0;
+    
+    if (!hasToastErrorHandling) {
+      issues.push('No toast-based error notifications found');
+      recommendations.push('Implement toast notifications for non-critical errors');
+    }
+    
+    // Check for form error handling
+    const forms = document.querySelectorAll('form');
+    let formErrorHandlingFound = false;
+    
+    forms.forEach(form => {
+      const errorMessages = form.querySelectorAll('[aria-invalid="true"], [data-error-message]');
+      if (errorMessages.length > 0) {
+        formErrorHandlingFound = true;
+      }
+    });
+    
+    if (!formErrorHandlingFound && forms.length > 0) {
+      issues.push('Forms may lack adequate error handling');
+      recommendations.push('Ensure all forms have proper error messaging and validation feedback');
+    }
+    
+    // Check for API error handling in fetch calls
+    // This is a simplified check - in a real app, you'd do static analysis
+    const success = issues.length === 0;
+    
+    return {
+      success,
+      issues,
+      recommendations
+    };
+  } catch (error) {
+    console.error('Error during error handling validation:', error);
+    return {
+      success: false,
+      issues: [`Error during validation: ${error.message || error}`],
+      recommendations: ['Review error handling validation logic']
+    };
+  }
+}
