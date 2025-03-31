@@ -20,6 +20,8 @@ import CrossPlatformTools from "./pages/cross-platform-tools";
 import NavigationTest from "./pages/nav-test";
 import NotFound from "./pages/not-found";
 import Profile from './components/profile/Profile';
+import PlatformIntegrations from './pages/platform-integrations'; // Added import
+import ErrorBoundary from './components/ErrorBoundary'; // Added import
 
 
 function Router() {
@@ -48,10 +50,11 @@ function Router() {
         <Route path="/ai-enhancement" component={AIEnhancement} />
         <Route path="/creative-prompts" component={CreativePrompts} />
         <Route path="/cross-platform-tools" component={CrossPlatformTools} />
-        <Route path="/profile" component={Profile} /> {/* Added route for Profile */}
-        <Route path="/profile/accessibility" component={Profile} /> {/* Added route for Profile accessibility */}
-        <Route path="/profile/integrations" component={Profile} /> {/* Added route for Profile integrations */}
-        <Route path="/nav-test" component={NavigationTest} /> {/* Navigation testing tool */}
+        <Route path="/profile" component={Profile} />
+        <Route path="/profile/accessibility" component={Profile} />
+        <Route path="/profile/integrations" component={Profile} />
+        <Route path="/platform-integrations" component={PlatformIntegrations} /> {/* Added route for Platform Integrations */}
+        <Route path="/nav-test" component={NavigationTest} />
         <Route component={NotFound} />
       </Switch>
     </AppShell>
@@ -61,8 +64,10 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Router />
-      <AutoDismissToaster defaultDuration={5000} />
+      <ErrorBoundary>
+        <AutoDismissToaster defaultDuration={5000} />
+        <Router />
+      </ErrorBoundary>
     </QueryClientProvider>
   );
 }

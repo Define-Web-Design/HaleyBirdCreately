@@ -75,13 +75,16 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [isGeneratingCaption, setIsGeneratingCaption] = useState(false);
   const isEditMode = !!capsule;
-  
+
   // Fetch content for content selection
   const { data: contentItems = [], isLoading: isContentLoading, error: contentError } = useQuery({
     queryKey: ['/api/content'],
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
-  
+
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [selectedContent, setSelectedContent] = useState<ContentItem[]>([]);
+
   // Show loading indicator when content is loading
   React.useEffect(() => {
     if (isContentLoading) {
@@ -90,7 +93,7 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
         description: "Fetching available content items...",
       });
     }
-    
+
     if (contentError) {
       toast({
         title: "Error Loading Content",
@@ -99,7 +102,7 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
       });
     }
   }, [isContentLoading, contentError, toast]);
-  
+
   // Initialize form with existing data or defaults
   const form = useForm<MoodCapsuleFormData>({
     resolver: zodResolver(moodCapsuleSchema),
@@ -112,10 +115,10 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
       thumbnailUrl: capsule?.thumbnailUrl || '',
     },
   });
-  
+
   const { formState } = form;
   const { isSubmitting, isDirty } = formState;
-  
+
   // Available emotional tones
   const emotionalTones = [
     { label: 'Joyful', value: 'joyful' },
@@ -127,7 +130,7 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
     { label: 'Powerful', value: 'powerful' },
     { label: 'Mysterious', value: 'mysterious' },
   ];
-  
+
   // Available caption tones
   const captionTones = [
     { label: 'Balanced', value: 'balanced' },
@@ -138,7 +141,7 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
     { label: 'Humorous', value: 'humorous' },
     { label: 'Inspirational', value: 'inspirational' },
   ];
-  
+
   // Submit form
   const onSubmit = async (data: MoodCapsuleFormData) => {
     try {
@@ -147,9 +150,9 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
         await apiRequest({
           url: `/api/mood-capsules/${capsule.id}`,
           method: 'PUT',
-          data,
+          data: { ...data, contentIds: selectedContent.map(item => item.id) }, // Updated data submission
         });
-        
+
         toast({
           title: 'Mood Capsule Updated',
           description: `"${data.name}" has been successfully updated`,
@@ -159,15 +162,15 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
         await apiRequest({
           url: '/api/mood-capsules',
           method: 'POST',
-          data,
+          data: { ...data, contentIds: selectedContent.map(item => item.id) }, // Updated data submission
         });
-        
+
         toast({
           title: 'Mood Capsule Created',
           description: `"${data.name}" has been successfully created`,
         });
       }
-      
+
       // Invalidate cache and call success callback
       queryClient.invalidateQueries({ queryKey: ['/api/mood-capsules'] });
       onSuccess();
@@ -180,7 +183,7 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
       });
     }
   };
-  
+
   // Handle cancel with confirmation if form is dirty
   const handleCancel = () => {
     if (isDirty) {
@@ -189,13 +192,13 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
       onCancel();
     }
   };
-  
+
   // Generate AI caption based on selected content
   const generateCaption = async () => {
-    const contentIds = form.getValues('contentIds');
+    const contentIds = selectedContent.map(item => item.id); // Use selectedContent
     const emotionalTone = form.getValues('emotionalTone');
     const captionTone = form.getValues('captionTone');
-    
+
     if (!contentIds || contentIds.length === 0) {
       toast({
         title: 'No Content Selected',
@@ -204,9 +207,9 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
       });
       return;
     }
-    
+
     setIsGeneratingCaption(true);
-    
+
     try {
       // Explicitly type the response
       const response = await apiRequest<{ success: boolean; caption: string }>({
@@ -218,10 +221,10 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
           captionTone,
         },
       });
-      
+
       if (response && response.success && response.caption) {
         form.setValue('description', response.caption);
-        
+
         toast({
           title: 'Caption Generated',
           description: 'AI has generated a caption based on your content and mood',
@@ -239,7 +242,7 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
       setIsGeneratingCaption(false);
     }
   };
-  
+
   return (
     <>
       <Card>
@@ -269,7 +272,7 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
                   </FormItem>
                 )}
               />
-              
+
               {/* Emotional Tone */}
               <FormField
                 control={form.control}
@@ -286,7 +289,7 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
                             // Emotional Tone is a string in the schema, convert to array for MultiSelect
                             // and back to comma-separated string for storage
                             let selectedValues: { label: string, value: string }[] = [];
-                            
+
                             try {
                               // Handle both comma-separated string or direct value formats
                               if (value) {
@@ -310,7 +313,7 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
                               // Fallback to empty array
                               selectedValues = [];
                             }
-                            
+
                             return (
                               <MultiSelect
                                 options={emotionalTones}
@@ -339,7 +342,7 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
                   </FormItem>
                 )}
               />
-              
+
               {/* Caption Tone */}
               <FormField
                 control={form.control}
@@ -347,7 +350,7 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Caption Tone</FormLabel>
-                    <Select 
+                    <Select
                       onValueChange={field.onChange}
                       value={field.value || 'balanced'}
                       defaultValue="balanced"
@@ -375,7 +378,7 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
                   </FormItem>
                 )}
               />
-              
+
               {/* Description / Caption */}
               <FormField
                 control={form.control}
@@ -412,7 +415,7 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
                   </FormItem>
                 )}
               />
-              
+
               {/* Content Selection */}
               <FormField
                 control={form.control}
@@ -421,46 +424,62 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
                   <FormItem>
                     <FormLabel>Select Content</FormLabel>
                     <FormControl>
-                      <div className="w-full">
-                        <Controller
-                          name="contentIds"
-                          control={form.control}
-                          render={({ field: { onChange, value } }) => {
-                            // Convert contentItems to expected MultiSelect options format
-                            const contentOptions = Array.isArray(contentItems) 
-                              ? (contentItems as ContentItem[]).map(item => ({
-                                  label: item.title || `Item ${item.id}`,
-                                  value: item.id.toString(),
-                                }))
-                              : [];
-                            
-                            // Map the array of numbers to Option objects for MultiSelect
-                            const selectedItems = Array.isArray(value)
-                              ? value.map(id => {
-                                  const item = Array.isArray(contentItems) 
-                                    ? (contentItems as ContentItem[]).find(item => item.id === id)
-                                    : null;
-                                  return {
-                                    label: item?.title || `Content #${id}`,
-                                    value: id.toString(),
-                                  };
-                                })
-                              : [];
-                            
-                            return (
-                              <MultiSelect
-                                options={contentOptions}
-                                value={selectedItems}
-                                onChange={(selected) => {
-                                  // Convert back to array of numbers for form state
-                                  onChange(selected.map(option => parseInt(option.value, 10)));
-                                }}
-                                placeholder="Select content items..."
-                                className="w-full"
-                              />
-                            );
-                          }}
-                        />
+                      <div className="space-y-3">
+                        <div className="mb-4">
+                          <div className="relative">
+                            <select
+                              id="content-select"
+                              multiple
+                              className="hidden"
+                              value={selectedItems}
+                              onChange={(e) => {
+                                const selected = Array.from(e.target.selectedOptions, option => option.value);
+                                setSelectedItems(selected);
+                                setSelectedContent(contentItems.filter(item => selected.includes(item.id.toString())));
+                              }}
+                            >
+                              {contentItems.map(item => (
+                                <option key={item.id} value={item.id.toString()}>
+                                  {item.title}
+                                </option>
+                              ))}
+                            </select>
+
+                            <div className="relative">
+                              <div className="flex flex-wrap gap-2 p-2 border rounded-md min-h-[80px] bg-white dark:bg-gray-800">
+                                {selectedContent.length === 0 ? (
+                                  <div className="flex items-center justify-center w-full h-full text-gray-500 dark:text-gray-400">
+                                    Select content items to include
+                                  </div>
+                                ) : (
+                                  selectedContent.map(item => (
+                                    <div
+                                      key={item.id}
+                                      className="flex items-center bg-primary/10 text-primary rounded-md px-2 py-1"
+                                    >
+                                      <span className="truncate max-w-[150px]">{item.title}</span>
+                                      <button
+                                        type="button"
+                                        className="ml-1 text-primary hover:text-primary/80"
+                                        onClick={() => {
+                                          setSelectedItems(prev => prev.filter(id => id !== item.id.toString()));
+                                          setSelectedContent(prev => prev.filter(content => content.id !== item.id));
+                                        }}
+                                      >
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                          <line x1="18" y1="6" x2="6" y2="18"></line>
+                                          <line x1="6" y1="6" x2="18" y2="18"></line>
+                                        </svg>
+                                      </button>
+                                    </div>
+                                  ))
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+
                       </div>
                     </FormControl>
                     <FormDescription>
@@ -470,7 +489,7 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
                   </FormItem>
                 )}
               />
-              
+
               {/* Thumbnail URL */}
               <FormField
                 control={form.control}
@@ -488,7 +507,7 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
                   </FormItem>
                 )}
               />
-              
+
               {/* Form buttons */}
               <div className="flex justify-end space-x-4 pt-4">
                 <Button
@@ -499,7 +518,7 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
                 >
                   Cancel
                 </Button>
-                <Button 
+                <Button
                   type="submit"
                   disabled={isSubmitting}
                 >
@@ -514,7 +533,7 @@ const MoodCapsuleForm: React.FC<MoodCapsuleFormProps> = ({
           </Form>
         </CardContent>
       </Card>
-      
+
       {/* Confirmation Dialog */}
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <AlertDialogContent>

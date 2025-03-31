@@ -5,7 +5,7 @@ import {
   content, Content, InsertContent,
   moodBoards, MoodBoard, InsertMoodBoard,
   analyticsData, AnalyticsData, InsertAnalyticsData,
-  platformIntegrations, PlatformIntegration,
+  platformIntegrations, PlatformIntegration, InsertPlatformIntegration,
   userEngagement, UserEngagement, InsertUserEngagement,
   evolutionPoints, EvolutionPoints, InsertEvolutionPoints,
   userCapabilities, UserCapabilities, InsertUserCapabilities,
@@ -239,6 +239,26 @@ class Storage {
       .returning();
 
     return result[0];
+  }
+
+  // Platform Integration methods
+  async createPlatformIntegration(data: InsertPlatformIntegration): Promise<PlatformIntegration> {
+    const createdIntegration = await db.insert(platformIntegrations).values(data).returning();
+    return createdIntegration[0];
+  }
+
+  async getPlatformIntegrationById(id: number): Promise<PlatformIntegration | null> {
+    const result = await db.select().from(platformIntegrations).where(eq(platformIntegrations.id, id)).limit(1);
+    return result.length > 0 ? result[0] : null;
+  }
+
+  async getPlatformIntegrationsByUserId(userId: number): Promise<PlatformIntegration[]> {
+    return await db.select().from(platformIntegrations).where(eq(platformIntegrations.userId, userId));
+  }
+
+  async deactivatePlatformIntegration(id: number): Promise<boolean> {
+    const updatedRows = await db.update(platformIntegrations).set({active: false}).where(eq(platformIntegrations.id, id));
+    return updatedRows.rowsAffected > 0;
   }
 }
 

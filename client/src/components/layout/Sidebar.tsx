@@ -22,7 +22,6 @@ interface SidebarProps {
   setExpanded?: (expanded: boolean) => void;
 }
 
-// Define types for menu items with possible sub-menus
 interface MenuItem {
   name: string;
   path: string;
@@ -50,14 +49,11 @@ const Sidebar = ({
   const { isDark, toggleTheme } = useTheme();
   const [accessibilityExpanded, setAccessibilityExpanded] = useState(false);
   const [expandedSubMenu, setExpandedSubMenu] = useState<string | null>(null);
-  
-  // Only close sidebar on navigation when submenu is not open
-  // and we're not using the toggle button explicitly
+
   useEffect(() => {
     if (expanded && expandedSubMenu === null && !sessionStorage.getItem('sidebarToggled')) {
       setExpanded(false);
     }
-    // Clear the toggle flag after it's been used
     if (sessionStorage.getItem('sidebarToggled')) {
       sessionStorage.removeItem('sidebarToggled');
     }
@@ -68,28 +64,16 @@ const Sidebar = ({
   };
 
   const handleMenuItemClick = useCallback((item: MenuItem) => {
-    // If item has submenu, toggle it
     if (item.subMenu && item.subMenu.length > 0) {
-      // This is a category with subcategories
       setExpandedSubMenu(prev => prev === item.path ? null : item.path);
-      setExpanded(true); // Keep sidebar expanded when submenu is toggled
-      
-      // Implement your special actions for categories here
-      // For example:
+      setExpanded(true); 
       if (item.onCategoryClick) {
         item.onCategoryClick(item);
       }
     } else {
-      // This is a regular menu item or a subcategory
-      
-      // Implement your special actions for subcategories here
-      // For example:
       if (item.onSubCategoryClick) {
         item.onSubCategoryClick(item);
       }
-      
-      // If no submenu, close sidebar after a brief delay to allow for animation
-      // Only if we're on mobile - on desktop we might want to keep it open
       if (window.innerWidth < 768) {
         setTimeout(() => {
           setExpandedSubMenu(null);
@@ -101,13 +85,11 @@ const Sidebar = ({
 
   return (
     <div className="flex flex-col w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 shadow-sm h-full">
-      {/* Logo - Clickable to go back to dashboard */}
       <Link href="/" className="p-4 flex items-center cursor-pointer hover:opacity-90 transition-opacity">
         <div className="bg-gradient-to-r from-[#F2994A] to-[#FF9DAE] h-10 w-10 rounded-lg flex items-center justify-center text-white font-bold text-xl mr-3">C</div>
         <h1 className="text-xl font-['SF_Pro_Display'] font-semibold">Creately</h1>
       </Link>
-      
-      {/* Navigation Menu */}
+
       <nav className="flex-1 overflow-y-auto py-4">
         <div className="px-4 mb-4">
           <div className="flex items-center justify-between">
@@ -117,11 +99,9 @@ const Sidebar = ({
             </button>
           </div>
         </div>
-        
-        {/* Menu Items */}
+
         <ul>
           {MENU_ITEMS.map((item) => {
-            // For demo purposes, let's add submenu to Content Library
             const hasSubMenu = item.name === "Content Library" || item.name === "Color Palettes";
             const subMenu = hasSubMenu ? [
               { name: "All Content", path: `${item.path}/all` },
@@ -129,10 +109,10 @@ const Sidebar = ({
               { name: "Categories", path: `${item.path}/categories` },
               { name: "Favorites", path: `${item.path}/favorites` }
             ] : [];
-            
+
             const itemWithSubMenu = hasSubMenu ? { ...item, subMenu } : item;
             const isSubMenuExpanded = expandedSubMenu === item.path;
-            
+
             return (
               <li key={item.path} className="px-2 mt-1 first:mt-0">
                 <div>
@@ -175,8 +155,7 @@ const Sidebar = ({
                       )}
                     </Link>
                   )}
-                  
-                  {/* Sub menu */}
+
                   {hasSubMenu && isSubMenuExpanded && (
                     <ul className="ml-7 mt-1 space-y-1 border-l-2 border-gray-200 dark:border-gray-700 pl-2">
                       {subMenu.map((subItem) => (
@@ -206,13 +185,13 @@ const Sidebar = ({
             );
           })}
         </ul>
-        
+
         <div className="px-4 mt-8 mb-4">
           <div className="flex items-center justify-between">
             <h2 className="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Smart Tools</h2>
           </div>
         </div>
-        
+
         <ul>
           {SMART_TOOLS.map((tool) => (
             <li key={tool.path} className="px-2 mt-1 first:mt-0">
@@ -228,10 +207,8 @@ const Sidebar = ({
           ))}
         </ul>
       </nav>
-      
-      {/* User Profile & Accessibility Tools */}
+
       <div className="border-t border-gray-200 dark:border-gray-800 mt-auto">
-        {/* User Profile */}
         <div className="p-4">
           <div className="flex items-center">
             <DropdownMenu>
@@ -268,8 +245,7 @@ const Sidebar = ({
             </button>
           </div>
         </div>
-        
-        {/* Accessibility Tools Section */}
+
         <div className="px-4 pb-4">
           <button 
             onClick={toggleAccessibility}
@@ -282,10 +258,9 @@ const Sidebar = ({
               <ChevronDown className="h-4 w-4" />
             )}
           </button>
-          
+
           {accessibilityExpanded && (
             <div className="mt-2 space-y-3 pl-2 border-l-2 border-gray-200 dark:border-gray-700">
-              {/* Day/Night Toggle */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <div className="relative">
@@ -308,8 +283,7 @@ const Sidebar = ({
                   className="data-[state=checked]:bg-primary/90 data-[state=unchecked]:bg-slate-200 dark:data-[state=unchecked]:bg-slate-700"
                 />
               </div>
-              
-              {/* Text Size Controls */}
+
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <ZoomIn className="h-4 w-4 text-gray-600 dark:text-gray-400" />
@@ -333,8 +307,7 @@ const Sidebar = ({
                   </button>
                 </div>
               </div>
-              
-              {/* High Contrast Toggle */}
+
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <Eye className="h-4 w-4 text-gray-600 dark:text-gray-400" />
