@@ -55,7 +55,7 @@ localPort = 8425
 externalPort = 3002
 
 [workflows]
-runButton = "Comprehensive Task Validation"
+runButton = "Development Server"
 
 [[workflows.workflow]]
 name = "Project"
@@ -604,3 +604,16 @@ args = "# Run the comprehensive validation and display detailed report"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "node -e \"require('./client/src/utils/validate-implementation.js').validateImplementation().then(require('./client/src/utils/validate-implementation.js').displayValidationResults)\""
+
+[[workflows.workflow]]
+name = "Development Server"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pkill -f node || true"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"

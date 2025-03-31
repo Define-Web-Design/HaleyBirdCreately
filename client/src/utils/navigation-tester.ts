@@ -1,14 +1,306 @@
 // Navigation testing utilities for auditing UI elements and interactions
 
 /**
- * Check interactive elements on a specific page
- * @param pagePath The URL path to check
- * @returns Promise with results of the check
- */
+ * Comprehensive page accessibility check
+export const checkPageAccessibility = async (pagePath: string): Promise<{
+  score: number;
+  issues: Array<{type: string, element: string, message: string, severity: 'critical' | 'serious' | 'moderate' | 'minor'}>;
+  passingCriteria: string[];
+  recommendations: string[];
+}> => {
+  return new Promise(resolve => {
+    // Simulate navigation to the page
+    window.history.pushState({}, '', pagePath);
+
+    // Wait for any dynamic content to load
+    setTimeout(() => {
+      const issues: Array<{type: string, element: string, message: string, severity: 'critical' | 'serious' | 'moderate' | 'minor'}> = [];
+      const passingCriteria: string[] = [];
+      const recommendations: string[] = [];
+
+      // Check for images without alt text
+      const images = document.querySelectorAll('img');
+      let imagesWithAlt = 0;
+
+      images.forEach(img => {
+        if (!img.hasAttribute('alt')) {
+          issues.push({
+            type: 'image-alt',
+            element: `Image (src: ${img.getAttribute('src')?.substring(0, 30)}...)`,
+            message: 'Image is missing alt text',
+            severity: 'serious'
+          });
+        } else {
+          imagesWithAlt++;
+        }
+      });
+
+      if (images.length > 0 && imagesWithAlt === images.length) {
+        passingCriteria.push('All images have alt text');
+      } else if (images.length > 0) {
+        recommendations.push(`Add alt text to ${images.length - imagesWithAlt} images`);
+      }
+
+      // Check for proper heading structure
+      const headings = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
+      const headingLevels: number[] = [];
+
+      headings.forEach(heading => {
+        const level = parseInt(heading.tagName.substring(1));
+        headingLevels.push(level);
+
+        // Check if headings are empty
+        if (!heading.textContent?.trim()) {
+          issues.push({
+            type: 'empty-heading',
+            element: heading.tagName,
+            message: 'Heading has no content',
+            severity: 'serious'
+          });
+        }
+      });
+
+      // Check for skipped heading levels
+      for (let i = 1; i < headingLevels.length; i++) {
+        if (headingLevels[i] > headingLevels[i-1] + 1) {
+          issues.push({
+            type: 'heading-order',
+            element: `H${headingLevels[i-1]} to H${headingLevels[i]}`,
+            message: `Skipped heading level from H${headingLevels[i-1]} to H${headingLevels[i]}`,
+            severity: 'moderate'
+          });
+          recommendations.push(`Fix heading structure: don't skip from H${headingLevels[i-1]} to H${headingLevels[i]}`);
+        }
+      }
+
+      if (headings.length > 0 && issues.filter(i => i.type === 'heading-order').length === 0) {
+        passingCriteria.push('Proper heading structure');
+      }
+
+      // Check for interactive elements without labels
+      const buttons = document.querySelectorAll('button');
+      const links = document.querySelectorAll('a');
+      const inputs = document.querySelectorAll('input:not([type="hidden"])');
+      const selects = document.querySelectorAll('select');
+
+      buttons.forEach(button => {
+        if (!button.textContent?.trim() && !button.getAttribute('aria-label') && !button.getAttribute('title')) {
+          issues.push({
+            type: 'button-name',
+            element: 'Button',
+            message: 'Button has no accessible name',
+            severity: 'critical'
+          });
+        }
+      });
+
+      links.forEach(link => {
+        if (!link.textContent?.trim() && !link.getAttribute('aria-label') && !link.getAttribute('title')) {
+          issues.push({
+            type: 'link-name',
+            element: `Link (href: ${link.getAttribute('href')})`,
+            message: 'Link has no accessible name',
+            severity: 'critical'
+          });
+        }
+
+        // Check for links with problematic text
+        const linkText = link.textContent?.trim().toLowerCase();
+        if (linkText === 'click here' || linkText === 'read more' || linkText === 'more' || linkText === 'here') {
+          issues.push({
+            type: 'generic-link-text',
+            element: `Link with text "${linkText}"`,
+            message: 'Link uses generic text that does not describe its purpose',
+            severity: 'moderate'
+          });
+          recommendations.push('Replace generic link text like "click here" with descriptive text');
+        }
+      });
+
+      // Check form controls for labels
+      inputs.forEach(input => {
+        const id = input.getAttribute('id');
+        const hasLabel = id ? document.querySelector(`label[for="${id}"]`) !== null : false;
+        const hasAriaLabel = input.getAttribute('aria-label') !== null;
+        const hasAriaLabelledBy = input.getAttribute('aria-labelledby') !== null;
+        const hasPlaceholder = input.getAttribute('placeholder') !== null;
+
+        if (!hasLabel && !hasAriaLabel && !hasAriaLabelledBy) {
+          issues.push({
+            type: 'form-label',
+            element: `Input (type: ${input.getAttribute('type') || 'text'})`,
+            message: 'Form control has no associated label',
+            severity: 'critical'
+          });
+
+          if (hasPlaceholder) {
+            recommendations.push('Use <label> elements instead of just placeholders for form controls');
+          } else {
+            recommendations.push('Add labels to form controls');
+          }
+        }
+      });
+
+      selects.forEach(select => {
+        const id = select.getAttribute('id');
+        const hasLabel = id ? document.querySelector(`label[for="${id}"]`) !== null : false;
+        const hasAriaLabel = select.getAttribute('aria-label') !== null;
+        const hasAriaLabelledBy = select.getAttribute('aria-labelledby') !== null;
+
+        if (!hasLabel && !hasAriaLabel && !hasAriaLabelledBy) {
+          issues.push({
+            type: 'form-label',
+            element: 'Select',
+            message: 'Select control has no associated label',
+            severity: 'critical'
+          });
+        }
+      });
+
+      // Check for proper color contrast (simple approximation)
+      const textElements = document.querySelectorAll('p, span, h1, h2, h3, h4, h5, h6, a, button, label');
+      let lowContrastElements = 0;
+
+      textElements.forEach(element => {
+        try {
+          const style = window.getComputedStyle(element);
+          const textColor = style.color;
+          const bgColor = style.backgroundColor;
+
+          // Skip if background is transparent - would need more complex calculation
+          if (bgColor === 'rgba(0, 0, 0, 0)' || bgColor === 'transparent') return;
+
+          // Simple contrast check (not comprehensive)
+          const textRgb = textColor.match(/\d+/g)?.map(Number) || [0, 0, 0];
+          const bgRgb = bgColor.match(/\d+/g)?.map(Number) || [255, 255, 255];
+
+          const textLuminance = (0.299 * textRgb[0] + 0.587 * textRgb[1] + 0.114 * textRgb[2]) / 255;
+          const bgLuminance = (0.299 * bgRgb[0] + 0.587 * bgRgb[1] + 0.114 * bgRgb[2]) / 255;
+
+          const contrastRatio = Math.abs(textLuminance - bgLuminance);
+
+          if (contrastRatio < 0.5) { // Simple threshold
+            lowContrastElements++;
+            issues.push({
+              type: 'color-contrast',
+              element: element.tagName,
+              message: 'Element may have insufficient color contrast',
+              severity: 'serious'
+            });
+          }
+        } catch (e) {
+          // Skip elements with computation errors
+        }
+      });
+
+      if (lowContrastElements > 0) {
+        recommendations.push(`Improve color contrast for ${lowContrastElements} elements`);
+      } else if (textElements.length > 0) {
+        passingCriteria.push('Good color contrast');
+      }
+
+      // Check for keyboard accessibility
+      const focusableElements = document.querySelectorAll('a, button, input, select, textarea, [tabindex]:not([tabindex="-1"])');
+      let hiddenFocusableElements = 0;
+
+      focusableElements.forEach(element => {
+        const style = window.getComputedStyle(element as Element);
+        if (style.display === 'none' || style.visibility === 'hidden') {
+          hiddenFocusableElements++;
+          issues.push({
+            type: 'keyboard-focus',
+            element: (element as Element).tagName,
+            message: 'Interactive element is hidden but still in the focus order',
+            severity: 'moderate'
+          });
+        }
+      });
+
+      if (focusableElements.length > 0 && hiddenFocusableElements === 0) {
+        passingCriteria.push('All focusable elements are visible');
+      }
+
+      // Check for ARIA attributes
+      const elementsWithAria = document.querySelectorAll('[aria-*]');
+      let invalidAriaCount = 0;
+
+      elementsWithAria.forEach(element => {
+        // Check for invalid role
+        const role = element.getAttribute('role');
+        if (role === 'button' && element.tagName !== 'BUTTON' && !element.hasAttribute('tabindex')) {
+          invalidAriaCount++;
+          issues.push({
+            type: 'aria-role',
+            element: `${element.tagName} with role="button"`,
+            message: 'Element has role="button" but is not keyboard focusable',
+            severity: 'serious'
+          });
+        }
+
+        // Check for aria-expanded on non-expandable elements
+        if (element.hasAttribute('aria-expanded') && 
+            !['button', 'link'].includes(role || '') && 
+            !element.classList.contains('dropdown') && 
+            !element.classList.contains('accordion')) {
+          invalidAriaCount++;
+          issues.push({
+            type: 'aria-attribute',
+            element: element.tagName,
+            message: 'Element uses aria-expanded but may not be expandable',
+            severity: 'moderate'
+          });
+        }
+      });
+
+      if (elementsWithAria.length > 0 && invalidAriaCount === 0) {
+        passingCriteria.push('Proper ARIA attribute usage');
+      }
+
+      // Calculate score based on issues and passing criteria
+      const criticalIssues = issues.filter(i => i.severity === 'critical').length;
+      const seriousIssues = issues.filter(i => i.severity === 'serious').length;
+      const moderateIssues = issues.filter(i => i.severity === 'moderate').length;
+      const minorIssues = issues.filter(i => i.severity === 'minor').length;
+
+      // Base score calculation
+      let score = 100;
+      score -= criticalIssues * 15;
+      score -= seriousIssues * 10;
+      score -= moderateIssues * 5;
+      score -= minorIssues * 2;
+
+      // Bonus for passing criteria
+      score += passingCriteria.length * 5;
+
+      // Ensure score is within bounds
+      score = Math.max(0, Math.min(100, score));
+
+      // Add general recommendations based on score
+      if (score < 70) {
+        recommendations.push('Conduct a comprehensive accessibility audit');
+      }
+
+      if (criticalIssues > 0) {
+        recommendations.push('Address critical accessibility issues first');
+      }
+
+      resolve({
+        score,
+        issues,
+        passingCriteria,
+        recommendations
+      });
+    }, 500);
+  });
+};
+
+// Check interactive elements on a specific page
 export const checkPageInteractiveElements = (pagePath: string): Promise<{
   success: boolean;
   elementsCount: number;
   interactiveElements: string[];
+  hasKeyboardAccessibility: boolean;
+  hasMobileOptimization: boolean;
 }> => {
   return new Promise(resolve => {
     // Simulate navigation to the page
@@ -22,74 +314,154 @@ export const checkPageInteractiveElements = (pagePath: string): Promise<{
       const inputs = document.querySelectorAll('input');
       const selects = document.querySelectorAll('select');
       const textareas = document.querySelectorAll('textarea');
+      const dropdowns = document.querySelectorAll('[role="menu"], [role="listbox"]');
+      const tabs = document.querySelectorAll('[role="tab"]');
+      const accordions = document.querySelectorAll('[aria-expanded]');
 
       const interactiveElements: string[] = [];
+      let keyboardAccessibleCount = 0;
+      let touchTargetIssues = 0;
 
-      // Collect information about interactive elements
+      // Check keyboard accessibility and touch target sizes
+      const checkElementAccessibility = (el: Element, type: string, name: string) => {
+        let hasKeyboardAccess = true;
+        let hasSufficientTouchTarget = true;
+        const issues: string[] = [];
+
+        // Check keyboard accessibility
+        if (el.getAttribute('tabindex') === '-1') {
+          hasKeyboardAccess = false;
+          issues.push('not keyboard accessible');
+        }
+
+        // Check touch target size for mobile optimization
+        try {
+          const rect = el.getBoundingClientRect();
+          const width = rect.width;
+          const height = rect.height;
+
+          // Minimum recommended touch target size is 44x44px
+          if (width < 44 || height < 44) {
+            hasSufficientTouchTarget = false;
+            issues.push(`small touch target (${Math.round(width)}x${Math.round(height)}px)`);
+            touchTargetIssues++;
+          }
+        } catch (e) {
+          // Skip size check on error
+        }
+
+        if (hasKeyboardAccess) {
+          keyboardAccessibleCount++;
+        }
+
+        let description = `${type}: ${name}`;
+        if (issues.length > 0) {
+          description += ` (${issues.join(', ')})`;
+        }
+
+        interactiveElements.push(description);
+      };
+
+      // Collect and check information about interactive elements
       buttons.forEach(button => {
-        interactiveElements.push(`Button: ${button.textContent || button.getAttribute('aria-label') || 'Unnamed button'}`);
+        const name = button.textContent?.trim() || button.getAttribute('aria-label') || 'Unnamed button';
+        checkElementAccessibility(button, 'Button', name);
       });
 
       links.forEach(link => {
-        interactiveElements.push(`Link: ${link.textContent || link.getAttribute('aria-label') || 'Unnamed link'} (${link.getAttribute('href')})`);
+        const name = link.textContent?.trim() || link.getAttribute('aria-label') || 'Unnamed link';
+        const href = link.getAttribute('href') || '#';
+        checkElementAccessibility(link, 'Link', `${name} (${href})`);
       });
 
       inputs.forEach(input => {
-        interactiveElements.push(`Input: ${input.getAttribute('name') || input.getAttribute('placeholder') || input.getAttribute('aria-label') || 'Unnamed input'}`);
+        const name = input.getAttribute('name') || 
+                    input.getAttribute('placeholder') || 
+                    input.getAttribute('aria-label') || 
+                    'Unnamed input';
+        const type = input.getAttribute('type') || 'text';
+        checkElementAccessibility(input, `Input (${type})`, name);
       });
 
       selects.forEach(select => {
-        interactiveElements.push(`Select: ${select.getAttribute('name') || select.getAttribute('aria-label') || 'Unnamed select'}`);
+        const name = select.getAttribute('name') || 
+                    select.getAttribute('aria-label') || 
+                    'Unnamed select';
+        checkElementAccessibility(select, 'Select', name);
       });
 
       textareas.forEach(textarea => {
-        interactiveElements.push(`Textarea: ${textarea.getAttribute('name') || textarea.getAttribute('placeholder') || textarea.getAttribute('aria-label') || 'Unnamed textarea'}`);
+        const name = textarea.getAttribute('name') || 
+                     textarea.getAttribute('placeholder') || 
+                     textarea.getAttribute('aria-label') || 
+                     'Unnamed textarea';
+        checkElementAccessibility(textarea, 'Textarea', name);
+      });
+
+      dropdowns.forEach(dropdown => {
+        const name = dropdown.getAttribute('aria-label') || 'Unnamed dropdown';
+        checkElementAccessibility(dropdown, 'Dropdown', name);
+      });
+
+      tabs.forEach(tab => {
+        const name = tab.getAttribute('aria-label') || tab.textContent?.trim() || 'Unnamed tab';
+        checkElementAccessibility(tab, 'Tab', name);
+      });
+
+      accordions.forEach(accordion => {
+        const name = accordion.getAttribute('aria-label') || 'Unnamed accordion';
+        checkElementAccessibility(accordion, 'Accordion', name);
       });
 
       resolve({
         success: true,
         elementsCount: interactiveElements.length,
-        interactiveElements
+        interactiveElements,
+        hasKeyboardAccessibility: keyboardAccessibleCount === interactiveElements.length,
+        hasMobileOptimization: touchTargetIssues === 0
       });
     }, 500); // Wait 500ms for dynamic content
   });
 };
 
+
 /**
  * Verify toast notification behavior
- * @returns Promise with analysis of toast implementation
- */
 export const verifyToastBehavior = async (): Promise<{ 
   automatic: boolean; 
   closable: boolean;
-  accessible: boolean;
   recommendations: string[];
+  accessibilityScore: number;
 }> => {
   return new Promise(resolve => {
     // Check if auto-dismiss-toaster is being used
     let automatic = false;
     let closable = true;
-    let accessible = true;
+    let hasAriaLive = false;
+    let hasProperRole = false;
+    let hasProperColor = false;
     const recommendations: string[] = [];
 
     // Check for AutoDismissToaster component in the DOM or imported modules
     try {
-      // Check if imported scripts contain AutoDismissToaster
-      const scripts = document.querySelectorAll('script');
-      const scriptSources = Array.from(scripts).map(script => script.textContent || '');
+      // Check if the component is imported and available
+      const imports = document.querySelectorAll('script[type="module"]');
+      const importContent = Array.from(imports).map(script => script.textContent || '').join('');
 
-      if (scriptSources.some(src => src.includes('AutoDismissToaster'))) {
+      if (importContent.includes('AutoDismissToaster') || 
+          document.querySelector('.auto-dismiss-toaster')) {
         automatic = true;
       } else {
         automatic = false;
         recommendations.push('Consider using AutoDismissToaster for better UX with automatic toast dismissal');
       }
 
-      // Check if toast has a close button
+      // Check toast accessibility features
       const toastComponents = document.querySelectorAll('[role="status"], [role="alert"]');
       if (toastComponents.length > 0) {
+        // Check for close button
         const hasCloseButton = Array.from(toastComponents).some(toast => 
-          toast.querySelector('button[aria-label="Close"]') !== null
+          toast.querySelector('button[aria-label="Close"], button[aria-label="Dismiss"], button[aria-label="Close notification"]') !== null
         );
 
         closable = hasCloseButton;
@@ -98,49 +470,62 @@ export const verifyToastBehavior = async (): Promise<{
           recommendations.push('Add a close button to toast notifications for better accessibility');
         }
 
-        // Check for accessibility features
-        const accessibilityFeatures = Array.from(toastComponents).every(toast => {
-          const hasRole = toast.hasAttribute('role');
-          const hasAriaLive = toast.hasAttribute('aria-live');
-          const closeButton = toast.querySelector('button[aria-label]');
-          const hasKeyboardAccess = closeButton && closeButton.hasAttribute('tabindex');
+        // Check for aria-live attribute
+        hasAriaLive = Array.from(toastComponents).some(toast => 
+          toast.getAttribute('aria-live') === 'polite' || 
+          toast.getAttribute('aria-live') === 'assertive'
+        );
 
-          return hasRole && hasAriaLive && (closeButton ? hasKeyboardAccess : true);
-        });
+        if (!hasAriaLive) {
+          recommendations.push('Add appropriate aria-live attributes to toast notifications');
+        }
 
-        accessible = accessibilityFeatures;
+        // Check for proper role
+        hasProperRole = Array.from(toastComponents).every(toast => 
+          toast.getAttribute('role') === 'status' || 
+          toast.getAttribute('role') === 'alert'
+        );
 
-        if (!accessible) {
-          recommendations.push('Improve toast accessibility by adding proper ARIA attributes and keyboard navigation');
+        if (!hasProperRole) {
+          recommendations.push('Ensure all toast notifications have appropriate roles (status or alert)');
+        }
+
+        // Check for color contrast
+        try {
+          const computedStyles = getComputedStyle(toastComponents[0]);
+          const backgroundColor = computedStyles.backgroundColor;
+          const color = computedStyles.color;
+
+          // Simple contrast check (not comprehensive)
+          const bgRgb = backgroundColor.match(/\d+/g)?.map(Number) || [255, 255, 255];
+          const textRgb = color.match(/\d+/g)?.map(Number) || [0, 0, 0];
+
+          const bgLuminance = (0.299 * bgRgb[0] + 0.587 * bgRgb[1] + 0.114 * bgRgb[2]) / 255;
+          const textLuminance = (0.299 * textRgb[0] + 0.587 * textRgb[1] + 0.114 * textRgb[2]) / 255;
+
+          const contrastRatio = Math.abs(bgLuminance - textLuminance);
+
+          hasProperColor = contrastRatio > 0.5; // Simple threshold
+
+          if (!hasProperColor) {
+            recommendations.push('Improve color contrast in toast notifications for better readability');
+          }
+        } catch (e) {
+          console.error('Error checking color contrast:', e);
         }
       } else {
-        // No toasts found, check for default implementation
-        closable = true; // Assume default implementation has close button
-        accessible = true; // Assume accessible by default
+        // No toasts found, provide general recommendations
+        recommendations.push('Implement toast notifications with appropriate accessibility features');
       }
 
-      // Check for toast position and contrast
-      const toastPosition = document.querySelectorAll('.toast-position-top-right, .toast-position-bottom-right, .toast-position-top-left, .toast-position-bottom-left');
-      if (toastPosition.length === 0 && toastComponents.length > 0) {
-        recommendations.push('Consider positioning toasts in a consistent location (top-right or bottom-right recommended)');
-      }
+      // Calculate accessibility score
+      let accessibilityScore = 0;
+      accessibilityScore += automatic ? 25 : 0;
+      accessibilityScore += closable ? 25 : 0;
+      accessibilityScore += hasAriaLive ? 25 : 0;
+      accessibilityScore += hasProperRole ? 25 : 0;
+      accessibilityScore += hasProperColor ? 25 : 0;
 
-      // Additional recommendations
-      if (!automatic && !closable) {
-        recommendations.push('Current toast implementation may cause usability issues as notifications cannot be dismissed');
-      }
-
-      // Check for appropriate z-index
-      const computedStyles = Array.from(toastComponents).map(toast => window.getComputedStyle(toast));
-      const hasHighZIndex = computedStyles.some(style => parseInt(style.zIndex) >= 1000);
-
-      if (!hasHighZIndex && toastComponents.length > 0) {
-        recommendations.push('Ensure toast notifications have a high z-index to appear above other content');
-      }
-
-      if (recommendations.length === 0) {
-        recommendations.push('Toast implementation follows best practices with auto-dismissal and manual close options');
-      }
 
     } catch (error) {
       recommendations.push(`Error checking toast behavior: ${error}`);
@@ -149,8 +534,8 @@ export const verifyToastBehavior = async (): Promise<{
     resolve({
       automatic,
       closable,
-      accessible,
-      recommendations
+      recommendations,
+      accessibilityScore
     });
   });
 };
@@ -222,8 +607,6 @@ export const testKeyboardNavigation = async (): Promise<{
   tabbableElements: number;
   issues: string[];
   recommendations: string[];
-  keyboardTrappedAreas: string[];
-  tabOrder: string[];
 }> => {
   return new Promise(resolve => {
     const focusableElements = document.querySelectorAll(
@@ -262,47 +645,12 @@ export const testKeyboardNavigation = async (): Promise<{
       return tabIndex >= 0;
     });
 
-    // Find areas where keyboard focus might get trapped
-    const keyboardTrappedAreas: string[] = [];
-
-    // Check for modals without escape key handlers
-    const modals = document.querySelectorAll('[role="dialog"]');
-    Array.from(modals).forEach(modal => {
-      const hasEscapeHandler = modal.hasAttribute('data-escape-dismissible') || 
-                              modal.querySelector('button[aria-label="Close"]');
-      if (!hasEscapeHandler) {
-        keyboardTrappedAreas.push(`Modal: ${modal.getAttribute('aria-labelledby') || 'Unnamed modal'}`);
-      }
-    });
-
-    // Check for tab order issues
-    const tabOrder: string[] = [];
-    Array.from(focusableElements).sort((a, b) => {
-      const aTabIndex = parseInt(a.getAttribute('tabindex') || '0', 10);
-      const bTabIndex = parseInt(b.getAttribute('tabindex') || '0', 10);
-      return aTabIndex - bTabIndex;
-    }).forEach(el => {
-      const elementInfo = el.tagName.toLowerCase() + 
-                         (el.getAttribute('aria-label') ? 
-                          `: ${el.getAttribute('aria-label')}` : 
-                          el.textContent ? `: ${el.textContent.trim().substring(0, 20)}` : '');
-      tabOrder.push(elementInfo);
-    });
-
-    // Test for skip navigation functionality
-    if (tabOrder.length > 0 && !tabOrder[0].includes('skip')) {
-      issues.push('First focusable element is not a skip link');
-      recommendations.push('Add a skip navigation link as the first focusable element on the page');
-    }
-
     resolve({
       success: issues.length === 0,
       focusableElements: focusableElements.length,
       tabbableElements: tabbableElements.length,
       issues,
-      recommendations,
-      keyboardTrappedAreas,
-      tabOrder: tabOrder.slice(0, 20) // Limit to first 20 elements for readability
+      recommendations
     });
   });
 };

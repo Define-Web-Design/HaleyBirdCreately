@@ -304,3 +304,259 @@ export default function AccessibilityTools({ className = '' }: AccessibilityTool
     </div>
   );
 }
+import React, { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Slider } from '@/components/ui/slider';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
+
+interface AccessibilityState {
+  fontSize: number;
+  highContrast: boolean;
+  reducedMotion: boolean;
+  dyslexicFont: boolean;
+  lineSpacing: number;
+}
+
+interface AccessibilityToolsProps {
+  onSettingsChange: (settings: AccessibilityState) => void;
+  initialSettings?: Partial<AccessibilityState>;
+}
+
+export default function AccessibilityTools({ 
+  onSettingsChange, 
+  initialSettings = {}
+}: AccessibilityToolsProps) {
+  const { toast } = useToast();
+  
+  const [settings, setSettings] = useState<AccessibilityState>({
+    fontSize: initialSettings.fontSize || 16,
+    highContrast: initialSettings.highContrast || false,
+    reducedMotion: initialSettings.reducedMotion || false,
+    dyslexicFont: initialSettings.dyslexicFont || false,
+    lineSpacing: initialSettings.lineSpacing || 1.5,
+  });
+
+  // Check for reduced motion preference
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (mediaQuery.matches) {
+      setSettings(prev => ({ ...prev, reducedMotion: true }));
+    }
+  }, []);
+
+  // Apply settings when they change
+  useEffect(() => {
+    onSettingsChange(settings);
+    
+    // Apply settings to document
+    document.documentElement.style.fontSize = `${settings.fontSize}px`;
+    
+    if (settings.highContrast) {
+      document.documentElement.classList.add('contrast-high');
+    } else {
+      document.documentElement.classList.remove('contrast-high');
+    }
+    
+    if (settings.reducedMotion) {
+      document.documentElement.classList.add('motion-reduce');
+    } else {
+      document.documentElement.classList.remove('motion-reduce');
+    }
+    
+    if (settings.dyslexicFont) {
+      document.documentElement.classList.add('dyslexic-font');
+      // Dynamically load OpenDyslexic font if not already loaded
+      if (!document.getElementById('dyslexic-font')) {
+        const link = document.createElement('link');
+        link.id = 'dyslexic-font';
+        link.rel = 'stylesheet';
+        link.href = 'https://cdn.jsdelivr.net/npm/opendyslexic@1.0.3/dist/opendyslexic/opendyslexic.css';
+        document.head.appendChild(link);
+      }
+    } else {
+      document.documentElement.classList.remove('dyslexic-font');
+    }
+    
+    document.documentElement.style.setProperty('--line-height-base', `${settings.lineSpacing}`);
+    
+  }, [settings, onSettingsChange]);
+
+  const handleFontSizeChange = (value: number[]) => {
+    setSettings(prev => ({ ...prev, fontSize: value[0] }));
+  };
+
+  const handleLineSpacingChange = (value: number[]) => {
+    setSettings(prev => ({ ...prev, lineSpacing: value[0] }));
+  };
+
+  const toggleHighContrast = () => {
+    setSettings(prev => {
+      const newValue = !prev.highContrast;
+      if (newValue) {
+        toast({
+          title: "High contrast mode enabled",
+          description: "Improving visibility of content",
+          duration: 3000
+        });
+      }
+      return { ...prev, highContrast: newValue };
+    });
+  };
+
+  const toggleReducedMotion = () => {
+    setSettings(prev => {
+      const newValue = !prev.reducedMotion;
+      if (newValue) {
+        toast({
+          title: "Reduced motion enabled",
+          description: "Minimizing animations for comfort",
+          duration: 3000
+        });
+      }
+      return { ...prev, reducedMotion: newValue };
+    });
+  };
+
+  const toggleDyslexicFont = () => {
+    setSettings(prev => {
+      const newValue = !prev.dyslexicFont;
+      if (newValue) {
+        toast({
+          title: "Dyslexic friendly font enabled",
+          description: "Using OpenDyslexic font for improved readability",
+          duration: 3000
+        });
+      }
+      return { ...prev, dyslexicFont: newValue };
+    });
+  };
+
+  const resetDefaults = () => {
+    setSettings({
+      fontSize: 16,
+      highContrast: false,
+      reducedMotion: false,
+      dyslexicFont: false,
+      lineSpacing: 1.5,
+    });
+    
+    toast({
+      title: "Settings reset",
+      description: "Accessibility settings have been reset to defaults",
+      duration: 3000
+    });
+  };
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button 
+          variant="outline" 
+          size="icon" 
+          className="relative"
+          aria-label="Accessibility settings"
+        >
+          <svg 
+            xmlns="http://www.w3.org/2000/svg" 
+            width="20" 
+            height="20" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            stroke="currentColor" 
+            strokeWidth="2" 
+            strokeLinecap="round" 
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <path d="m4.93 4.93 4.24 4.24" />
+            <path d="m14.83 9.17 4.24-4.24" />
+            <path d="m14.83 14.83 4.24 4.24" />
+            <path d="m9.17 14.83-4.24 4.24" />
+            <circle cx="12" cy="12" r="4" />
+          </svg>
+          {(settings.highContrast || settings.reducedMotion || settings.dyslexicFont) && (
+            <span className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full border-2 border-background" />
+          )}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-80" align="end">
+        <div className="space-y-4">
+          <h3 className="font-medium text-lg mb-2">Accessibility Settings</h3>
+          
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <Label htmlFor="font-size">Font Size: {settings.fontSize}px</Label>
+            </div>
+            <Slider
+              id="font-size"
+              min={12}
+              max={24}
+              step={1}
+              value={[settings.fontSize]}
+              onValueChange={handleFontSizeChange}
+              aria-label="Adjust font size"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <Label htmlFor="line-spacing">Line Spacing: {settings.lineSpacing.toFixed(1)}</Label>
+            </div>
+            <Slider
+              id="line-spacing"
+              min={1}
+              max={2.5}
+              step={0.1}
+              value={[settings.lineSpacing]}
+              onValueChange={handleLineSpacingChange}
+              aria-label="Adjust line spacing"
+            />
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <Label htmlFor="high-contrast">High Contrast</Label>
+            <Switch
+              id="high-contrast"
+              checked={settings.highContrast}
+              onCheckedChange={toggleHighContrast}
+              aria-label="Toggle high contrast mode"
+            />
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <Label htmlFor="reduced-motion">Reduced Motion</Label>
+            <Switch
+              id="reduced-motion"
+              checked={settings.reducedMotion}
+              onCheckedChange={toggleReducedMotion}
+              aria-label="Toggle reduced motion"
+            />
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <Label htmlFor="dyslexic-font">Dyslexic Friendly Font</Label>
+            <Switch
+              id="dyslexic-font"
+              checked={settings.dyslexicFont}
+              onCheckedChange={toggleDyslexicFont}
+              aria-label="Toggle dyslexic font"
+            />
+          </div>
+          
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={resetDefaults}
+            className="w-full mt-2"
+          >
+            Reset to Defaults
+          </Button>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
