@@ -889,3 +889,97 @@ args = "# Run comprehensive validation"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "node -e \"require('./client/src/utils/consolidated-validation.js').runFullSystemValidation().then(report => { require('./client/src/utils/consolidated-validation.js').displayFullValidationResults(report); });\""
+
+[[workflows.workflow]]
+name = "Complete Task Verification"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Kill any running processes"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pkill -f node || true"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Step 1: Code quality checks"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"Running code quality checks...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run lint"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npx tsc --noEmit"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Step 2: Run security validation"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"Running security validation...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node -e \"const { securityMonitor } = require('./server/services/securityMonitor.js'); securityMonitor.validateAssetIntegrity().then(results => console.log(JSON.stringify(results, null, 2)))\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Step 3: Run the consolidated validation system"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"Running consolidated validation system...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node -e \"require('./client/src/utils/consolidated-validation.js').runFullSystemValidation().then(report => { require('./client/src/utils/consolidated-validation.js').displayFullValidationResults(report); process.exit(report.overallSuccess ? 0 : 1); })\""
+
+[[workflows.workflow]]
+name = "Pre-Checkpoint Verification"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Kill any running processes"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pkill -f node || true"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run the comprehensive verification system"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"Running comprehensive task verification before creating checkpoint...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npx ts-node client/src/utils/run-verification.ts"
