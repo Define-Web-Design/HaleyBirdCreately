@@ -196,6 +196,15 @@ export const checkPageInteractiveElements = (pagePath: string): Promise<{
       });
       
       resolve({
+        success: interactiveElements.length > 0,
+        elementsCount: interactiveElements.length,
+        interactiveElements
+      });
+    }, 500); // Give time for dynamic content to load
+        interactiveElements.push(`Textarea: ${textarea.getAttribute('name') || textarea.getAttribute('placeholder') || 'Unnamed textarea'}`);
+      });
+      
+      resolve({
         success: true,
         elementsCount: interactiveElements.length,
         interactiveElements

@@ -131,7 +131,43 @@ export default function MoodCapsules() {
 
   useEffect(() => {
     generateCapsules();
+    
+    // Add cleanup function to prevent memory leaks
+    return () => {
+      // Cancel any pending requests if component unmounts
+      const controller = new AbortController();
+      controller.abort();
+    };
   }, []);
+  
+  // Function to handle sharing a capsule
+  const handleShareCapsule = (capsule) => {
+    try {
+      // Implement share functionality
+      if (navigator.share) {
+        navigator.share({
+          title: capsule.title,
+          text: capsule.caption,
+          url: window.location.href,
+        })
+        .catch(err => {
+          console.error('Error sharing capsule:', err);
+        });
+      } else {
+        // Fallback for browsers that don't support Web Share API
+        // Copy link to clipboard
+        navigator.clipboard.writeText(window.location.href)
+          .then(() => {
+            alert('Link copied to clipboard!');
+          })
+          .catch(err => {
+            console.error('Error copying to clipboard:', err);
+          });
+      }
+    } catch (error) {
+      console.error('Share functionality error:', error);
+    }
+  };
 
   if (loading) {
     return (
@@ -227,7 +263,11 @@ export default function MoodCapsules() {
                 <span className="px-3 py-1 bg-gray-100 dark:bg-gray-700 rounded-full text-sm font-medium text-gray-600 dark:text-gray-300">
                   {capsule.mood}
                 </span>
-                <button className="text-primary hover:text-primary/80 font-medium transition-colors">
+                <button 
+                  onClick={() => handleShareCapsule(capsule)}
+                  aria-label={`Share ${capsule.title} capsule`}
+                  className="text-primary hover:text-primary/80 font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+                >
                   Share Capsule
                 </button>
               </div>

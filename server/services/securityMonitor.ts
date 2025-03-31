@@ -146,36 +146,10 @@ class SecurityMonitorService {
   /**
    * Send notification for high priority security alerts
    */
-  private async sendHighPriorityNotification(alert: SecurityAlert): Promise<void> {
-    try {
-      // In a real implementation, this would send an email or other notification
-      console.error('HIGH PRIORITY SECURITY ALERT', alert);
-      // Example: await sendEmail('admin@example.com', 'Security Alert', alertDetailsTemplate);
-      
-      // Log detailed information for security audit
-      await this.logSecurityActivity({
-        activityType: 'high-priority-alert',
-        alertId: alert.id,
-        alertType: alert.alertType,
-        severity: alert.severity,
-        timestamp: new Date().toISOString(),
-        ipAddress: alert.ipAddress
-      });
-      
-      // Additional reporting mechanisms could be implemented here
-      // For example, sending to a SIEM system or security monitoring service
-    } catch (error) {
-      // Even if notification fails, log the attempt
-      console.error('Failed to send high priority notification:', error);
-      
-      // Try alternate notification method as backup
-      try {
-        // Example: SMS or alternative communication channel
-        console.warn('Attempting alternate notification method for security alert:', alert.id);
-      } catch (backupError) {
-        console.error('All notification methods failed for security alert:', alert.id);
-      }
-    }
+  private sendHighPriorityNotification(alert: SecurityAlert): void {
+    // In a real implementation, this would send an email or other notification
+    console.error('HIGH PRIORITY SECURITY ALERT', alert);
+    // Example: await sendEmail('admin@example.com', 'Security Alert', alertDetailsTemplate);
   }
   
   /**
@@ -347,6 +321,42 @@ class SecurityMonitorService {
           break;
           
         case 'mood-board':
+          // Check for potential copyright issues with mood board generation
+          if (content.source === 'external' || content.tags?.includes('copyrighted')) {
+            valid = false;
+            issues.push('Content source may have copyright restrictions');
+            recommendations.push('Use only content that you have rights to for mood board generation');
+            recommendations.push('Consider adding attribution or watermarks to mood boards');
+          }
+          break;
+          
+        case 'cross-platform':
+          // Verify terms acceptance for cross-platform adaptations
+          const userAcceptedTerms = await storage.checkUserLegalAcceptance(content.userId, 'terms');
+          if (!userAcceptedTerms) {
+            valid = false;
+            issues.push('User has not accepted the terms of service');
+            recommendations.push('Terms of service must be accepted before using cross-platform adaptation tools');
+          }
+          
+          // Check platform-specific policies
+          const platforms = content.targetPlatforms || [];
+          for (const platform of platforms) {
+            if (platform === 'instagram' && content.tags?.includes('explicit')) {
+              valid = false;
+              issues.push(`Content may violate ${platform} content policies`);
+              recommendations.push(`Review ${platform} content guidelines before proceeding`);
+            }
+          }
+          break;
+          
+        default:
+          // Default validation for other enhancement types
+          if (content.locked || content.accessRestricted) {
+            valid = false;
+            issues.push('Content has access restrictions');
+            recommendations.push('Only use unrestricted content for AI enhancements');
+          }
           // Check for potential style/brand consistency
           if (content.tags?.includes('branding') && !content.tags.includes('flexible-use')) {
             recommendations.push('This is branded content - ensure generated mood boards comply with brand guidelines');

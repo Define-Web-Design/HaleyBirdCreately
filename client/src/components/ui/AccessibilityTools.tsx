@@ -37,6 +37,69 @@ export default function AccessibilityTools({ className = '' }: AccessibilityTool
     const savedColorBlindMode = localStorage.getItem('colorBlindMode') as 'none' | 'protanopia' | 'deuteranopia' | 'tritanopia' | null;
     if (savedColorBlindMode && savedColorBlindMode !== 'none') {
       setColorBlindMode(savedColorBlindMode);
+      document.documentElement.setAttribute('data-color-blind-mode', savedColorBlindMode);
+    }
+    
+    // Add keyboard shortcut listener for accessibility toggles
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Alt+T for theme toggle
+      if (event.altKey && event.key === 't') {
+        toggleTheme();
+      }
+      
+      // Alt+F for font size increase
+      if (event.altKey && event.key === 'f') {
+        const nextSize = fontSize === 'normal' ? 'large' : 
+                        fontSize === 'large' ? 'x-large' : 'normal';
+        setFontSize(nextSize);
+        applyFontSize(nextSize);
+      }
+      
+      // Alt+C for high contrast toggle
+      if (event.altKey && event.key === 'c') {
+        setHighContrast(!highContrast);
+        document.documentElement.classList.toggle('high-contrast');
+        localStorage.setItem('highContrast', (!highContrast).toString());
+      }
+    };
+    
+    document.addEventListener('keydown', handleKeyDown);
+    
+    // Cleanup on unmount
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [theme, fontSize, highContrast, colorBlindMode]);
+  
+  // Toggle theme function
+  const toggleTheme = () => {
+    const newTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
+    
+    // Apply theme to document
+    if (newTheme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    
+    // Save preference
+    localStorage.theme = newTheme;
+  };
+  
+  // Apply font size
+  const applyFontSize = (size: 'normal' | 'large' | 'x-large') => {
+    const rootElement = document.documentElement;
+    
+    // Remove existing size classes
+    rootElement.classList.remove('text-normal', 'text-large', 'text-x-large');
+    
+    // Add new size class
+    rootElement.classList.add(`text-${size}`);
+    
+    // Save preference
+    localStorage.setItem('fontSize', size);
+  };
       document.documentElement.classList.add(savedColorBlindMode);
     }
   }, []);

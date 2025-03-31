@@ -811,6 +811,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Global error handler middleware
+  app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+    console.error('Global error handler caught:', err);
+    
+    // Check for specific error types
+    if (err.name === 'ValidationError') {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation error',
+        errors: err.errors
+      });
+    }
+    
+    if (err.name === 'UnauthorizedError') {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+    }
+    
+    // Default error response
+    const statusCode = err.statusCode || 500;
+    const message = err.message || 'An unexpected error occurred';
+    
+    return res.status(statusCode).json({
+      success: false,
+      message,
+      error: process.env.NODE_ENV === 'development' ? err.stack : undefined
+    });
+  });
+
   // Auto-create mood capsules from content
   app.post(`${apiPrefix}/mood-capsules/auto-create`, async (req: Request, res: Response) => {
     try {
