@@ -1,7 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { HoverCard, HoverCardTrigger, HoverCardContent } from '../ui/hover-card';
+import { Skeleton } from '@/components/ui/skeleton'; // Added for loading indicator
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'; // Added for better error display
+
 
 interface ContentItem {
   id: string | number;
@@ -32,12 +34,12 @@ export default function MoodCapsules() {
   const [capsules, setCapsules] = useState<MoodCapsule[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Function to generate mood capsules
   const generateCapsules = async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       // This would normally fetch user's content from your API
       // For now, using placeholder data
@@ -67,11 +69,11 @@ export default function MoodCapsules() {
           imageUrl: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTB8fG1vdW50YWlufGVufDB8fDB8fHww&auto=format&fit=crop&w=500&q=60" 
         }
       ];
-      
+
       const response = await axios.post('/api/mood-capsule', {
         content: userContent
       });
-      
+
       if (response.data.success) {
         setCapsules(response.data.moodCapsules);
       } else {
@@ -80,7 +82,7 @@ export default function MoodCapsules() {
     } catch (err) {
       console.error(err);
       setError("An error occurred while generating mood capsules");
-      
+
       // Fallback to demo capsules for development
       setCapsules([
         {
@@ -131,49 +133,13 @@ export default function MoodCapsules() {
 
   useEffect(() => {
     generateCapsules();
-    
-    // Add cleanup function to prevent memory leaks
-    return () => {
-      // Cancel any pending requests if component unmounts
-      const controller = new AbortController();
-      controller.abort();
-    };
   }, []);
-  
-  // Function to handle sharing a capsule
-  const handleShareCapsule = (capsule) => {
-    try {
-      // Implement share functionality
-      if (navigator.share) {
-        navigator.share({
-          title: capsule.title,
-          text: capsule.caption,
-          url: window.location.href,
-        })
-        .catch(err => {
-          console.error('Error sharing capsule:', err);
-        });
-      } else {
-        // Fallback for browsers that don't support Web Share API
-        // Copy link to clipboard
-        navigator.clipboard.writeText(window.location.href)
-          .then(() => {
-            alert('Link copied to clipboard!');
-          })
-          .catch(err => {
-            console.error('Error copying to clipboard:', err);
-          });
-      }
-    } catch (error) {
-      console.error('Share functionality error:', error);
-    }
-  };
 
   if (loading) {
     return (
       <div className="p-6">
         <div className="flex flex-col items-center justify-center p-12">
-          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+          <Skeleton className="w-16 h-16 rounded-full" /> {/* Replaced spinner with Skeleton */}
           <p className="mt-4 text-lg font-medium text-gray-600 dark:text-gray-300">Gathering your creative moments...</p>
         </div>
       </div>
@@ -182,9 +148,10 @@ export default function MoodCapsules() {
 
   if (error) {
     return (
-      <div className="p-6">
-        <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg border border-red-200 dark:border-red-800">
-          <p className="text-red-700 dark:text-red-300">{error}</p>
+      <Alert variant="destructive">
+        <AlertTitle>Error</AlertTitle>
+        <AlertDescription>{error}</AlertDescription>
+        <div className='flex justify-end'>
           <button 
             onClick={generateCapsules}
             className="mt-2 px-4 py-2 bg-red-100 dark:bg-red-800 text-red-800 dark:text-red-200 rounded-md hover:bg-red-200 dark:hover:bg-red-700 transition-colors"
@@ -192,7 +159,7 @@ export default function MoodCapsules() {
             Try Again
           </button>
         </div>
-      </div>
+      </Alert>
     );
   }
 
@@ -208,7 +175,7 @@ export default function MoodCapsules() {
           Refresh Capsules
         </button>
       </div>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {capsules.map((capsule, index) => (
           <div
@@ -219,12 +186,12 @@ export default function MoodCapsules() {
               <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100">{capsule.title}</h3>
               <p className="text-gray-600 dark:text-gray-300 mt-1">{capsule.subtitle}</p>
             </div>
-            
+
             <div className="p-5">
               <blockquote className="italic text-gray-700 dark:text-gray-300 border-l-4 border-primary pl-4 py-2 my-3">
                 {capsule.caption}
               </blockquote>
-              
+
               <div className="capsule-items grid grid-cols-2 sm:grid-cols-3 md:grid-cols-2 lg:grid-cols-3 gap-2 my-4">
                 {capsule.items.map((item) => (
                   <HoverCard key={item.id}>
@@ -258,16 +225,12 @@ export default function MoodCapsules() {
                   </HoverCard>
                 ))}
               </div>
-              
+
               <div className="flex justify-between items-center mt-4">
                 <span className="px-3 py-1 bg-gray-100 dark:bg-gray-700 rounded-full text-sm font-medium text-gray-600 dark:text-gray-300">
                   {capsule.mood}
                 </span>
-                <button 
-                  onClick={() => handleShareCapsule(capsule)}
-                  aria-label={`Share ${capsule.title} capsule`}
-                  className="text-primary hover:text-primary/80 font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-gray-800"
-                >
+                <button className="text-primary hover:text-primary/80 font-medium transition-colors">
                   Share Capsule
                 </button>
               </div>
@@ -275,7 +238,7 @@ export default function MoodCapsules() {
           </div>
         ))}
       </div>
-      
+
       {capsules.length === 0 && (
         <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-8 text-center">
           <p className="text-gray-600 dark:text-gray-300">No mood capsules found. Try creating some content first!</p>

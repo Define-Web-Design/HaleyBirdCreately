@@ -150,7 +150,32 @@ export default function Profile() {
                       </div>
                     ))}
                   </div>
-                  <Button variant="ghost" className="w-full mt-4">View Full History</Button>
+                  <Button variant="ghost" className="w-full mt-4" onClick={() => window.location.href = "/analytics"}>View Full History</Button>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle>Content Security</CardTitle>
+                  <CardDescription>Manage content ownership and protection</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between p-3 border rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                    <div>
+                      <h4 className="font-medium">Ownership Verification</h4>
+                      <p className="text-sm text-muted-foreground">Verify ownership of your creative content</p>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={() => window.location.href = "/content-vault"}>
+                      Manage
+                    </Button>
+                  </div>
+                  <div className="flex items-center justify-between p-3 border rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                    <div>
+                      <h4 className="font-medium">Digital Rights</h4>
+                      <p className="text-sm text-muted-foreground">Control how your content is shared</p>
+                    </div>
+                    <Button variant="outline" size="sm">Configure</Button>
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>

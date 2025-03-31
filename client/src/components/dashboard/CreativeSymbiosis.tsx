@@ -1,12 +1,15 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'wouter';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { toast } from '@/hooks/use-toast';
+import { useState } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/components/ui/use-toast';
+import { verifyContentIntegrity } from '@/lib/security-verification';
 
 interface EvolutionPoints {
   userId: number;
@@ -33,12 +36,12 @@ interface CardProps {
 
 export function EvolutionProgressCard({ className }: CardProps) {
   const queryClient = useQueryClient();
-  
+
   const { data: evolutionPoints, isLoading } = useQuery<EvolutionPoints>({
     queryKey: ['/api/evolution-points'],
     enabled: true,
   });
-  
+
   const handleRefreshEnergy = async () => {
     try {
       await queryClient.invalidateQueries({ queryKey: ['/api/evolution-points'] });
@@ -88,14 +91,14 @@ export function EvolutionProgressCard({ className }: CardProps) {
   const totalPoints = evolutionPoints.totalPoints || 0;
   const nextMilestone = evolutionPoints.nextMilestone || 1; // Avoid division by zero
   const progressPercentage = (totalPoints / nextMilestone) * 100;
-  
+
   const lastUpdate = evolutionPoints.lastPointsUpdate ? new Date(evolutionPoints.lastPointsUpdate) : new Date();
   const formattedDate = lastUpdate.toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
   });
-  
+
   // Determine tier-specific styles and maximum energy
   const getTierStyles = (tier: string) => {
     switch (tier.toLowerCase()) {
@@ -141,10 +144,10 @@ export function EvolutionProgressCard({ className }: CardProps) {
         };
     }
   };
-  
+
   const tierStyles = getTierStyles(evolutionPoints.currentTier || 'starter');
   const energyPercentage = (evolutionPoints.creativeEnergyPoints / tierStyles.energyCap) * 100;
-  
+
   // Create milestone markers (evenly spaced)
   const milestones = [
     { point: nextMilestone * 0.2, label: Math.floor(nextMilestone * 0.2).toString() },
@@ -158,7 +161,7 @@ export function EvolutionProgressCard({ className }: CardProps) {
     <Card className={`col-span-2 overflow-hidden ${className}`}>
       {/* Add top border with gradient based on tier */}
       <div className={`h-1.5 w-full bg-gradient-to-r ${tierStyles.gradient}`}></div>
-      
+
       <CardHeader>
         <div className="flex justify-between items-center">
           <div>
@@ -170,18 +173,18 @@ export function EvolutionProgressCard({ className }: CardProps) {
           </Badge>
         </div>
       </CardHeader>
-      
+
       <CardContent className="space-y-6">
         <div className="space-y-4">
           <div className="flex justify-between text-sm">
             <span>Total Evolution Points</span>
             <span className="font-medium">{totalPoints} / {nextMilestone}</span>
           </div>
-          
+
           {/* Progress bar with milestone markers */}
           <div className="relative pt-1 pb-6">
             <Progress value={progressPercentage} className="h-2.5 rounded-full" />
-            
+
             {/* Add milestone markers */}
             {milestones.map((milestone, i) => {
               const position = (milestone.point / nextMilestone) * 100;
@@ -200,12 +203,12 @@ export function EvolutionProgressCard({ className }: CardProps) {
               );
             })}
           </div>
-          
+
           <div className="flex justify-between items-center">
             <p className="text-xs text-muted-foreground">
               {Math.ceil(nextMilestone - totalPoints)} points until next tier
             </p>
-            
+
             {/* Add a celebratory element when close to next milestone */}
             {progressPercentage > 80 && (
               <p className="text-xs font-medium animate-pulse flex items-center">
@@ -270,7 +273,7 @@ export function EvolutionProgressCard({ className }: CardProps) {
               Refresh Energy
             </Button>
           </div>
-          
+
           {/* Energy progress bar */}
           <div className="space-y-1.5">
             <div className="flex justify-between items-center text-xs text-muted-foreground">
@@ -298,7 +301,7 @@ export function CreativeHistoryCard({ className }: CardProps) {
     queryKey: ['/api/creative-history/monthly'],
     enabled: true,
   });
-  
+
   // Mock milestones - in a real implementation, these would come from the API
   const milestones = [
     { 
@@ -359,7 +362,7 @@ export function CreativeHistoryCard({ className }: CardProps) {
       )
     }
   ];
-  
+
   // Get appropriate color based on milestone category
   const getCategoryColor = (category: string) => {
     switch (category) {
@@ -375,7 +378,7 @@ export function CreativeHistoryCard({ className }: CardProps) {
         return 'bg-gray-500 text-gray-500';
     }
   };
-  
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -383,7 +386,7 @@ export function CreativeHistoryCard({ className }: CardProps) {
       day: 'numeric'
     });
   };
-  
+
   if (isLoading) {
     return (
       <Card className={className}>
@@ -431,7 +434,7 @@ export function CreativeHistoryCard({ className }: CardProps) {
           {milestones.map((milestone, index) => {
             const colorClass = getCategoryColor(milestone.category);
             const date = formatDate(milestone.date);
-            
+
             return (
               <div key={milestone.id} className={`relative mb-6 ${index === milestones.length - 1 ? 'pb-0' : 'pb-2'}`}>
                 {/* Timeline dot */}
@@ -442,7 +445,7 @@ export function CreativeHistoryCard({ className }: CardProps) {
                     </span>
                   </div>
                 </div>
-                
+
                 {/* Content */}
                 <div className="bg-card rounded-lg p-3 border">
                   <div className="flex justify-between items-start mb-1">
@@ -488,17 +491,17 @@ export function CreativeHistoryCard({ className }: CardProps) {
 
 export function CapabilitiesCard({ className }: CardProps) {
   const queryClient = useQueryClient();
-  
+
   const { data: capabilities = [] } = useQuery<UserCapability[]>({
     queryKey: ['/api/user-capabilities'],
     enabled: true,
   });
-  
+
   const { data: evolutionPoints } = useQuery<EvolutionPoints>({
     queryKey: ['/api/evolution-points'],
     enabled: true,
   });
-  
+
   // Get capability details - provides information about what each level unlocks
   const getCapabilityDetails = (name: string, level: number) => {
     const details: Record<string, Record<number, string>> = {
@@ -538,25 +541,25 @@ export function CapabilitiesCard({ className }: CardProps) {
         5: 'Custom AI voice and style' 
       }
     };
-    
+
     // Default description if capability not found
     return details[name]?.[level] || `Enhanced ${name} features`;
   };
-  
+
   // Show next level preview
   const getNextLevelPreview = (capability: UserCapability) => {
     if (!capability.isUnlocked || !capability.level) return null;
-    
+
     // Max level is 5
     if (capability.level >= 5) return null;
-    
+
     return getCapabilityDetails(capability.capabilityName, capability.level + 1);
   };
-  
+
   const handleUpgradeCapability = async () => {
     // Find the first unlocked capability to upgrade
     const upgradeableCapability = capabilities.find((cap: UserCapability) => cap.isUnlocked === true && cap.level && cap.level < 5);
-    
+
     if (!upgradeableCapability) {
       toast({
         title: "No capability to upgrade",
@@ -565,7 +568,7 @@ export function CapabilitiesCard({ className }: CardProps) {
       });
       return;
     }
-    
+
     // Check if user has enough creative energy
     if (!evolutionPoints || evolutionPoints.creativeEnergyPoints < 20) {
       toast({
@@ -575,7 +578,7 @@ export function CapabilitiesCard({ className }: CardProps) {
       });
       return;
     }
-    
+
     try {
       await fetch(`/api/user-capabilities/${upgradeableCapability.capabilityName}`, {
         method: 'PUT',
@@ -583,15 +586,15 @@ export function CapabilitiesCard({ className }: CardProps) {
           'Content-Type': 'application/json',
         }
       });
-      
+
       // Refresh capabilities and evolution points
       await queryClient.invalidateQueries({ queryKey: ['/api/user-capabilities'] });
       await queryClient.invalidateQueries({ queryKey: ['/api/evolution-points'] });
-      
+
       // Get the new capability level
       const newLevel = (upgradeableCapability.level || 0) + 1;
       const newFeature = getCapabilityDetails(upgradeableCapability.capabilityName, newLevel);
-      
+
       toast({
         title: "Capability Upgraded",
         description: `${upgradeableCapability.capabilityName} has been upgraded to level ${newLevel}. New feature: ${newFeature}`,
@@ -620,7 +623,7 @@ export function CapabilitiesCard({ className }: CardProps) {
               const isUnlocked = capability.isUnlocked === true;
               const level = capability.level || 0;
               const nextLevelPreview = getNextLevelPreview(capability);
-              
+
               // Get color scheme based on capability type
               const getColorScheme = (name: string) => {
                 if (name.includes('Caption')) return { bg: 'bg-blue-500/10', text: 'text-blue-500', border: 'border-blue-500/30' };
@@ -630,9 +633,9 @@ export function CapabilitiesCard({ className }: CardProps) {
                 if (name.includes('Style')) return { bg: 'bg-rose-500/10', text: 'text-rose-500', border: 'border-rose-500/30' };
                 return { bg: 'bg-gray-500/10', text: 'text-gray-500', border: 'border-gray-500/30' };
               };
-              
+
               const colors = getColorScheme(capability.capabilityName);
-              
+
               return (
                 <div key={capability.id} className={`space-y-3 p-3 rounded-lg border ${isUnlocked ? colors.border : 'border-dashed'}`}>
                   <div className="flex items-center justify-between">
@@ -644,7 +647,7 @@ export function CapabilitiesCard({ className }: CardProps) {
                       {isUnlocked && level ? `Level ${level}` : 'Locked'}
                     </Badge>
                   </div>
-                  
+
                   {isUnlocked && level && (
                     <>
                       <div className="space-y-1">
@@ -664,13 +667,13 @@ export function CapabilitiesCard({ className }: CardProps) {
                           ))}
                         </div>
                       </div>
-                      
+
                       <div className="text-xs space-y-2">
                         <p className="font-medium">Current capability: </p>
                         <p className="text-muted-foreground">
                           {getCapabilityDetails(capability.capabilityName, level)}
                         </p>
-                        
+
                         {nextLevelPreview && (
                           <>
                             <p className="font-medium pt-1">Next level unlocks: </p>
@@ -682,7 +685,7 @@ export function CapabilitiesCard({ className }: CardProps) {
                       </div>
                     </>
                   )}
-                  
+
                   {!isUnlocked && (
                     <div className="text-xs text-muted-foreground py-1">
                       <p>Unlocked with continued content creation and evolution points</p>
@@ -695,7 +698,7 @@ export function CapabilitiesCard({ className }: CardProps) {
             <div className="text-center py-8 space-y-3">
               <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-6 h-6 text-primary" strokeWidth="2">
-                  <path d="M9.5 4h5M4 8h16M6 12h12M8 16h8M10 20h4"/>
+                  <path d="M10 20h4"/>
                 </svg>
               </div>
               <div>
@@ -726,17 +729,21 @@ export function CapabilitiesCard({ className }: CardProps) {
 }
 
 export default function CreativeSymbiosisSection() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
+
   const { data: evolutionPoints } = useQuery<EvolutionPoints>({
     queryKey: ['/api/evolution-points'],
     enabled: true,
   });
-  
+
   // Get stats for the creative journey metrics from API (using mock data for now)
   const { data: userEngagement } = useQuery({
     queryKey: ['/api/user-engagement'],
     enabled: false, // Disable until implemented
   });
-  
+
   // Mock stats for the creative journey metrics
   const stats = {
     contentCreated: 12,
@@ -744,14 +751,14 @@ export default function CreativeSymbiosisSection() {
     capabilitiesUnlocked: 3,
     daysActive: 7
   };
-  
+
   // Define Tier info type
   type TierInfo = {
     color: string;
     nextTier: string | null;
     features: string[];
   };
-  
+
   // Get tier information
   const getTierInfo = (tier: string = 'starter'): TierInfo => {
     const tiers: Record<string, TierInfo> = {
@@ -781,22 +788,62 @@ export default function CreativeSymbiosisSection() {
         features: ['Custom AI Voice & Style', 'Predictive Trend Analysis', 'Unlimited Creative Energy']
       }
     };
-    
+
     const lowerTier = tier.toLowerCase();
     return tiers[lowerTier] || tiers.starter;
   };
-  
+
   const currentTier = evolutionPoints?.currentTier?.toLowerCase() || 'starter';
   const tierInfo = getTierInfo(currentTier);
-  
+
+  const handleSymbiosisAction = async (actionType: string) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      // This would be a real API call in production
+      await new Promise(resolve => setTimeout(resolve, 800));
+
+      // Verify integrity of framework components
+      const integrityVerified = await verifyContentIntegrity(1);
+
+      if (!integrityVerified) {
+        throw new Error("Component integrity verification failed");
+      }
+
+      toast({
+        title: "Success",
+        description: `${actionType} action completed successfully`,
+        variant: "default",
+      });
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "An unknown error occurred";
+      setError(errorMessage);
+
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-8">
+      {error && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4 rounded-lg text-red-800 dark:text-red-300 mb-4">
+          <p className="font-medium">Error</p>
+          <p className="text-sm">{error}</p>
+        </div>
+      )}
       {/* Hero section with improved visual appeal */}
       <div className="relative overflow-hidden bg-gradient-to-r from-primary/10 to-primary/5 rounded-xl border border-primary/20">
         {/* Background accent elements */}
         <div className="absolute -right-16 -top-16 w-64 h-64 bg-primary/5 rounded-full blur-3xl"></div>
         <div className="absolute -left-16 -bottom-16 w-64 h-64 bg-primary/5 rounded-full blur-3xl"></div>
-        
+
         <div className="relative p-8">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between">
             <div className="mb-6 md:mb-0 md:mr-8">
@@ -806,7 +853,7 @@ export default function CreativeSymbiosisSection() {
                 As you create more content, you unlock enhanced AI capabilities tailored to your creative style.
               </p>
               <div className="flex flex-wrap gap-4">
-                <Button variant="default" className="flex items-center">
+                <Button variant="default" className="flex items-center" onClick={() => handleSymbiosisAction('How It Works')}>
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" className="w-4 h-4 mr-2" strokeWidth="2">
                     <circle cx="12" cy="12" r="10"/>
@@ -815,7 +862,7 @@ export default function CreativeSymbiosisSection() {
                   </svg>
                   How It Works
                 </Button>
-                <Button variant="outline" className="flex items-center">
+                <Button variant="outline" className="flex items-center" onClick={() => handleSymbiosisAction('View Benefits')}>
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" className="w-4 h-4 mr-2" strokeWidth="2">
                     <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
@@ -824,7 +871,7 @@ export default function CreativeSymbiosisSection() {
                 </Button>
               </div>
             </div>
-            
+
             {/* Current tier badge */}
             <div className="bg-card p-4 rounded-lg border shadow-sm text-center md:min-w-[200px]">
               <h3 className="font-medium mb-2">Your Current Tier</h3>
@@ -836,7 +883,7 @@ export default function CreativeSymbiosisSection() {
               )}
             </div>
           </div>
-          
+
           {/* Tier benefits preview */}
           {tierInfo.features && tierInfo.features.length > 0 && (
             <div className="mt-6 pt-6 border-t border-border">
@@ -877,7 +924,7 @@ export default function CreativeSymbiosisSection() {
           <h3 className="text-lg font-medium">Your Creative Journey</h3>
           <p className="text-sm text-muted-foreground">Track your growth and accomplishments over time</p>
         </div>
-        
+
         <div className="p-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 items-stretch">
             <div className="bg-card rounded-lg border p-4 text-center">
@@ -891,7 +938,7 @@ export default function CreativeSymbiosisSection() {
               <span className="text-3xl font-bold text-blue-500">{stats.contentCreated}</span>
               <p className="text-sm text-muted-foreground mt-1">Content Created</p>
             </div>
-            
+
             <div className="bg-card rounded-lg border p-4 text-center">
               <div className="w-12 h-12 rounded-full bg-purple-500/10 flex items-center justify-center mx-auto mb-3">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
@@ -904,7 +951,7 @@ export default function CreativeSymbiosisSection() {
               <span className="text-3xl font-bold text-purple-500">{stats.aiCollaborations}</span>
               <p className="text-sm text-muted-foreground mt-1">AI Collaborations</p>
             </div>
-            
+
             <div className="bg-card rounded-lg border p-4 text-center">
               <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-3">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
@@ -915,7 +962,7 @@ export default function CreativeSymbiosisSection() {
               <span className="text-3xl font-bold text-green-500">{stats.capabilitiesUnlocked}</span>
               <p className="text-sm text-muted-foreground mt-1">Capabilities Unlocked</p>
             </div>
-            
+
             <div className="bg-card rounded-lg border p-4 text-center">
               <div className="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center mx-auto mb-3">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
@@ -928,7 +975,7 @@ export default function CreativeSymbiosisSection() {
               <p className="text-sm text-muted-foreground mt-1">Days Active</p>
             </div>
           </div>
-          
+
           <div className="mt-6 pt-4 border-t border-border text-center">
             <Button variant="ghost" size="sm" className="text-muted-foreground" asChild>
               <Link href="/analytics">

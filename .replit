@@ -55,7 +55,7 @@ localPort = 8425
 externalPort = 3002
 
 [workflows]
-runButton = "Start Development Server"
+runButton = "Run Server"
 
 [[workflows.workflow]]
 name = "Project"
@@ -105,7 +105,7 @@ args = "pkill -f node || true"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npm run dev"
+args = "cd client && npm run dev"
 
 [[workflows.workflow]]
 name = "Code Quality Check"
@@ -226,3 +226,25 @@ args = "npm run lint"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npm run type-check"
+
+[[workflows.workflow]]
+name = "Development Environment"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
+
+[[workflows.workflow]]
+name = "Build and Test"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run build"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run test"
