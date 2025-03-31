@@ -55,7 +55,7 @@ localPort = 8425
 externalPort = 3002
 
 [workflows]
-runButton = "Full-Stack Integration Test"
+runButton = "Complete Validation Suite"
 
 [[workflows.workflow]]
 name = "Project"
@@ -135,6 +135,96 @@ args = "# Check for security vulnerabilities"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npm audit"
+
+[[workflows.workflow]]
+name = "Comprehensive Validation"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pkill -f node || true"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run build"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node -e \"require('./client/src/utils/validate-implementation.js').validateImplementation().then(require('./client/src/utils/validate-implementation.js').displayValidationResults)\""
+
+[[workflows.workflow]]
+name = "Accessibility Audit"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run build"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node -e \"const { runAccessibilityAudit } = require('./client/src/utils/navigation-tester.js'); runAccessibilityAudit().then(results => console.log(JSON.stringify(results, null, 2)))\""
+
+[[workflows.workflow]]
+name = "Security Validation"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node -e \"const { securityMonitor } = require('./server/services/securityMonitor.js'); securityMonitor.validateAssetIntegrity().then(results => console.log(JSON.stringify(results, null, 2)))\""
+
+[[workflows.workflow]]
+name = "Full-Stack Integration Test"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pkill -f node || true"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "NODE_ENV=test npm run dev &"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "sleep 5"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd client && npm test"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node -e \"require('./client/src/utils/validate-implementation.js').validateImplementation().then(require('./client/src/utils/validate-implementation.js').displayValidationResults)\""
+
+[[workflows.workflow]]
+name = "Build and Test"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run build"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run test"
+
+[[workflows.workflow]]
+name = "Run Server Improved"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pkill -f node || true"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd client && npm run dev"
 
 [[workflows.workflow]]
 name = "Start Dev Server"
@@ -237,22 +327,13 @@ task = "shell.exec"
 args = "npm run dev"
 
 [[workflows.workflow]]
-name = "Build and Test"
+name = "Complete Validation Suite"
 author = 40896524
 mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npm run build"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npm run test"
-
-[[workflows.workflow]]
-name = "Run Server Improved"
-author = 40896524
-mode = "sequential"
+args = "# Kill any running processes"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
@@ -260,111 +341,47 @@ args = "pkill -f node || true"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd client && npm run dev"
-
-[[workflows.workflow]]
-name = "Comprehensive Validation"
-author = 40896524
-mode = "sequential"
+args = "# Start with code quality checks"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "# Kill any running node processes first"
+args = "npm run lint"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "pkill -f node || true"
+args = "npx tsc --noEmit"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "# Build the app"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npm run build"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "# Run the comprehensive validation script"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "node -e \"require('./client/src/utils/validate-implementation.js').validateImplementation().then(require('./client/src/utils/validate-implementation.js').displayValidationResults)\""
-
-[[workflows.workflow]]
-name = "Accessibility Audit"
-author = 40896524
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "# Run accessibility audit"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npm run build"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "# Execute accessibility checks"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "node -e \"const { runAccessibilityAudit } = require('./client/src/utils/navigation-tester.js'); runAccessibilityAudit().then(results => console.log(JSON.stringify(results, null, 2)))\""
-
-[[workflows.workflow]]
-name = "Security Validation"
-author = 40896524
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "# Run security checks"
+args = "# Run security validation"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "node -e \"const { securityMonitor } = require('./server/services/securityMonitor.js'); securityMonitor.validateAssetIntegrity().then(results => console.log(JSON.stringify(results, null, 2)))\""
 
-[[workflows.workflow]]
-name = "Full-Stack Integration Test"
-author = 40896524
-mode = "sequential"
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run the accessibility audit"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "# Kill any running node processes"
+args = "npm run build"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "pkill -f node || true"
+args = "node -e \"const { runAccessibilityAudit } = require('./client/src/utils/navigation-tester.js'); runAccessibilityAudit().then(results => console.log(JSON.stringify(results, null, 2)))\""
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "# Run server in test mode"
+args = "# Run API endpoint validation"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "NODE_ENV=test npm run dev &"
+args = "node -e \"const { validateApiEndpoints, generateApiValidationReport } = require('./client/src/utils/api-validator.js'); validateApiEndpoints().then(results => { console.log(generateApiValidationReport(results.results)); })\""
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "# Wait for server to start"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "sleep 5"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "# Run client-side tests "
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd client && npm test"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "# Run comprehensive validation"
+args = "# Run the comprehensive validation"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
