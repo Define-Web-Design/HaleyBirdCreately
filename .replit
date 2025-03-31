@@ -877,11 +877,115 @@ args = ""
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "# Run the consolidated validation system that checks everything simultaneously"
+args = "# Run all code quality checks"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = '''node -e "const { runFullSystemValidation } = require('./client/src/utils/consolidated-validation.js'); runFullSystemValidation().then(report => { console.log('\n\nVALIDATION SUMMARY:\n' + '-'.repeat(80) + '\n'); console.log(report.summary); if (report.recommendations.length > 0) { console.log('\nRECOMMENDATIONS:'); report.recommendations.forEach((rec, i) => console.log(`${i+1}. ${rec}`)); } console.exit(report.overallSuccess ? 0 : 1); })"'''
+args = "npm run lint"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npx tsc --noEmit"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run the complete validation suite with checkpointing controls"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node -e \""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "  const { taskOrchestrator } = require('./client/src/utils/task-validation-orchestrator');"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "  const { runFullSystemValidation, displayFullValidationResults } = require('./client/src/utils/consolidated-validation');"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "  // First run the full system validation"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "  runFullSystemValidation().then(report => {"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "    displayFullValidationResults(report);"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "    "
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "    // Only create a checkpoint if everything passes"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "    if (report.overallSuccess) {"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "      const checkpointResult = taskOrchestrator.createCheckpoint();"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "      console.log('CHECKPOINT STATUS:', checkpointResult.message);"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "      process.exit(0);"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "    } else {"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "      console.error('VALIDATION FAILED: No checkpoint created - tasks incomplete or errors detected');"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "      console.log('Fix the issues reported above before attempting to create a checkpoint');"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "      process.exit(1);"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "    }"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "  }).catch(error => {"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "    console.error('FATAL ERROR:', error);"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "    process.exit(1);"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "  });"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "\""
 
 [[workflows.workflow]]
 name = "Pre-Checkpoint Verification"
@@ -964,3 +1068,124 @@ args = "# Run the comprehensive task verification"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "node -r ts-node/register client/src/utils/verify-all-tasks.ts"
+
+[[workflows.workflow]]
+name = "Verify All Tasks Before Checkpoint"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Kill any running processes"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pkill -f node || true"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run all code quality checks"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run lint"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npx tsc --noEmit"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run the task verification with instruction support"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Replace the quoted text with actual task instructions"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node -e \""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "  const { verifyTasksSimultaneously } = require('./client/src/utils/validation-runner');"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "  const instruction = process.env.TASK_INSTRUCTION || 'Verify all implemented tasks';"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "  "
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "  verifyTasksSimultaneously(instruction, {"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "    displayResults: true,"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "    createCheckpoint: true"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "  }).then(success => {"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "    if (success) {"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "      console.log('All tasks verified and checkpoint created successfully!');"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "      process.exit(0);"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "    } else {"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "      console.error('Verification failed! No checkpoint created.');"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "      process.exit(1);"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "    }"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "  }).catch(error => {"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "    console.error('Error during verification:', error);"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "    process.exit(1);"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "  });"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "\""

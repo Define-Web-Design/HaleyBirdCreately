@@ -339,82 +339,137 @@ class TaskValidationOrchestrator {
       message: `Checkpoint ${checkpoint.id} created successfully`
     };
   }
-  
-  /**
-   * Execute simultaneous validation of all tasks and ensure all are completed
-   * before allowing any checkpoint creation
-   */
-  public async ensureSimultaneousValidation(): Promise<{ success: boolean; message: string }> {
-    console.log('Starting simultaneous validation for all tasks...');
-    console.log('='.repeat(80));
-    
-    // If no tasks are registered, this is likely a new workflow
-    if (this._context.taskRequests.length === 0) {
-      console.log('No tasks registered. Please register tasks before validation.');
-      return {
-        success: false,
-        message: 'No tasks registered for validation. Please define tasks first.'
-      };
-    }
-    
-    try {
-      // Run validation for all tasks
-      console.log(`Validating ${this._context.taskRequests.length} tasks simultaneously...`);
-      await this.validateAllTasks();
-      
-      // Check if ANY task failed
-      const failedTasks = this._context.taskRequests.filter(task => task.status === 'failed');
-      
-      if (failedTasks.length > 0) {
-        console.error(`${failedTasks.length} tasks failed validation:`);
-        failedTasks.forEach(task => {
-          console.error(`- Task ${task.id} (${task.type}): ${task.description}`);
-          console.error(`  Error: ${task.error || 'Unknown error'}`);
-        });
-        
-        return {
-          success: false,
-          message: `Cannot create checkpoint - ${failedTasks.length} tasks failed validation. All tasks must be completed simultaneously.`
-        };
-      }
-      
-      // If all tasks completed successfully, create a checkpoint
-      if (this.canCreateCheckpoint()) {
-        // Create a checkpoint record
-        const checkpoint = {
-          id: `checkpoint-${Date.now()}`,
-          timestamp: new Date().toISOString(),
-          tasks: this._context.taskRequests,
-          validationReport: this._context.validationReport
-        };
-        
-        console.log('All tasks validated successfully. Creating checkpoint:', checkpoint.id);
-        
-        // Reset the context for new tasks
-        this._context = {
-          taskRequests: [],
-          timestamp: new Date().toISOString(),
-          allTasksCompleted: false
-        };
-        
-        return {
-          success: true,
-          message: `All tasks were successfully validated simultaneously. Checkpoint ${checkpoint.id} created.`
-        };
-      } else {
-        return {
-          success: false,
-          message: 'Cannot create checkpoint - not all tasks completed successfully together.'
-        };
-      }
-    } catch (error) {
-      console.error('Error during simultaneous validation:', error);
-      return {
-        success: false,
-        message: `Validation failed with error: ${error.message || 'Unknown error'}`
-      };
-    }
-  }
 }
 
 export const taskOrchestrator = TaskValidationOrchestrator.getInstance();
+
+
+  /**
+   * Verify all tasks in a batch, ensuring everything is validated simultaneously
+   * This method runs all validations in parallel and only reports success if ALL pass
+   */
+  public async batchVerifyAllTasks(tasks: Omit<TaskRequest, 'status'>[]): Promise<{
+    success: boolean;
+    completedTasks: number;
+    failedTasks: number;
+    report: ValidationReport | undefined;
+    canCreateCheckpoint: boolean;
+  }> {
+    console.log(`Starting batch verification of ${tasks.length} tasks...`);
+    
+    // Register all tasks
+    const taskIds = tasks.map(task => this.registerTask(task));
+    
+    try {
+      // Run full system validation
+      const validationReport = await runFullSystemValidation();
+      this._context.validationReport = validationReport;
+      
+      // Process validation results for each task
+      const validationPromises = taskIds.map(id => {
+        const task = this._context.taskRequests.find(t => t.id === id);
+        if (!task) return Promise.resolve(false);
+        
+        // Mark as in-progress
+        this.updateTaskStatus(id, 'in-progress');
+        
+        // Match task to appropriate validation sections
+        return this.validateTaskAgainstReport(task, validationReport)
+          .then(success => {
+            this.updateTaskStatus(id, success ? 'completed' : 'failed', 
+              success ? { result: 'Passed all validation checks' } : 
+              { error: 'Failed validation checks' });
+            return success;
+          });
+      });
+      
+      // Wait for all validations to complete
+      const results = await Promise.all(validationPromises);
+      
+      // Update context
+      this._context.allTasksCompleted = results.every(result => result === true);
+      
+      const completedTasks = results.filter(r => r === true).length;
+      const failedTasks = tasks.length - completedTasks;
+      
+      console.log(`Batch verification complete: ${completedTasks}/${tasks.length} tasks verified successfully`);
+      
+      return {
+        success: this._context.allTasksCompleted,
+        completedTasks,
+        failedTasks,
+        report: validationReport,
+        canCreateCheckpoint: this._context.allTasksCompleted
+      };
+    } catch (error) {
+      console.error('Error during batch verification:', error);
+      
+      // Mark all in-progress tasks as failed
+      taskIds.forEach(id => {
+        const task = this._context.taskRequests.find(t => t.id === id);
+        if (task && task.status === 'in-progress') {
+          this.updateTaskStatus(id, 'failed', { 
+            error: `Verification error: ${error.message || 'Unknown error'}`
+          });
+        }
+      });
+      
+      return {
+        success: false,
+        completedTasks: 0,
+        failedTasks: tasks.length,
+        report: undefined,
+        canCreateCheckpoint: false
+      };
+    }
+  }
+  
+  /**
+   * Validate a single task against the full validation report
+   */
+  private async validateTaskAgainstReport(task: TaskRequest, report: ValidationReport): Promise<boolean> {
+    // Extract relevant section(s) from the report based on task type
+    switch (task.type) {
+      case 'accessibility':
+        const a11ySection = report.sections.find(s => s.name === 'Accessibility Audit');
+        return a11ySection?.success || false;
+        
+      case 'security':
+        const securitySection = report.sections.find(s => 
+          s.name === 'Security Validation' || s.name.includes('Security'));
+        return securitySection?.success || false;
+        
+      case 'performance':
+        const apiSection = report.sections.find(s => s.name === 'API Endpoint Validation');
+        const performanceThreshold = 
+          apiSection?.details?.failedEndpoints?.filter(e => e.responseTime > 500).length === 0;
+        return performanceThreshold;
+        
+      case 'feature':
+      case 'enhancement':
+        // For features, check implementation validation
+        const implSection = report.sections.find(s => s.name === 'Implementation Validation');
+        return implSection?.success || false;
+        
+      case 'fix':
+        // For fixes, need to check specific sections based on description
+        const lowerDescription = task.description.toLowerCase();
+        
+        if (lowerDescription.includes('link') || lowerDescription.includes('navigation')) {
+          const linkSection = report.sections.find(s => s.name === 'Link Validation');
+          return linkSection?.success || false;
+        }
+        
+        if (lowerDescription.includes('accessibility') || lowerDescription.includes('a11y')) {
+          const a11ySection = report.sections.find(s => s.name === 'Accessibility Audit');
+          return a11ySection?.success || false;
+        }
+        
+        // Default to overall success for other fixes
+        return report.overallSuccess;
+        
+      default:
+        // For any unspecified type, use overall validation success
+        return report.overallSuccess;
+    }
+  }
