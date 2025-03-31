@@ -66,7 +66,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <div
             className={`${
               sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-            } fixed md:relative z-10 h-full transition-transform duration-300 ease-in-out md:translate-x-0`}
+            } fixed md:relative z-20 h-full transition-transform duration-300 ease-in-out md:translate-x-0 shadow-lg`}
           >
             <Sidebar 
               fontSize={fontSize}
@@ -77,6 +77,15 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               setExpanded={setSidebarOpen}
             />
           </div>
+          
+          {/* Overlay for mobile - closes sidebar when clicking outside */}
+          {sidebarOpen && isMobile && (
+            <div 
+              className="fixed inset-0 bg-black/20 z-10 md:hidden"
+              onClick={() => setSidebarOpen(false)}
+              aria-hidden="true"
+            />
+          )}
 
           {/* Main content with responsive padding */}
           <main 

@@ -127,6 +127,13 @@ export async function generateMoodPalette(mood: MoodTone): Promise<Palette> {
  * @returns A palette of colors
  */
 export async function generateAIPalette(description: string): Promise<Palette> {
+  // Cache implementation for frequent palette requests
+  const cacheKey = `palette:${description.toLowerCase().trim()}`;
+  const cachedResult = await getCachedPalette(cacheKey);
+  if (cachedResult) {
+    return cachedResult;
+  }
+  
   try {
     // Check if OpenAI API key is configured and valid
     if (!process.env.OPENAI_API_KEY) {
@@ -138,7 +145,12 @@ export async function generateAIPalette(description: string): Promise<Palette> {
       apiKey: process.env.OPENAI_API_KEY,
     });
 
-    const response = await openai.chat.completions.create({
+    // Add timeout to prevent hanging requests
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error("OpenAI request timed out")), 10000);
+    });
+
+    const openaiPromise = openai.chat.completions.create({
       model: "gpt-3.5-turbo", // Use a more widely available model
       messages: [
         {
@@ -165,6 +177,9 @@ export async function generateAIPalette(description: string): Promise<Palette> {
       max_tokens: 500,
     });
 
+    // Race between timeout and API request
+    const response = await Promise.race([openaiPromise, timeoutPromise]);
+    
     const content = response.choices[0].message.content;
     if (!content) {
       throw new Error("No content returned from OpenAI");
@@ -173,6 +188,10 @@ export async function generateAIPalette(description: string): Promise<Palette> {
     try {
       const data = JSON.parse(content.trim());
       const palette = PaletteSchema.parse(data);
+      
+      // Cache successful result
+      await cachePalette(cacheKey, palette);
+      
       return palette;
     } catch (error) {
       console.error("Failed to parse AI response:", content);
@@ -180,7 +199,98 @@ export async function generateAIPalette(description: string): Promise<Palette> {
     }
   } catch (error) {
     console.error("Error generating AI palette:", error);
-    // Fallback to a default palette
+    // Fallback to a default palette based on the description's characteristics
+    const fallbackPalette = generateFallbackPalette(description);
+    return fallbackPalette;
+  }
+}
+
+// Helper function to get cached palette (to be implemented with actual caching solution)
+async function getCachedPalette(key: string): Promise<Palette | null> {
+  // This would normally use Redis or another caching system
+  // For now, just return null to indicate no cache hit
+  return null;
+}
+
+// Helper function to cache a palette (to be implemented with actual caching solution)
+async function cachePalette(key: string, palette: Palette): Promise<void> {
+  // This would normally store in Redis or another caching system
+  // For now, it's a no-op
+}
+
+// Generate a fallback palette that's more tailored to the description
+function generateFallbackPalette(description: string): Palette {
+  const lowercaseDesc = description.toLowerCase();
+  
+  // Determine if description contains certain mood keywords
+  const isEnergeticOrBold = /energ|bold|vibrant|bright|power/i.test(lowercaseDesc);
+  const isCalmOrSoft = /calm|soft|gentle|peaceful|serene/i.test(lowercaseDesc);
+  const isProfessionalOrCorporate = /professional|corporate|business|formal/i.test(lowercaseDesc);
+  const isPlayfulOrFun = /playful|fun|creative|joy|happy/i.test(lowercaseDesc);
+  const isElegantOrLuxury = /elegant|luxury|sophisticated|premium/i.test(lowercaseDesc);
+  
+  if (isEnergeticOrBold) {
+    return {
+      colors: [
+        { hex: '#FF3B30', name: 'Dynamic Red', role: 'primary' },
+        { hex: '#FF9500', name: 'Energetic Orange', role: 'secondary' },
+        { hex: '#FFFFFF', name: 'Clean White', role: 'background' },
+        { hex: '#FFCC00', name: 'Vibrant Yellow', role: 'accent' },
+        { hex: '#1D1D1F', name: 'Bold Black', role: 'text' },
+      ],
+      moodName: 'Energetic',
+      description: 'A high-energy palette with bold, attention-grabbing colors',
+    };
+  } else if (isCalmOrSoft) {
+    return {
+      colors: [
+        { hex: '#90CAF9', name: 'Calm Blue', role: 'primary' },
+        { hex: '#A5D6A7', name: 'Soft Green', role: 'secondary' },
+        { hex: '#F5F5F5', name: 'Gentle Gray', role: 'background' },
+        { hex: '#E1BEE7', name: 'Soft Lavender', role: 'accent' },
+        { hex: '#455A64', name: 'Muted Blue-Gray', role: 'text' },
+      ],
+      moodName: 'Peaceful',
+      description: 'A soothing palette that promotes tranquility and balance',
+    };
+  } else if (isProfessionalOrCorporate) {
+    return {
+      colors: [
+        { hex: '#0A66C2', name: 'Professional Blue', role: 'primary' },
+        { hex: '#2C3E50', name: 'Corporate Navy', role: 'secondary' },
+        { hex: '#F9F9F9', name: 'Clean Gray', role: 'background' },
+        { hex: '#00A0DC', name: 'Accent Blue', role: 'accent' },
+        { hex: '#333333', name: 'Professional Gray', role: 'text' },
+      ],
+      moodName: 'Professional',
+      description: 'A polished palette conveying trust and professionalism',
+    };
+  } else if (isPlayfulOrFun) {
+    return {
+      colors: [
+        { hex: '#FF6B6B', name: 'Playful Coral', role: 'primary' },
+        { hex: '#48DBFB', name: 'Fun Blue', role: 'secondary' },
+        { hex: '#FFFFFF', name: 'Bright White', role: 'background' },
+        { hex: '#FFDA79', name: 'Cheerful Yellow', role: 'accent' },
+        { hex: '#546E7A', name: 'Balanced Gray', role: 'text' },
+      ],
+      moodName: 'Playful',
+      description: 'A whimsical palette encouraging creativity and joy',
+    };
+  } else if (isElegantOrLuxury) {
+    return {
+      colors: [
+        { hex: '#8E44AD', name: 'Rich Purple', role: 'primary' },
+        { hex: '#2C3E50', name: 'Deep Navy', role: 'secondary' },
+        { hex: '#F5F5F5', name: 'Soft Cream', role: 'background' },
+        { hex: '#D4AF37', name: 'Elegant Gold', role: 'accent' },
+        { hex: '#2C2C2C', name: 'Sophisticated Black', role: 'text' },
+      ],
+      moodName: 'Elegant',
+      description: 'A sophisticated palette conveying luxury and refinement',
+    };
+  } else {
+    // Default fallback palette with neutral, versatile colors
     return {
       colors: [
         { hex: '#3498DB', name: 'Default Blue', role: 'primary' },
@@ -190,7 +300,7 @@ export async function generateAIPalette(description: string): Promise<Palette> {
         { hex: '#34495E', name: 'Default Navy', role: 'text' },
       ],
       moodName: 'Default',
-      description: 'A fallback palette when AI generation fails',
+      description: 'A versatile palette suitable for various applications',
     };
   }
 }
