@@ -5,7 +5,8 @@
  */
 
 import { fullTestSuite, runAutomatedTests, generateTestReport } from './testing-plan';
-import { verifyNavigationLinks, verifyToastBehavior, checkPageInteractiveElements } from './navigation-tester';
+import { verifyNavigationLinks, verifyToastBehavior, checkPageInteractiveElements, verifyPageLinks, runAccessibilityAudit } from './navigation-tester';
+import { validateApiEndpoints, generateApiValidationReport } from './api-validator';
 
 // Main validation function
 export async function validateImplementation(): Promise<{
@@ -63,6 +64,37 @@ export async function validateImplementation(): Promise<{
       }
     }
     
+    // Additional validation: Check for dead links
+    console.log('Step 5: Checking for dead links...');
+    const linkResults = await verifyPageLinks();
+    
+    if (linkResults.potentialBrokenLinks.length > 0) {
+      success = false;
+      issues.push(`Found ${linkResults.potentialBrokenLinks.length} potentially broken links`);
+    }
+    
+    // Additional validation: Accessibility audit
+    console.log('Step 6: Running accessibility audit...');
+    const a11yResults = await runAccessibilityAudit();
+    
+    if (a11yResults.score < 80) { // Set threshold at 80%
+      success = false;
+      issues.push(`Accessibility score is below threshold: ${a11yResults.score}%`);
+      a11yResults.issues.forEach(issue => {
+        issues.push(`A11y issue: ${issue}`);
+      });
+    }
+    
+    // Additional validation: API endpoints
+    console.log('Step 7: Validating API endpoints...');
+    const apiResults = await validateApiEndpoints();
+    
+    if (!apiResults.success) {
+      success = false;
+      const failedCount = apiResults.results.filter(r => !r.valid).length;
+      issues.push(`${failedCount} API endpoints failed validation`);
+    }
+    
     // Generate comprehensive report
     let report = `# Implementation Validation Report\n\n`;
     report += `## Overall Status: ${success ? 'SUCCESS ✓' : 'FAILED ✗'}\n\n`;
@@ -92,6 +124,7 @@ export async function validateImplementation(): Promise<{
     report += `\n## Toast Notification Validation\n`;
     report += `- Automatic dismissal: ${toastResults.automatic ? 'Yes' : 'No'}\n`;
     report += `- Manual close button: ${toastResults.closable ? 'Yes' : 'No'}\n`;
+    report += `- Accessibility compliant: ${toastResults.accessible ? 'Yes' : 'No'}\n`;
     report += `- Recommendations:\n`;
     toastResults.recommendations.forEach(rec => {
       report += `  - ${rec}\n`;
@@ -115,6 +148,51 @@ export async function validateImplementation(): Promise<{
           report += `  - ... and ${pageResults.interactiveElements.length - 5} more\n`;
         }
       }
+    }
+    
+    // Add dead links report
+    report += `\n## Link Validation\n`;
+    report += `- Total links: ${linkResults.totalLinks}\n`;
+    report += `- Potential broken links: ${linkResults.potentialBrokenLinks.length}\n`;
+    
+    if (linkResults.potentialBrokenLinks.length > 0) {
+      report += `- Broken links found:\n`;
+      linkResults.potentialBrokenLinks.slice(0, 10).forEach(link => {
+        report += `  - ${link.text} (${link.href})\n`;
+      });
+      
+      if (linkResults.potentialBrokenLinks.length > 10) {
+        report += `  - ... and ${linkResults.potentialBrokenLinks.length - 10} more\n`;
+      }
+    }
+    
+    // Add accessibility report
+    report += `\n## Accessibility Audit\n`;
+    report += `- Score: ${a11yResults.score}%\n`;
+    
+    if (a11yResults.issues.length > 0) {
+      report += `- Issues:\n`;
+      a11yResults.issues.forEach(issue => {
+        report += `  - ${issue}\n`;
+      });
+    }
+    
+    report += `- Recommendations:\n`;
+    a11yResults.recommendations.forEach(rec => {
+      report += `  - ${rec}\n`;
+    });
+    
+    // Add API validation report
+    report += `\n## API Endpoint Validation\n`;
+    report += `- Total endpoints: ${apiResults.results.length}\n`;
+    report += `- Valid endpoints: ${apiResults.results.filter(r => r.valid).length}\n`;
+    report += `- Invalid endpoints: ${apiResults.results.filter(r => !r.valid).length}\n\n`;
+    
+    if (apiResults.results.filter(r => !r.valid).length > 0) {
+      report += `- Failed endpoints:\n`;
+      apiResults.results.filter(r => !r.valid).forEach(endpoint => {
+        report += `  - ${endpoint.method} ${endpoint.endpoint}: ${endpoint.error || 'Unknown error'}\n`;
+      });
     }
     
     return {

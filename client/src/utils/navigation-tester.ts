@@ -63,12 +63,14 @@ export const checkPageInteractiveElements = (pagePath: string): Promise<{
 export const verifyToastBehavior = async (): Promise<{ 
   automatic: boolean; 
   closable: boolean;
+  accessible: boolean;
   recommendations: string[];
 }> => {
   return new Promise(resolve => {
     // Check if auto-dismiss-toaster is being used
     let automatic = false;
     let closable = true;
+    let accessible = true;
     const recommendations: string[] = [];
     
     // Check for AutoDismissToaster component in the DOM or imported modules
@@ -96,14 +98,45 @@ export const verifyToastBehavior = async (): Promise<{
         if (!hasCloseButton) {
           recommendations.push('Add a close button to toast notifications for better accessibility');
         }
+        
+        // Check for accessibility features
+        const accessibilityFeatures = Array.from(toastComponents).every(toast => {
+          const hasRole = toast.hasAttribute('role');
+          const hasAriaLive = toast.hasAttribute('aria-live');
+          const closeButton = toast.querySelector('button[aria-label]');
+          const hasKeyboardAccess = closeButton && closeButton.hasAttribute('tabindex');
+          
+          return hasRole && hasAriaLive && (closeButton ? hasKeyboardAccess : true);
+        });
+        
+        accessible = accessibilityFeatures;
+        
+        if (!accessible) {
+          recommendations.push('Improve toast accessibility by adding proper ARIA attributes and keyboard navigation');
+        }
       } else {
         // No toasts found, check for default implementation
         closable = true; // Assume default implementation has close button
+        accessible = true; // Assume accessible by default
+      }
+      
+      // Check for toast position and contrast
+      const toastPosition = document.querySelectorAll('.toast-position-top-right, .toast-position-bottom-right, .toast-position-top-left, .toast-position-bottom-left');
+      if (toastPosition.length === 0 && toastComponents.length > 0) {
+        recommendations.push('Consider positioning toasts in a consistent location (top-right or bottom-right recommended)');
       }
       
       // Additional recommendations
       if (!automatic && !closable) {
         recommendations.push('Current toast implementation may cause usability issues as notifications cannot be dismissed');
+      }
+      
+      // Check for appropriate z-index
+      const computedStyles = Array.from(toastComponents).map(toast => window.getComputedStyle(toast));
+      const hasHighZIndex = computedStyles.some(style => parseInt(style.zIndex) >= 1000);
+      
+      if (!hasHighZIndex && toastComponents.length > 0) {
+        recommendations.push('Ensure toast notifications have a high z-index to appear above other content');
       }
       
       if (recommendations.length === 0) {
@@ -117,6 +150,7 @@ export const verifyToastBehavior = async (): Promise<{
     resolve({
       automatic,
       closable,
+      accessible,
       recommendations
     });
   });
