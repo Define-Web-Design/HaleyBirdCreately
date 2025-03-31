@@ -511,7 +511,7 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "# Kill any running processes first"
+args = "# Kill any running processes"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
@@ -539,7 +539,7 @@ args = ""
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "# Validate security implementation"
+args = "# Run security validation"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
@@ -551,19 +551,11 @@ args = ""
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "# Run navigation and link validation "
+args = "# Run the accessibility audit"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "node -e \"const { verifyPageLinks } = require('./client/src/utils/navigation-tester.js'); verifyPageLinks().then(results => console.log(JSON.stringify(results, null, 2)))\""
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = ""
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "# Run accessibility audit"
+args = "npm run build"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
@@ -575,7 +567,19 @@ args = ""
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "# Validate API endpoints"
+args = "# Check navigation links"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node -e \"const { verifyPageLinks } = require('./client/src/utils/navigation-tester.js'); verifyPageLinks().then(results => console.log(JSON.stringify(results, null, 2)))\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run API endpoint validation"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
@@ -587,23 +591,11 @@ args = ""
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "# Run keyboard navigation test"
+args = "# Run the new comprehensive validation system"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "node -e \"const { testKeyboardNavigation } = require('./client/src/utils/navigation-tester.js'); testKeyboardNavigation().then(results => console.log(JSON.stringify(results, null, 2)))\""
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = ""
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "# Run the comprehensive validation and display detailed report"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "node -e \"require('./client/src/utils/validate-implementation.js').validateImplementation().then(require('./client/src/utils/validate-implementation.js').displayValidationResults)\""
+args = "node -e \"const { validateBeforeCheckpoint } = require('./client/src/utils/validation-coordinator.js'); validateBeforeCheckpoint('Full workflow validation').then(canProceed => { console.log('Can create checkpoint:', canProceed); process.exit(canProceed ? 0 : 1); })\""
 
 [[workflows.workflow]]
 name = "Development Server"
