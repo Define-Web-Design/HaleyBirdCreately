@@ -1,13 +1,13 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { useTheme } from '@/lib/hooks/use-theme';
-import { useLocation } from 'wouter';
+import { Link, useLocation } from 'wouter';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { PLATFORMS } from '@/lib/constants';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 // Example data for Sophia
 const mockCreativeHistory = [
@@ -34,11 +34,91 @@ const userData = {
 // Mock connected platforms
 const connectedPlatforms = ["Instagram", "LinkedIn"];
 
+// Color blindness simulation modes
+const colorBlindnessTypes = [
+  { id: 'none', name: 'None' },
+  { id: 'protanopia', name: 'Protanopia (Red-Blind)' },
+  { id: 'deuteranopia', name: 'Deuteranopia (Green-Blind)' },
+  { id: 'tritanopia', name: 'Tritanopia (Blue-Blind)' },
+  { id: 'achromatopsia', name: 'Achromatopsia (Monochrome)' }
+];
+
 export default function Profile() {
   const { isDark, toggleTheme } = useTheme();
   const [fontSize, setFontSize] = useState(16);
   const [highContrast, setHighContrast] = useState(false);
-  const [location] = useLocation();
+  const [reducedMotion, setReducedMotion] = useState(false);
+  const [screenReaderOptimized, setScreenReaderOptimized] = useState(false);
+  const [colorBlindnessMode, setColorBlindnessMode] = useState('none');
+  const [hapticsEnabled, setHapticsEnabled] = useState(false);
+  const [location, setLocation] = useLocation();
+  
+  // Apply font size to document root
+  useEffect(() => {
+    document.documentElement.style.fontSize = `${fontSize}px`;
+    
+    // Cleanup on unmount
+    return () => {
+      document.documentElement.style.fontSize = '';
+    };
+  }, [fontSize]);
+  
+  // Apply color blindness filter to the entire app
+  useEffect(() => {
+    document.body.dataset.colorBlindness = colorBlindnessMode;
+    
+    // Add CSS filter based on color blindness mode
+    const html = document.documentElement;
+    
+    switch(colorBlindnessMode) {
+      case 'protanopia':
+        html.style.filter = 'url(#protanopia-filter)';
+        break;
+      case 'deuteranopia':
+        html.style.filter = 'url(#deuteranopia-filter)';
+        break;  
+      case 'tritanopia':
+        html.style.filter = 'url(#tritanopia-filter)';
+        break;
+      case 'achromatopsia':
+        html.style.filter = 'grayscale(100%)';
+        break;
+      default:
+        html.style.filter = '';
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      html.style.filter = '';
+      delete document.body.dataset.colorBlindness;
+    };
+  }, [colorBlindnessMode]);
+  
+  // Apply reduced motion setting
+  useEffect(() => {
+    if (reducedMotion) {
+      document.body.classList.add('reduce-motion');
+    } else {
+      document.body.classList.remove('reduce-motion');
+    }
+    
+    return () => {
+      document.body.classList.remove('reduce-motion');
+    };
+  }, [reducedMotion]);
+  
+  // Apply high contrast
+  useEffect(() => {
+    if (highContrast) {
+      document.body.classList.add('high-contrast');
+    } else {
+      document.body.classList.remove('high-contrast');
+    }
+    
+    return () => {
+      document.body.classList.remove('high-contrast');
+    };
+  }, [highContrast]);
   
   // Determine which tab to show based on the URL
   const getActiveTab = () => {
@@ -46,9 +126,58 @@ export default function Profile() {
     if (location.includes('/integrations')) return 'integrations';
     return 'general';
   };
+  
+  // Change tabs through URL
+  const handleTabChange = (value: string) => {
+    if (value === 'accessibility') {
+      setLocation('/profile/accessibility');
+    } else if (value === 'integrations') {
+      setLocation('/profile/integrations');
+    } else {
+      setLocation('/profile');
+    }
+  };
 
   return (
     <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 space-y-6">
+      {/* SVG Filters for Color Blindness Simulation - hidden from view */}
+      <svg aria-hidden="true" className="absolute w-0 h-0 overflow-hidden">
+        <defs>
+          {/* Protanopia (red-blind) */}
+          <filter id="protanopia-filter">
+            <feColorMatrix 
+              type="matrix"
+              values="0.567, 0.433, 0, 0, 0
+                      0.558, 0.442, 0, 0, 0
+                      0, 0.242, 0.758, 0, 0
+                      0, 0, 0, 1, 0"
+            />
+          </filter>
+          
+          {/* Deuteranopia (green-blind) */}
+          <filter id="deuteranopia-filter">
+            <feColorMatrix 
+              type="matrix"
+              values="0.625, 0.375, 0, 0, 0
+                      0.7, 0.3, 0, 0, 0
+                      0, 0.3, 0.7, 0, 0
+                      0, 0, 0, 1, 0"
+            />
+          </filter>
+          
+          {/* Tritanopia (blue-blind) */}
+          <filter id="tritanopia-filter">
+            <feColorMatrix 
+              type="matrix"
+              values="0.95, 0.05, 0, 0, 0
+                      0, 0.433, 0.567, 0, 0
+                      0, 0.475, 0.525, 0, 0
+                      0, 0, 0, 1, 0"
+            />
+          </filter>
+        </defs>
+      </svg>
+    
       {/* Mobile profile summary - only visible on small screens */}
       <div className="md:hidden mb-6 p-4 bg-background rounded-lg border shadow-sm">
         <div className="flex items-center space-x-4">
@@ -132,7 +261,7 @@ export default function Profile() {
         
         {/* Main content */}
         <div className="flex-1 w-full">
-          <Tabs defaultValue={getActiveTab()} className="w-full">
+          <Tabs defaultValue={getActiveTab()} className="w-full" onValueChange={handleTabChange}>
             <TabsList className="mb-4 w-full flex overflow-x-auto no-scrollbar">
               <TabsTrigger value="general" className="flex-1">General</TabsTrigger>
               <TabsTrigger value="accessibility" className="flex-1">Accessibility</TabsTrigger>
@@ -198,13 +327,14 @@ export default function Profile() {
                     ))}
                   </div>
                   <div className="flex flex-col sm:flex-row gap-2 mt-4">
-                    <Button 
-                      variant="ghost" 
-                      className="w-full" 
-                      onClick={() => window.location.href = "/analytics"}
-                    >
-                      View Full History
-                    </Button>
+                    <Link href="/analytics">
+                      <Button 
+                        variant="ghost" 
+                        className="w-full"
+                      >
+                        View Full History
+                      </Button>
+                    </Link>
                     <Button 
                       variant="outline" 
                       className="w-full sm:w-auto"
@@ -226,14 +356,15 @@ export default function Profile() {
                       <h4 className="font-medium">Ownership Verification</h4>
                       <p className="text-sm text-muted-foreground">Verify ownership of your creative content</p>
                     </div>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="self-start sm:self-auto"
-                      onClick={() => window.location.href = "/content-vault"}
-                    >
-                      Manage
-                    </Button>
+                    <Link href="/content-vault">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="self-start sm:self-auto"
+                      >
+                        Manage
+                      </Button>
+                    </Link>
                   </div>
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                     <div className="mb-3 sm:mb-0">
@@ -270,84 +401,149 @@ export default function Profile() {
               <Card>
                 <CardHeader>
                   <CardTitle>Accessibility Settings</CardTitle>
-                  <CardDescription>Customize your experience</CardDescription>
+                  <CardDescription>Customize your experience for better accessibility</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="grid grid-cols-1 gap-6">
-                    <div className="p-4 border rounded-md">
-                      <div className="flex flex-row items-center justify-between mb-1">
-                        <label className="font-medium">Dark Mode</label>
-                        <Switch 
-                          checked={isDark} 
-                          onCheckedChange={toggleTheme}
-                          className="data-[state=checked]:bg-primary"
-                        />
+                    {/* Display Settings */}
+                    <div>
+                      <h3 className="text-lg font-medium mb-3">Display</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="p-4 border rounded-md">
+                          <div className="flex flex-row items-center justify-between mb-1">
+                            <label className="font-medium">Dark Mode</label>
+                            <Switch 
+                              checked={isDark} 
+                              onCheckedChange={toggleTheme}
+                              className="data-[state=checked]:bg-primary"
+                            />
+                          </div>
+                          <p className="text-sm text-muted-foreground">Switch between light and dark themes</p>
+                        </div>
+                        
+                        <div className="p-4 border rounded-md">
+                          <div className="flex flex-row items-center justify-between mb-1">
+                            <label className="font-medium">High Contrast</label>
+                            <Switch 
+                              checked={highContrast} 
+                              onCheckedChange={setHighContrast}
+                              className="data-[state=checked]:bg-primary"
+                            />
+                          </div>
+                          <p className="text-sm text-muted-foreground">Increase contrast for better readability</p>
+                        </div>
                       </div>
-                      <p className="text-sm text-muted-foreground">Switch between light and dark themes</p>
                     </div>
                     
-                    <div className="p-4 border rounded-md">
-                      <div className="flex flex-row items-center justify-between mb-1">
-                        <label className="font-medium">High Contrast</label>
-                        <Switch 
-                          checked={highContrast} 
-                          onCheckedChange={setHighContrast}
-                          className="data-[state=checked]:bg-primary"
-                        />
-                      </div>
-                      <p className="text-sm text-muted-foreground">Increase contrast for better readability</p>
-                    </div>
-                    
-                    <div className="p-4 border rounded-md space-y-2">
-                      <label className="font-medium block">Text Size</label>
-                      <p className="text-sm text-muted-foreground">Adjust the size of text throughout the app</p>
-                      <div className="flex items-center justify-between mt-2">
-                        <Button 
-                          variant="outline" 
-                          onClick={() => setFontSize(s => Math.max(s - 2, 12))}
-                          className="flex-1"
+                    {/* Color Blindness Options */}
+                    <div>
+                      <h3 className="text-lg font-medium mb-3">Color Blindness Support</h3>
+                      <div className="p-4 border rounded-md">
+                        <label className="font-medium block mb-2">Color Blindness Mode</label>
+                        <p className="text-sm text-muted-foreground mb-3">Adjust colors to accommodate different types of color vision deficiency</p>
+                        
+                        <Select 
+                          value={colorBlindnessMode} 
+                          onValueChange={setColorBlindnessMode}
                         >
-                          A-
-                        </Button>
-                        <span className="px-4 text-center">{fontSize}px</span>
-                        <Button 
-                          variant="outline"
-                          onClick={() => setFontSize(s => Math.min(s + 2, 24))}
-                          className="flex-1"
-                        >
-                          A+
-                        </Button>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select a color blindness mode" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {colorBlindnessTypes.map(type => (
+                              <SelectItem key={type.id} value={type.id}>
+                                {type.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        
+                        <div className="mt-4 flex flex-wrap gap-3">
+                          <div className="w-12 h-12 rounded-md bg-red-500 border" aria-label="Red color sample"></div>
+                          <div className="w-12 h-12 rounded-md bg-green-500 border" aria-label="Green color sample"></div>
+                          <div className="w-12 h-12 rounded-md bg-blue-500 border" aria-label="Blue color sample"></div>
+                          <div className="w-12 h-12 rounded-md bg-yellow-500 border" aria-label="Yellow color sample"></div>
+                          <div className="w-12 h-12 rounded-md bg-purple-500 border" aria-label="Purple color sample"></div>
+                        </div>
+                        
+                        <p className="text-xs text-muted-foreground mt-2">Color samples help you verify the current filter effect</p>
                       </div>
                     </div>
                     
-                    <div className="p-4 border rounded-md">
-                      <div className="flex flex-row items-center justify-between mb-1">
-                        <label className="font-medium">Reduced Motion</label>
-                        <Switch className="data-[state=checked]:bg-primary" />
+                    {/* Text Size */}
+                    <div>
+                      <h3 className="text-lg font-medium mb-3">Text</h3>
+                      <div className="p-4 border rounded-md space-y-2">
+                        <label className="font-medium block">Text Size</label>
+                        <p className="text-sm text-muted-foreground">Adjust the size of text throughout the app</p>
+                        <div className="flex items-center justify-between mt-2">
+                          <Button 
+                            variant="outline" 
+                            onClick={() => setFontSize(s => Math.max(s - 1, 12))}
+                            aria-label="Decrease text size"
+                            className="flex-1"
+                          >
+                            A-
+                          </Button>
+                          <span className="px-4 text-center">{fontSize}px</span>
+                          <Button 
+                            variant="outline"
+                            onClick={() => setFontSize(s => Math.min(s + 1, 24))}
+                            aria-label="Increase text size"
+                            className="flex-1"
+                          >
+                            A+
+                          </Button>
+                        </div>
+                        <div className="mt-3 text-base">
+                          <p>Example text at current size</p>
+                        </div>
                       </div>
-                      <p className="text-sm text-muted-foreground">Minimize animations throughout the interface</p>
                     </div>
                     
-                    <div className="p-4 border rounded-md">
-                      <div className="flex flex-row items-center justify-between mb-1">
-                        <label className="font-medium">Screen Reader Optimized</label>
-                        <Switch className="data-[state=checked]:bg-primary" />
+                    {/* Motion & Interaction */}
+                    <div>
+                      <h3 className="text-lg font-medium mb-3">Motion & Interaction</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="p-4 border rounded-md">
+                          <div className="flex flex-row items-center justify-between mb-1">
+                            <label className="font-medium">Reduced Motion</label>
+                            <Switch 
+                              checked={reducedMotion}
+                              onCheckedChange={setReducedMotion}
+                              className="data-[state=checked]:bg-primary"
+                            />
+                          </div>
+                          <p className="text-sm text-muted-foreground">Minimize animations throughout the interface</p>
+                        </div>
+                        
+                        <div className="p-4 border rounded-md">
+                          <div className="flex flex-row items-center justify-between mb-1">
+                            <label className="font-medium">Haptic Feedback</label>
+                            <Switch 
+                              checked={hapticsEnabled}
+                              onCheckedChange={setHapticsEnabled}
+                              className="data-[state=checked]:bg-primary"
+                            />
+                          </div>
+                          <p className="text-sm text-muted-foreground">Enable vibration feedback on mobile devices</p>
+                        </div>
                       </div>
-                      <p className="text-sm text-muted-foreground">Enhanced support for screen readers</p>
                     </div>
                     
-                    <div className="p-4 border rounded-md">
-                      <div className="flex flex-row items-center justify-between mb-1">
-                        <label className="font-medium">Color Blind Mode</label>
-                        <span className="text-sm text-muted-foreground">Active</span>
-                      </div>
-                      <p className="text-sm text-muted-foreground mb-3">Adjust colors to accommodate different types of color blindness</p>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                        <Button size="sm" variant="outline" className="w-full">None</Button>
-                        <Button size="sm" variant="outline" className="w-full">Protanopia</Button>
-                        <Button size="sm" variant="outline" className="w-full">Deuteranopia</Button>
-                        <Button size="sm" variant="outline" className="w-full">Tritanopia</Button>
-                        <Button size="sm" variant="outline" className="w-full">Grayscale</Button>
+                    {/* Assistive Technology */}
+                    <div>
+                      <h3 className="text-lg font-medium mb-3">Assistive Technology</h3>
+                      <div className="p-4 border rounded-md">
+                        <div className="flex flex-row items-center justify-between mb-1">
+                          <label className="font-medium">Screen Reader Optimized</label>
+                          <Switch 
+                            checked={screenReaderOptimized}
+                            onCheckedChange={setScreenReaderOptimized}
+                            className="data-[state=checked]:bg-primary"
+                          />
+                        </div>
+                        <p className="text-sm text-muted-foreground">Enhance interface elements and descriptions for screen readers</p>
                       </div>
                     </div>
                   </div>
@@ -360,130 +556,66 @@ export default function Profile() {
               <Card>
                 <CardHeader>
                   <CardTitle>Connected Platforms</CardTitle>
-                  <CardDescription>Manage your connected social media accounts</CardDescription>
+                  <CardDescription>Manage your platform connections</CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 gap-4">
-                    {PLATFORMS.map((platform) => (
-                      <div 
-                        key={platform.name} 
-                        className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border rounded-md"
-                      >
-                        <div className="flex items-center mb-3 sm:mb-0">
-                          <div className={`w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center ${platform.color} mr-3`}>
-                            <i className={`${platform.icon} text-xl`}></i>
-                          </div>
-                          <div>
-                            <p className="font-medium">{platform.name}</p>
-                            <p className="text-xs text-muted-foreground">{platform.type.replace(/_/g, ' ')}</p>
-                          </div>
+                <CardContent className="space-y-4">
+                  {PLATFORMS.map((platform) => (
+                    <div 
+                      key={platform.name}
+                      className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    >
+                      <div className="flex items-center mb-3 sm:mb-0">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 ${platform.color}`}>
+                          <i className={platform.icon}></i>
                         </div>
-                        <div className="w-full sm:w-auto flex flex-col sm:flex-row gap-2">
-                          <Button 
-                            variant={connectedPlatforms.includes(platform.name) ? "outline" : "default"}
-                            size="sm"
-                            className="w-full sm:w-auto"
-                          >
-                            {connectedPlatforms.includes(platform.name) ? "Disconnect" : "Connect"}
-                          </Button>
-                          {connectedPlatforms.includes(platform.name) && (
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              className="w-full sm:w-auto"
-                            >
-                              Settings
-                            </Button>
-                          )}
+                        <div className="ml-3">
+                          <h4 className="font-medium">{platform.name}</h4>
+                          <p className="text-sm text-muted-foreground">
+                            {connectedPlatforms.includes(platform.name) 
+                              ? "Connected" 
+                              : "Not connected"}
+                          </p>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                  <div className="mt-6">
-                    <p className="text-sm text-muted-foreground mb-2">
-                      Connect your social media accounts to share your creative work directly from Creately
-                    </p>
-                    <Button variant="outline" className="w-full sm:w-auto">
-                      Connect New Platform
-                    </Button>
-                  </div>
+                      <Button 
+                        variant={connectedPlatforms.includes(platform.name) ? "outline" : "default"}
+                        size="sm"
+                      >
+                        {connectedPlatforms.includes(platform.name) ? "Disconnect" : "Connect"}
+                      </Button>
+                    </div>
+                  ))}
                 </CardContent>
               </Card>
               
               <Card>
                 <CardHeader>
-                  <CardTitle>API Preferences</CardTitle>
-                  <CardDescription>Configure AI model preferences and API settings</CardDescription>
+                  <CardTitle>Sharing Settings</CardTitle>
+                  <CardDescription>Configure how content is shared to platforms</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="p-4 border rounded-md">
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3">
-                      <div className="mb-2 sm:mb-0">
-                        <div className="flex items-center mb-1">
-                          <p className="font-medium mr-2">OpenAI Integration</p>
-                          <Badge variant="outline" className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
-                            Active
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground">Connected: March 20, 2025</p>
-                      </div>
-                      <div className="w-full sm:w-auto">
-                        <p className="text-sm text-muted-foreground hidden sm:block">API Usage: 85% of monthly limit</p>
-                      </div>
+                    <div className="flex flex-row items-center justify-between mb-1">
+                      <label className="font-medium">Automatic Sharing</label>
+                      <Switch className="data-[state=checked]:bg-primary" />
                     </div>
-                    <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden mb-3 sm:mb-4">
-                      <div className="h-full bg-green-500 dark:bg-green-600" style={{ width: '85%' }}></div>
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-3 sm:hidden">API Usage: 85% of monthly limit</p>
-                    <div className="flex flex-col sm:flex-row gap-2">
-                      <Button variant="outline" size="sm" className="w-full sm:w-auto">Configure</Button>
-                      <Button variant="ghost" size="sm" className="w-full sm:w-auto">View Usage</Button>
-                      <Button variant="ghost" size="sm" className="w-full sm:w-auto text-red-500 hover:text-red-600">Disconnect</Button>
-                    </div>
+                    <p className="text-sm text-muted-foreground">Automatically share new palettes and mood capsules</p>
                   </div>
                   
                   <div className="p-4 border rounded-md">
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3">
-                      <div className="mb-2 sm:mb-0">
-                        <div className="flex items-center mb-1">
-                          <p className="font-medium mr-2">Midjourney</p>
-                          <Badge variant="outline" className="bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300">
-                            Inactive
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground">Image generation API not connected</p>
-                      </div>
+                    <div className="flex flex-row items-center justify-between mb-1">
+                      <label className="font-medium">Share Analytics</label>
+                      <Switch className="data-[state=checked]:bg-primary" />
                     </div>
-                    <div className="mt-2">
-                      <Button size="sm" className="w-full sm:w-auto">Connect API</Button>
-                    </div>
+                    <p className="text-sm text-muted-foreground">Allow analytics data to be shared with integrations</p>
                   </div>
                   
                   <div className="p-4 border rounded-md">
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3">
-                      <div className="mb-2 sm:mb-0">
-                        <div className="flex items-center mb-1">
-                          <p className="font-medium mr-2">Stability AI</p>
-                          <Badge variant="outline" className="bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300">
-                            Inactive
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground">Advanced image processing and generation</p>
-                      </div>
+                    <div className="flex flex-row items-center justify-between mb-1">
+                      <label className="font-medium">Import Content</label>
+                      <Button variant="outline" size="sm">Import Now</Button>
                     </div>
-                    <div className="mt-2">
-                      <Button size="sm" className="w-full sm:w-auto">Connect API</Button>
-                    </div>
-                  </div>
-                  
-                  <div className="p-4 border rounded-md border-dashed">
-                    <div className="text-center py-4">
-                      <p className="font-medium mb-2">Add Custom API Integration</p>
-                      <p className="text-sm text-muted-foreground mb-4">Connect a custom AI service to expand capabilities</p>
-                      <Button variant="outline" className="w-full sm:w-auto">
-                        Add Custom API
-                      </Button>
-                    </div>
+                    <p className="text-sm text-muted-foreground">Import content from connected platforms</p>
                   </div>
                 </CardContent>
               </Card>
