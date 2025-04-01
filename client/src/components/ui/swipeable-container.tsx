@@ -1,130 +1,136 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useSwipe } from '@/lib/useGestures';
 
-interface SwipeableContainerProps extends React.HTMLAttributes<HTMLDivElement> {
+interface SwipeableContainerProps {
+  children: React.ReactNode;
+  className?: string;
   onSwipeLeft?: () => void;
   onSwipeRight?: () => void;
-  onSwipeUp?: () => void;
-  onSwipeDown?: () => void;
   swipeThreshold?: number;
-  disableSwipe?: boolean;
-  children: React.ReactNode;
+  leftAction?: React.ReactNode;
+  rightAction?: React.ReactNode;
+  disabled?: boolean;
 }
 
-const SwipeableContainer: React.FC<SwipeableContainerProps> = ({
-  onSwipeLeft,
-  onSwipeRight,
-  onSwipeUp,
-  onSwipeDown,
-  swipeThreshold = 50,
-  disableSwipe = false,
+export const SwipeableContainer: React.FC<SwipeableContainerProps> = ({
   children,
   className = '',
-  ...props
+  onSwipeLeft,
+  onSwipeRight,
+  swipeThreshold = 100,
+  leftAction,
+  rightAction,
+  disabled = false,
 }) => {
-  // Get swipe handlers
-  const { swipeHandlers, swipeDirection } = useSwipe({
-    onSwipeLeft,
-    onSwipeRight,
-    onSwipeUp,
-    onSwipeDown,
-    threshold: swipeThreshold,
-    disabled: disableSwipe,
-  });
+  const [offset, setOffset] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const initialX = useRef<number | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Add visual feedback for swipe
-  const [feedbackActive, setFeedbackActive] = useState(false);
-  const [feedbackDirection, setFeedbackDirection] = useState<string | null>(null);
-  const feedbackTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
+  // Reset offset when actions change or component mounts
   useEffect(() => {
-    if (swipeDirection) {
-      setFeedbackActive(true);
-      setFeedbackDirection(swipeDirection);
-      
-      // Clear previous timeout if exists
-      if (feedbackTimeoutRef.current) {
-        clearTimeout(feedbackTimeoutRef.current);
-      }
-      
-      // Clear feedback after animation
-      feedbackTimeoutRef.current = setTimeout(() => {
-        setFeedbackActive(false);
-        setFeedbackDirection(null);
-      }, 300);
-    }
-    
-    return () => {
-      if (feedbackTimeoutRef.current) {
-        clearTimeout(feedbackTimeoutRef.current);
-      }
-    };
-  }, [swipeDirection]);
+    setOffset(0);
+  }, [leftAction, rightAction]);
 
-  // Generate animation class based on swipe direction
-  const getFeedbackClass = () => {
-    if (!feedbackActive || !feedbackDirection) return '';
-    
-    const baseClass = 'transition-transform duration-300 ease-out';
-    
-    switch (feedbackDirection) {
-      case 'left':
-        return `${baseClass} -translate-x-2`;
-      case 'right':
-        return `${baseClass} translate-x-2`;
-      case 'up':
-        return `${baseClass} -translate-y-2`;
-      case 'down':
-        return `${baseClass} translate-y-2`;
-      default:
-        return '';
-    }
+  // Create custom swipe handlers for this component
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (disabled) return;
+    initialX.current = e.touches[0].clientX;
+    setIsDragging(true);
   };
 
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (disabled || initialX.current === null) return;
+    
+    const currentX = e.touches[0].clientX;
+    const diffX = currentX - initialX.current;
+    
+    // Limit the offset based on actions available
+    if ((diffX > 0 && !rightAction) || (diffX < 0 && !leftAction)) {
+      setOffset(0);
+      return;
+    }
+    
+    // Apply resistance as we move further
+    const resistance = Math.abs(diffX) > 50 ? 0.5 : 1;
+    setOffset(diffX * resistance);
+  };
+
+  const handleTouchEnd = () => {
+    if (disabled || initialX.current === null) return;
+    
+    // Check if swipe was long enough to trigger action
+    if (offset > swipeThreshold && onSwipeRight) {
+      onSwipeRight();
+    } else if (offset < -swipeThreshold && onSwipeLeft) {
+      onSwipeLeft();
+    }
+    
+    // Reset state
+    initialX.current = null;
+    setOffset(0);
+    setIsDragging(false);
+  };
+
+  // For click outside to cancel swiping
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node) && offset !== 0) {
+        setOffset(0);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [offset]);
+
   return (
-    <div
-      className={`${className} ${getFeedbackClass()} touch-manipulation`}
-      {...swipeHandlers}
-      {...props}
+    <div 
+      ref={containerRef}
+      className={`relative overflow-hidden ${className}`}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
-      {children}
+      {/* Left action indicator */}
+      {leftAction && (
+        <div
+          className="absolute inset-y-0 right-0 flex items-center justify-center bg-red-500 text-white px-4"
+          style={{
+            transform: `translateX(100%) ${offset < 0 ? `translateX(${offset}px)` : ''}`,
+            opacity: offset < 0 ? Math.min(Math.abs(offset) / swipeThreshold, 1) : 0,
+            width: swipeThreshold,
+          }}
+        >
+          {leftAction}
+        </div>
+      )}
+
+      {/* Right action indicator */}
+      {rightAction && (
+        <div
+          className="absolute inset-y-0 left-0 flex items-center justify-center bg-green-500 text-white px-4"
+          style={{
+            transform: `translateX(-100%) ${offset > 0 ? `translateX(${offset}px)` : ''}`,
+            opacity: offset > 0 ? Math.min(offset / swipeThreshold, 1) : 0,
+            width: swipeThreshold,
+          }}
+        >
+          {rightAction}
+        </div>
+      )}
+
+      {/* Main content */}
+      <div 
+        style={{ 
+          transform: `translateX(${offset}px)`,
+          transition: isDragging ? 'none' : 'transform 0.3s ease-out'
+        }}
+      >
+        {children}
+      </div>
     </div>
-  );
-};
-
-export { SwipeableContainer };
-
-// Example usage with a card component
-interface SwipeableCardProps {
-  title: string;
-  content: React.ReactNode;
-  onDismiss?: () => void;
-  onSwipeLeft?: () => void;
-  onSwipeRight?: () => void;
-  onSwipeUp?: () => void;
-  onSwipeDown?: () => void;
-  swipeThreshold?: number;
-  disableSwipe?: boolean;
-}
-
-export const SwipeableCard: React.FC<SwipeableCardProps> = ({
-  title,
-  content,
-  onDismiss,
-  ...swipeProps
-}) => {
-  return (
-    <SwipeableContainer
-      className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 overflow-hidden"
-      onSwipeLeft={onDismiss || swipeProps.onSwipeLeft}
-      onSwipeRight={swipeProps.onSwipeRight}
-      onSwipeUp={swipeProps.onSwipeUp}
-      onSwipeDown={swipeProps.onSwipeDown}
-      swipeThreshold={swipeProps.swipeThreshold}
-      disableSwipe={swipeProps.disableSwipe}
-    >
-      <h3 className="text-lg font-medium mb-2">{title}</h3>
-      <div>{content}</div>
-    </SwipeableContainer>
   );
 };

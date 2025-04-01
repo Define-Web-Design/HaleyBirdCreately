@@ -1,139 +1,115 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
-import { applyColorBlindMode, ColorBlindModeType } from './colorBlindUtils';
-
-export type ThemeType = 'light' | 'dark' | 'system';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 interface ThemeContextProps {
-  theme: ThemeType;
-  setTheme: (theme: ThemeType) => void;
-  isDark: boolean;
-  fontSize: number;
-  setFontSize: (size: number) => void;
-  highContrast: boolean;
-  setHighContrast: (contrast: boolean) => void;
-  colorBlindMode: ColorBlindModeType;
-  setColorBlindMode: (mode: ColorBlindModeType) => void;
+  theme: string;
+  isDarkMode: boolean;
+  isColorBlindMode: boolean;
+  updateThemeColor: (color: string) => void;
+  toggleDarkMode: () => void;
+  toggleColorBlindMode: () => void;
 }
 
-const ThemeContext = createContext<ThemeContextProps>({
-  theme: 'system',
-  setTheme: () => {},
-  isDark: false,
-  fontSize: 16,
-  setFontSize: () => {},
-  highContrast: false,
-  setHighContrast: () => {},
-  colorBlindMode: 'none',
-  setColorBlindMode: () => {},
-});
+const defaultThemeContext: ThemeContextProps = {
+  theme: '#7c3aed', // Default purple
+  isDarkMode: false,
+  isColorBlindMode: false,
+  updateThemeColor: () => {},
+  toggleDarkMode: () => {},
+  toggleColorBlindMode: () => {},
+};
 
-export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Load settings from localStorage or use defaults
-  const [theme, setThemeState] = useState<ThemeType>(
-    () => (localStorage.getItem('theme') as ThemeType) || 'system'
+const ThemeContext = createContext<ThemeContextProps>(defaultThemeContext);
+
+interface ThemeProviderProps {
+  children: ReactNode;
+}
+
+export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
+  const [theme, setTheme] = useState<string>(defaultThemeContext.theme);
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(
+    () => localStorage.getItem('darkMode') === 'true' || 
+          window.matchMedia('(prefers-color-scheme: dark)').matches
   );
-  
-  const [isDark, setIsDark] = useState(() => {
-    if (theme === 'dark') return true;
-    if (theme === 'light') return false;
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
-  });
-  
-  const [fontSize, setFontSizeState] = useState(() => {
-    return parseInt(localStorage.getItem('fontSize') || '16', 10);
-  });
-  
-  const [highContrast, setHighContrastState] = useState(() => {
-    return localStorage.getItem('highContrast') === 'true';
-  });
-  
-  const [colorBlindMode, setColorBlindModeState] = useState<ColorBlindModeType>(() => {
-    return (localStorage.getItem('colorBlindMode') as ColorBlindModeType) || 'none';
-  });
+  const [isColorBlindMode, setIsColorBlindMode] = useState<boolean>(
+    localStorage.getItem('colorBlindMode') === 'true'
+  );
 
-  // Update theme when system preference changes
+  // Load theme from localStorage on mount
   useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    
-    const handleChange = () => {
-      if (theme === 'system') {
-        setIsDark(mediaQuery.matches);
+    const savedTheme = localStorage.getItem('themeColor');
+    if (savedTheme) {
+      setTheme(savedTheme);
+    }
+  }, []);
+
+  // Update document with current theme settings
+  useEffect(() => {
+    // Save settings to localStorage
+    localStorage.setItem('themeColor', theme);
+    localStorage.setItem('darkMode', String(isDarkMode));
+    localStorage.setItem('colorBlindMode', String(isColorBlindMode));
+
+    // Update theme.json via API
+    const updateTheme = async () => {
+      try {
+        await fetch('/api/theme', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            primary: theme,
+            appearance: isDarkMode ? 'dark' : 'light',
+            variant: isColorBlindMode ? 'professional' : 'vibrant',
+            radius: 0.5,
+          }),
+        });
+      } catch (error) {
+        console.error('Failed to update theme:', error);
       }
     };
-    
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
-  }, [theme]);
 
-  // Apply theme changes to document
-  useEffect(() => {
-    if (isDark) {
+    updateTheme();
+
+    // Apply color blind mode CSS modifications
+    if (isColorBlindMode) {
+      document.documentElement.classList.add('color-blind-mode');
+    } else {
+      document.documentElement.classList.remove('color-blind-mode');
+    }
+
+    // Apply dark/light mode
+    if (isDarkMode) {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
     }
-  }, [isDark]);
+  }, [theme, isDarkMode, isColorBlindMode]);
 
-  // Apply high contrast
-  useEffect(() => {
-    if (highContrast) {
-      document.documentElement.classList.add('high-contrast');
-    } else {
-      document.documentElement.classList.remove('high-contrast');
-    }
-  }, [highContrast]);
-
-  // Apply font size
-  useEffect(() => {
-    document.documentElement.style.fontSize = `${fontSize}px`;
-  }, [fontSize]);
-
-  // Apply color blind mode
-  useEffect(() => {
-    applyColorBlindMode(colorBlindMode);
-  }, [colorBlindMode]);
-
-  // Setters with localStorage persistence
-  const setTheme = (newTheme: ThemeType) => {
-    localStorage.setItem('theme', newTheme);
-    setThemeState(newTheme);
-    
-    if (newTheme === 'dark') {
-      setIsDark(true);
-    } else if (newTheme === 'light') {
-      setIsDark(false);
-    } else {
-      setIsDark(window.matchMedia('(prefers-color-scheme: dark)').matches);
-    }
+  // Update theme color
+  const updateThemeColor = (color: string) => {
+    setTheme(color);
   };
 
-  const setFontSize = (size: number) => {
-    localStorage.setItem('fontSize', size.toString());
-    setFontSizeState(size);
+  // Toggle dark mode
+  const toggleDarkMode = () => {
+    setIsDarkMode((prev) => !prev);
   };
 
-  const setHighContrast = (contrast: boolean) => {
-    localStorage.setItem('highContrast', contrast.toString());
-    setHighContrastState(contrast);
-  };
-
-  const setColorBlindMode = (mode: ColorBlindModeType) => {
-    localStorage.setItem('colorBlindMode', mode);
-    setColorBlindModeState(mode);
+  // Toggle color blind mode
+  const toggleColorBlindMode = () => {
+    setIsColorBlindMode((prev) => !prev);
   };
 
   return (
     <ThemeContext.Provider
       value={{
         theme,
-        setTheme,
-        isDark,
-        fontSize,
-        setFontSize,
-        highContrast,
-        setHighContrast,
-        colorBlindMode,
-        setColorBlindMode,
+        isDarkMode,
+        isColorBlindMode,
+        updateThemeColor,
+        toggleDarkMode,
+        toggleColorBlindMode,
       }}
     >
       {children}

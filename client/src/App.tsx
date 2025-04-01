@@ -18,6 +18,7 @@ import MoodCapsules from "./pages/mood-capsules";
 import AIEnhancement from "./pages/ai-enhancement";
 import CreativePrompts from "./pages/creative-prompts";
 import CrossPlatformTools from "./pages/cross-platform-tools";
+import CreativeTools from "./pages/CreativeTools";
 import NavigationTest from "./pages/nav-test";
 import NotFound from "./pages/not-found";
 import Profile from './components/profile/Profile';
@@ -86,6 +87,7 @@ function Router() {
         <Route path="/mood-capsules" component={MoodCapsules} />
         <Route path="/ai-enhancement" component={AIEnhancement} />
         <Route path="/creative-prompts" component={CreativePrompts} />
+        <Route path="/creative-tools" component={CreativeTools} />
         <Route path="/cross-platform-tools" component={CrossPlatformTools} />
         <Route path="/profile" component={Profile} />
         <Route path="/profile/accessibility" component={Profile} />

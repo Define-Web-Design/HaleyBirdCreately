@@ -257,8 +257,317 @@ class Storage {
   }
 
   async deactivatePlatformIntegration(id: number): Promise<boolean> {
-    const updatedRows = await db.update(platformIntegrations).set({active: false}).where(eq(platformIntegrations.id, id));
+    const updatedRows = await db.update(platformIntegrations).set({isActive: false}).where(eq(platformIntegrations.id, id));
     return updatedRows.rowsAffected > 0;
+  }
+
+  // ColorPalette functions
+  async createColorPalette(paletteData: InsertColorPalette): Promise<ColorPalette> {
+    const createdPalettes = await db.insert(colorPalettes).values(paletteData).returning();
+    return createdPalettes[0];
+  }
+
+  async getColorPaletteById(id: number): Promise<ColorPalette | null> {
+    const result = await db.select().from(colorPalettes).where(eq(colorPalettes.id, id)).limit(1);
+    return result.length > 0 ? result[0] : null;
+  }
+
+  async getColorPalettesByUserId(userId: number): Promise<ColorPalette[]> {
+    return await db
+      .select()
+      .from(colorPalettes)
+      .where(eq(colorPalettes.userId, userId))
+      .orderBy(desc(colorPalettes.createdAt));
+  }
+
+  async getColorPalettesByMood(mood: string): Promise<ColorPalette[]> {
+    return await db
+      .select()
+      .from(colorPalettes)
+      .where(eq(colorPalettes.mood, mood))
+      .orderBy(desc(colorPalettes.createdAt));
+  }
+
+  async updateColorPalette(id: number, paletteData: Partial<ColorPalette>): Promise<ColorPalette> {
+    const updatedPalettes = await db
+      .update(colorPalettes)
+      .set({ ...paletteData, updatedAt: new Date() })
+      .where(eq(colorPalettes.id, id))
+      .returning();
+    return updatedPalettes[0];
+  }
+
+  async toggleFavoritePalette(id: number): Promise<ColorPalette> {
+    // First get current state
+    const palette = await this.getColorPaletteById(id);
+    if (!palette) throw new Error("Palette not found");
+    
+    // Toggle favorite state
+    const updatedPalettes = await db
+      .update(colorPalettes)
+      .set({ 
+        isFavorite: !palette.isFavorite,
+        updatedAt: new Date()
+      })
+      .where(eq(colorPalettes.id, id))
+      .returning();
+    return updatedPalettes[0];
+  }
+
+  async incrementPaletteUsage(id: number): Promise<ColorPalette> {
+    const palette = await this.getColorPaletteById(id);
+    if (!palette) throw new Error("Palette not found");
+    
+    const updatedPalettes = await db
+      .update(colorPalettes)
+      .set({ 
+        usageCount: palette.usageCount + 1,
+        updatedAt: new Date()
+      })
+      .where(eq(colorPalettes.id, id))
+      .returning();
+    return updatedPalettes[0];
+  }
+
+  // ContentSentiment functions
+  async createContentSentiment(sentimentData: InsertContentSentiment): Promise<ContentSentiment> {
+    const createdSentiments = await db.insert(contentSentiment).values(sentimentData).returning();
+    return createdSentiments[0];
+  }
+
+  async getContentSentimentById(id: number): Promise<ContentSentiment | null> {
+    const result = await db.select().from(contentSentiment).where(eq(contentSentiment.id, id)).limit(1);
+    return result.length > 0 ? result[0] : null;
+  }
+
+  async getContentSentimentByContentId(contentId: number): Promise<ContentSentiment | null> {
+    const result = await db.select().from(contentSentiment).where(eq(contentSentiment.contentId, contentId)).limit(1);
+    return result.length > 0 ? result[0] : null;
+  }
+
+  async getContentSentimentsByUserId(userId: number): Promise<ContentSentiment[]> {
+    return await db
+      .select()
+      .from(contentSentiment)
+      .where(eq(contentSentiment.userId, userId))
+      .orderBy(desc(contentSentiment.analyzedAt));
+  }
+
+  async updateContentSentiment(id: number, sentimentData: Partial<ContentSentiment>): Promise<ContentSentiment> {
+    const updatedSentiments = await db
+      .update(contentSentiment)
+      .set({ 
+        ...sentimentData, 
+        analyzedAt: new Date() 
+      })
+      .where(eq(contentSentiment.id, id))
+      .returning();
+    return updatedSentiments[0];
+  }
+
+  // Creative Symbiosis Framework functions
+  async createUserEngagement(engagementData: InsertUserEngagement): Promise<UserEngagement> {
+    const createdEngagements = await db.insert(userEngagement).values(engagementData).returning();
+    return createdEngagements[0];
+  }
+
+  async getUserEngagementsByUserId(userId: number): Promise<UserEngagement[]> {
+    return await db
+      .select()
+      .from(userEngagement)
+      .where(eq(userEngagement.userId, userId))
+      .orderBy(desc(userEngagement.createdAt));
+  }
+
+  async getEvolutionPointsByUserId(userId: number): Promise<EvolutionPoints | null> {
+    const result = await db.select().from(evolutionPoints).where(eq(evolutionPoints.userId, userId)).limit(1);
+    return result.length > 0 ? result[0] : null;
+  }
+
+  async createEvolutionPoints(pointsData: InsertEvolutionPoints): Promise<EvolutionPoints> {
+    const createdPoints = await db.insert(evolutionPoints).values(pointsData).returning();
+    return createdPoints[0];
+  }
+
+  async updateEvolutionPoints(userId: number, pointsData: Partial<EvolutionPoints>): Promise<EvolutionPoints> {
+    const updatedPoints = await db
+      .update(evolutionPoints)
+      .set({ 
+        ...pointsData, 
+        lastPointsUpdate: new Date() 
+      })
+      .where(eq(evolutionPoints.userId, userId))
+      .returning();
+    return updatedPoints[0];
+  }
+
+  async addEvolutionPoints(userId: number, pointsToAdd: number): Promise<EvolutionPoints> {
+    // First get the current points
+    const userPoints = await this.getEvolutionPointsByUserId(userId);
+    
+    if (!userPoints) {
+      // If user doesn't have points yet, create new record
+      return await this.createEvolutionPoints({
+        userId,
+        totalPoints: pointsToAdd,
+        currentTier: "Starter",
+        nextMilestone: 100,
+        creativeEnergyPoints: 100
+      });
+    }
+    
+    // Add points and determine new tier
+    const newTotalPoints = userPoints.totalPoints + pointsToAdd;
+    let currentTier = userPoints.currentTier;
+    let nextMilestone = userPoints.nextMilestone;
+    
+    // Update tier based on total points
+    if (newTotalPoints >= 1000) {
+      currentTier = "Expert";
+      nextMilestone = 0; // Max tier
+    } else if (newTotalPoints >= 500) {
+      currentTier = "Advanced";
+      nextMilestone = 1000;
+    } else if (newTotalPoints >= 250) {
+      currentTier = "Established";
+      nextMilestone = 500;
+    } else if (newTotalPoints >= 100) {
+      currentTier = "Growing";
+      nextMilestone = 250;
+    } else {
+      currentTier = "Starter";
+      nextMilestone = 100;
+    }
+    
+    // Update points in database
+    return await this.updateEvolutionPoints(userId, {
+      totalPoints: newTotalPoints,
+      currentTier,
+      nextMilestone
+    });
+  }
+
+  async getUserCapabilities(userId: number): Promise<UserCapabilities[]> {
+    return await db
+      .select()
+      .from(userCapabilities)
+      .where(eq(userCapabilities.userId, userId));
+  }
+
+  async createUserCapability(capabilityData: InsertUserCapabilities): Promise<UserCapabilities> {
+    const createdCapabilities = await db.insert(userCapabilities).values(capabilityData).returning();
+    return createdCapabilities[0];
+  }
+
+  async updateUserCapability(id: number, capabilityData: Partial<UserCapabilities>): Promise<UserCapabilities> {
+    const updatedCapabilities = await db
+      .update(userCapabilities)
+      .set(capabilityData)
+      .where(eq(userCapabilities.id, id))
+      .returning();
+    return updatedCapabilities[0];
+  }
+
+  async unlockUserCapability(userId: number, capabilityName: string, level: number = 1): Promise<UserCapabilities> {
+    // Check if capability already exists
+    const existingCapabilities = await db
+      .select()
+      .from(userCapabilities)
+      .where(
+        and(
+          eq(userCapabilities.userId, userId),
+          eq(userCapabilities.capabilityName, capabilityName)
+        )
+      );
+    
+    if (existingCapabilities.length > 0) {
+      // Update existing capability
+      return await this.updateUserCapability(existingCapabilities[0].id, {
+        isUnlocked: true,
+        level,
+        unlockedAt: new Date()
+      });
+    } else {
+      // Create new capability
+      return await this.createUserCapability({
+        userId,
+        capabilityName,
+        isUnlocked: true,
+        level
+      });
+    }
+  }
+
+  async getCreativeHistory(userId: number, period: string): Promise<CreativeHistory | null> {
+    const result = await db
+      .select()
+      .from(creativeHistory)
+      .where(
+        and(
+          eq(creativeHistory.userId, userId),
+          eq(creativeHistory.period, period)
+        )
+      )
+      .orderBy(desc(creativeHistory.date))
+      .limit(1);
+    
+    return result.length > 0 ? result[0] : null;
+  }
+
+  async createCreativeHistory(historyData: InsertCreativeHistory): Promise<CreativeHistory> {
+    const createdHistory = await db.insert(creativeHistory).values(historyData).returning();
+    return createdHistory[0];
+  }
+
+  async updateCreativeHistory(id: number, historyData: Partial<CreativeHistory>): Promise<CreativeHistory> {
+    const updatedHistory = await db
+      .update(creativeHistory)
+      .set({ ...historyData, date: new Date() })
+      .where(eq(creativeHistory.id, id))
+      .returning();
+    return updatedHistory[0];
+  }
+
+  async refreshCreativeEnergyPoints(userId: number): Promise<EvolutionPoints> {
+    // Get current user points
+    const userPoints = await this.getEvolutionPointsByUserId(userId);
+    if (!userPoints) {
+      throw new Error("User points record not found");
+    }
+    
+    // Calculate time since last refresh
+    const now = new Date();
+    const lastRefresh = new Date(userPoints.lastEnergyRefresh);
+    const hoursSinceRefresh = (now.getTime() - lastRefresh.getTime()) / (1000 * 60 * 60);
+    
+    // Calculate points to add (5 per hour)
+    const pointsToAdd = Math.floor(hoursSinceRefresh * 5);
+    
+    if (pointsToAdd <= 0) {
+      return userPoints; // No points to add
+    }
+    
+    // Calculate max points based on tier
+    let maxPoints = 100; // Default for Starter
+    
+    if (userPoints.currentTier === "Growing") {
+      maxPoints = 125;
+    } else if (userPoints.currentTier === "Established") {
+      maxPoints = 150;
+    } else if (userPoints.currentTier === "Advanced") {
+      maxPoints = 175;
+    } else if (userPoints.currentTier === "Expert") {
+      maxPoints = 200;
+    }
+    
+    // Calculate new energy points (not exceeding max)
+    const newEnergyPoints = Math.min(userPoints.creativeEnergyPoints + pointsToAdd, maxPoints);
+    
+    // Update points in database
+    return await this.updateEvolutionPoints(userId, {
+      creativeEnergyPoints: newEnergyPoints,
+      lastEnergyRefresh: now
+    });
   }
 }
 

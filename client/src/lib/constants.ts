@@ -75,6 +75,12 @@ export const SMART_TOOLS = [
     icon: "fas fa-magic",
   },
   {
+    name: "Creative Tools",
+    path: "/creative-tools",
+    icon: "fas fa-tools",
+    isNew: true,
+  },
+  {
     name: "Creative Prompts",
     path: "/creative-prompts",
     icon: "fas fa-lightbulb",
