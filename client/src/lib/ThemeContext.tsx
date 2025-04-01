@@ -18,7 +18,8 @@ const defaultThemeContext: ThemeContextProps = {
   toggleColorBlindMode: () => {},
 };
 
-const ThemeContext = createContext<ThemeContextProps>(defaultThemeContext);
+// Using named export instead of default export to fix Fast Refresh issues
+export const ThemeContext = createContext<ThemeContextProps>(defaultThemeContext);
 
 interface ThemeProviderProps {
   children: ReactNode;
@@ -119,26 +120,61 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
       document.documentElement.classList.remove('color-blind-mode');
     }
 
-    // Apply dark/light mode with smooth transition
+    // Apply dark/light mode with an elegant, sensual and luxurious transition
     const html = document.documentElement;
+    const body = document.body;
     
     // Make sure we have transition class before toggling
     html.classList.add('theme-transition');
     
-    // Apply the mode change after a small delay to let transition class take effect
-    setTimeout(() => {
+    // Create a more elegant transition with proper timing
+    requestAnimationFrame(() => {
+      // Create a luxurious gradient overlay for smooth transition
+      const overlay = document.createElement('div');
+      
+      // Set up an elegant transition overlay
+      overlay.className = 'fixed inset-0 pointer-events-none z-[100]';
+      overlay.style.opacity = '0';
+      overlay.style.transition = 'opacity 450ms cubic-bezier(0.65, 0, 0.35, 1)';
+      
+      // Use gradient for more luxurious feel
       if (isDarkMode) {
-        html.classList.add('dark');
+        // Transitioning to dark
+        overlay.style.background = 'radial-gradient(circle at center, rgba(15, 15, 15, 0) 0%, rgba(15, 15, 15, 0.2) 100%)';
       } else {
-        html.classList.remove('dark');
+        // Transitioning to light
+        overlay.style.background = 'radial-gradient(circle at center, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.2) 100%)';
       }
       
-      // Remove transition class after transition completes to prevent 
-      // affecting other animations/transitions
-      setTimeout(() => {
-        html.classList.remove('theme-transition');
-      }, 800);
-    }, 10);
+      document.body.appendChild(overlay);
+      
+      // Trigger the transition immediately for optimal flow
+      requestAnimationFrame(() => {
+        overlay.style.opacity = '1';
+        
+        // Apply the theme change after a brief, natural delay
+        setTimeout(() => {
+          if (isDarkMode) {
+            html.classList.add('dark');
+          } else {
+            html.classList.remove('dark');
+          }
+          
+          // Fade out the overlay elegantly
+          setTimeout(() => {
+            overlay.style.opacity = '0';
+            
+            // Remove overlay when transition completes
+            setTimeout(() => {
+              document.body.removeChild(overlay);
+              
+              // Remove the transition class to restore normal animations
+              html.classList.remove('theme-transition');
+            }, 350); // Clean up after fade out
+          }, 200); // Start fade after colors have settled
+        }, 100); // Short pause for visual elegance
+      });
+    });
   }, [theme, isDarkMode, isColorBlindMode]);
 
   // Update theme color
@@ -172,6 +208,5 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   );
 };
 
+// Custom hook for accessing theme context more easily
 export const useTheme = () => useContext(ThemeContext);
-
-export default ThemeContext;

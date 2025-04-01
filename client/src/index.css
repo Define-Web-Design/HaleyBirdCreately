@@ -4,9 +4,41 @@
 @tailwind utilities;
 
 .theme-transition * {
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, box-shadow;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 800ms;
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, box-shadow, opacity, transform;
+  transition-timing-function: cubic-bezier(0.4, 0.0, 0.2, 1); /* More refined easing */
+  transition-duration: 500ms; /* Faster overall transition */
+}
+
+/* Create a luxurious, ambient feel during theme transitions */
+.theme-transition body {
+  transition: background-color 600ms cubic-bezier(0.22, 1, 0.36, 1); /* Fluid, elegant easing */
+}
+
+/* Add sensual animation to elements during theme change */
+.theme-transition button,
+.theme-transition a,
+.theme-transition input,
+.theme-transition .card,
+.theme-transition .panel {
+  transition: all 450ms cubic-bezier(0.33, 1, 0.68, 1); /* Eased out for elegance */
+}
+
+/* More elegant transitions for text elements */
+.theme-transition h1, 
+.theme-transition h2, 
+.theme-transition h3,
+.theme-transition p {
+  transition: color 450ms cubic-bezier(0.16, 1, 0.3, 1), opacity 350ms ease-out;
+}
+
+/* Create nuanced transitions for UI elements */
+.theme-transition .bg-primary {
+  transition: background-color 500ms cubic-bezier(0.65, 0, 0.35, 1); /* Luxurious easing */
+}
+
+/* Add subtle scale effect to interactive elements */
+.theme-transition .interactive-element:hover {
+  transition: transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1); /* Elegant bounce */
 }
 
 :root {
