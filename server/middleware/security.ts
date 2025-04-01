@@ -3,6 +3,7 @@ import { Request, Response, NextFunction } from 'express';
 import { securityMonitor } from '../services/securityMonitor';
 import { storage } from '../storage';
 import rateLimit from 'express-rate-limit';
+import crypto from 'crypto';
 
 // Configure rate limiting
 export const apiLimiter = rateLimit({
@@ -41,18 +42,19 @@ export const blockSensitiveEndpoints = (req: Request, res: Response, next: NextF
 export const validateAccess = async (req: Request, res: Response, next: NextFunction) => {
   // For demonstration, we use a session-based check
   // In a real implementation, you would validate JWT tokens or session data
-  const isAuthenticated = req.session?.userId;
+  const session = (req as any).session;
+  const isAuthenticated = session?.userId;
   const isPublicRoute = req.path.startsWith("/api/public");
   
   // Log access attempts for security monitoring
   await storage.trackAccessAttempt({
-    ipAddress: req.ip,
+    ipAddress: req.ip || 'unknown',
     path: req.path,
     method: req.method,
-    timestamp: new Date().toISOString(),
+    timestamp: new Date(),
     userAgent: req.headers["user-agent"] || "unknown",
     authorized: !!isAuthenticated,
-    userId: isAuthenticated ? req.session.userId : undefined
+    userId: isAuthenticated ? session.userId : undefined
   });
   
   if (!isAuthenticated && !isPublicRoute) {
@@ -161,4 +163,16 @@ export const createOwnershipNotice = (req: Request) => {
       clientIdentifier: clientIP.split('.').slice(0, 2).join('.') + '.x.x' // Anonymized IP
     }
   };
+};
+
+// Middleware to add ownership headers to all responses
+export const addOwnershipHeaders = (req: Request, res: Response, next: NextFunction) => {
+  res.setHeader('X-Content-Ownership', 'All content and functionality © 2023 All Rights Reserved');
+  res.setHeader('X-Content-Protection', 'Protected by intellectual property law');
+  
+  // Add a unique request identifier for tracking
+  const requestId = crypto.randomUUID();
+  res.setHeader('X-Request-ID', requestId);
+  
+  next();
 };

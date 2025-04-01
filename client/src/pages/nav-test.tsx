@@ -69,7 +69,7 @@ const NavigationTest: React.FC = () => {
       await runTest('validateMenuRoutes', async () => {
         const result = validateMenuRoutes();
         setProgress(20);
-        return resultult;
+        return result;
       });
       
       // Test 2: Verify navigation links

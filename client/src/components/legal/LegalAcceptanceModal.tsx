@@ -1,236 +1,204 @@
-import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../ui/dialog';
-import { Button } from '../ui/button';
-import { Checkbox } from '../ui/checkbox';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
-import { Label } from '../ui/label';
-import TermsOfService from './TermsOfService';
-import PrivacyNotice from './PrivacyNotice';
+import { useState } from 'react';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogFooter, 
+  DialogHeader, 
+  DialogTitle 
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
-interface LegalAcceptanceModalProps {
+export interface LegalAcceptanceModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAccept: (accepted: { terms: boolean; privacy: boolean }) => void;
-  requiredDocuments?: {
-    terms: boolean;
-    privacy: boolean;
-  };
-  title?: string;
-  description?: string;
+  documentType: 'terms' | 'privacy';
+  version: string;
+  requiredForFeature?: string;
 }
 
-const LegalAcceptanceModal: React.FC<LegalAcceptanceModalProps> = ({
+export const LegalAcceptanceModal = ({
   isOpen,
   onClose,
-  onAccept,
-  requiredDocuments = { terms: true, privacy: true },
-  title = "Legal Terms Acceptance",
-  description = "Please review and accept our terms and conditions"
-}) => {
-  const [activeTab, setActiveTab] = useState<string>(
-    requiredDocuments.terms ? 'terms' : 'privacy'
-  );
-  const [accepted, setAccepted] = useState<{
-    terms: boolean;
-    privacy: boolean;
-  }>({
-    terms: !requiredDocuments.terms,
-    privacy: !requiredDocuments.privacy,
-  });
+  documentType,
+  version,
+  requiredForFeature = 'this feature'
+}: LegalAcceptanceModalProps) => {
+  const { toast } = useToast();
+  const [isAccepting, setIsAccepting] = useState(false);
+  const [hasAcknowledged, setHasAcknowledged] = useState(false);
 
-  const handleCheckboxChange = (document: 'terms' | 'privacy') => {
-    setAccepted({
-      ...accepted,
-      [document]: !accepted[document],
-    });
+  const handleAccept = async () => {
+    if (!hasAcknowledged) {
+      toast({
+        title: "Acknowledgment Required",
+        description: "Please read and acknowledge the document first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsAccepting(true);
+
+    try {
+      await apiRequest('/api/public/legal/accept', {
+        method: 'POST',
+        body: JSON.stringify({
+          documentType,
+          version
+        })
+      });
+
+      toast({
+        title: "Accepted",
+        description: documentType === 'terms' 
+          ? "You've accepted the Terms of Service." 
+          : "You've accepted the Privacy Policy."
+      });
+      
+      onClose();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "There was a problem recording your acceptance. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAccepting(false);
+    }
   };
 
-  const handleAccept = () => {
-    onAccept(accepted);
-  };
+  const title = documentType === 'terms' ? 'Terms of Service' : 'Privacy Policy';
+  const description = documentType === 'terms'
+    ? 'Please review our Terms of Service before continuing.'
+    : 'Please review our Privacy Policy before continuing.';
 
-  const canAccept = 
-    (!requiredDocuments.terms || accepted.terms) && 
-    (!requiredDocuments.privacy || accepted.privacy);
-
-  // If using the simplified version (without tabs)
-  if (!requiredDocuments.terms && !requiredDocuments.privacy) {
-    return (
-      <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>{title}</DialogTitle>
-            <DialogDescription>{description}</DialogDescription>
-          </DialogHeader>
-
-          <div className="py-4 space-y-6">
-            <div className="space-y-4 max-h-[300px] overflow-y-auto p-4 border rounded-md">
-              <h3 className="text-lg font-medium">Terms of Service for AI Enhancement Tools</h3>
-
-              <div className="space-y-2 text-sm">
-                <p className="text-muted-foreground">
-                  <strong>1. Intellectual Property Rights.</strong> All content generated through our AI enhancement tools remains your intellectual property with the following conditions:
-                </p>
-
-                <p className="text-muted-foreground">
-                  <strong>2. Ownership Verification.</strong> Each enhanced content includes embedded ownership information and digital watermarks to protect your intellectual property.
-                </p>
-
-                <p className="text-muted-foreground">
-                  <strong>3. Usage Restrictions.</strong> Enhanced content is provided for your personal or commercial use according to your account level. Redistribution or reselling of AI-generated content as standalone products is prohibited without proper attribution.
-                </p>
-
-                <p className="text-muted-foreground">
-                  <strong>4. Legal Protections.</strong> Our platform provides tools to help you protect your intellectual property and report unauthorized usage or copyright infringement.
-                </p>
-
-                <p className="text-muted-foreground">
-                  <strong>5. Prohibited Content.</strong> You agree not to use our AI tools to generate content that infringes on others' intellectual property rights, contains offensive material, or violates any laws.
-                </p>
-
-                <p className="text-muted-foreground">
-                  <strong>6. Privacy and Data.</strong> Content submitted for AI enhancement is processed according to our Privacy Policy, which includes data protection measures.
-                </p>
-              </div>
-
-              <h3 className="text-lg font-medium mt-6">Privacy Notice</h3>
-
-              <div className="space-y-2 text-sm">
-                <p className="text-muted-foreground">
-                  <strong>1. Data Usage.</strong> When using our AI enhancement tools, we collect and process your content for the purpose of providing the requested AI services. This includes temporary storage and analysis necessary for enhancement.
-                </p>
-
-                <p className="text-muted-foreground">
-                  <strong>2. Ownership Records.</strong> We maintain records of ownership for AI-enhanced content to help protect your intellectual property rights and provide verification services.
-                </p>
-
-                <p className="text-muted-foreground">
-                  <strong>3. Security Measures.</strong> We implement technical and organizational measures to secure your content and ownership information, including encryption and access controls.
-                </p>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="terms" 
-                  checked={accepted.terms}
-                  onCheckedChange={(checked) => handleCheckboxChange('terms')}
-                />
-                <Label htmlFor="terms" className="text-sm">
-                  I accept the Terms of Service for AI Enhancement Tools
-                </Label>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="privacy" 
-                  checked={accepted.privacy}
-                  onCheckedChange={(checked) => handleCheckboxChange('privacy')}
-                />
-                <Label htmlFor="privacy" className="text-sm">
-                  I understand and agree to the Privacy Notice
-                </Label>
-              </div>
-            </div>
-          </div>
-
-          <DialogFooter className="flex flex-row justify-between sm:justify-between">
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button 
-              type="button" 
-              onClick={handleAccept} 
-              disabled={!canAccept}
-            >
-              Accept and Continue
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    );
-  }
-
-  // Full version with tabs
   return (
-    <Dialog open={isOpen} onOpenChange={() => canAccept && onClose()}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold">
-            {title}
-          </DialogTitle>
-          <DialogDescription>
-            {description}
-          </DialogDescription>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
-
-        <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="flex-1 overflow-hidden flex flex-col">
-          <TabsList>
-            {requiredDocuments.terms && (
-              <TabsTrigger value="terms">Terms of Service</TabsTrigger>
-            )}
-            {requiredDocuments.privacy && (
-              <TabsTrigger value="privacy">Privacy Notice</TabsTrigger>
-            )}
-          </TabsList>
-
-          <div className="overflow-y-auto flex-1 mt-4 pr-2">
-            {requiredDocuments.terms && (
-              <TabsContent value="terms" className="mt-0 h-full">
-                <TermsOfService />
-              </TabsContent>
-            )}
-
-            {requiredDocuments.privacy && (
-              <TabsContent value="privacy" className="mt-0 h-full">
-                <PrivacyNotice />
-              </TabsContent>
-            )}
-          </div>
-        </Tabs>
-
-        <div className="pt-4 border-t space-y-4">
-          {requiredDocuments.terms && (
-            <div className="flex items-start space-x-2">
-              <Checkbox 
-                id="terms" 
-                checked={accepted.terms} 
-                onCheckedChange={() => handleCheckboxChange('terms')}
-              />
-              <label 
-                htmlFor="terms"
-                className="text-sm cursor-pointer"
-              >
-                I have read and agree to the Terms of Service
-              </label>
+        
+        <div className="max-h-[60vh] overflow-y-auto border rounded-md p-4 my-4">
+          {documentType === 'terms' ? (
+            <div className="prose prose-sm dark:prose-invert">
+              <h2>Terms of Service</h2>
+              <p>Version: {version}</p>
+              <p>Last Updated: {new Date().toLocaleDateString()}</p>
+              
+              <h3>1. Acceptance of Terms</h3>
+              <p>
+                By accessing or using our creative platform, you agree to be bound by these Terms of Service
+                and all applicable laws and regulations. If you do not agree with any of these terms, you are
+                prohibited from using or accessing this platform.
+              </p>
+              
+              <h3>2. Use License</h3>
+              <p>
+                Permission is granted to temporarily use the platform for personal, non-commercial use only.
+                This is the grant of a license, not a transfer of title, and under this license you may not:
+              </p>
+              <ul>
+                <li>Modify or copy the materials</li>
+                <li>Use the materials for any commercial purpose</li>
+                <li>Attempt to decompile or reverse engineer any software contained in the platform</li>
+                <li>Remove any copyright or other proprietary notations from the materials</li>
+                <li>Transfer the materials to another person or "mirror" the materials on any other server</li>
+              </ul>
+              
+              <h3>3. Content Creation and Ownership</h3>
+              <p>
+                When you create content using our AI tools, you retain ownership of the content you create,
+                subject to any rights granted to us through these Terms. We reserve the right to use anonymized
+                data to improve our services.
+              </p>
+              
+              <h3>4. User Accounts</h3>
+              <p>
+                You are responsible for maintaining the confidentiality of your account and password and for 
+                restricting access to your computer. You agree to accept responsibility for all activities that
+                occur under your account.
+              </p>
+              
+              <h3>5. Limitation of Liability</h3>
+              <p>
+                In no event shall the platform, its operators, or suppliers be liable for any damages arising
+                out of the use or inability to use the platform's materials, even if we have been notified of
+                the possibility of such damage.
+              </p>
             </div>
-          )}
-
-          {requiredDocuments.privacy && (
-            <div className="flex items-start space-x-2">
-              <Checkbox 
-                id="privacy" 
-                checked={accepted.privacy} 
-                onCheckedChange={() => handleCheckboxChange('privacy')}
-              />
-              <label 
-                htmlFor="privacy"
-                className="text-sm cursor-pointer"
-              >
-                I have read and agree to the Privacy Notice
-              </label>
+          ) : (
+            <div className="prose prose-sm dark:prose-invert">
+              <h2>Privacy Policy</h2>
+              <p>Version: {version}</p>
+              <p>Last Updated: {new Date().toLocaleDateString()}</p>
+              
+              <h3>1. Information Collection</h3>
+              <p>
+                We collect personal information that you voluntarily provide to us when you register on the 
+                platform, express interest in obtaining information about us or our products, or otherwise
+                contact us.
+              </p>
+              
+              <h3>2. Use of Your Information</h3>
+              <p>
+                We use personal information collected via our platform for business purposes described below:
+              </p>
+              <ul>
+                <li>To provide and maintain our services</li>
+                <li>To manage your account and provide you with customer support</li>
+                <li>To improve and optimize our platform</li>
+                <li>To monitor usage metrics and analyze trends</li>
+                <li>To communicate with you about updates and new features</li>
+              </ul>
+              
+              <h3>3. Data Retention</h3>
+              <p>
+                We will only keep your personal information for as long as it is necessary for the purposes
+                set out in this privacy policy, unless a longer retention period is required or permitted by law.
+              </p>
+              
+              <h3>4. AI Generated Content</h3>
+              <p>
+                When you use our AI features to generate content, we may store this content and related metadata
+                to improve our services. All stored content is protected according to our security standards.
+              </p>
+              
+              <h3>5. Your Rights</h3>
+              <p>
+                You have the right to access, correct, update, or request deletion of your personal information.
+                You can object to processing of your personal information, ask us to restrict processing, or
+                request portability of your information.
+              </p>
             </div>
           )}
         </div>
-
-        <DialogFooter>
-          <Button
-            onClick={handleAccept}
-            disabled={!canAccept}
-            className="mt-4"
+        
+        <div className="flex items-center space-x-2 mb-4">
+          <Checkbox 
+            id="terms" 
+            checked={hasAcknowledged}
+            onCheckedChange={(checked) => setHasAcknowledged(!!checked)}
+          />
+          <label 
+            htmlFor="terms" 
+            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
           >
-            Accept and Continue
+            I have read and agree to the {title}
+          </label>
+        </div>
+        
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            Decline
+          </Button>
+          <Button onClick={handleAccept} disabled={isAccepting || !hasAcknowledged}>
+            {isAccepting ? 'Accepting...' : 'Accept'}
           </Button>
         </DialogFooter>
       </DialogContent>

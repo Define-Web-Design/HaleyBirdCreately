@@ -12,15 +12,15 @@ import { generateMoodPalette, generateAIPalette } from "./services/paletteGenera
 import { 
   apiLimiter, 
   addOwnershipHeaders, 
-  validateAccess, 
-  scrapeDetection 
+  validateAccess,
+  monitorSecurity
 } from "./middleware/security";
 import { securityMonitor } from "./services/securityMonitor";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Apply global security middleware
   app.use(addOwnershipHeaders);
-  app.use(scrapeDetection);
+  app.use(monitorSecurity);
 
   // Apply rate limiting to all API routes
   app.use("/api", apiLimiter);

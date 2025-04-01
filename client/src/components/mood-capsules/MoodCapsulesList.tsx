@@ -62,7 +62,7 @@ const MoodCapsulesList: React.FC<MoodCapsulesListProps> = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("newest");
   const [currentPage, setCurrentPage] = useState(1);
-  const [filterTone, setFilterTone] = useState("");
+  const [filterTone, setFilterTone] = useState("all_tones");
   const [isRefreshing, setIsRefreshing] = useState(false);
   
   // Query to fetch mood capsules
@@ -87,7 +87,7 @@ const MoodCapsulesList: React.FC<MoodCapsulesListProps> = ({
         (tab === "active" && !capsule.isArchived);
       
       // Filter by emotional tone
-      const matchesTone = filterTone === "" || 
+      const matchesTone = filterTone === "" || filterTone === "all_tones" || 
         capsule.emotionalTone.toLowerCase() === filterTone.toLowerCase();
       
       return matchesSearch && matchesTab && matchesTone;
@@ -211,7 +211,7 @@ const MoodCapsulesList: React.FC<MoodCapsulesListProps> = ({
                 </div>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All tones</SelectItem>
+                <SelectItem value="all_tones">All tones</SelectItem>
                 {emotionalTones.map((tone) => (
                   <SelectItem key={tone} value={tone} className="capitalize">
                     {tone}
@@ -290,11 +290,11 @@ const MoodCapsulesList: React.FC<MoodCapsulesListProps> = ({
               </Badge>
             )}
             
-            {filterTone && (
+            {filterTone && filterTone !== "all_tones" && (
               <Badge variant="outline" className="ml-2 capitalize">
                 Tone: {filterTone}
                 <button 
-                  onClick={() => setFilterTone("")}
+                  onClick={() => setFilterTone("all_tones")}
                   className="ml-1 hover:text-primary"
                 >
                   ×
@@ -390,7 +390,7 @@ const MoodCapsulesList: React.FC<MoodCapsulesListProps> = ({
             <p className="text-muted-foreground mb-6">
               {tab === "archived" 
                 ? "No archived mood capsules available"
-                : searchTerm || filterTone 
+                : searchTerm || (filterTone && filterTone !== "all_tones")
                   ? "Try adjusting your search or filters"
                   : "Create your first mood capsule to organize your content"}
             </p>

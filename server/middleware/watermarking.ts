@@ -80,7 +80,7 @@ export const verifyStaticFileOwnership = (req: Request, res: Response, next: Nex
         // Verify if needed - this is mostly for demonstration
         // In a real implementation, we'd do more thorough verification
         if (body.length > 1000) { // Only check larger files
-          const isVerified = securityMonitor.verifyOwnership(body, { assetId, assetType, ownerInfo });
+          const isVerified = securityMonitor.verifyWatermark(body, { assetId, assetType, ownerInfo, timestamp: options.timestamp });
           
           if (!isVerified) {
             console.warn(`Ownership verification failed for: ${filePath}`);

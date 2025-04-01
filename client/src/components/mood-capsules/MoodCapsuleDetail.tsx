@@ -27,6 +27,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Calendar, 
   Edit, 
@@ -420,6 +421,6 @@ const MoodCapsuleDetail: React.FC<MoodCapsuleDetailProps> = React.memo(({
       </SheetContent>
     </Sheet>
   );
-};
+});
 
 export default MoodCapsuleDetail;
