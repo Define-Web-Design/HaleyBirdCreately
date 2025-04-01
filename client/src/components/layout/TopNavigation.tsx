@@ -137,8 +137,8 @@ export default function TopNavigation({ toggleSidebar, isMobile }: { toggleSideb
           </button>
           
           <Link 
-            href="/content-library/create" 
-            className="p-3 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors duration-200 focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:outline-none shadow-sm active:bg-primary/80"
+            href="/content-library" 
+            className="p-3 rounded-md bg-gradient-to-r from-[#F2994A] to-[#FF9DAE] text-white hover:opacity-90 transition-all duration-300 ease-in-out focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:outline-none shadow-sm active:opacity-80 hover:shadow-md"
             aria-label="Create content"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -312,8 +312,8 @@ export default function TopNavigation({ toggleSidebar, isMobile }: { toggleSideb
 
         {/* Enhanced create new content button */}
         <Link 
-          href="/content-library/create" 
-          className="flex items-center gap-1.5 px-3.5 py-2.5 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors duration-200 focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:outline-none shadow-sm active:bg-primary/80"
+          href="/content-library" 
+          className="flex items-center gap-1.5 px-3.5 py-2.5 bg-gradient-to-r from-[#F2994A] to-[#FF9DAE] text-white rounded-md hover:opacity-90 transition-all duration-300 ease-in-out focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:outline-none shadow-sm active:opacity-80 hover:shadow-md"
           aria-label="Create new content"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

@@ -119,12 +119,26 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
       document.documentElement.classList.remove('color-blind-mode');
     }
 
-    // Apply dark/light mode
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    // Apply dark/light mode with smooth transition
+    const html = document.documentElement;
+    
+    // Make sure we have transition class before toggling
+    html.classList.add('theme-transition');
+    
+    // Apply the mode change after a small delay to let transition class take effect
+    setTimeout(() => {
+      if (isDarkMode) {
+        html.classList.add('dark');
+      } else {
+        html.classList.remove('dark');
+      }
+      
+      // Remove transition class after transition completes to prevent 
+      // affecting other animations/transitions
+      setTimeout(() => {
+        html.classList.remove('theme-transition');
+      }, 800);
+    }, 10);
   }, [theme, isDarkMode, isColorBlindMode]);
 
   // Update theme color
