@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'wouter';
 import { MENU_ITEMS, SMART_TOOLS } from '@/lib/constants';
-import { useTheme } from '@/lib/hooks/use-theme';
+import { useTheme } from '@/lib/ThemeContext';
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { 
   Sun, Moon, ZoomIn, ZoomOut, Eye, EyeOff, 
@@ -55,7 +55,7 @@ const Sidebar = ({
   setExpanded = () => {}
 }: SidebarProps) => {
   const [location] = useLocation();
-  const { isDark, toggleTheme } = useTheme();
+  const { isDarkMode, toggleDarkMode } = useTheme();
   const [accessibilityExpanded, setAccessibilityExpanded] = useState(false);
   const [expandedSubMenu, setExpandedSubMenu] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -165,7 +165,7 @@ const Sidebar = ({
       className={`flex flex-col ${expanded ? 'w-64' : 'w-0 md:w-20'} bg-background border-r border-border 
       h-full transition-all duration-300 ease-in-out overflow-hidden overscroll-none`}
       style={{ 
-        willChange: 'width',
+        willChange: 'width, transform',
         overscrollBehavior: 'none',
         WebkitOverflowScrolling: 'touch'
       }}
@@ -173,18 +173,31 @@ const Sidebar = ({
       role="navigation"
       aria-label="Main Navigation"
     >
-      <Link href="/" className="p-4 flex items-center cursor-pointer hover:opacity-90 transition-opacity">
-        <div className="bg-gradient-to-r from-[#F2994A] to-[#FF9DAE] h-10 w-10 rounded-lg flex items-center justify-center text-white font-bold text-xl mr-3 shrink-0">C</div>
-        <h1 className={`text-xl font-medium transition-opacity duration-300 ${expanded ? 'opacity-100' : 'opacity-0 w-0 overflow-hidden md:opacity-0 md:w-0 md:hidden'}`}>Creately</h1>
+      {/* Compact Logo Section */}
+      <Link 
+        href="/" 
+        className="py-2 px-3 flex items-center cursor-pointer hover:opacity-90 transition-all duration-300 ease-in-out group"
+      >
+        <div className="bg-gradient-to-r from-[#F2994A] to-[#FF9DAE] h-8 w-8 rounded-lg flex items-center justify-center text-white font-bold text-lg mr-3 shrink-0 
+        shadow-sm transition-transform duration-300 ease-out hover:scale-110 group-hover:shadow-md">
+          C
+        </div>
+        <h1 className={`text-lg font-medium transition-all duration-300 ease-in-out 
+        ${expanded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 w-0 overflow-hidden md:opacity-0 md:w-0 md:hidden'}`}>
+          Creately
+        </h1>
       </Link>
 
-      <nav className="flex-1 overflow-y-auto py-2">
-        <div className={`px-3 mb-2 transition-opacity duration-300 ${expanded ? 'opacity-100' : 'opacity-0 h-0 mb-0 overflow-hidden md:opacity-100 md:h-auto md:mb-2 md:overflow-visible'}`}>
+      {/* Main Navigation - Expanded to be the majority of the sidebar */}
+      <nav className="flex-1 overflow-y-auto py-4 flex flex-col">
+        {/* Workspace Section */}
+        <div className={`px-3 mb-2 transition-all duration-300 ease-in-out 
+        ${expanded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 h-0 mb-0 overflow-hidden md:opacity-100 md:h-auto md:mb-2 md:translate-x-0'}`}>
           <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Workspace</h2>
         </div>
 
-        <ul>
-          {MENU_ITEMS.map((item) => {
+        <ul className="mb-6 space-y-0.5">
+          {MENU_ITEMS.map((item, index) => {
             const hasSubMenu = item.name === "Content Library" || item.name === "Color Palettes";
             const subMenu = hasSubMenu ? [
               { name: "All Content", path: `${item.path}/all` },
@@ -195,52 +208,70 @@ const Sidebar = ({
 
             const itemWithSubMenu = hasSubMenu ? { ...item, subMenu } : item;
             const isSubMenuExpanded = expandedSubMenu === item.path;
+            // Staggered animation delay for menu items
+            const animDelay = `${index * 0.03}s`;
 
             return (
-              <li key={item.path} className="px-1.5">
+              <li key={item.path} className="px-1.5" style={{animationDelay: animDelay}}>
                 <div>
                   {hasSubMenu ? (
                     <button 
                       onClick={() => handleMenuItemClick(itemWithSubMenu as MenuItem)}
-                      className={`w-full flex items-center justify-between px-3 py-2 rounded ${
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-md 
+                      transition-all duration-200 ease-in-out hover:scale-[1.02] active:scale-[0.98] ${
                         location === item.path || isSubMenuExpanded 
-                        ? 'text-primary bg-primary/10' 
+                        ? 'text-primary bg-primary/10 shadow-sm' 
                         : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/50'
                       }`}
                     >
                       <div className="flex items-center">
                         <i className={`${item.icon} w-4 mr-2.5 text-base shrink-0`}></i>
-                        <span className={`transition-opacity duration-300 ${expanded ? 'opacity-100' : 'opacity-0 w-0 overflow-hidden md:opacity-100 md:w-auto md:overflow-visible'}`}>{item.name}</span>
+                        <span className={`transition-all duration-300 ease-in-out 
+                        ${expanded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 w-0 overflow-hidden md:opacity-100 md:w-auto md:transform-none md:overflow-visible'}`}>
+                          {item.name}
+                        </span>
                         {item.isNew && expanded && (
-                          <span className="ml-1.5 px-1 py-0 text-[10px] font-medium text-white bg-primary rounded-sm">New</span>
+                          <span className="ml-1.5 px-1 py-0 text-[10px] font-medium text-white bg-primary rounded-sm animate-pulse">
+                            New
+                          </span>
                         )}
                       </div>
-                      {isSubMenuExpanded ? (
-                        <ChevronDown className="h-3.5 w-3.5" />
-                      ) : (
-                        <ChevronRight className="h-3.5 w-3.5" />
-                      )}
+                      <div className="transition-transform duration-300 ease-in-out">
+                        {isSubMenuExpanded ? (
+                          <ChevronDown className="h-3.5 w-3.5 animate-bounce" />
+                        ) : (
+                          <ChevronRight className="h-3.5 w-3.5" />
+                        )}
+                      </div>
                     </button>
                   ) : (
                     <Link 
                       href={item.path} 
                       onClick={() => handleMenuItemClick(item as MenuItem)}
-                      className={`flex items-center px-3 py-2 rounded ${
+                      className={`flex items-center px-3 py-2 rounded-md 
+                      transition-all duration-200 ease-in-out hover:scale-[1.02] active:scale-[0.98] ${
                         location === item.path 
-                        ? 'text-primary bg-primary/10' 
+                        ? 'text-primary bg-primary/10 shadow-sm' 
                         : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/50'
                       }`}
                     >
-                      <i className={`${item.icon} w-4 mr-2.5 text-base shrink-0`}></i>
-                      <span className={`transition-opacity duration-300 ${expanded ? 'opacity-100' : 'opacity-0 w-0 overflow-hidden md:opacity-100 md:w-auto md:overflow-visible'}`}>{item.name}</span>
+                      <i className={`${item.icon} w-4 mr-2.5 text-base shrink-0 transition-transform duration-300 ease-in-out 
+                      ${location === item.path ? 'scale-110' : ''}`}></i>
+                      <span className={`transition-all duration-300 ease-in-out 
+                      ${expanded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 w-0 overflow-hidden md:opacity-100 md:w-auto md:transform-none md:overflow-visible'}`}>
+                        {item.name}
+                      </span>
                       {item.isNew && expanded && (
-                        <span className="ml-1.5 px-1 py-0 text-[10px] font-medium text-white bg-primary rounded-sm">New</span>
+                        <span className="ml-1.5 px-1 py-0 text-[10px] font-medium text-white bg-primary rounded-sm animate-pulse">
+                          New
+                        </span>
                       )}
                     </Link>
                   )}
 
                   {hasSubMenu && isSubMenuExpanded && (
-                    <ul className="ml-6 mt-0.5 space-y-0.5 border-l border-gray-200 dark:border-gray-700 pl-1.5">
+                    <ul className="ml-6 mt-1 space-y-0.5 border-l border-gray-200 dark:border-gray-700 pl-2 
+                    animate-in slide-in-from-left-2 duration-300 ease-in-out">
                       {subMenu.map((subItem) => (
                         <li key={subItem.path}>
                           <Link 
@@ -254,10 +285,11 @@ const Sidebar = ({
                                 }, 150);
                               }
                             }}
-                            className={`flex items-center px-2 py-1.5 text-sm rounded ${
+                            className={`flex items-center px-2 py-1.5 text-sm rounded-md 
+                            transition-all duration-200 ease-in-out hover:scale-[1.02] active:scale-[0.98] ${
                               location === subItem.path
-                              ? 'text-primary bg-primary/5' 
-                              : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/50'
+                              ? 'text-primary bg-primary/5 shadow-sm' 
+                              : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/30'
                             }`}
                           >
                             {subItem.name}
@@ -272,85 +304,121 @@ const Sidebar = ({
           })}
         </ul>
 
-        <div className={`px-3 mt-4 mb-2 transition-opacity duration-300 ${expanded ? 'opacity-100' : 'opacity-0 h-0 mb-0 overflow-hidden md:opacity-100 md:h-auto md:mb-2 md:overflow-visible'}`}>
+        {/* Smart Tools Section */}
+        <div className={`px-3 mb-2 transition-all duration-300 ease-in-out 
+        ${expanded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 h-0 mb-0 overflow-hidden md:opacity-100 md:h-auto md:mb-2 md:translate-x-0'}`}>
           <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Smart Tools</h2>
         </div>
 
-        <ul>
-          {SMART_TOOLS.map((tool) => (
-            <li key={tool.path} className="px-1.5">
-              <Link 
-                href={tool.path} 
-                onClick={() => handleMenuItemClick(tool as MenuItem)}
-                className={`flex items-center px-3 py-2 rounded ${
-                  location === tool.path 
-                  ? 'text-primary bg-primary/10' 
-                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/50'
-                }`}
-              >
-                <i className={`${tool.icon} w-4 mr-2.5 text-base shrink-0`}></i>
-                <span className={`transition-opacity duration-300 ${expanded ? 'opacity-100' : 'opacity-0 w-0 overflow-hidden md:opacity-100 md:w-auto md:overflow-visible'}`}>{tool.name}</span>
-              </Link>
-            </li>
-          ))}
+        <ul className="space-y-0.5">
+          {SMART_TOOLS.map((tool, index) => {
+            // Staggered animation delay for tool items
+            const animDelay = `${0.2 + (index * 0.03)}s`;
+            
+            return (
+              <li key={tool.path} className="px-1.5" style={{animationDelay: animDelay}}>
+                <Link 
+                  href={tool.path} 
+                  onClick={() => handleMenuItemClick(tool as MenuItem)}
+                  className={`flex items-center px-3 py-2 rounded-md 
+                  transition-all duration-200 ease-in-out hover:scale-[1.02] active:scale-[0.98] ${
+                    location === tool.path 
+                    ? 'text-primary bg-primary/10 shadow-sm' 
+                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/50'
+                  }`}
+                >
+                  <i className={`${tool.icon} w-4 mr-2.5 text-base shrink-0 transition-transform duration-300 ease-in-out 
+                  ${location === tool.path ? 'scale-110' : ''}`}></i>
+                  <span className={`transition-all duration-300 ease-in-out 
+                  ${expanded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 w-0 overflow-hidden md:opacity-100 md:w-auto md:transform-none md:overflow-visible'}`}>
+                    {tool.name}
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
         </ul>
       </nav>
 
+      {/* Compact User Profile and Settings Section */}
       <div className="border-t border-border mt-auto">
-        <div className="p-3">
-          <div className="flex items-center">
-            <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center w-full">
-                <img 
-                  src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=120&h=120&q=80" 
-                  alt="User avatar" 
-                  className="h-8 w-8 rounded-full object-cover mr-2 shrink-0"
-                />
-                <div className={`flex-1 transition-opacity duration-300 ${expanded ? 'opacity-100' : 'opacity-0 w-0 overflow-hidden md:opacity-100 md:w-auto md:overflow-visible'}`}>
-                  <p className="text-sm font-medium text-left">Sophia</p>
-                  <p className="text-xs text-muted-foreground">Creator</p>
-                </div>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                <DropdownMenuItem asChild>
-                  <Link href="/profile">Profile</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/profile/accessibility">Accessibility</Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  Sign out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+        {/* Compact User Profile with Settings Dropdown */}
+        <div className="p-2 flex items-center justify-between">
+          <DropdownMenu>
+            <DropdownMenuTrigger className="flex items-center space-x-2 rounded-md p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800/30 transition-colors duration-200 w-full">
+              <img 
+                src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=120&h=120&q=80" 
+                alt="User avatar" 
+                className="h-7 w-7 rounded-full object-cover shrink-0 border-2 border-primary/20 shadow-sm"
+              />
+              <div className={`flex flex-row items-center gap-2 transition-all duration-300 ease-in-out 
+              ${expanded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 w-0 overflow-hidden'}`}>
+                <span className="text-sm font-medium truncate">Sophia</span>
+                <Settings className="h-3.5 w-3.5 text-muted-foreground" />
+              </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel className="flex items-center gap-2">
+                <User className="h-4 w-4" />
+                My Account
+              </DropdownMenuLabel>
+              <DropdownMenuItem asChild className="cursor-pointer">
+                <Link href="/profile">Profile</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild className="cursor-pointer">
+                <Link href="/profile/accessibility">Accessibility</Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="cursor-pointer flex items-center gap-2 text-rose-500 dark:text-rose-400">
+                <LogOut className="h-4 w-4" />
+                <span>Sign out</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
-        <div className={`px-3 pb-3 transition-opacity duration-300 ${expanded ? 'opacity-100' : 'opacity-0 h-0 overflow-hidden md:opacity-100 md:h-auto md:overflow-visible'}`}>
-          <div className="flex items-center justify-between py-1.5">
+        {/* Compact Settings Controls */}
+        <div className={`px-2 pb-2 transition-all duration-300 ease-out 
+        ${expanded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 h-0 overflow-hidden md:opacity-100 md:h-auto md:translate-y-0'}`}>
+          {/* Theme Toggle */}
+          <div className="flex items-center justify-between p-1.5 mb-1 rounded-md bg-gray-50 dark:bg-gray-800/50">
             <div className="flex items-center gap-1.5">
-              {isDark ? <Moon className="h-3.5 w-3.5" /> : <Sun className="h-3.5 w-3.5" />}
-              <span className="text-xs">{isDark ? 'Dark' : 'Light'}</span>
+              {isDarkMode 
+                ? <Moon className="h-3.5 w-3.5 text-indigo-400" /> 
+                : <Sun className="h-3.5 w-3.5 text-amber-500 animate-pulse" />
+              }
+              <span className="text-xs font-medium">{isDarkMode ? 'Dark' : 'Light'}</span>
             </div>
             <Switch 
-              checked={isDark}
-              onCheckedChange={toggleTheme}
+              checked={isDarkMode}
+              onCheckedChange={toggleDarkMode}
               aria-label="Toggle theme"
               className="h-3.5 w-7 data-[state=checked]:bg-primary/90"
             />
           </div>
 
-          <div className="flex items-center justify-between py-1.5">
+          {/* Text Size Controls */}
+          <div className="flex items-center justify-between p-1.5 rounded-md bg-gray-50 dark:bg-gray-800/50">
             <div className="flex items-center gap-1.5">
-              <ZoomIn className="h-3.5 w-3.5" />
-              <span className="text-xs">Text Size</span>
+              <ZoomIn className="h-3.5 w-3.5 text-primary" />
+              <span className="text-xs font-medium">Size</span>
             </div>
-            <div className="flex items-center gap-1">
-              <button onClick={() => setFontSize(Math.max(fontSize - 1, 12))} aria-label="Smaller text">−</button>
-              <span className="text-xs mx-1">{fontSize}</span>
-              <button onClick={() => setFontSize(Math.min(fontSize + 1, 20))} aria-label="Larger text">+</button>
+            <div className="flex items-center">
+              <button 
+                onClick={() => setFontSize(Math.max(fontSize - 1, 12))} 
+                aria-label="Smaller text"
+                className="w-5 h-5 flex items-center justify-center rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              >
+                −
+              </button>
+              <span className="text-xs mx-1 w-3 text-center">{fontSize}</span>
+              <button 
+                onClick={() => setFontSize(Math.min(fontSize + 1, 20))} 
+                aria-label="Larger text"
+                className="w-5 h-5 flex items-center justify-center rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              >
+                +
+              </button>
             </div>
           </div>
         </div>
