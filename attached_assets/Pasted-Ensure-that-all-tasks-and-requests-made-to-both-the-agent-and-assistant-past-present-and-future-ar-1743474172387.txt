@@ -1,0 +1,37 @@
+Ensure that all tasks and requests made to both the agent and assistant—past, present, and future—are fully addressed and resolved through Replit's systematic and layered approach. The workflow must be executed in a cohesive and logically structured order, reflecting an intelligent understanding of interconnected tasks to achieve the desired outcome comprehensively and without interruption. Follow these directives:
+
+1. **Layered Execution and Validation:**  
+   - Address tasks layer by layer, starting from foundational issues (e.g., fixing links, restoring features) to advanced integrations and enhancements.  
+   - Validate each layer to ensure the functionality is complete and error-free before progressing to the next.  
+
+2. **Comprehensive Review of Past and Present Tasks:**  
+   - Audit all previous tasks and instructions to confirm completion and alignment with my requirements.  
+   - Revisit any skipped or incomplete tasks, ensuring no aspect of functionality, design, or integration is overlooked.  
+   - Implement any recently added or newly requested features with precision, ensuring they coexist seamlessly with existing functionalities.  
+
+3. **Proactive Issue Detection and Anticipation:**  
+   - Identify and resolve error codes, systematic chain reaction issues, or any potential conflicts before they escalate.  
+   - Anticipate related or future requirements tied to my current instructions and address them proactively to avoid future delays.  
+
+4. **Usability Optimization:**  
+   - Confirm all navigation bars, tools, buttons, and links are functional and consistent in behavior across mobile and web platforms.  
+   - Restore essential features such as color blindness accessibility and clickable logos in the top navigation bar to return to the home page.  
+   - Ensure the app, Creately, is fully optimized for mobile while maintaining complete web responsiveness.  
+
+5. **Integration of All Components:**  
+   - Seamlessly integrate past, present, and new features to create a harmonious user experience.  
+   - Double-check all assistant and agent integrations to ensure a smooth, intuitive functionality.  
+
+6. **Iterative Testing and Continuous Validation:**  
+   - Continuously test and validate each aspect of the app across multiple layers to ensure zero errors, skipped steps, or usability issues.  
+   - Simulate real-world usage scenarios to confirm the app works flawlessly for all users.  
+
+7. **Avoid Interruptions in Workflow:**  
+   - Do not pause or check in with me until every single task—explicitly mentioned or logically inferred—has been fully completed, verified, and resolved.  
+   - Maintain an uninterrupted, systematic workflow that accounts for all interconnected tasks and dependencies.  
+
+8. **Final Reporting and Review:**  
+   - Once all layers and tasks are addressed comprehensively, provide a detailed report summarizing all fixes, updates, and improvements made.  
+   - Highlight any areas that required preemptive action or additional work to achieve the final result.  
+
+Use this approach to ensure every detail of my requests is handled effectively, with no disruptions, and that the app operates flawlessly in all aspects before moving on to the next phase.

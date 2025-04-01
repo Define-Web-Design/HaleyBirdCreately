@@ -48,10 +48,47 @@ export default function Profile() {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-start gap-6">
-        {/* User profile sidebar */}
-        <Card className="w-80 shrink-0">
+    <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 space-y-6">
+      {/* Mobile profile summary - only visible on small screens */}
+      <div className="md:hidden mb-6 p-4 bg-background rounded-lg border shadow-sm">
+        <div className="flex items-center space-x-4">
+          <img 
+            src={userData.profileImage} 
+            alt="Sophia Chen profile"
+            className="h-16 w-16 rounded-full object-cover"
+          />
+          <div>
+            <h2 className="text-lg font-bold">{userData.name}</h2>
+            <p className="text-sm text-muted-foreground">{userData.role}</p>
+            <div className="flex flex-wrap items-center gap-2 mt-1">
+              <Badge variant="outline" className="text-xs bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300">
+                {userData.tier}
+              </Badge>
+              <Badge variant="outline" className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
+                {userData.points} Points
+              </Badge>
+            </div>
+          </div>
+        </div>
+        
+        <div className="mt-3 space-y-1">
+          <p className="text-xs text-muted-foreground">Creative Energy</p>
+          <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-primary"
+              style={{ width: `${(userData.creativeEnergyPoints / userData.maxCreativeEnergy) * 100}%` }}
+            ></div>
+          </div>
+          <div className="flex justify-between text-xs">
+            <span>{userData.creativeEnergyPoints} points</span>
+            <span>Max: {userData.maxCreativeEnergy}</span>
+          </div>
+        </div>
+      </div>
+  
+      <div className="flex flex-col md:flex-row items-start gap-6">
+        {/* User profile sidebar - hidden on mobile */}
+        <Card className="w-full md:w-80 shrink-0 hidden md:block">
           <CardContent className="p-6">
             <div className="flex flex-col items-center">
               <img 
@@ -94,12 +131,12 @@ export default function Profile() {
         </Card>
         
         {/* Main content */}
-        <div className="flex-1">
+        <div className="flex-1 w-full">
           <Tabs defaultValue={getActiveTab()} className="w-full">
-            <TabsList className="mb-4">
-              <TabsTrigger value="general">General</TabsTrigger>
-              <TabsTrigger value="accessibility">Accessibility</TabsTrigger>
-              <TabsTrigger value="integrations">Integrations</TabsTrigger>
+            <TabsList className="mb-4 w-full flex overflow-x-auto no-scrollbar">
+              <TabsTrigger value="general" className="flex-1">General</TabsTrigger>
+              <TabsTrigger value="accessibility" className="flex-1">Accessibility</TabsTrigger>
+              <TabsTrigger value="integrations" className="flex-1">Integrations</TabsTrigger>
             </TabsList>
             
             {/* General Tab */}
@@ -109,25 +146,29 @@ export default function Profile() {
                   <CardTitle>User Information</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Full Name</p>
-                      <p>{userData.name}</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="p-3 bg-background border rounded-md">
+                      <p className="text-sm font-medium text-muted-foreground mb-1">Full Name</p>
+                      <p className="truncate">{userData.name}</p>
                     </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Email</p>
-                      <p>{userData.email}</p>
+                    <div className="p-3 bg-background border rounded-md">
+                      <p className="text-sm font-medium text-muted-foreground mb-1">Email</p>
+                      <p className="truncate">{userData.email}</p>
                     </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Role</p>
-                      <p>{userData.role}</p>
+                    <div className="p-3 bg-background border rounded-md">
+                      <p className="text-sm font-medium text-muted-foreground mb-1">Role</p>
+                      <p className="truncate">{userData.role}</p>
                     </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Subscription</p>
-                      <p>Premium (Annual)</p>
+                    <div className="p-3 bg-background border rounded-md">
+                      <p className="text-sm font-medium text-muted-foreground mb-1">Subscription</p>
+                      <p className="truncate">Premium (Annual)</p>
                     </div>
                   </div>
-                  <Button variant="outline" className="mt-2">Edit Profile</Button>
+                  <div className="flex justify-end mt-4">
+                    <Button variant="outline" className="w-full sm:w-auto">
+                      Edit Profile
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
               
@@ -138,19 +179,39 @@ export default function Profile() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {mockCreativeHistory.map((item, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 border rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                        <div>
-                          <h4 className="font-medium">{item.title}</h4>
+                    {mockCreativeHistory.slice(0, 3).map((item, index) => (
+                      <div 
+                        key={index} 
+                        className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                      >
+                        <div className="mb-2 sm:mb-0">
+                          <h4 className="font-medium truncate">{item.title}</h4>
                           <p className="text-sm text-muted-foreground">{item.date}</p>
                         </div>
-                        <Badge variant="outline" className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
+                        <Badge 
+                          variant="outline" 
+                          className="self-start sm:self-center bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 mt-2 sm:mt-0"
+                        >
                           +{item.pointsEarned} points
                         </Badge>
                       </div>
                     ))}
                   </div>
-                  <Button variant="ghost" className="w-full mt-4" onClick={() => window.location.href = "/analytics"}>View Full History</Button>
+                  <div className="flex flex-col sm:flex-row gap-2 mt-4">
+                    <Button 
+                      variant="ghost" 
+                      className="w-full" 
+                      onClick={() => window.location.href = "/analytics"}
+                    >
+                      View Full History
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="w-full sm:w-auto"
+                    >
+                      Export Data
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
               
@@ -160,21 +221,45 @@ export default function Profile() {
                   <CardDescription>Manage content ownership and protection</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between p-3 border rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                    <div>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                    <div className="mb-3 sm:mb-0">
                       <h4 className="font-medium">Ownership Verification</h4>
                       <p className="text-sm text-muted-foreground">Verify ownership of your creative content</p>
                     </div>
-                    <Button variant="outline" size="sm" onClick={() => window.location.href = "/content-vault"}>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="self-start sm:self-auto"
+                      onClick={() => window.location.href = "/content-vault"}
+                    >
                       Manage
                     </Button>
                   </div>
-                  <div className="flex items-center justify-between p-3 border rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                    <div>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                    <div className="mb-3 sm:mb-0">
                       <h4 className="font-medium">Digital Rights</h4>
                       <p className="text-sm text-muted-foreground">Control how your content is shared</p>
                     </div>
-                    <Button variant="outline" size="sm">Configure</Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="self-start sm:self-auto"
+                    >
+                      Configure
+                    </Button>
+                  </div>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                    <div className="mb-3 sm:mb-0">
+                      <h4 className="font-medium">Content Privacy</h4>
+                      <p className="text-sm text-muted-foreground">Manage who can view and access your content</p>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="self-start sm:self-auto"
+                    >
+                      Settings
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -188,64 +273,83 @@ export default function Profile() {
                   <CardDescription>Customize your experience</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <label className="font-medium">Dark Mode</label>
+                  <div className="grid grid-cols-1 gap-6">
+                    <div className="p-4 border rounded-md">
+                      <div className="flex flex-row items-center justify-between mb-1">
+                        <label className="font-medium">Dark Mode</label>
+                        <Switch 
+                          checked={isDark} 
+                          onCheckedChange={toggleTheme}
+                          className="data-[state=checked]:bg-primary"
+                        />
+                      </div>
                       <p className="text-sm text-muted-foreground">Switch between light and dark themes</p>
                     </div>
-                    <Switch 
-                      checked={isDark} 
-                      onCheckedChange={toggleTheme}
-                      className="data-[state=checked]:bg-primary"
-                    />
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <label className="font-medium">High Contrast</label>
+                    
+                    <div className="p-4 border rounded-md">
+                      <div className="flex flex-row items-center justify-between mb-1">
+                        <label className="font-medium">High Contrast</label>
+                        <Switch 
+                          checked={highContrast} 
+                          onCheckedChange={setHighContrast}
+                          className="data-[state=checked]:bg-primary"
+                        />
+                      </div>
                       <p className="text-sm text-muted-foreground">Increase contrast for better readability</p>
                     </div>
-                    <Switch 
-                      checked={highContrast} 
-                      onCheckedChange={setHighContrast}
-                      className="data-[state=checked]:bg-primary"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="font-medium">Text Size</label>
-                    <p className="text-sm text-muted-foreground">Adjust the size of text throughout the app</p>
-                    <div className="flex items-center gap-4 mt-2">
-                      <Button 
-                        variant="outline" 
-                        onClick={() => setFontSize(s => Math.max(s - 2, 12))}
-                      >
-                        A-
-                      </Button>
-                      <span className="min-w-[60px] text-center">{fontSize}px</span>
-                      <Button 
-                        variant="outline"
-                        onClick={() => setFontSize(s => Math.min(s + 2, 24))}
-                      >
-                        A+
-                      </Button>
+                    
+                    <div className="p-4 border rounded-md space-y-2">
+                      <label className="font-medium block">Text Size</label>
+                      <p className="text-sm text-muted-foreground">Adjust the size of text throughout the app</p>
+                      <div className="flex items-center justify-between mt-2">
+                        <Button 
+                          variant="outline" 
+                          onClick={() => setFontSize(s => Math.max(s - 2, 12))}
+                          className="flex-1"
+                        >
+                          A-
+                        </Button>
+                        <span className="px-4 text-center">{fontSize}px</span>
+                        <Button 
+                          variant="outline"
+                          onClick={() => setFontSize(s => Math.min(s + 2, 24))}
+                          className="flex-1"
+                        >
+                          A+
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <label className="font-medium">Reduced Motion</label>
+                    
+                    <div className="p-4 border rounded-md">
+                      <div className="flex flex-row items-center justify-between mb-1">
+                        <label className="font-medium">Reduced Motion</label>
+                        <Switch className="data-[state=checked]:bg-primary" />
+                      </div>
                       <p className="text-sm text-muted-foreground">Minimize animations throughout the interface</p>
                     </div>
-                    <Switch className="data-[state=checked]:bg-primary" />
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <label className="font-medium">Screen Reader Optimized</label>
+                    
+                    <div className="p-4 border rounded-md">
+                      <div className="flex flex-row items-center justify-between mb-1">
+                        <label className="font-medium">Screen Reader Optimized</label>
+                        <Switch className="data-[state=checked]:bg-primary" />
+                      </div>
                       <p className="text-sm text-muted-foreground">Enhanced support for screen readers</p>
                     </div>
-                    <Switch className="data-[state=checked]:bg-primary" />
+                    
+                    <div className="p-4 border rounded-md">
+                      <div className="flex flex-row items-center justify-between mb-1">
+                        <label className="font-medium">Color Blind Mode</label>
+                        <span className="text-sm text-muted-foreground">Active</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-3">Adjust colors to accommodate different types of color blindness</p>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        <Button size="sm" variant="outline" className="w-full">None</Button>
+                        <Button size="sm" variant="outline" className="w-full">Protanopia</Button>
+                        <Button size="sm" variant="outline" className="w-full">Deuteranopia</Button>
+                        <Button size="sm" variant="outline" className="w-full">Tritanopia</Button>
+                        <Button size="sm" variant="outline" className="w-full">Grayscale</Button>
+                      </div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -259,24 +363,49 @@ export default function Profile() {
                   <CardDescription>Manage your connected social media accounts</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
+                  <div className="grid grid-cols-1 gap-4">
                     {PLATFORMS.map((platform) => (
-                      <div key={platform.name} className="flex items-center justify-between p-3 border rounded">
-                        <div className="flex items-center">
-                          <i className={`${platform.icon} text-xl ${platform.color} mr-3`}></i>
+                      <div 
+                        key={platform.name} 
+                        className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border rounded-md"
+                      >
+                        <div className="flex items-center mb-3 sm:mb-0">
+                          <div className={`w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center ${platform.color} mr-3`}>
+                            <i className={`${platform.icon} text-xl`}></i>
+                          </div>
                           <div>
                             <p className="font-medium">{platform.name}</p>
                             <p className="text-xs text-muted-foreground">{platform.type.replace(/_/g, ' ')}</p>
                           </div>
                         </div>
-                        <Button 
-                          variant={connectedPlatforms.includes(platform.name) ? "outline" : "default"}
-                          size="sm"
-                        >
-                          {connectedPlatforms.includes(platform.name) ? "Disconnect" : "Connect"}
-                        </Button>
+                        <div className="w-full sm:w-auto flex flex-col sm:flex-row gap-2">
+                          <Button 
+                            variant={connectedPlatforms.includes(platform.name) ? "outline" : "default"}
+                            size="sm"
+                            className="w-full sm:w-auto"
+                          >
+                            {connectedPlatforms.includes(platform.name) ? "Disconnect" : "Connect"}
+                          </Button>
+                          {connectedPlatforms.includes(platform.name) && (
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              className="w-full sm:w-auto"
+                            >
+                              Settings
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     ))}
+                  </div>
+                  <div className="mt-6">
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Connect your social media accounts to share your creative work directly from Creately
+                    </p>
+                    <Button variant="outline" className="w-full sm:w-auto">
+                      Connect New Platform
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -287,34 +416,73 @@ export default function Profile() {
                   <CardDescription>Configure AI model preferences and API settings</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="p-3 border rounded">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium">OpenAI Integration</p>
+                  <div className="p-4 border rounded-md">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3">
+                      <div className="mb-2 sm:mb-0">
+                        <div className="flex items-center mb-1">
+                          <p className="font-medium mr-2">OpenAI Integration</p>
+                          <Badge variant="outline" className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
+                            Active
+                          </Badge>
+                        </div>
                         <p className="text-sm text-muted-foreground">Connected: March 20, 2025</p>
                       </div>
-                      <Badge variant="outline" className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
-                        Active
-                      </Badge>
+                      <div className="w-full sm:w-auto">
+                        <p className="text-sm text-muted-foreground hidden sm:block">API Usage: 85% of monthly limit</p>
+                      </div>
                     </div>
-                    <div className="mt-2 flex gap-2">
-                      <Button variant="outline" size="sm">Configure</Button>
-                      <Button variant="ghost" size="sm">Disconnect</Button>
+                    <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden mb-3 sm:mb-4">
+                      <div className="h-full bg-green-500 dark:bg-green-600" style={{ width: '85%' }}></div>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-3 sm:hidden">API Usage: 85% of monthly limit</p>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <Button variant="outline" size="sm" className="w-full sm:w-auto">Configure</Button>
+                      <Button variant="ghost" size="sm" className="w-full sm:w-auto">View Usage</Button>
+                      <Button variant="ghost" size="sm" className="w-full sm:w-auto text-red-500 hover:text-red-600">Disconnect</Button>
                     </div>
                   </div>
                   
-                  <div className="p-3 border rounded">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium">Midjourney</p>
-                        <p className="text-sm text-muted-foreground">Not connected</p>
+                  <div className="p-4 border rounded-md">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3">
+                      <div className="mb-2 sm:mb-0">
+                        <div className="flex items-center mb-1">
+                          <p className="font-medium mr-2">Midjourney</p>
+                          <Badge variant="outline" className="bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300">
+                            Inactive
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground">Image generation API not connected</p>
                       </div>
-                      <Badge variant="outline" className="bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300">
-                        Inactive
-                      </Badge>
                     </div>
                     <div className="mt-2">
-                      <Button size="sm">Connect API</Button>
+                      <Button size="sm" className="w-full sm:w-auto">Connect API</Button>
+                    </div>
+                  </div>
+                  
+                  <div className="p-4 border rounded-md">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3">
+                      <div className="mb-2 sm:mb-0">
+                        <div className="flex items-center mb-1">
+                          <p className="font-medium mr-2">Stability AI</p>
+                          <Badge variant="outline" className="bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300">
+                            Inactive
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground">Advanced image processing and generation</p>
+                      </div>
+                    </div>
+                    <div className="mt-2">
+                      <Button size="sm" className="w-full sm:w-auto">Connect API</Button>
+                    </div>
+                  </div>
+                  
+                  <div className="p-4 border rounded-md border-dashed">
+                    <div className="text-center py-4">
+                      <p className="font-medium mb-2">Add Custom API Integration</p>
+                      <p className="text-sm text-muted-foreground mb-4">Connect a custom AI service to expand capabilities</p>
+                      <Button variant="outline" className="w-full sm:w-auto">
+                        Add Custom API
+                      </Button>
                     </div>
                   </div>
                 </CardContent>
