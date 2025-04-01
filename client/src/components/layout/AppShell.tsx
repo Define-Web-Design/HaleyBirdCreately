@@ -8,6 +8,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const [isMobile, setIsMobile] = useState(false);
   const [fontSize, setFontSize] = useState(16);
   const [highContrast, setHighContrast] = useState(false);
+  const [colorBlindMode, setColorBlindMode] = useState('none');
   const [reduced, setReducedMotion] = useState(false);
 
   // Check if the screen is mobile size on mount and window resize
@@ -54,10 +55,29 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     setSidebarOpen(prevState => !prevState);
   };
 
+  // CSS filter values for different color blind modes
+  const getColorBlindFilter = () => {
+    switch(colorBlindMode) {
+      case 'protanopia': 
+        return 'saturate(0.5) sepia(0.2) brightness(1.1) hue-rotate(320deg)';
+      case 'deuteranopia': 
+        return 'saturate(0.85) sepia(0.15) hue-rotate(60deg)';
+      case 'tritanopia': 
+        return 'saturate(0.8) sepia(0.2) hue-rotate(180deg)';
+      case 'achromatopsia': 
+        return 'grayscale(1)';
+      default: 
+        return 'none';
+    }
+  };
+
   return (
     <SidebarProvider>
       <div className={`flex flex-col min-h-screen bg-background ${highContrast ? 'contrast-high' : ''} ${reduced ? 'motion-reduce' : ''}`}
-           style={{ fontSize: `${fontSize}px` }}>
+           style={{ 
+             fontSize: `${fontSize}px`,
+             filter: getColorBlindFilter()
+           }}>
         <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-background focus:text-foreground">
           Skip to main content
         </a>
@@ -77,6 +97,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               setFontSize={setFontSize}
               highContrast={highContrast}
               setHighContrast={setHighContrast}
+              colorBlindMode={colorBlindMode}
+              setColorBlindMode={setColorBlindMode}
               expanded={sidebarOpen}
               setExpanded={setSidebarOpen}
             />

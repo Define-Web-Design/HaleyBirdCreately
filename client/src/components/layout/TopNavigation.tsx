@@ -20,7 +20,10 @@ export default function TopNavigation({ toggleSidebar, isMobile }: { toggleSideb
             <line x1="3" y1="18" x2="21" y2="18"></line>
           </svg>
         </button>
-        <Link href="/" className="font-semibold text-lg tracking-tight">Creative Capsule</Link>
+        <Link href="/" className="font-semibold text-lg tracking-tight flex items-center">
+          <div className="bg-gradient-to-r from-[#F2994A] to-[#FF9DAE] h-8 w-8 rounded-lg flex items-center justify-center text-white font-bold text-lg mr-2">C</div>
+          Creately
+        </Link>
       </div>
 
       {/* Center section with search bar - hide on mobile */}
@@ -62,7 +65,8 @@ export default function TopNavigation({ toggleSidebar, isMobile }: { toggleSideb
         </button>
 
         {/* Create new content button - hide label on mobile */}
-        <button 
+        <Link 
+          href="/content-library/create" 
           className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors duration-200"
           aria-label="Create new content"
         >
@@ -71,7 +75,7 @@ export default function TopNavigation({ toggleSidebar, isMobile }: { toggleSideb
             <line x1="5" y1="12" x2="19" y2="12"></line>
           </svg>
           {!isMobile && <span>Create</span>}
-        </button>
+        </Link>
 
         {/* User avatar */}
         <Link href="/profile" className="group">

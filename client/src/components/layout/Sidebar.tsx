@@ -2,7 +2,7 @@ import { Link, useLocation } from 'wouter';
 import { MENU_ITEMS, SMART_TOOLS } from '@/lib/constants';
 import { useTheme } from '@/lib/hooks/use-theme';
 import { useState, useCallback, useEffect } from 'react';
-import { Sun, Moon, ZoomIn, ZoomOut, Eye, ChevronUp, ChevronDown, ChevronRight } from 'lucide-react';
+import { Sun, Moon, ZoomIn, ZoomOut, Eye, EyeOff, ChevronUp, ChevronDown, ChevronRight } from 'lucide-react';
 import { Switch } from "@/components/ui/switch";
 import {
   DropdownMenu,
@@ -18,6 +18,8 @@ interface SidebarProps {
   setFontSize?: (size: number) => void;
   highContrast?: boolean;
   setHighContrast?: (contrast: boolean) => void;
+  colorBlindMode?: string;
+  setColorBlindMode?: (mode: string) => void;
   expanded?: boolean;
   setExpanded?: (expanded: boolean) => void;
 }
@@ -42,6 +44,8 @@ const Sidebar = ({
   setFontSize = () => {}, 
   highContrast = false, 
   setHighContrast = () => {},
+  colorBlindMode = 'none',
+  setColorBlindMode = () => {},
   expanded = true,
   setExpanded = () => {}
 }: SidebarProps) => {
@@ -319,6 +323,25 @@ const Sidebar = ({
                   aria-label="Toggle high contrast"
                   className="data-[state=checked]:bg-primary/90 data-[state=unchecked]:bg-slate-200 dark:data-[state=unchecked]:bg-slate-700"
                 />
+              </div>
+              
+              <div className="flex flex-col space-y-2">
+                <div className="flex items-center space-x-2">
+                  <EyeOff className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                  <span className="text-sm">Color Blind Mode</span>
+                </div>
+                <select
+                  value={colorBlindMode}
+                  onChange={(e) => setColorBlindMode(e.target.value)}
+                  className="w-full px-3 py-1.5 text-sm rounded-md bg-muted border border-input shadow-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                  aria-label="Select color blind mode"
+                >
+                  <option value="none">None</option>
+                  <option value="protanopia">Protanopia (Red-Blind)</option>
+                  <option value="deuteranopia">Deuteranopia (Green-Blind)</option>
+                  <option value="tritanopia">Tritanopia (Blue-Blind)</option>
+                  <option value="achromatopsia">Achromatopsia (No Color)</option>
+                </select>
               </div>
             </div>
           )}
