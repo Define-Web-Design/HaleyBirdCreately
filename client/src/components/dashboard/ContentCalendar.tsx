@@ -101,27 +101,27 @@ const ContentCalendar = ({
   };
 
   return (
-    <section className="animate-slide-up mb-8" style={{ animationDelay: '0.4s' }}>
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-5 gap-3">
-        <h2 className="text-xl font-['SF_Pro_Display'] font-semibold text-gray-900 dark:text-white">Upcoming Schedule</h2>
+    <section className="mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 gap-2">
+        <h2 className="text-xl font-medium text-gray-900 dark:text-white">Upcoming Schedule</h2>
         <button className="text-sm text-primary hover:text-primary/80 transition-colors flex items-center self-start sm:self-auto">
-          View Full Calendar <i className="fas fa-calendar-alt ml-2"></i>
+          Full Calendar <i className="fas fa-calendar-alt ml-1.5"></i>
         </button>
       </div>
       
-      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm overflow-hidden border border-gray-100 dark:border-gray-800">
-        <div className="p-4 sm:p-5 border-b border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-white dark:bg-gray-900 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-800">
+        <div className="p-3 border-b border-gray-200 dark:border-gray-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center">
             <button 
-              className="text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary mr-4 transition-colors p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
+              className="text-gray-500 dark:text-gray-400 hover:text-primary mr-3 transition-colors p-1"
               onClick={onPrevMonth}
               aria-label="Previous month"
             >
               <i className="fas fa-chevron-left"></i>
             </button>
-            <h3 className="font-medium text-lg">{currentMonth}</h3>
+            <h3 className="font-medium">{currentMonth}</h3>
             <button 
-              className="text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary ml-4 transition-colors p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
+              className="text-gray-500 dark:text-gray-400 hover:text-primary ml-3 transition-colors p-1"
               onClick={onNextMonth}
               aria-label="Next month"
             >
@@ -129,47 +129,45 @@ const ContentCalendar = ({
             </button>
           </div>
           
-          <div className="flex space-x-1.5 p-0.5 bg-gray-100 dark:bg-gray-800 rounded-lg self-start sm:self-auto">
+          <div className="flex space-x-1 bg-gray-100 dark:bg-gray-800 rounded self-start sm:self-auto">
             <button 
               className={`${
                 viewMode === 'week' 
-                  ? 'bg-white dark:bg-gray-700 text-primary shadow-sm' 
-                  : 'hover:bg-gray-200/70 dark:hover:bg-gray-700/70 text-gray-700 dark:text-gray-300'
-              } px-3.5 py-1.5 rounded-md text-sm font-medium transition-all`}
+                  ? 'bg-white dark:bg-gray-700 text-primary' 
+                  : 'text-gray-700 dark:text-gray-300'
+              } px-3 py-1 rounded text-sm transition-colors`}
               onClick={() => setViewMode('week')}
               aria-label="Week view"
-              aria-pressed={viewMode === 'week'}
             >
               Week
             </button>
             <button 
               className={`${
                 viewMode === 'month' 
-                  ? 'bg-white dark:bg-gray-700 text-primary shadow-sm' 
-                  : 'hover:bg-gray-200/70 dark:hover:bg-gray-700/70 text-gray-700 dark:text-gray-300'
-              } px-3.5 py-1.5 rounded-md text-sm font-medium transition-all`}
+                  ? 'bg-white dark:bg-gray-700 text-primary' 
+                  : 'text-gray-700 dark:text-gray-300'
+              } px-3 py-1 rounded text-sm transition-colors`}
               onClick={() => setViewMode('month')}
               aria-label="Month view"
-              aria-pressed={viewMode === 'month'}
             >
               Month
             </button>
           </div>
         </div>
         
-        <div className="p-4 sm:p-5 overflow-x-auto scrollbar-thin">
+        <div className="p-3 overflow-x-auto">
           <div className="min-w-max">
             {/* Days of Week */}
-            <div className="grid grid-cols-7 gap-2 mb-3">
+            <div className="grid grid-cols-7 gap-1 mb-2">
               {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
-                <div key={day} className="text-center text-sm font-medium text-gray-500 dark:text-gray-400">
+                <div key={day} className="text-center text-xs font-medium text-gray-500 dark:text-gray-400">
                   {day}
                 </div>
               ))}
             </div>
             
             {/* Calendar Grid */}
-            <div className="grid grid-cols-7 gap-2">
+            <div className="grid grid-cols-7 gap-1">
               {days.slice(0, viewMode === 'week' ? 7 : days.length).map((day, index) => (
                 <CalendarDayComponent
                   key={`${day.month}-${day.date}-${index}`}

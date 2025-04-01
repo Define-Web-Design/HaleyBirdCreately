@@ -121,50 +121,46 @@ const ContentLibrary = ({
   const displayContent = contentItems.length > 0 ? contentItems : defaultContent;
 
   return (
-    <section className="mb-8 animate-slide-up" style={{ animationDelay: '0.2s' }}>
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+    <section className="mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
         <div className="flex items-center">
-          <h2 className="text-xl font-['SF_Pro_Display'] font-semibold text-gray-900 dark:text-white">Recent Content</h2>
+          <h2 className="text-xl font-medium text-gray-900 dark:text-white">Recent Content</h2>
           <Link href="/library" className="ml-3 text-sm text-primary hover:text-primary/80 transition-colors flex items-center">
-            View All <i className="fas fa-chevron-right ml-1.5 text-xs"></i>
+            View All <i className="fas fa-chevron-right ml-1 text-xs"></i>
           </Link>
         </div>
-        <div className="flex flex-wrap sm:flex-nowrap gap-3">
-          <div className="relative">
-            <label htmlFor="platform-select" className="sr-only">Select platform</label>
+        <div className="flex gap-2">
+          <div className="relative flex-1 min-w-[120px]">
             <select
               id="platform-select"
-              className="appearance-none bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 
-                rounded-lg py-2.5 pl-4 pr-10 text-sm focus:outline-none focus:border-primary focus:ring-1 
-                focus:ring-primary transition-colors shadow-sm"
+              className="w-full appearance-none bg-background border border-input rounded py-1.5 pl-3 pr-8 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
               value={platform}
               onChange={(e) => setPlatform(e.target.value)}
+              aria-label="Select platform"
             >
               <option>All Platforms</option>
               <option>Instagram</option>
               <option>TikTok</option>
               <option>Pinterest</option>
             </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
               <i className="fas fa-chevron-down text-xs"></i>
             </div>
           </div>
           
-          <div className="relative">
-            <label htmlFor="time-period-select" className="sr-only">Select time period</label>
+          <div className="relative flex-1 min-w-[120px]">
             <select
               id="time-period-select"
-              className="appearance-none bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 
-                rounded-lg py-2.5 pl-4 pr-10 text-sm focus:outline-none focus:border-primary focus:ring-1 
-                focus:ring-primary transition-colors shadow-sm"
+              className="w-full appearance-none bg-background border border-input rounded py-1.5 pl-3 pr-8 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
               value={period}
               onChange={(e) => setPeriod(e.target.value)}
+              aria-label="Select time period"
             >
               {TIME_PERIODS.map((p) => (
                 <option key={p.value} value={p.value}>{p.label}</option>
               ))}
             </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
               <i className="fas fa-chevron-down text-xs"></i>
             </div>
           </div>
@@ -172,7 +168,7 @@ const ContentLibrary = ({
       </div>
       
       {/* Content Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-5 sm:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {displayContent.map((item) => (
           <ContentCard
             key={item.id}

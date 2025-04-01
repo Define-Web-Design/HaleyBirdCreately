@@ -38,59 +38,47 @@ const CalendarDayComponent = ({ day, onClick }: CalendarDayProps) => {
   return (
     <div 
       className={`
-        h-auto min-h-[6rem] p-1.5 rounded-lg relative
+        min-h-[5rem] p-1 rounded relative
         ${day.isToday 
-          ? 'border-2 border-primary ring-2 ring-primary/20 bg-primary/5' 
+          ? 'border border-primary bg-primary/5' 
           : `border ${isInactive 
-              ? 'border-gray-100 dark:border-gray-800/60 bg-gray-50/80 dark:bg-gray-800/20 text-gray-400 dark:text-gray-600' 
-              : 'border-gray-200 dark:border-gray-700/80 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800/40'
+              ? 'border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 text-gray-400 dark:text-gray-600' 
+              : 'border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700'
             }`
         }
-        ${!isInactive ? 'cursor-pointer hover:shadow-sm' : ''}
-        transition-all
+        ${!isInactive ? 'cursor-pointer' : ''}
       `}
       onClick={!isInactive ? handleClick : undefined}
-      role={!isInactive ? "button" : undefined}
       aria-label={!isInactive ? `Select ${day.date}` : undefined}
     >
-      <div className={`text-xs font-medium p-1 rounded-sm inline-flex items-center ${
+      <div className={`text-xs p-0.5 ${
         day.isToday 
-          ? 'text-primary bg-primary/10 px-1.5' 
+          ? 'font-medium text-primary' 
           : isInactive 
-            ? 'text-gray-400 dark:text-gray-500' 
-            : 'text-gray-700 dark:text-gray-300'
+            ? 'text-gray-400 dark:text-gray-600' 
+            : 'text-gray-700 dark:text-gray-400'
       }`}>
-        {day.date}
-        {day.isToday && (
-          <span className="ml-1 text-[0.65rem] opacity-80">Today</span>
-        )}
+        {day.date}{day.isToday ? '*' : ''}
       </div>
       
       {day.scheduledContent && day.scheduledContent.length > 0 && day.isCurrentMonth && (
-        <div className="mt-1.5 space-y-1.5">
+        <div className="mt-1 space-y-1">
           {day.scheduledContent.slice(0, 2).map((content) => (
             <div 
               key={content.id} 
-              className={`text-[0.7rem] leading-tight font-medium rounded-sm ${getContentTypeColor(content.type)} py-1 px-1.5 truncate shadow-sm`}
+              className={`text-[0.65rem] leading-tight rounded-sm ${getContentTypeColor(content.type)} py-0.5 px-1 truncate`}
               title={content.title}
             >
-              <i className={`${getPlatformIcon(content.platform)} mr-1`}></i>
-              <span className="align-middle">{content.title}</span>
+              <i className={`${getPlatformIcon(content.platform)} mr-0.5`}></i>
+              <span>{content.title}</span>
             </div>
           ))}
           
           {day.scheduledContent.length > 2 && (
-            <div className="text-[0.65rem] text-center font-medium text-gray-500 dark:text-gray-400 mt-1 py-0.5 bg-gray-100/80 dark:bg-gray-700/50 rounded-sm">
-              +{day.scheduledContent.length - 2} more
+            <div className="text-[0.6rem] text-center text-gray-500 dark:text-gray-400">
+              +{day.scheduledContent.length - 2}
             </div>
           )}
-        </div>
-      )}
-      
-      {/* Empty state for empty days with subtle visual indicator */}
-      {(!day.scheduledContent || day.scheduledContent.length === 0) && day.isCurrentMonth && (
-        <div className="flex items-center justify-center h-10 mt-1">
-          <div className="w-1.5 h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 opacity-50"></div>
         </div>
       )}
     </div>
