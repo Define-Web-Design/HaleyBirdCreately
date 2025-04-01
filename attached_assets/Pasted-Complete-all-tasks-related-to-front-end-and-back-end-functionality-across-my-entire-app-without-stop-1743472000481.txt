@@ -1,0 +1,17 @@
+Complete all tasks related to front-end and back-end functionality across my entire app without stopping the workflow until every detail is thoroughly addressed and fixed. Ensure every process, portion, button, container, link, and page is created, functional, and correctly implemented. Preemptively anticipate my needs by addressing areas that may not have been explicitly requested but logically fit within the goals of comprehensive functionality, usability, and responsiveness. Retroactively ensure all workflows align with prior requests, and that everything operates flawlessly.
+
+Additionally, seamlessly incorporate any newly added requests into the workflow without disrupting the process, handling them efficiently wherever they logically fit. Address these alongside existing tasks without skipping over any details.
+
+Focus on the following:
+1 Verify that all navigation links direct to appropriate pages create missing pages where necessary and fix any broken links or 404 errors
+2 Replace text implying clickable links with actual linked text ensuring relevant results upon clicking
+3 Ensure all containers pages and buttons are functional linked and visually consistent
+4 Revitalize aesthetic functionalities including smooth scrolling responsive pop-ups and cohesive animations
+5 Audit all design layouts for responsiveness accessibility and user friendliness Ensure compatibility across all devices and screen sizes
+6 Validate all assets plugins and content throughout the site including media and placeholder content Compress and optimize for performance without errors
+7 Check that all front-end and back-end elements communicate properly and function cohesively Confirm the integration between components APIs and databases is seamless
+8 Test every single feature for usability and functionality Simulate real-world scenarios to guarantee that no errors or usability issues exist
+9 Implement ownership and security measures including metadata watermarks disclaimers and privacy notices prominently displayed on the site
+10 Review all prior requests thoroughly to confirm every task has been completed to match my expectations Ensure there are no skipped steps gaps or errors
+
+Do not stop to check in with me until all elements are functional flawless and fully implemented without flaws When finished provide me with a detailed report of all changes fixes and updates Let me know if additional steps are needed to ensure comprehensive results

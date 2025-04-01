@@ -1,8 +1,9 @@
 import React from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient, UseQueryOptions } from '@tanstack/react-query';
 import type { MoodCapsule, ContentItem } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { formatDistance } from 'date-fns';
+import { QueryKey } from '@tanstack/react-query';
 import {
   Dialog,
   DialogContent,
@@ -66,29 +67,37 @@ const MoodCapsuleDetail: React.FC<MoodCapsuleDetailProps> = React.memo(({
   const { data: capsule, isLoading: isCapsuleLoading, error: capsuleError } = useQuery<MoodCapsule>({
     queryKey: [`/api/mood-capsules/${capsuleId}`],
     enabled: isOpen && !!capsuleId,
-    retry: 2,
-    onError: (error) => {
+    retry: 2
+  });
+
+  // Handle errors with useEffect
+  React.useEffect(() => {
+    if (capsuleError) {
       toast({
         title: "Error loading mood capsule",
         description: "There was a problem loading this mood capsule. Please try again.",
         variant: "destructive",
       });
     }
-  });
+  }, [capsuleError, toast]);
 
   // Fetch content items for this capsule
   const { data: content = [], isLoading: isContentLoading, error: contentError } = useQuery<ContentItem[]>({
     queryKey: [`/api/content/by-capsule/${capsuleId}`],
     enabled: isOpen && !!capsuleId,
-    retry: 2,
-    onError: (error) => {
+    retry: 2
+  });
+
+  // Handle content errors
+  React.useEffect(() => {
+    if (contentError) {
       toast({
         title: "Error loading content",
         description: "There was a problem loading content for this mood capsule.",
         variant: "destructive",
       });
     }
-  });
+  }, [contentError, toast]);
 
   // Handle the regeneration of AI caption
   const handleRegenerateCaption = async () => {

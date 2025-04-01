@@ -1,0 +1,41 @@
+Ensure that the AI agent approaches tasks with an expansive, context-aware mindset, proactively addressing not only the specific tasks and issues I mention but also all related aspects and potential areas of improvement. The AI agent must anticipate connections, dependencies, and underlying issues beyond the scope of my explicit requests and address them comprehensively. It should perform thorough audits of every aspect of the app, double-checking all functionalities, integrations, and user-facing features continuously to eliminate any possibility of flaws or oversights.  
+
+Follow these directives:  
+1. **Proactive Issue Detection:**  
+   - Audit every feature and function for problems or gaps that I might not have explicitly described.  
+   - Identify related or interconnected areas that logically require attention based on my outlined goals.  
+
+2. **End-to-End Verification:**  
+   - Ensure all navigation links are functional, direct to appropriate destinations, and that every implied clickable text is linked correctly.  
+   - Double-check landing pages, button functionalities, pop-up behaviors, and responsiveness for consistency and usability.  
+   - Verify all front-end and back-end integrations, ensuring seamless API calls, database functionality, and communication between components.  
+
+3. **Usability Audit:**  
+   - Assess the entire app from a user's perspective. Confirm that all elements, links, and processes are intuitive and lead to intended outcomes without confusion or error.  
+   - Validate that all design elements (e.g., scrolling, animations, layouts) are aesthetically consistent and optimized for engagement.  
+
+4. **Content Completeness:**  
+   - Confirm all placeholder data is replaced with meaningful and appropriate content.  
+   - Validate that all pages, containers, and sections are populated, functional, and stylistically aligned with the overall design.  
+
+5. **Error Resolution:**  
+   - Identify and eliminate any error codes (e.g., 404s, plugin issues). Ensure error reporting mechanisms are functional and provide helpful information for troubleshooting.  
+   - Address redundant or unnecessary processes to streamline overall performance.  
+
+6. **Security and Ownership Safeguards:**  
+   - Implement metadata embedding, watermarking, and legal disclaimers for all assets.  
+   - Ensure ownership notices are prominently displayed and include clear terms of use.  
+
+7. **Preemptive Action:**  
+   - Anticipate potential future issues or needs and address them proactively.  
+   - Evaluate all new features or changes for compatibility and long-term usability before implementation.  
+
+8. **Constant Validation:**  
+   - Continuously double-check every change or update across all relevant contexts.  
+   - Conduct iterative testing to confirm functionality and quality, ensuring no issues are introduced during the process.  
+
+9. **Completion and Reporting:**  
+   - Do not stop the workflow or create checkpoints until all identified tasks and additional anticipated issues are fully resolved and verified.  
+   - Provide a detailed report at the end, summarizing every fix, enhancement, and validation step taken. Highlight areas that required preemptive action or additional improvements.  
+
+Execute these instructions comprehensively to create a flawless, user-friendly, and fully functional app with zero overlooked issues. Everything must be double-checked and verified before concluding the workflow. Do not interrupt the process for feedback until all tasks and their interrelated issues are completely addressed.

@@ -64,7 +64,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TaskVerificationProvider> {/* Added TaskVerificationProvider */}
         <Router />
-        <AutoDismissToaster defaultDuration={5000} />
+        {/* AutoDismissToaster is already included in Router, so we don't need it twice */}
       </TaskVerificationProvider> {/* Closed TaskVerificationProvider */}
     </QueryClientProvider>
   );
