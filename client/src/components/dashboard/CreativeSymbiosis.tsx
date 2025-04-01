@@ -493,6 +493,7 @@ export function CreativeHistoryCard({ className }: CardProps) {
 
 export function CapabilitiesCard({ className }: CardProps) {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const { data: capabilities = [] } = useQuery<UserCapability[]>({
     queryKey: ['/api/user-capabilities'],
