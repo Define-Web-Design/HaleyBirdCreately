@@ -55,6 +55,15 @@ export default function LegalPage() {
             You may use AI-generated content for personal and commercial purposes, but you may not claim exclusive ownership or copyright 
             of raw AI outputs without significant modification or creative input.
           </p>
+          <p className="mt-2">
+            <strong>3.4 Mood Capsules & Color Palettes:</strong> Content created using our Mood Capsules and Color Palette Generator tools
+            is subject to the same ownership terms as other AI-generated content. While you may use these creations commercially, the underlying
+            algorithms and technology remain the property of Creately.
+          </p>
+          <p className="mt-2">
+            <strong>3.5 Emotional Analysis Data:</strong> When you opt to use our emotion-based tools that analyze your content, the resulting 
+            metadata and emotional categorizations derived from your content may be used in an anonymized form to improve platform services.
+          </p>
         </div>
 
         <div className="mb-8">

@@ -55,13 +55,22 @@ const Sidebar = ({
   const [expandedSubMenu, setExpandedSubMenu] = useState<string | null>(null);
 
   useEffect(() => {
-    if (expanded && expandedSubMenu === null && !sessionStorage.getItem('sidebarToggled')) {
-      setExpanded(false);
+    // Check if user has manually toggled the sidebar
+    const userToggled = sessionStorage.getItem('sidebarToggled');
+    
+    // Only run this effect if we have a valid setExpanded function
+    if (typeof setExpanded === 'function') {
+      // If on mobile and no user toggle, ensure sidebar is collapsed
+      if (window.innerWidth < 768 && !userToggled) {
+        setExpanded(false);
+      } else if (userToggled === 'true') {
+        // If user has toggled it open, keep it open
+        setExpanded(true);
+      }
     }
-    if (sessionStorage.getItem('sidebarToggled')) {
-      sessionStorage.removeItem('sidebarToggled');
-    }
-  }, [location, expanded, expandedSubMenu, setExpanded]);
+    
+    // Do not remove the userToggled flag here to maintain persistence
+  }, [location, setExpanded]);
 
   const toggleAccessibility = () => {
     setAccessibilityExpanded(!accessibilityExpanded);
@@ -188,10 +197,13 @@ const Sidebar = ({
                           <Link 
                             href={subItem.path}
                             onClick={() => {
-                              setTimeout(() => {
-                                setExpandedSubMenu(null);
-                                setExpanded(false);
-                              }, 150);
+                              // Only close sidebar on mobile, keep expanded on desktop
+                              if (window.innerWidth < 768) {
+                                setTimeout(() => {
+                                  setExpandedSubMenu(null);
+                                  setExpanded(false);
+                                }, 150);
+                              }
                             }}
                             className={`flex items-center px-3 py-2 text-sm rounded-md ${
                               location === subItem.path

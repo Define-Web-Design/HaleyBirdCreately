@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import TopNavigation from './TopNavigation';
 import Sidebar from './Sidebar';
@@ -54,9 +54,15 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [isMobile]);
 
-  const toggleSidebar = () => {
-    setSidebarOpen(prevState => !prevState);
-  };
+  const toggleSidebar = useCallback(() => {
+    // Toggle sidebar state
+    setSidebarOpen(prevState => {
+      const newState = !prevState;
+      // Save the new state to sessionStorage so it persists
+      sessionStorage.setItem('sidebarToggled', newState ? 'true' : 'false');
+      return newState;
+    });
+  }, []);
 
   // CSS filter values for different color blind modes
   const getColorBlindFilter = () => {
@@ -93,7 +99,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           {isMobile && sidebarOpen && (
             <div 
               className="fixed inset-0 bg-black/50 z-30 transition-opacity duration-300 ease-in-out animate-in fade-in"
-              onClick={() => setSidebarOpen(false)}
+              onClick={() => {
+                setSidebarOpen(false);
+                // Update sessionStorage to reflect the closed state
+                sessionStorage.setItem('sidebarToggled', 'false');
+              }}
               aria-hidden="true"
             />
           )}

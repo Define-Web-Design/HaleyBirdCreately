@@ -89,8 +89,19 @@ export default function PrivacyPage() {
             We do not use personally identifiable information in our training processes without explicit consent.
           </p>
           <p className="mt-2">
-            <strong>3.3 Opt-Out Rights:</strong> You can opt out of having your content used for AI training by adjusting your privacy 
-            settings in your account preferences.
+            <strong>3.3 Emotion Analysis:</strong> Our Mood Capsules feature analyzes the emotional tone of your content. This analysis may include 
+            processing text, images, and other media to categorize content by emotional themes. This data is used to create cohesive collections
+            and generate AI-assisted captions that match the emotional context of your content.
+          </p>
+          <p className="mt-2">
+            <strong>3.4 Color Generation:</strong> The Mood-Based Color Palette Generator processes your text inputs to understand emotional context
+            and creates color palettes that reflect those emotions. These inputs are temporarily processed and not permanently stored unless you 
+            explicitly save the generated palette.
+          </p>
+          <p className="mt-2">
+            <strong>3.5 Opt-Out Rights:</strong> You can opt out of having your content used for AI training by adjusting your privacy 
+            settings in your account preferences. Note that opting out will not affect your ability to use AI-powered features, but may limit
+            the personalization of those features.
           </p>
         </div>
 
