@@ -86,11 +86,20 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           isMobile={isMobile}
         />
         <div className="flex flex-1 overflow-hidden">
+          {/* Backdrop overlay for mobile when sidebar is open */}
+          {isMobile && sidebarOpen && (
+            <div 
+              className="fixed inset-0 bg-black/50 z-10 transition-opacity duration-300 ease-in-out animate-in fade-in"
+              onClick={() => setSidebarOpen(false)}
+              aria-hidden="true"
+            />
+          )}
+          
           {/* Sidebar - conditionally shown based on sidebarOpen state */}
           <div
             className={`${
               sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-            } fixed md:relative z-10 h-full transition-transform duration-300 ease-in-out md:translate-x-0`}
+            } fixed md:relative z-20 h-full transition-transform duration-300 ease-in-out md:translate-x-0`}
           >
             <Sidebar 
               fontSize={fontSize}

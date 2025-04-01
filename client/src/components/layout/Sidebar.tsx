@@ -67,6 +67,8 @@ const Sidebar = ({
     setAccessibilityExpanded(!accessibilityExpanded);
   };
 
+  const [_, setLocation] = useLocation();
+  
   const handleMenuItemClick = useCallback((item: MenuItem) => {
     // For sidebar items with submenus
     if (item.subMenu && item.subMenu.length > 0) {
@@ -81,13 +83,13 @@ const Sidebar = ({
       
       // Navigate to the main path if not already there
       if (location !== item.path) {
-        window.history.pushState(null, '', item.path);
+        setLocation(item.path);
       }
     } 
     // For regular sidebar items without submenus
     else {
-      // Navigate to the path
-      window.history.pushState(null, '', item.path);
+      // Navigate to the path using wouter's setLocation
+      setLocation(item.path);
       
       // Trigger any custom handler
       if (item.onSubCategoryClick) {
@@ -102,20 +104,22 @@ const Sidebar = ({
         }, 150);
       }
     }
-  }, [setExpanded, location]);
+  }, [setExpanded, location, setLocation]);
 
   return (
-    <div className="flex flex-col w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 shadow-sm h-full">
-      <Link href="/" className="p-4 flex items-center cursor-pointer hover:opacity-90 transition-opacity">
-        <div className="bg-gradient-to-r from-[#F2994A] to-[#FF9DAE] h-10 w-10 rounded-lg flex items-center justify-center text-white font-bold text-xl mr-3">C</div>
-        <h1 className="text-xl font-['SF_Pro_Display'] font-semibold">Creately</h1>
+    <div 
+      className={`flex flex-col ${expanded ? 'w-64' : 'w-0 md:w-20'} bg-background border-r border-border shadow-sm h-full transition-all duration-300 ease-in-out`}
+    >
+      <Link href="/" className="p-4 flex items-center cursor-pointer hover:opacity-90 transition-opacity overflow-hidden">
+        <div className="bg-gradient-to-r from-[#F2994A] to-[#FF9DAE] h-10 w-10 rounded-lg flex items-center justify-center text-white font-bold text-xl mr-3 shrink-0">C</div>
+        <h1 className={`text-xl font-medium transition-opacity duration-300 ${expanded ? 'opacity-100' : 'opacity-0 md:hidden'}`}>Creately</h1>
       </Link>
 
       <nav className="flex-1 overflow-y-auto py-4">
-        <div className="px-4 mb-4">
+        <div className={`px-4 mb-4 transition-opacity duration-300 ${expanded ? 'opacity-100' : 'opacity-0 h-0 mb-0 overflow-hidden md:opacity-100 md:h-auto md:mb-4 md:overflow-visible'}`}>
           <div className="flex items-center justify-between">
-            <h2 className="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Workspace</h2>
-            <button className="text-gray-500 hover:text-primary dark:text-gray-400 dark:hover:text-primary">
+            <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Workspace</h2>
+            <button className="text-muted-foreground hover:text-primary">
               <i className="fas fa-ellipsis-h text-xs"></i>
             </button>
           </div>
@@ -147,9 +151,9 @@ const Sidebar = ({
                       }`}
                     >
                       <div className="flex items-center">
-                        <i className={`${item.icon} w-5 mr-3 text-lg`}></i>
-                        <span>{item.name}</span>
-                        {item.isNew && (
+                        <i className={`${item.icon} w-5 mr-3 text-lg shrink-0`}></i>
+                        <span className={`transition-opacity duration-300 ${expanded ? 'opacity-100' : 'opacity-0 w-0 overflow-hidden md:opacity-100 md:w-auto md:overflow-visible'}`}>{item.name}</span>
+                        {item.isNew && expanded && (
                           <span className="ml-2 px-1.5 py-0.5 text-xs font-medium text-white bg-primary rounded-full">New</span>
                         )}
                       </div>
@@ -169,9 +173,9 @@ const Sidebar = ({
                         : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
                       }`}
                     >
-                      <i className={`${item.icon} w-5 mr-3 text-lg`}></i>
-                      <span>{item.name}</span>
-                      {item.isNew && (
+                      <i className={`${item.icon} w-5 mr-3 text-lg shrink-0`}></i>
+                      <span className={`transition-opacity duration-300 ${expanded ? 'opacity-100' : 'opacity-0 w-0 overflow-hidden md:opacity-100 md:w-auto md:overflow-visible'}`}>{item.name}</span>
+                      {item.isNew && expanded && (
                         <span className="ml-2 px-1.5 py-0.5 text-xs font-medium text-white bg-primary rounded-full">New</span>
                       )}
                     </Link>
@@ -207,9 +211,9 @@ const Sidebar = ({
           })}
         </ul>
 
-        <div className="px-4 mt-8 mb-4">
+        <div className={`px-4 mt-8 mb-4 transition-opacity duration-300 ${expanded ? 'opacity-100' : 'opacity-0 h-0 mb-0 overflow-hidden md:opacity-100 md:h-auto md:mb-4 md:overflow-visible'}`}>
           <div className="flex items-center justify-between">
-            <h2 className="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Smart Tools</h2>
+            <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Smart Tools</h2>
           </div>
         </div>
 
@@ -221,15 +225,15 @@ const Sidebar = ({
                 onClick={() => handleMenuItemClick(tool as MenuItem)}
                 className="flex items-center px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
               >
-                <i className={`${tool.icon} w-5 mr-3 text-lg`}></i>
-                <span>{tool.name}</span>
+                <i className={`${tool.icon} w-5 mr-3 text-lg shrink-0`}></i>
+                <span className={`transition-opacity duration-300 ${expanded ? 'opacity-100' : 'opacity-0 w-0 overflow-hidden md:opacity-100 md:w-auto md:overflow-visible'}`}>{tool.name}</span>
               </Link>
             </li>
           ))}
         </ul>
       </nav>
 
-      <div className="border-t border-gray-200 dark:border-gray-800 mt-auto">
+      <div className="border-t border-border mt-auto">
         <div className="p-4">
           <div className="flex items-center">
             <DropdownMenu>
@@ -237,11 +241,11 @@ const Sidebar = ({
                 <img 
                   src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=120&h=120&q=80" 
                   alt="User avatar" 
-                  className="h-8 w-8 rounded-full object-cover mr-3"
+                  className="h-9 w-9 rounded-full object-cover mr-3 shrink-0 shadow-sm"
                 />
-                <div className="flex-1">
+                <div className={`flex-1 transition-opacity duration-300 ${expanded ? 'opacity-100' : 'opacity-0 w-0 overflow-hidden md:opacity-100 md:w-auto md:overflow-visible'}`}>
                   <p className="text-sm font-medium text-left">Sophia Chen</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Creator</p>
+                  <p className="text-xs text-muted-foreground">Creator</p>
                 </div>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
@@ -261,16 +265,16 @@ const Sidebar = ({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <button className="ml-auto text-gray-500 hover:text-primary dark:text-gray-400 dark:hover:text-primary">
+            <button className={`ml-auto text-muted-foreground hover:text-primary transition-opacity duration-300 ${expanded ? 'opacity-100' : 'opacity-0 w-0 overflow-hidden md:opacity-100 md:w-auto md:overflow-visible'}`}>
               <i className="fas fa-cog"></i>
             </button>
           </div>
         </div>
 
-        <div className="px-4 pb-4">
+        <div className={`px-4 pb-4 transition-opacity duration-300 ${expanded ? 'opacity-100' : 'opacity-0 h-0 overflow-hidden md:opacity-100 md:h-auto md:overflow-visible'}`}>
           <button 
             onClick={toggleAccessibility}
-            className="flex items-center justify-between w-full py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary transition-colors"
+            className="flex items-center justify-between w-full py-2 text-sm font-medium text-foreground hover:text-primary transition-colors"
           >
             <span>Accessibility Tools</span>
             {accessibilityExpanded ? (

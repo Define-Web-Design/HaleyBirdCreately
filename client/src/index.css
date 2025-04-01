@@ -84,7 +84,12 @@
 
 @layer base {
   * {
-    @apply border-border transition-all duration-200;
+    @apply border-border;
+  }
+  
+  /* Apply smoother, less distracting transitions to interactive elements only */
+  a, button, input, select, textarea, .interactive-element {
+    @apply transition-all duration-300 ease-in-out;
   }
 
   html {
@@ -542,35 +547,79 @@
   }
 }
 
-/* Specific component styles */
+/* Specific component styles with reduced distractions */
 .auto-dismiss-toaster {
   @apply pointer-events-none fixed bottom-4 right-4 z-50 flex w-full max-w-md flex-col gap-2;
 }
 
 .auto-dismiss-toast {
-  @apply pointer-events-auto flex items-center justify-between gap-2 rounded-lg bg-white p-4 shadow-md dark:bg-gray-800;
-  animation: toast-enter 0.3s ease, toast-exit 0.3s ease forwards;
+  @apply pointer-events-auto flex items-center justify-between gap-2 rounded-lg bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm p-4 shadow-md;
+  animation: toast-enter 0.4s cubic-bezier(0.21, 1.02, 0.73, 1), toast-exit 0.4s cubic-bezier(0.06, 0.71, 0.55, 1) forwards;
   animation-delay: 0s, var(--toast-duration, 4s);
 }
 
+/* Modal and popup styles with subtle animations */
+.modal-overlay {
+  @apply fixed inset-0 bg-black/40 backdrop-blur-sm z-50;
+  animation: fade-in 0.3s ease-out;
+}
+
+.modal-content {
+  @apply bg-background rounded-lg shadow-xl overflow-hidden max-w-md w-full mx-auto mt-20;
+  animation: slide-up 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dropdown-content {
+  animation: zoom-fade 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: top center;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from { 
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to { 
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes zoom-fade {
+  from { 
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to { 
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Less distracting toast animations with smoother easing */
 @keyframes toast-enter {
   from {
-    transform: translateX(100%);
+    transform: translateY(10px);
     opacity: 0;
   }
   to {
-    transform: translateX(0);
+    transform: translateY(0);
     opacity: 1;
   }
 }
 
 @keyframes toast-exit {
   from {
-    transform: translateX(0);
+    transform: translateY(0);
     opacity: 1;
   }
   to {
-    transform: translateX(100%);
+    transform: translateY(10px);
     opacity: 0;
   }
 }
