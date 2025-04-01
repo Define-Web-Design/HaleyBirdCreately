@@ -163,7 +163,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Apply access validation to protected routes
+  // Register theme routes before applying access validation
+  // Theme configuration - publicly accessible
+  app.post('/api/theme', async (req, res) => {
+    try {
+      const { primary, appearance, variant, radius } = req.body;
+      
+      if (!primary) {
+        return res.status(400).json({ 
+          message: "Primary color is required" 
+        });
+      }
+      
+      console.log('Theme update received:', { primary, appearance, variant, radius });
+      
+      // In a real implementation, this would update theme.json
+      // For now, we'll just return success
+      res.json({ 
+        success: true,
+        theme: {
+          primary,
+          appearance: appearance || 'light',
+          variant: variant || 'vibrant',
+          radius: radius || 0.5
+        }
+      });
+    } catch (error: any) {
+      console.error('Error in theme API:', error);
+      res.status(500).json({ 
+        message: error.message 
+      });
+    }
+  });
+
+  // Theme route to get the current theme - publicly accessible
+  app.get('/api/public/theme', (req, res) => {
+    // Improved default theme configuration that matches our UI design
+    const defaultTheme = {
+      primary: '#F2994A', // Matches our app's gradient starting color
+      appearance: 'system', // Use system preference by default
+      variant: 'vibrant', // Use vibrant variant for more appealing UI
+      radius: 0.5 // Moderate border radius
+    };
+    
+    console.log('Serving default theme:', defaultTheme);
+    res.json(defaultTheme);
+  });
+  
+  // Allow OPTIONS requests for CORS preflight
+  app.options('/api/theme', (req, res) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.sendStatus(204);
+  });
+  
+  // Allow OPTIONS requests for public theme endpoint
+  app.options('/api/public/theme', (req, res) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET,OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type');
+    res.sendStatus(204);
+  });
+  
+  // Apply access validation to all other API routes
   app.use("/api", validateAccess);
   // API routes prefix
   const apiPrefix = "/api";
@@ -1614,45 +1677,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // Theme configuration
-  app.post('/api/theme', async (req, res) => {
-    try {
-      const { primary, appearance, variant, radius } = req.body;
-      
-      if (!primary) {
-        return res.status(400).json({ 
-          message: "Primary color is required" 
-        });
-      }
-      
-      // In a real implementation, this would update theme.json
-      // For now, we'll just return success
-      res.json({ 
-        success: true,
-        theme: {
-          primary,
-          appearance: appearance || 'light',
-          variant: variant || 'vibrant',
-          radius: radius || 0.5
-        }
-      });
-    } catch (error: any) {
-      res.status(500).json({ 
-        message: error.message 
-      });
-    }
-  });
-
-  // Add a theme route to get the current theme (outside of authentication)
-  app.get('/api/public/theme', (req, res) => {
-    // Default theme configuration
-    res.json({
-      primary: '#7c3aed',
-      appearance: 'light',
-      variant: 'vibrant',
-      radius: 0.5
-    });
-  });
+  // Theme routes moved above the authentication middleware
 
   const httpServer = createServer(app);
 

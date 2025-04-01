@@ -34,12 +34,30 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     localStorage.getItem('colorBlindMode') === 'true'
   );
 
-  // Load theme from localStorage on mount
+  // Load theme from localStorage or API on mount
   useEffect(() => {
-    const savedTheme = localStorage.getItem('themeColor');
-    if (savedTheme) {
-      setTheme(savedTheme);
-    }
+    const loadTheme = async () => {
+      const savedTheme = localStorage.getItem('themeColor');
+      
+      if (savedTheme) {
+        // If we have a saved theme, use it
+        setTheme(savedTheme);
+      } else {
+        // Otherwise, try to get default theme from the API
+        try {
+          const response = await fetch('/api/public/theme');
+          if (response.ok) {
+            const themeData = await response.json();
+            console.log('Fetched initial theme from API:', themeData);
+            setTheme(themeData.primary);
+          }
+        } catch (error) {
+          console.error('Failed to fetch initial theme from API:', error);
+        }
+      }
+    };
+    
+    loadTheme();
   }, []);
 
   // Update document with current theme settings
@@ -49,14 +67,16 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     localStorage.setItem('darkMode', String(isDarkMode));
     localStorage.setItem('colorBlindMode', String(isColorBlindMode));
 
-    // Update theme.json via API
+    // Update theme via API
     const updateTheme = async () => {
       try {
+        // First, try using the publicly accessible theme endpoint
         const response = await fetch('/api/theme', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
+          credentials: 'include', // Include cookies for authentication if available
           body: JSON.stringify({
             primary: theme,
             appearance: isDarkMode ? 'dark' : 'light',
@@ -66,17 +86,27 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
         });
         
         if (!response.ok) {
-          // If authenticated endpoint fails, try the public endpoint
-          console.log('Using public theme endpoint');
-          await fetch('/api/public/theme', {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          });
+          console.log('Theme update response not OK, status:', response.status);
         }
       } catch (error) {
         console.error('Failed to update theme:', error);
+        
+        // For any errors, try to fetch default theme from the public endpoint
+        try {
+          console.log('Fetching from public theme endpoint');
+          const publicResponse = await fetch('/api/public/theme');
+          if (publicResponse.ok) {
+            const publicTheme = await publicResponse.json();
+            console.log('Loaded public theme:', publicTheme);
+            
+            // Only update if we didn't have a value already
+            if (!localStorage.getItem('themeColor')) {
+              setTheme(publicTheme.primary);
+            }
+          }
+        } catch (fallbackError) {
+          console.error('Failed to fetch public theme:', fallbackError);
+        }
       }
     };
 

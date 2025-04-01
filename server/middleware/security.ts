@@ -45,7 +45,9 @@ export const validateAccess = async (req: Request, res: Response, next: NextFunc
   const session = (req as any).session;
   const isAuthenticated = session?.userId;
   const isPublicRoute = req.path.startsWith("/api/public");
-  const isThemeEndpoint = req.path === "/api/theme";
+  
+  // Allow all theme-related requests without authentication
+  const isThemeEndpoint = req.path === "/api/theme" || req.path === "/api/public/theme" || req.path.includes('/theme');
   
   // Log access attempts for security monitoring
   await storage.trackAccessAttempt({
@@ -54,7 +56,7 @@ export const validateAccess = async (req: Request, res: Response, next: NextFunc
     method: req.method,
     timestamp: new Date(),
     userAgent: req.headers["user-agent"] || "unknown",
-    authorized: !!isAuthenticated,
+    authorized: !!isAuthenticated || isPublicRoute || isThemeEndpoint,
     userId: isAuthenticated ? session.userId : undefined
   });
   
