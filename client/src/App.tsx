@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Switch, Route } from "wouter";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
@@ -22,9 +23,44 @@ import NotFound from "./pages/not-found";
 import Profile from './components/profile/Profile';
 import LegalPage from "./pages/legal";
 import PrivacyPage from "./pages/privacy";
-import { TaskVerificationProvider } from "./context/task-verification-context"; // Added import
+import CookieConsent from "./components/common/CookieConsent";
+import { ThemeProvider } from "./lib/ThemeContext";
+import { TaskVerificationProvider } from "./context/task-verification-context";
+
+// Set up service worker for offline capabilities
+function registerServiceWorker() {
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(registration => {
+          console.log('ServiceWorker registration successful with scope: ', registration.scope);
+        })
+        .catch(error => {
+          console.log('ServiceWorker registration failed: ', error);
+        });
+    });
+  }
+}
 
 function Router() {
+  // Detect if running on a mobile device
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  
+  // Add mobile-specific body class
+  useEffect(() => {
+    if (isMobile) {
+      document.body.classList.add('mobile-device');
+    }
+    
+    // Prevent overscroll behavior on mobile
+    document.body.style.overscrollBehavior = 'none';
+    
+    return () => {
+      document.body.classList.remove('mobile-device');
+      document.body.style.overscrollBehavior = 'auto';
+    };
+  }, [isMobile]);
+
   return (
     <AppShell>
       <AutoDismissToaster defaultDuration={5000} />
@@ -51,25 +87,36 @@ function Router() {
         <Route path="/ai-enhancement" component={AIEnhancement} />
         <Route path="/creative-prompts" component={CreativePrompts} />
         <Route path="/cross-platform-tools" component={CrossPlatformTools} />
-        <Route path="/profile" component={Profile} /> {/* Added route for Profile */}
-        <Route path="/profile/accessibility" component={Profile} /> {/* Added route for Profile accessibility */}
-        <Route path="/profile/integrations" component={Profile} /> {/* Added route for Profile integrations */}
-        <Route path="/legal" component={LegalPage} /> {/* Added route for Legal terms */}
-        <Route path="/privacy" component={PrivacyPage} /> {/* Added route for Privacy policy */}
-        <Route path="/nav-test" component={NavigationTest} /> {/* Navigation testing tool */}
+        <Route path="/profile" component={Profile} />
+        <Route path="/profile/accessibility" component={Profile} />
+        <Route path="/profile/integrations" component={Profile} />
+        <Route path="/legal" component={LegalPage} />
+        <Route path="/privacy" component={PrivacyPage} />
+        <Route path="/terms-of-service" component={LegalPage} />
+        <Route path="/nav-test" component={NavigationTest} />
         <Route component={NotFound} />
       </Switch>
+      <CookieConsent 
+        privacyPolicyUrl="/privacy"
+        termsOfServiceUrl="/terms-of-service"
+      />
     </AppShell>
   );
 }
 
 function App() {
+  // Try to register service worker on mount
+  useEffect(() => {
+    registerServiceWorker();
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
-      <TaskVerificationProvider> {/* Added TaskVerificationProvider */}
-        <Router />
-        {/* AutoDismissToaster is already included in Router, so we don't need it twice */}
-      </TaskVerificationProvider> {/* Closed TaskVerificationProvider */}
+      <ThemeProvider>
+        <TaskVerificationProvider>
+          <Router />
+        </TaskVerificationProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }
