@@ -20,6 +20,8 @@ import CrossPlatformTools from "./pages/cross-platform-tools";
 import NavigationTest from "./pages/nav-test";
 import NotFound from "./pages/not-found";
 import Profile from './components/profile/Profile';
+import LegalPage from "./pages/legal";
+import PrivacyPage from "./pages/privacy";
 import { TaskVerificationProvider } from "./context/task-verification-context"; // Added import
 
 function Router() {
@@ -52,6 +54,8 @@ function Router() {
         <Route path="/profile" component={Profile} /> {/* Added route for Profile */}
         <Route path="/profile/accessibility" component={Profile} /> {/* Added route for Profile accessibility */}
         <Route path="/profile/integrations" component={Profile} /> {/* Added route for Profile integrations */}
+        <Route path="/legal" component={LegalPage} /> {/* Added route for Legal terms */}
+        <Route path="/privacy" component={PrivacyPage} /> {/* Added route for Privacy policy */}
         <Route path="/nav-test" component={NavigationTest} /> {/* Navigation testing tool */}
         <Route component={NotFound} />
       </Switch>

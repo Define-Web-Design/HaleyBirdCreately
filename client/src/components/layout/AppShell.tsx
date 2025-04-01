@@ -128,6 +128,58 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               </button>
             )}
             {children}
+            
+            {/* Footer with legal links */}
+            <footer className="mt-16 pt-8 border-t border-border">
+              <div className="container mx-auto px-4">
+                <div className="flex flex-col md:flex-row justify-between items-center py-6">
+                  <div className="mb-4 md:mb-0">
+                    <div className="flex items-center">
+                      <div className="bg-gradient-to-r from-[#F2994A] to-[#FF9DAE] h-8 w-8 rounded-lg flex items-center justify-center text-white font-bold text-lg mr-2">C</div>
+                      <span className="text-lg font-semibold">Creately</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      A creative intelligence platform for design and content creation
+                    </p>
+                  </div>
+                  
+                  <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-8">
+                    <div>
+                      <h3 className="font-medium mb-2">Legal</h3>
+                      <ul className="space-y-2">
+                        <li>
+                          <a href="/legal" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                            Terms and Conditions
+                          </a>
+                        </li>
+                        <li>
+                          <a href="/privacy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                            Privacy Policy
+                          </a>
+                        </li>
+                      </ul>
+                    </div>
+                    
+                    <div>
+                      <h3 className="font-medium mb-2">Contact</h3>
+                      <ul className="space-y-2">
+                        <li>
+                          <a href="mailto:support@creately.com" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                            support@creately.com
+                          </a>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="py-4 text-center border-t border-border">
+                  <p className="text-xs text-muted-foreground">
+                    &copy; {new Date().getFullYear()} Creately. All rights reserved.
+                  </p>
+                </div>
+              </div>
+            </footer>
           </main>
         </div>
       </div>

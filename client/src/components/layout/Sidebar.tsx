@@ -68,16 +68,33 @@ const Sidebar = ({
   };
 
   const handleMenuItemClick = useCallback((item: MenuItem) => {
+    // For sidebar items with submenus
     if (item.subMenu && item.subMenu.length > 0) {
+      // Toggle the submenu visibility
       setExpandedSubMenu(prev => prev === item.path ? null : item.path);
       setExpanded(true); 
+      
+      // Trigger any custom handler
       if (item.onCategoryClick) {
         item.onCategoryClick(item);
       }
-    } else {
+      
+      // Navigate to the main path if not already there
+      if (location !== item.path) {
+        window.history.pushState(null, '', item.path);
+      }
+    } 
+    // For regular sidebar items without submenus
+    else {
+      // Navigate to the path
+      window.history.pushState(null, '', item.path);
+      
+      // Trigger any custom handler
       if (item.onSubCategoryClick) {
         item.onSubCategoryClick(item);
       }
+      
+      // On mobile, collapse sidebar after navigating
       if (window.innerWidth < 768) {
         setTimeout(() => {
           setExpandedSubMenu(null);
@@ -85,7 +102,7 @@ const Sidebar = ({
         }, 150);
       }
     }
-  }, [setExpanded]);
+  }, [setExpanded, location]);
 
   return (
     <div className="flex flex-col w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 shadow-sm h-full">
