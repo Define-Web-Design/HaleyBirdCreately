@@ -157,7 +157,11 @@
 
   /* Interactive elements */
   button, a {
-    @apply rounded-lg hover:opacity-90 active:scale-97 focus:ring-2 focus:ring-primary/20 focus:outline-none;
+    @apply rounded-lg hover:opacity-90 focus:ring-2 focus:ring-primary/20 focus:outline-none;
+  }
+  
+  button:active, a:active {
+    transform: scale(0.97);
   }
 
   /* Form elements */
@@ -390,10 +394,6 @@
 }
 
 @layer utilities {
-  /* Active scale utility */
-  .active\:scale-97:active {
-    transform: scale(0.97);
-  }
   
   /* Animation delay utilities */
   .delay-1 {

@@ -45,11 +45,8 @@ export const LegalAcceptanceModal = ({
 
     try {
       await apiRequest('/api/public/legal/accept', {
-        method: 'POST',
-        body: JSON.stringify({
-          documentType,
-          version
-        })
+        documentType,
+        version
       });
 
       toast({
@@ -58,6 +55,16 @@ export const LegalAcceptanceModal = ({
           ? "You've accepted the Terms of Service." 
           : "You've accepted the Privacy Policy."
       });
+      
+      // Dispatch event for other components to listen for
+      const legalEvent = new CustomEvent('legalAction', {
+        detail: {
+          action: 'accept',
+          documentType,
+          version
+        }
+      });
+      document.dispatchEvent(legalEvent);
       
       onClose();
     } catch (error) {

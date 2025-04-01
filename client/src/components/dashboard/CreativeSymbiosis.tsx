@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'wouter';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -8,7 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { verifyContentIntegrity } from '@/lib/security-verification';
 import TaskVerificationDashboard from './TaskVerificationDashboard'; // Import added
 
@@ -37,6 +37,7 @@ interface CardProps {
 
 export function EvolutionProgressCard({ className }: CardProps) {
   const queryClient = useQueryClient();
+  const { toast } = useToast();  
 
   const { data: evolutionPoints, isLoading } = useQuery<EvolutionPoints>({
     queryKey: ['/api/evolution-points'],

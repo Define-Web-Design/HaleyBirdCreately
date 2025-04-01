@@ -6,8 +6,8 @@ import { cn } from '@/lib/utils';
 
 interface AutoDismissToastProps {
   id: string;
-  title?: string;
-  description?: string;
+  title?: React.ReactNode;
+  description?: React.ReactNode;
   variant?: 'default' | 'success' | 'warning' | 'destructive' | 'info';
   duration?: number;
   className?: string;
@@ -164,9 +164,10 @@ export const AutoDismissToast = ({
 
 interface AutoDismissToasterProps {
   className?: string;
+  defaultDuration?: number;
 }
 
-export const AutoDismissToaster = ({ className }: AutoDismissToasterProps) => {
+export const AutoDismissToaster = ({ className, defaultDuration = 5000 }: AutoDismissToasterProps) => {
   const { toasts, dismiss } = useToast();
   
   return (
@@ -178,7 +179,7 @@ export const AutoDismissToaster = ({ className }: AutoDismissToasterProps) => {
           title={toast.title}
           description={toast.description}
           variant={toast.variant as any}
-          duration={toast.duration}
+          duration={toast.duration || defaultDuration}
           onDismiss={dismiss}
         />
       ))}

@@ -1,10 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
-
-// Import the toast component from UI components
-import { toast } from '../components/ui/toast';
 
 // Define Task Status
 export enum TaskStatus {
@@ -290,12 +288,9 @@ export function useCheckpointManager() {
     
     if (result && syncWithServer) {
       try {
-        await apiRequest('/api/checkpoints/complete', {
-          method: 'POST',
-          body: JSON.stringify({
-            taskId,
-            checkpointId
-          })
+        await apiRequest('/api/checkpoints/complete', 'POST', {
+          taskId,
+          checkpointId
         });
         
         // Invalidate related queries
@@ -320,9 +315,8 @@ export function useCheckpointManager() {
     
     if (result && syncWithServer) {
       try {
-        await apiRequest('/api/tasks/verify', {
-          method: 'POST',
-          body: JSON.stringify({ taskId })
+        await apiRequest('/api/tasks/verify', 'POST', { 
+          taskId 
         });
         
         // Invalidate related queries

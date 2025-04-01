@@ -1,12 +1,12 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { useToast } from '../components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import AIEnhancementTools from '../components/dashboard/AIEnhancementTools';
 import { Separator } from '../components/ui/separator';
-import { LegalAcceptanceModal } from '../components/legal/LegalAcceptanceModal';
+import LegalAcceptanceModal from '@/components/legal/LegalAcceptanceModal';
 
 // Sample content items for demonstration
 const SAMPLE_CONTENT = [
@@ -52,16 +52,24 @@ const AIEnhancement = () => {
     });
   };
   
-  // Handle legal terms acceptance
-  const handleLegalAcceptance = () => {
-    setHasAcceptedLegal(true);
-    setShowLegalModal(false);
+  // Handle closing the modal without accepting
+  useEffect(() => {
+    // Hook into the LegalAcceptanceModal's onClose to detect when legal terms are accepted
+    const handleLegalEvent = (event: CustomEvent) => {
+      if (event.detail?.action === 'accept') {
+        setHasAcceptedLegal(true);
+        toast({
+          title: "Terms Accepted",
+          description: "You have accepted the legal terms for AI enhancement tools",
+        });
+      }
+    };
     
-    toast({
-      title: "Terms Accepted",
-      description: "You have accepted the legal terms for AI enhancement tools",
-    });
-  };
+    document.addEventListener('legalAction', handleLegalEvent as EventListener);
+    return () => {
+      document.removeEventListener('legalAction', handleLegalEvent as EventListener);
+    };
+  }, [toast]);
   
   // Handle enhancement generation
   const handleGenerateEnhancement = () => {
@@ -310,9 +318,9 @@ const AIEnhancement = () => {
         <LegalAcceptanceModal 
           isOpen={showLegalModal} 
           onClose={() => setShowLegalModal(false)}
-          onAccept={handleLegalAcceptance}
-          title="AI Enhancement Legal Terms"
-          description="Please review and accept the terms for using AI enhancement tools"
+          documentType="terms"
+          version="1.0"
+          requiredForFeature="AI Enhancement"
         />
       )}
     </div>

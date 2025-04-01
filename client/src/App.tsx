@@ -1,7 +1,7 @@
 import { Switch, Route } from "wouter";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
-import AutoDismissToaster from "@/components/ui/auto-dismiss-toaster";
+import { AutoDismissToaster } from "@/components/ui/auto-dismiss-toaster";
 import AppShell from "./components/layout/AppShell";
 import Dashboard from "./pages/dashboard";
 import ContentLibrary from "./pages/content-library";
@@ -22,13 +22,10 @@ import NotFound from "./pages/not-found";
 import Profile from './components/profile/Profile';
 import { TaskVerificationProvider } from "./context/task-verification-context"; // Added import
 
-
-import { AutoDismissToaster } from './components/ui/auto-dismiss-toaster';
-
 function Router() {
   return (
     <AppShell>
-      <AutoDismissToaster autoDismissTimeout={5000} />
+      <AutoDismissToaster defaultDuration={5000} />
       <Switch>
         <Route path="/" component={Dashboard} />
         <Route path="/content-library" component={ContentLibrary} />
