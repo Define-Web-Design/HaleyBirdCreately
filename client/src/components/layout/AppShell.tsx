@@ -35,26 +35,42 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     preventDefaultTouchmove: false, // Don't prevent default to allow scrolling
   });
 
-  // Check if the screen is mobile size on mount and window resize
+  // Improved check for mobile size on mount and window resize
   useEffect(() => {
     const checkMobile = () => {
-      const isMobileView = window.innerWidth < 768;
+      // Use both width check and user agent check for better mobile detection
+      const isMobileByWidth = window.innerWidth < 768;
+      const isMobileByAgent = /iPhone|iPad|iPod|Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      const isMobileView = isMobileByWidth || isMobileByAgent;
+      
       setIsMobile(isMobileView);
       
       // Check for user preference before auto-collapsing
       const userToggled = sessionStorage.getItem('sidebarToggled');
       
+      // On mobile, always ensure sidebar starts closed for better UX
       if (isMobileView && !userToggled) {
         setSidebarOpen(false);
+        // Store this preference
+        sessionStorage.setItem('sidebarToggled', 'false');
       } else if (!isMobileView && !userToggled) {
         setSidebarOpen(true);
+        // Store this preference
+        sessionStorage.setItem('sidebarToggled', 'true');
+      }
+      
+      // Add touch-specific class to body for touch-specific CSS
+      if (isMobileView || 'ontouchstart' in window) {
+        document.body.classList.add('touch-device');
+      } else {
+        document.body.classList.remove('touch-device');
       }
     };
 
     // Initial check
     checkMobile();
 
-    // Add event listener with debounce for better performance
+    // Add event listener with improved debounce for better performance
     let resizeTimer: NodeJS.Timeout;
     const handleResize = () => {
       clearTimeout(resizeTimer);
@@ -62,10 +78,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     };
     
     window.addEventListener('resize', handleResize);
+    
+    // Also check on orientation change specifically for mobile
+    window.addEventListener('orientationchange', checkMobile);
 
     // Cleanup
     return () => {
       window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', checkMobile);
       clearTimeout(resizeTimer);
     };
   }, []);

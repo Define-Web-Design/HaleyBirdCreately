@@ -97,6 +97,22 @@
   a, button, input, select, textarea, .interactive-element {
     @apply transition-all duration-300 ease-in-out;
   }
+  
+  /* Touch-specific optimizations */
+  .touch-device button, .touch-device a, [data-mobile-view="true"] button, [data-mobile-view="true"] a {
+    @apply p-3 min-h-[44px] min-w-[44px] text-base;
+  }
+  
+  /* Increase tap targets for better mobile UX */
+  .touch-device input[type="checkbox"],
+  .touch-device input[type="radio"] {
+    @apply min-h-[24px] min-w-[24px];
+  }
+  
+  /* Remove hover effects on touch devices to prevent hover state sticking */
+  .touch-device *:hover {
+    @apply transition-none;
+  }
 
   html {
     /* Enable smooth scrolling */
