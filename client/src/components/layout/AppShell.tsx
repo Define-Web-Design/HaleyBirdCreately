@@ -108,12 +108,19 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             />
           )}
           
-          {/* Sidebar wrapper with fixed positioning to avoid layout issues */}
-          <div className="flex">
+          {/* Sidebar wrapper with optimized positioning for improved performance */}
+          <div className="flex shrink-0">
             <div
               className={`${
                 sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-              } fixed z-40 h-[calc(100vh-4rem)] transition-transform duration-300 ease-in-out md:relative md:translate-x-0`}
+              } fixed z-40 h-[calc(100vh-4rem)] will-change-transform transition-transform duration-300 ease-in-out 
+              md:relative md:translate-x-0 shadow-md md:shadow-none`}
+              style={{ 
+                willChange: 'transform', 
+                backfaceVisibility: 'hidden',
+                touchAction: 'manipulation',
+                isolation: 'isolate'
+              }}
             >
               <Sidebar 
                 fontSize={fontSize}
@@ -133,8 +140,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             id="main-content"
             role="main"
             className={`flex-1 overflow-y-auto p-2 sm:p-4 md:p-6 transition-all duration-300 ${
-              sidebarOpen ? 'md:ml-64' : ''
-            } ${reduced ? 'scroll-smooth' : ''} w-full`}
+              sidebarOpen ? 'md:ml-64' : 'ml-0'
+            } ${reduced ? 'scroll-smooth' : ''} w-full max-w-full`}
+            style={{ 
+              scrollbarWidth: 'thin', 
+              scrollbarGutter: 'stable', 
+              WebkitOverflowScrolling: 'touch' 
+            }}
             aria-live="polite"
           >
             {/* Scroll to top button for mobile - only shows when scrolled down */}

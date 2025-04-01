@@ -25,33 +25,37 @@ const ContentLibrary = ({
   // Loading state
   if (isLoading) {
     return (
-      <section className="mb-8 animate-slide-up opacity-75" style={{ animationDelay: '0.2s' }}>
-        <div className="flex items-center justify-between mb-4">
+      <section className="mb-8 animate-slide-up opacity-80" style={{ animationDelay: '0.2s' }}>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
           <div className="flex items-center">
-            <h2 className="text-xl font-['SF_Pro_Display'] font-semibold">Recent Content</h2>
-            <Link href="/library" className="ml-2 text-sm text-primary hover:text-primary/80 transition-colors">
-              View All <i className="fas fa-chevron-right ml-1"></i>
-            </Link>
+            <h2 className="text-xl font-['SF_Pro_Display'] font-semibold text-gray-900 dark:text-white">Recent Content</h2>
+            <div className="ml-3 h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
           </div>
-          <div className="flex space-x-2">
-            <div className="h-10 w-32 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
-            <div className="h-10 w-32 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
+          <div className="flex flex-wrap sm:flex-nowrap gap-3">
+            <div className="h-10 w-36 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
+            <div className="h-10 w-36 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
           </div>
         </div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-5 sm:gap-6">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="bg-white dark:bg-gray-900 rounded-xl shadow-sm h-96 overflow-hidden border border-gray-100 dark:border-gray-800 animate-pulse">
-              <div className="h-48 bg-gray-200 dark:bg-gray-700"></div>
-              <div className="p-4 space-y-4">
-                <div className="flex justify-between">
-                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
-                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
+            <div 
+              key={i} 
+              className="bg-white dark:bg-gray-900 rounded-xl shadow-sm h-96 overflow-hidden border border-gray-100 dark:border-gray-800"
+            >
+              <div className="h-48 bg-gray-200 dark:bg-gray-700 animate-pulse"></div>
+              <div className="p-5 space-y-4">
+                <div className="flex justify-between items-center">
+                  <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                  <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
                 </div>
-                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
-                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-2/3"></div>
-                <div className="pt-4 mt-4 border-t border-gray-100 dark:border-gray-800">
-                  <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+                <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-3/4 animate-pulse"></div>
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full animate-pulse"></div>
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-2/3 animate-pulse"></div>
+                <div className="pt-4 mt-4 border-t border-gray-100 dark:border-gray-800 flex justify-between">
+                  <div className="h-8 w-8 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse"></div>
+                  <div className="h-8 w-8 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse"></div>
+                  <div className="h-8 w-8 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse"></div>
                 </div>
               </div>
             </div>
@@ -118,17 +122,21 @@ const ContentLibrary = ({
 
   return (
     <section className="mb-8 animate-slide-up" style={{ animationDelay: '0.2s' }}>
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
         <div className="flex items-center">
-          <h2 className="text-xl font-['SF_Pro_Display'] font-semibold">Recent Content</h2>
-          <Link href="/library" className="ml-2 text-sm text-primary hover:text-primary/80 transition-colors">
-            View All <i className="fas fa-chevron-right ml-1"></i>
+          <h2 className="text-xl font-['SF_Pro_Display'] font-semibold text-gray-900 dark:text-white">Recent Content</h2>
+          <Link href="/library" className="ml-3 text-sm text-primary hover:text-primary/80 transition-colors flex items-center">
+            View All <i className="fas fa-chevron-right ml-1.5 text-xs"></i>
           </Link>
         </div>
-        <div className="flex space-x-2">
+        <div className="flex flex-wrap sm:flex-nowrap gap-3">
           <div className="relative">
+            <label htmlFor="platform-select" className="sr-only">Select platform</label>
             <select
-              className="appearance-none bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg py-2 pl-3 pr-8 text-sm focus:outline-none focus:border-primary transition-colors"
+              id="platform-select"
+              className="appearance-none bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 
+                rounded-lg py-2.5 pl-4 pr-10 text-sm focus:outline-none focus:border-primary focus:ring-1 
+                focus:ring-primary transition-colors shadow-sm"
               value={platform}
               onChange={(e) => setPlatform(e.target.value)}
             >
@@ -137,14 +145,18 @@ const ContentLibrary = ({
               <option>TikTok</option>
               <option>Pinterest</option>
             </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
               <i className="fas fa-chevron-down text-xs"></i>
             </div>
           </div>
           
           <div className="relative">
+            <label htmlFor="time-period-select" className="sr-only">Select time period</label>
             <select
-              className="appearance-none bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg py-2 pl-3 pr-8 text-sm focus:outline-none focus:border-primary transition-colors"
+              id="time-period-select"
+              className="appearance-none bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 
+                rounded-lg py-2.5 pl-4 pr-10 text-sm focus:outline-none focus:border-primary focus:ring-1 
+                focus:ring-primary transition-colors shadow-sm"
               value={period}
               onChange={(e) => setPeriod(e.target.value)}
             >
@@ -152,7 +164,7 @@ const ContentLibrary = ({
                 <option key={p.value} value={p.value}>{p.label}</option>
               ))}
             </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
               <i className="fas fa-chevron-down text-xs"></i>
             </div>
           </div>
@@ -160,7 +172,7 @@ const ContentLibrary = ({
       </div>
       
       {/* Content Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-5 sm:gap-6">
         {displayContent.map((item) => (
           <ContentCard
             key={item.id}

@@ -117,7 +117,13 @@ const Sidebar = ({
 
   return (
     <div 
-      className={`flex flex-col ${expanded ? 'w-64' : 'w-0 md:w-20'} bg-background border-r border-border shadow-sm h-full transition-all duration-300 ease-in-out overflow-hidden`}
+      className={`flex flex-col ${expanded ? 'w-64' : 'w-0 md:w-20'} bg-background border-r border-border 
+      h-full transition-all duration-300 ease-in-out overflow-hidden overscroll-none`}
+      style={{ 
+        willChange: 'width',
+        overscrollBehavior: 'none',
+        WebkitOverflowScrolling: 'touch'
+      }}
     >
       <Link href="/" className="p-4 flex items-center cursor-pointer hover:opacity-90 transition-opacity">
         <div className="bg-gradient-to-r from-[#F2994A] to-[#FF9DAE] h-10 w-10 rounded-lg flex items-center justify-center text-white font-bold text-xl mr-3 shrink-0">C</div>

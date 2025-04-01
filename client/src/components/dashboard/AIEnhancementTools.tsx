@@ -117,40 +117,47 @@ const AIEnhancementTools = ({ onToolSelect }: AIEnhancementToolsProps) => {
   };
   
   return (
-    <div className="space-y-3">
-      <h3 className="text-lg font-medium">AI Enhancement Tools</h3>
-      <p className="text-sm text-muted-foreground">
-        Enhance your content with AI-powered tools while maintaining full ownership and copyright protection
-      </p>
+    <section className="mb-8 space-y-4 p-4 sm:p-6 rounded-xl bg-gradient-to-br from-blue-50/40 to-transparent dark:from-gray-800/10 dark:to-transparent border border-blue-100/60 dark:border-gray-800/60 shadow-sm">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-xl font-medium text-gray-900 dark:text-white">AI Enhancement Tools</h3>
+          <p className="text-sm text-muted-foreground max-w-3xl mt-1">
+            Enhance your content with AI-powered tools while maintaining full ownership and copyright protection
+          </p>
+        </div>
+      </div>
       
       {error && (
-        <div className="p-3 bg-destructive/10 text-destructive rounded-md text-sm">
-          {error}
+        <div className="p-3.5 bg-destructive/10 text-destructive rounded-md text-sm border border-destructive/20">
+          <div className="flex items-center">
+            <i className="fas fa-exclamation-circle mr-2"></i>
+            {error}
+          </div>
         </div>
       )}
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mt-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
         {ENHANCEMENT_TOOLS.map((tool) => (
           <Card 
             key={tool.title}
-            className={`cursor-pointer transition-all ${
+            className={`cursor-pointer transition-all shadow-sm ${
               isLoading ? 'opacity-70 pointer-events-none' : ''
-            } ${selectedTool === tool.title ? 'ring-2 ring-primary' : 'hover:bg-accent/50'} ${tool.animation}`}
+            } ${selectedTool === tool.title ? 'ring-2 ring-primary shadow-md' : 'hover:bg-accent/50 hover:shadow-md'} ${tool.animation}`}
             onClick={() => !isLoading && handleSelectTool(tool.title)}
           >
-            <CardContent className="p-3">
-              <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${tool.iconGradient} text-white`}>
+            <CardContent className="p-4">
+              <div className="flex items-start gap-4">
+                <div className={`p-2.5 rounded-lg ${tool.iconGradient} text-white shadow-sm flex-shrink-0`}>
                   <i className={`${tool.icon} text-base`}></i>
                 </div>
                 <div>
                   <h3 className="font-medium flex items-center text-sm">
                     {tool.title}
                     {tool.isNew && (
-                      <Badge className="ml-1 bg-primary text-white text-xs py-0 px-1">New</Badge>
+                      <Badge className="ml-2 bg-primary/90 text-white text-xs py-0 px-1.5">New</Badge>
                     )}
                   </h3>
-                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{tool.description}</p>
+                  <p className="text-xs text-muted-foreground mt-1.5 line-clamp-2">{tool.description}</p>
                 </div>
               </div>
             </CardContent>
@@ -159,22 +166,25 @@ const AIEnhancementTools = ({ onToolSelect }: AIEnhancementToolsProps) => {
       </div>
       
       {selectedTool && (
-        <div className="mt-4 p-3 bg-muted/50 rounded-md border border-border">
-          <p className="text-xs text-muted-foreground">
-            <span className="font-medium">© Legal Notice:</span> All content generated through this tool will include 
-            embedded ownership information and digital watermarks. Your intellectual property rights are protected.
+        <div className="mt-5 p-4 bg-muted/50 rounded-md border border-border">
+          <p className="text-xs text-muted-foreground flex items-center">
+            <i className="fas fa-shield-alt mr-2 text-primary"></i>
+            <span>
+              <span className="font-medium">© Legal Notice:</span> All content generated through this tool will include 
+              embedded ownership information and digital watermarks. Your intellectual property rights are protected.
+            </span>
           </p>
         </div>
       )}
       
       {/* Tool loading state */}
       {isLoading && (
-        <div className="flex items-center justify-center p-4">
-          <div className="animate-spin h-5 w-5 border-2 border-primary border-t-transparent rounded-full mr-2" />
-          <span className="text-sm">Initializing tool...</span>
+        <div className="flex items-center justify-center p-4 bg-background/80 rounded-lg backdrop-blur-sm border border-border">
+          <div className="animate-spin h-5 w-5 border-2 border-primary border-t-transparent rounded-full mr-3" />
+          <span className="text-sm font-medium">Initializing tool...</span>
         </div>
       )}
-    </div>
+    </section>
   );
 };
 
