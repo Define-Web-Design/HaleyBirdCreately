@@ -132,18 +132,35 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
       // Create a luxurious gradient overlay for smooth transition
       const overlay = document.createElement('div');
       
-      // Set up an elegant transition overlay
+      // Set up a haptic-like visual transition overlay
       overlay.className = 'fixed inset-0 pointer-events-none z-[100]';
       overlay.style.opacity = '0';
-      overlay.style.transition = 'opacity 450ms cubic-bezier(0.65, 0, 0.35, 1)';
+      overlay.style.transition = 'opacity 230ms cubic-bezier(0.19, 1, 0.22, 1)'; // Fast haptic-synchronized transition
       
-      // Use gradient for more luxurious feel
+      // Create a subtle pulsing effect that mimics haptic feedback patterns
+      const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--color-primary') || '#7c3aed';
+      
+      // Use a gradient with primary color influence for a brand-consistent feedback
       if (isDarkMode) {
-        // Transitioning to dark
-        overlay.style.background = 'radial-gradient(circle at center, rgba(15, 15, 15, 0) 0%, rgba(15, 15, 15, 0.2) 100%)';
+        // Transitioning to dark - subtle pulse effect
+        overlay.style.background = `
+          radial-gradient(circle at center, 
+            rgba(15, 15, 15, 0) 0%, 
+            rgba(15, 15, 15, 0.05) 30%,
+            rgba(15, 15, 15, 0.1) 60%, 
+            rgba(15, 15, 15, 0.15) 100%), 
+          linear-gradient(to bottom, rgba(0,0,0,0.05), rgba(0,0,0,0.1))
+        `;
       } else {
-        // Transitioning to light
-        overlay.style.background = 'radial-gradient(circle at center, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.2) 100%)';
+        // Transitioning to light - subtle pulse effect
+        overlay.style.background = `
+          radial-gradient(circle at center, 
+            rgba(255, 255, 255, 0) 0%, 
+            rgba(255, 255, 255, 0.05) 30%,
+            rgba(255, 255, 255, 0.1) 60%, 
+            rgba(255, 255, 255, 0.15) 100%),
+          linear-gradient(to bottom, rgba(255,255,255,0.05), rgba(255,255,255,0.1))
+        `;
       }
       
       document.body.appendChild(overlay);
@@ -152,7 +169,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
       requestAnimationFrame(() => {
         overlay.style.opacity = '1';
         
-        // Apply the theme change after a brief, natural delay
+        // Apply theme change matching standard haptic feedback timing (~50ms response)
         setTimeout(() => {
           if (isDarkMode) {
             html.classList.add('dark');
@@ -160,19 +177,19 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
             html.classList.remove('dark');
           }
           
-          // Fade out the overlay elegantly
+          // Fade out using haptic-synchronized timing (~100ms)
           setTimeout(() => {
             overlay.style.opacity = '0';
             
-            // Remove overlay when transition completes
+            // Remove overlay on completion (haptic feedback resolution ~200ms)
             setTimeout(() => {
               document.body.removeChild(overlay);
               
-              // Remove the transition class to restore normal animations
+              // Restore normal animations
               html.classList.remove('theme-transition');
-            }, 350); // Clean up after fade out
-          }, 200); // Start fade after colors have settled
-        }, 100); // Short pause for visual elegance
+            }, 180); // Aligned with touch response threshold
+          }, 100); // Haptic-synchronized fade timing
+        }, 50); // Touch response timing standard
       });
     });
   }, [theme, isDarkMode, isColorBlindMode]);
