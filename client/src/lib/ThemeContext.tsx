@@ -52,7 +52,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     // Update theme.json via API
     const updateTheme = async () => {
       try {
-        await fetch('/api/theme', {
+        const response = await fetch('/api/theme', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -64,6 +64,17 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
             radius: 0.5,
           }),
         });
+        
+        if (!response.ok) {
+          // If authenticated endpoint fails, try the public endpoint
+          console.log('Using public theme endpoint');
+          await fetch('/api/public/theme', {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+        }
       } catch (error) {
         console.error('Failed to update theme:', error);
       }

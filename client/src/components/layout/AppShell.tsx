@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import TopNavigation from './TopNavigation';
 import Sidebar from './Sidebar';
+import useGestureHelpers from '@/lib/useGestures';
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -10,15 +11,42 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const [highContrast, setHighContrast] = useState(false);
   const [colorBlindMode, setColorBlindMode] = useState('none');
   const [reduced, setReducedMotion] = useState(false);
+  const mainContentRef = useRef<HTMLDivElement>(null);
+  const appRef = useRef<HTMLDivElement>(null);
+
+  // Setup gesture detection for the main content area
+  const { useSwipe } = useGestureHelpers;
+  const { swipeHandlers } = useSwipe({
+    onSwipeRight: () => {
+      // Only open the sidebar on right swipe if we're on mobile and the sidebar is closed
+      if (isMobile && !sidebarOpen) {
+        setSidebarOpen(true);
+        sessionStorage.setItem('sidebarToggled', 'true');
+      }
+    },
+    onSwipeLeft: () => {
+      // Only close the sidebar on left swipe if we're on mobile and the sidebar is open
+      if (isMobile && sidebarOpen) {
+        setSidebarOpen(false);
+        sessionStorage.setItem('sidebarToggled', 'false');
+      }
+    },
+    threshold: 80, // Larger threshold for more intentional swipes
+    preventDefaultTouchmove: false, // Don't prevent default to allow scrolling
+  });
 
   // Check if the screen is mobile size on mount and window resize
   useEffect(() => {
     const checkMobile = () => {
       const isMobileView = window.innerWidth < 768;
       setIsMobile(isMobileView);
-      if (isMobileView) {
+      
+      // Check for user preference before auto-collapsing
+      const userToggled = sessionStorage.getItem('sidebarToggled');
+      
+      if (isMobileView && !userToggled) {
         setSidebarOpen(false);
-      } else {
+      } else if (!isMobileView && !userToggled) {
         setSidebarOpen(true);
       }
     };
@@ -26,11 +54,20 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     // Initial check
     checkMobile();
 
-    // Add event listener
-    window.addEventListener('resize', checkMobile);
+    // Add event listener with debounce for better performance
+    let resizeTimer: NodeJS.Timeout;
+    const handleResize = () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(checkMobile, 100);
+    };
+    
+    window.addEventListener('resize', handleResize);
 
     // Cleanup
-    return () => window.removeEventListener('resize', checkMobile);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      clearTimeout(resizeTimer);
+    };
   }, []);
 
   // Add scroll event listener to show/hide the scroll-to-top button on mobile
@@ -39,20 +76,53 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     
     const scrollButton = document.getElementById('scroll-to-top-button');
     
+    // Debounce the scroll handler for better performance
+    let scrollTimer: NodeJS.Timeout;
     const handleScroll = () => {
-      if (!scrollButton) return;
-      
-      if (window.scrollY > 300) {
-        scrollButton.style.display = 'block';
-      } else {
-        scrollButton.style.display = 'none';
-      }
+      clearTimeout(scrollTimer);
+      scrollTimer = setTimeout(() => {
+        if (!scrollButton) return;
+        
+        if (window.scrollY > 300) {
+          scrollButton.style.display = 'block';
+        } else {
+          scrollButton.style.display = 'none';
+        }
+      }, 100);
     };
     
     window.addEventListener('scroll', handleScroll);
     
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      clearTimeout(scrollTimer);
+    };
   }, [isMobile]);
+
+  // Add touch event for doubletap to scroll to top
+  useEffect(() => {
+    if (!isMobile || !mainContentRef.current) return;
+    
+    let lastTap = 0;
+    const handleDoubleTap = (e: TouchEvent) => {
+      const currentTime = new Date().getTime();
+      const tapLength = currentTime - lastTap;
+      if (tapLength < 300 && tapLength > 0) {
+        // Double tap detected
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        e.preventDefault();
+      }
+      lastTap = currentTime;
+    };
+    
+    mainContentRef.current.addEventListener('touchend', handleDoubleTap);
+    
+    return () => {
+      if (mainContentRef.current) {
+        mainContentRef.current.removeEventListener('touchend', handleDoubleTap);
+      }
+    };
+  }, [isMobile, mainContentRef]);
 
   const toggleSidebar = useCallback(() => {
     // Toggle sidebar state
@@ -135,8 +205,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             </div>
           </div>
 
-          {/* Main content with responsive padding */}
+          {/* Main content with responsive padding and swipe gestures for mobile */}
           <main 
+            ref={mainContentRef}
+            {...swipeHandlers}
             id="main-content"
             role="main"
             className={`flex-1 overflow-y-auto p-2 sm:p-4 md:p-6 transition-all duration-300 ${
@@ -145,9 +217,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             style={{ 
               scrollbarWidth: 'thin', 
               scrollbarGutter: 'stable', 
-              WebkitOverflowScrolling: 'touch' 
+              WebkitOverflowScrolling: 'touch',
+              touchAction: 'pan-y', // Enable vertical scrolling on mobile
+              overscrollBehavior: 'contain' // Prevent page pull-to-refresh on mobile
             }}
             aria-live="polite"
+            data-mobile-view={isMobile ? 'true' : 'false'}
           >
             {/* Scroll to top button for mobile - only shows when scrolled down */}
             {isMobile && (

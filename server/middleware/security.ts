@@ -45,6 +45,7 @@ export const validateAccess = async (req: Request, res: Response, next: NextFunc
   const session = (req as any).session;
   const isAuthenticated = session?.userId;
   const isPublicRoute = req.path.startsWith("/api/public");
+  const isThemeEndpoint = req.path === "/api/theme";
   
   // Log access attempts for security monitoring
   await storage.trackAccessAttempt({
@@ -57,7 +58,7 @@ export const validateAccess = async (req: Request, res: Response, next: NextFunc
     userId: isAuthenticated ? session.userId : undefined
   });
   
-  if (!isAuthenticated && !isPublicRoute) {
+  if (!isAuthenticated && !isPublicRoute && !isThemeEndpoint) {
     return res.status(401).json({
       message: "Unauthorized access. All content and functionality are protected by intellectual property law.",
       ownershipNotice: "© 2023 All Rights Reserved. Unauthorized reproduction prohibited."

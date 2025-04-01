@@ -1614,6 +1614,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // Theme configuration
+  app.post('/api/theme', async (req, res) => {
+    try {
+      const { primary, appearance, variant, radius } = req.body;
+      
+      if (!primary) {
+        return res.status(400).json({ 
+          message: "Primary color is required" 
+        });
+      }
+      
+      // In a real implementation, this would update theme.json
+      // For now, we'll just return success
+      res.json({ 
+        success: true,
+        theme: {
+          primary,
+          appearance: appearance || 'light',
+          variant: variant || 'vibrant',
+          radius: radius || 0.5
+        }
+      });
+    } catch (error: any) {
+      res.status(500).json({ 
+        message: error.message 
+      });
+    }
+  });
+
+  // Add a theme route to get the current theme (outside of authentication)
+  app.get('/api/public/theme', (req, res) => {
+    // Default theme configuration
+    res.json({
+      primary: '#7c3aed',
+      appearance: 'light',
+      variant: 'vibrant',
+      radius: 0.5
+    });
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;

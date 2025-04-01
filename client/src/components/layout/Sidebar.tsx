@@ -1,8 +1,12 @@
 import { Link, useLocation } from 'wouter';
 import { MENU_ITEMS, SMART_TOOLS } from '@/lib/constants';
 import { useTheme } from '@/lib/hooks/use-theme';
-import { useState, useCallback, useEffect } from 'react';
-import { Sun, Moon, ZoomIn, ZoomOut, Eye, EyeOff, ChevronUp, ChevronDown, ChevronRight } from 'lucide-react';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { 
+  Sun, Moon, ZoomIn, ZoomOut, Eye, EyeOff, 
+  ChevronUp, ChevronDown, ChevronRight, 
+  Settings, LogOut, User 
+} from 'lucide-react';
 import { Switch } from "@/components/ui/switch";
 import {
   DropdownMenu,
@@ -12,6 +16,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import useGestureHelpers from '@/lib/useGestures';
 
 interface SidebarProps {
   fontSize?: number;
@@ -53,6 +58,44 @@ const Sidebar = ({
   const { isDark, toggleTheme } = useTheme();
   const [accessibilityExpanded, setAccessibilityExpanded] = useState(false);
   const [expandedSubMenu, setExpandedSubMenu] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const sidebarRef = useRef<HTMLDivElement>(null);
+
+  // Set up gesture detection for swipe to open/close the sidebar on mobile
+  const { useSwipe } = useGestureHelpers;
+  const { swipeHandlers } = useSwipe({
+    onSwipeRight: () => {
+      // Only open the sidebar if we're on mobile and it's not already expanded
+      if (isMobile && !expanded) {
+        setExpanded(true);
+        sessionStorage.setItem('sidebarToggled', 'true');
+      }
+    },
+    onSwipeLeft: () => {
+      // Only close the sidebar if we're on mobile and it's currently expanded
+      if (isMobile && expanded) {
+        setExpanded(false);
+        sessionStorage.setItem('sidebarToggled', 'false');
+      }
+    },
+    threshold: 60, // Higher threshold for more intentional swipes
+  });
+
+  // Check for mobile screen size
+  useEffect(() => {
+    const handleResize = () => {
+      const newIsMobile = window.innerWidth < 768;
+      setIsMobile(newIsMobile);
+      
+      // Auto-collapse sidebar when switching to mobile size
+      if (newIsMobile && !sessionStorage.getItem('sidebarToggled')) {
+        setExpanded(false);
+      }
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [setExpanded]);
 
   useEffect(() => {
     // Check if user has manually toggled the sidebar
@@ -106,17 +149,19 @@ const Sidebar = ({
       }
       
       // On mobile, collapse sidebar after navigating
-      if (window.innerWidth < 768) {
+      if (isMobile) {
         setTimeout(() => {
           setExpandedSubMenu(null);
           setExpanded(false);
         }, 150);
       }
     }
-  }, [setExpanded, location, setLocation]);
+  }, [setExpanded, location, setLocation, isMobile]);
 
   return (
     <div 
+      ref={sidebarRef}
+      {...swipeHandlers}
       className={`flex flex-col ${expanded ? 'w-64' : 'w-0 md:w-20'} bg-background border-r border-border 
       h-full transition-all duration-300 ease-in-out overflow-hidden overscroll-none`}
       style={{ 
@@ -124,6 +169,9 @@ const Sidebar = ({
         overscrollBehavior: 'none',
         WebkitOverflowScrolling: 'touch'
       }}
+      aria-expanded={expanded}
+      role="navigation"
+      aria-label="Main Navigation"
     >
       <Link href="/" className="p-4 flex items-center cursor-pointer hover:opacity-90 transition-opacity">
         <div className="bg-gradient-to-r from-[#F2994A] to-[#FF9DAE] h-10 w-10 rounded-lg flex items-center justify-center text-white font-bold text-xl mr-3 shrink-0">C</div>
