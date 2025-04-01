@@ -33,7 +33,7 @@ export default function TopNavigation({ toggleSidebar, isMobile }: { toggleSideb
   const renderMobileView = () => {
     if (showMobileSearch) {
       return (
-        <header className="bg-background/95 backdrop-blur-sm border-b border-border flex items-center justify-between px-5 py-2.5 h-16 sticky top-0 z-30 transition-all duration-300 ease-in-out">
+        <header className="bg-background/95 backdrop-blur-sm border-b border-border flex items-center justify-between px-5 py-2.5 h-16 sticky top-0 z-50 transition-all duration-300 ease-in-out">
           <div className="flex items-center w-full">
             <button 
               onClick={() => setShowMobileSearch(false)}
@@ -83,7 +83,7 @@ export default function TopNavigation({ toggleSidebar, isMobile }: { toggleSideb
     }
 
     return (
-      <header className="bg-background/95 backdrop-blur-sm border-b border-border flex items-center justify-between px-5 py-2.5 h-16 sticky top-0 z-30 transition-all duration-300 ease-in-out">
+      <header className="bg-background/95 backdrop-blur-sm border-b border-border flex items-center justify-between px-5 py-2.5 h-16 sticky top-0 z-50 transition-all duration-300 ease-in-out">
         {/* Left section with sidebar toggle and logo */}
         <div className="flex items-center gap-2">
           <button
@@ -216,7 +216,7 @@ export default function TopNavigation({ toggleSidebar, isMobile }: { toggleSideb
 
   // Desktop view with the search in the middle
   const renderDesktopView = () => (
-    <header className="bg-background/95 backdrop-blur-sm border-b border-border flex items-center justify-between px-5 py-2.5 h-16 sticky top-0 z-30 transition-all duration-300 ease-in-out">
+    <header className="bg-background/95 backdrop-blur-sm border-b border-border flex items-center justify-between px-5 py-2.5 h-16 sticky top-0 z-50 transition-all duration-300 ease-in-out">
       {/* Left section with sidebar toggle and logo */}
       <div className="flex items-center gap-2">
         <button

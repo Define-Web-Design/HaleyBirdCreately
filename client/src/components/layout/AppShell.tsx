@@ -14,9 +14,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   // Check if the screen is mobile size on mount and window resize
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-      if (window.innerWidth < 768) {
+      const isMobileView = window.innerWidth < 768;
+      setIsMobile(isMobileView);
+      if (isMobileView) {
         setSidebarOpen(false);
+      } else {
+        setSidebarOpen(true);
       }
     };
 
@@ -89,37 +92,39 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           {/* Backdrop overlay for mobile when sidebar is open */}
           {isMobile && sidebarOpen && (
             <div 
-              className="fixed inset-0 bg-black/50 z-10 transition-opacity duration-300 ease-in-out animate-in fade-in"
+              className="fixed inset-0 bg-black/50 z-30 transition-opacity duration-300 ease-in-out animate-in fade-in"
               onClick={() => setSidebarOpen(false)}
               aria-hidden="true"
             />
           )}
           
-          {/* Sidebar - conditionally shown based on sidebarOpen state */}
-          <div
-            className={`${
-              sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-            } fixed md:relative z-20 h-full transition-transform duration-300 ease-in-out md:translate-x-0`}
-          >
-            <Sidebar 
-              fontSize={fontSize}
-              setFontSize={setFontSize}
-              highContrast={highContrast}
-              setHighContrast={setHighContrast}
-              colorBlindMode={colorBlindMode}
-              setColorBlindMode={setColorBlindMode}
-              expanded={sidebarOpen}
-              setExpanded={setSidebarOpen}
-            />
+          {/* Sidebar wrapper with fixed positioning to avoid layout issues */}
+          <div className="flex">
+            <div
+              className={`${
+                sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+              } fixed z-40 h-[calc(100vh-4rem)] transition-transform duration-300 ease-in-out md:relative md:translate-x-0`}
+            >
+              <Sidebar 
+                fontSize={fontSize}
+                setFontSize={setFontSize}
+                highContrast={highContrast}
+                setHighContrast={setHighContrast}
+                colorBlindMode={colorBlindMode}
+                setColorBlindMode={setColorBlindMode}
+                expanded={sidebarOpen}
+                setExpanded={setSidebarOpen}
+              />
+            </div>
           </div>
 
           {/* Main content with responsive padding */}
           <main 
             id="main-content"
             role="main"
-            className={`flex-1 overflow-y-auto p-2 sm:p-4 md:p-6 transition-padding duration-300 ${
+            className={`flex-1 overflow-y-auto p-2 sm:p-4 md:p-6 transition-all duration-300 ${
               sidebarOpen ? 'md:ml-64' : ''
-            } ${reduced ? 'scroll-smooth' : ''}`}
+            } ${reduced ? 'scroll-smooth' : ''} w-full`}
             aria-live="polite"
           >
             {/* Scroll to top button for mobile - only shows when scrolled down */}
