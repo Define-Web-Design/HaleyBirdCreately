@@ -213,7 +213,10 @@ const ColorPaletteGenerator: React.FC = () => {
   const colorRoles = ['Primary', 'Secondary', 'Accent', 'Background', 'Text'];
 
   return (
-    <div className="space-y-6 p-1 md:p-4" {...swipeHandlers}>
+    <div 
+      className="space-y-6 p-1 md:p-4 transition-all duration-300 ease-out" 
+      style={{ transform: 'translateZ(0)' }} // Hardware acceleration for smoother animations
+      {...swipeHandlers}>
       <Card>
         <CardHeader>
           <CardTitle>Mood-Based Color Palette Generator</CardTitle>
@@ -264,18 +267,18 @@ const ColorPaletteGenerator: React.FC = () => {
                   {presetPalettesQuery.data?.length > 0 ? (
                     <div className="space-y-6">
                       {presetPalettesQuery.data.map((palette: SavedPalette) => (
-                        <div key={palette.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                        <div key={palette.id} className="border rounded-lg p-4 hover:shadow-md card-transition theme-aware">
                           <h3 className="font-medium mb-2">{palette.name}</h3>
                           <div className="flex mb-3">
                             {palette.colors.map((color, index) => (
                               <div
                                 key={index}
-                                className="h-16 w-full first:rounded-l-md last:rounded-r-md cursor-pointer relative group"
+                                className="h-16 w-full first:rounded-l-md last:rounded-r-md cursor-pointer relative group color-palette-item touch-responsive"
                                 style={{ backgroundColor: color }}
                                 onClick={() => copyColorToClipboard(color)}
                               >
-                                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/20 transition-opacity">
-                                  <Copy className="h-4 w-4 text-white" />
+                                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/20 transition-opacity spring-out">
+                                  <Copy className="h-4 w-4 text-white haptic-pulse" />
                                 </div>
                               </div>
                             ))}
@@ -338,18 +341,18 @@ const ColorPaletteGenerator: React.FC = () => {
                 {/* Custom palette display */}
                 <div className="pt-4">
                   <h3 className="font-medium mb-2">Your Custom Palette</h3>
-                  <div className="flex mb-4">
+                  <div className="flex mb-4 stagger-children">
                     {customPalette.map((color, index) => (
                       <div
                         key={index}
-                        className={`h-16 w-full first:rounded-l-md last:rounded-r-md cursor-pointer relative group ${
+                        className={`h-16 w-full first:rounded-l-md last:rounded-r-md cursor-pointer relative group color-palette-item touch-responsive ${
                           index === activeColorIndex ? 'ring-2 ring-primary ring-offset-2' : ''
                         }`}
                         style={{ backgroundColor: color }}
                         onClick={() => setActiveColorIndex(index)}
                       >
-                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/20 transition-opacity">
-                          <div className="text-xs font-bold text-white bg-black/50 px-1 rounded">
+                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/20 transition-opacity spring-out">
+                          <div className="text-xs font-bold text-white bg-black/50 px-1 rounded haptic-pulse">
                             {colorRoles[index]}
                           </div>
                         </div>
@@ -456,10 +459,10 @@ const ColorPaletteGenerator: React.FC = () => {
                   {savedPalettesQuery.data?.length > 0 ? (
                     <div className="space-y-6">
                       {savedPalettesQuery.data.map((palette: SavedPalette) => (
-                        <div key={palette.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                        <div key={palette.id} className="border rounded-lg p-4 hover:shadow-md card-transition theme-aware">
                           <div className="flex justify-between items-center mb-2">
                             <h3 className="font-medium">{palette.name}</h3>
-                            <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded-full">
+                            <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded-full spring-in">
                               {palette.mood}
                             </span>
                           </div>
@@ -467,12 +470,12 @@ const ColorPaletteGenerator: React.FC = () => {
                             {palette.colors.map((color, index) => (
                               <div
                                 key={index}
-                                className="h-16 w-full first:rounded-l-md last:rounded-r-md cursor-pointer relative group"
+                                className="h-16 w-full first:rounded-l-md last:rounded-r-md cursor-pointer relative group color-palette-item touch-responsive"
                                 style={{ backgroundColor: color }}
                                 onClick={() => copyColorToClipboard(color)}
                               >
-                                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/20 transition-opacity">
-                                  <Copy className="h-4 w-4 text-white" />
+                                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/20 transition-opacity spring-out">
+                                  <Copy className="h-4 w-4 text-white haptic-pulse" />
                                 </div>
                               </div>
                             ))}

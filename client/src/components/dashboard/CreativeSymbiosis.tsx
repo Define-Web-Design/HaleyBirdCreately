@@ -834,18 +834,24 @@ export default function CreativeSymbiosisSection() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 transition-all duration-300 ease-in-out">
       {error && (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4 rounded-lg text-red-800 dark:text-red-300 mb-4">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4 rounded-lg text-red-800 dark:text-red-300 mb-4 animate-entrance">
           <p className="font-medium">Error</p>
           <p className="text-sm">{error}</p>
         </div>
       )}
-      {/* Hero section with improved visual appeal */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-primary/10 to-primary/5 rounded-xl border border-primary/20">
-        {/* Background accent elements */}
-        <div className="absolute -right-16 -top-16 w-64 h-64 bg-primary/5 rounded-full blur-3xl"></div>
-        <div className="absolute -left-16 -bottom-16 w-64 h-64 bg-primary/5 rounded-full blur-3xl"></div>
+      {/* Hero section with improved visual appeal and haptic-synchronized transitions */}
+      <div 
+        className="relative overflow-hidden bg-gradient-to-r from-primary/10 to-primary/5 rounded-xl border border-primary/20 transition-all duration-300 ease-out" 
+        style={{
+          transform: 'translateZ(0)', // Hardware acceleration
+          transition: 'all 250ms cubic-bezier(0.33, 1, 0.68, 1)' // Haptic rate sync
+        }}
+      >
+        {/* Background accent elements with smooth hover animations */}
+        <div className="absolute -right-16 -top-16 w-64 h-64 bg-primary/5 rounded-full blur-3xl animate-pulse-slow"></div>
+        <div className="absolute -left-16 -bottom-16 w-64 h-64 bg-primary/5 rounded-full blur-3xl animate-pulse-slow"></div>
 
         <div className="relative p-8">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between">
@@ -909,19 +915,47 @@ export default function CreativeSymbiosisSection() {
 
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          <EvolutionProgressCard className="h-full" />
-          <CapabilitiesCard className="h-full" />
-          <CreativeHistoryCard className="h-full" />
+          {/* Apply staggered fade-in animations to create a cascading effect */}
+          <div className="transition-all duration-300 ease-out" style={{ 
+            animationDelay: '100ms',
+            animation: 'fadeInSlideUp 400ms cubic-bezier(0.33, 1, 0.68, 1) forwards' 
+          }}>
+            <EvolutionProgressCard className="h-full transform hover:translate-y-[-5px] transition-transform duration-200" />
+          </div>
+          
+          <div className="transition-all duration-300 ease-out" style={{ 
+            animationDelay: '200ms',
+            animation: 'fadeInSlideUp 400ms cubic-bezier(0.33, 1, 0.68, 1) forwards' 
+          }}>
+            <CapabilitiesCard className="h-full transform hover:translate-y-[-5px] transition-transform duration-200" />
+          </div>
+          
+          <div className="transition-all duration-300 ease-out" style={{ 
+            animationDelay: '300ms',
+            animation: 'fadeInSlideUp 400ms cubic-bezier(0.33, 1, 0.68, 1) forwards' 
+          }}>
+            <CreativeHistoryCard className="h-full transform hover:translate-y-[-5px] transition-transform duration-200" />
+          </div>
         </div>
 
-        <div className="mt-8">
+        <div className="mt-8 transition-all duration-300 ease-out" style={{
+          animationDelay: '400ms',
+          animation: 'fadeIn 500ms cubic-bezier(0.22, 1, 0.36, 1) forwards'
+        }}>
           <h2 className="text-2xl font-bold mb-4">Task Verification</h2>
           <TaskVerificationDashboard />
         </div>
       </div>
 
-      {/* Creative journey stats with visual improvements */}
-      <div className="bg-card rounded-lg border overflow-hidden">
+      {/* Creative journey stats with visual improvements and haptic-synchronized animations */}
+      <div 
+        className="bg-card rounded-lg border overflow-hidden transition-all duration-300 ease-out"
+        style={{
+          animationDelay: '500ms',
+          animation: 'fadeInUp 450ms cubic-bezier(0.16, 1, 0.3, 1) forwards',
+          transform: 'translateZ(0)' // Hardware acceleration
+        }}
+      >
         <div className="bg-muted/30 px-6 py-4 border-b">
           <h3 className="text-lg font-medium">Your Creative Journey</h3>
           <p className="text-sm text-muted-foreground">Track your growth and accomplishments over time</p>
@@ -929,20 +963,33 @@ export default function CreativeSymbiosisSection() {
 
         <div className="p-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 items-stretch">
-            <div className="bg-card rounded-lg border p-4 text-center">
-              <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center mx-auto mb-3">
+            {/* Staggered card animations with haptic-synchronized timing */}
+            <div 
+              className="bg-card rounded-lg border p-4 text-center transition-all duration-300 hover:shadow-md"
+              style={{ 
+                animationDelay: '100ms',
+                animation: 'pulse 1200ms cubic-bezier(0.33, 1, 0.68, 1) forwards'
+              }}
+            >
+              <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center mx-auto mb-3 transition-transform duration-300 ease-spring">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
                   stroke="currentColor" className="w-6 h-6 text-blue-500" strokeWidth="2">
                   <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
                   <polyline points="14 2 14 8 20 8"/>
                 </svg>
               </div>
-              <span className="text-3xl font-bold text-blue-500">{stats.contentCreated}</span>
+              <span className="text-3xl font-bold text-blue-500 transition-all duration-200">{stats.contentCreated}</span>
               <p className="text-sm text-muted-foreground mt-1">Content Created</p>
             </div>
 
-            <div className="bg-card rounded-lg border p-4 text-center">
-              <div className="w-12 h-12 rounded-full bg-purple-500/10 flex items-center justify-center mx-auto mb-3">
+            <div 
+              className="bg-card rounded-lg border p-4 text-center transition-all duration-300 hover:shadow-md"
+              style={{ 
+                animationDelay: '150ms',
+                animation: 'pulse 1200ms cubic-bezier(0.33, 1, 0.68, 1) forwards'
+              }}
+            >
+              <div className="w-12 h-12 rounded-full bg-purple-500/10 flex items-center justify-center mx-auto mb-3 transition-transform duration-300 ease-spring">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
                   stroke="currentColor" className="w-6 h-6 text-purple-500" strokeWidth="2">
                   <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/>
@@ -950,40 +997,57 @@ export default function CreativeSymbiosisSection() {
                   <path d="M10 22h4"/>
                 </svg>
               </div>
-              <span className="text-3xl font-bold text-purple-500">{stats.aiCollaborations}</span>
+              <span className="text-3xl font-bold text-purple-500 transition-all duration-200">{stats.aiCollaborations}</span>
               <p className="text-sm text-muted-foreground mt-1">AI Collaborations</p>
             </div>
 
-            <div className="bg-card rounded-lg border p-4 text-center">
-              <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-3">
+            <div 
+              className="bg-card rounded-lg border p-4 text-center transition-all duration-300 hover:shadow-md"
+              style={{ 
+                animationDelay: '200ms',
+                animation: 'pulse 1200ms cubic-bezier(0.33, 1, 0.68, 1) forwards'
+              }}
+            >
+              <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-3 transition-transform duration-300 ease-spring">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
                   stroke="currentColor" className="w-6 h-6 text-green-500" strokeWidth="2">
                   <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
                 </svg>
               </div>
-              <span className="text-3xl font-bold text-green-500">{stats.capabilitiesUnlocked}</span>
+              <span className="text-3xl font-bold text-green-500 transition-all duration-200">{stats.capabilitiesUnlocked}</span>
               <p className="text-sm text-muted-foreground mt-1">Capabilities Unlocked</p>
             </div>
 
-            <div className="bg-card rounded-lg border p-4 text-center">
-              <div className="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center mx-auto mb-3">
+            <div 
+              className="bg-card rounded-lg border p-4 text-center transition-all duration-300 hover:shadow-md"
+              style={{ 
+                animationDelay: '250ms',
+                animation: 'pulse 1200ms cubic-bezier(0.33, 1, 0.68, 1) forwards'
+              }}
+            >
+              <div className="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center mx-auto mb-3 transition-transform duration-300 ease-spring">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
                   stroke="currentColor" className="w-6 h-6 text-amber-500" strokeWidth="2">
                   <circle cx="12" cy="12" r="10"/>
                   <polyline points="12 6 12 12 16 14"/>
                 </svg>
               </div>
-              <span className="text-3xl font-bold text-amber-500">{stats.daysActive}</span>
+              <span className="text-3xl font-bold text-amber-500 transition-all duration-200">{stats.daysActive}</span>
               <p className="text-sm text-muted-foreground mt-1">Days Active</p>
             </div>
           </div>
 
           <div className="mt-6 pt-4 border-t border-border text-center">
-            <Button variant="ghost" size="sm" className="text-muted-foreground" asChild>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-muted-foreground transition-all duration-200 hover:text-primary" 
+              asChild
+            >
               <Link href="/analytics">
                 View detailed analytics and insights
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" className="w-4 h-4 ml-2" strokeWidth="2">
+                  stroke="currentColor" className="w-4 h-4 ml-2 transition-transform duration-150 group-hover:translate-x-1" strokeWidth="2">
                   <path d="M5 12h14M12 5l7 7-7 7"/>
                 </svg>
               </Link>

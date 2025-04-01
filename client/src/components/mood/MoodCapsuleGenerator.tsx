@@ -260,7 +260,13 @@ const MoodCapsuleGenerator: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 p-1 md:p-4" {...swipeHandlers}>
+    <div 
+      className="space-y-6 p-1 md:p-4 transition-all duration-300 ease-out" 
+      style={{ 
+        transform: 'translateZ(0)', // Hardware acceleration
+        animation: 'fadeIn 400ms cubic-bezier(0.33, 1, 0.68, 1) forwards' // Haptic-synchronized animation
+      }}
+      {...swipeHandlers}>
       <Card>
         <CardHeader>
           <CardTitle>AI-Driven Mood Capsules</CardTitle>
@@ -316,10 +322,10 @@ const MoodCapsuleGenerator: React.FC = () => {
                   {/* Filter capsules based on archived status */}
                   {capsuleQuery.data
                     .filter((capsule: MoodCapsule) => showArchived || !capsule.isArchived)
-                    .map((capsule: MoodCapsule) => (
+                    .map((capsule: MoodCapsule, index: number) => (
                       <SwipeableContainer
                         key={capsule.id}
-                        className="border rounded-lg hover:shadow-md transition-shadow overflow-hidden"
+                        className="border rounded-lg hover:shadow-lg card-transition theme-aware mood-capsule-item touch-responsive overflow-hidden"
                         onSwipeLeft={() => archiveCapsuleMutation.mutate(capsule.id)}
                       >
                         <div className="p-4">
@@ -535,8 +541,8 @@ const MoodCapsuleGenerator: React.FC = () => {
                   {contentQuery.data.map((contentItem: Content) => (
                     <div 
                       key={contentItem.id}
-                      className={`p-3 border rounded-md cursor-pointer hover:bg-muted/50 transition-colors ${
-                        selectedContent.includes(contentItem.id) ? 'bg-primary/10 border-primary' : ''
+                      className={`p-3 border rounded-md cursor-pointer hover:bg-muted/50 interactive-element touch-responsive ${
+                        selectedContent.includes(contentItem.id) ? 'bg-primary/10 border-primary spring-in' : ''
                       }`}
                       onClick={() => toggleContentSelection(contentItem.id)}
                     >
@@ -560,11 +566,11 @@ const MoodCapsuleGenerator: React.FC = () => {
                         </div>
                         <div className="ml-4">
                           {selectedContent.includes(contentItem.id) ? (
-                            <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
-                              <Check className="h-4 w-4 text-white" />
+                            <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center bounce-in">
+                              <Check className="h-4 w-4 text-white haptic-pulse" />
                             </div>
                           ) : (
-                            <div className="w-6 h-6 rounded-full border-2 border-muted-foreground/30" />
+                            <div className="w-6 h-6 rounded-full border-2 border-muted-foreground/30 haptic-touch" />
                           )}
                         </div>
                       </div>

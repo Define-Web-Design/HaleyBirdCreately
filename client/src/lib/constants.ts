@@ -90,6 +90,11 @@ export const SMART_TOOLS = [
     path: "/cross-platform-tools",
     icon: "fas fa-sync",
   },
+  {
+    name: "Settings",
+    path: "/settings",
+    icon: "fas fa-cog",
+  },
 ];
 
 // Social media platforms with integration status

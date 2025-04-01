@@ -1,44 +1,96 @@
 
+@import url('./styles/haptic-animations.css');
+@import url('./styles/accessibility.css');
+@import url('./styles/apple-animations.css');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-.theme-transition * {
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, box-shadow, opacity, transform;
-  transition-timing-function: cubic-bezier(0.18, 0.89, 0.32, 1.28); /* Haptic-inspired spring curve */
-  transition-duration: 280ms; /* Aligned with average haptic feedback timing */
+/* Legacy animation definitions kept for backward compatibility */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-/* Create a luxurious, ambient feel during theme transitions - but quick */
-.theme-transition body {
-  transition: background-color 320ms cubic-bezier(0.25, 1, 0.5, 1); /* Quick but still elegant */
+@keyframes fadeInUp {
+  from { 
+    opacity: 0; 
+    transform: translateY(20px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-/* Add responsive animation to elements during theme change */
-.theme-transition button,
-.theme-transition a,
-.theme-transition input,
-.theme-transition .card,
-.theme-transition .panel {
-  transition: all 250ms cubic-bezier(0.33, 1, 0.68, 1); /* Haptic-rate sync */
+@keyframes fadeInSlideUp {
+  from { 
+    opacity: 0; 
+    transform: translateY(15px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-/* Snappier transitions for text elements */
-.theme-transition h1, 
-.theme-transition h2, 
-.theme-transition h3,
-.theme-transition p {
-  transition: color 230ms cubic-bezier(0.16, 1, 0.3, 1), opacity 180ms ease-out;
+/* Enhanced pulse animation with haptic-like timing */
+@keyframes pulse {
+  0% { opacity: 0.7; transform: scale(0.97); }
+  30% { opacity: 0.9; transform: scale(1.01); }
+  60% { opacity: 1; transform: scale(1.02); }
+  80% { opacity: 1; transform: scale(1.01); }
+  100% { opacity: 1; transform: scale(1); }
 }
 
-/* Create nuanced transitions for UI elements */
-.theme-transition .bg-primary {
-  transition: background-color 300ms cubic-bezier(0.22, 1, 0.36, 1); /* Mobile-optimized curve */
+@keyframes pulse-slow {
+  0% { opacity: 0.5; }
+  50% { opacity: 0.8; }
+  100% { opacity: 0.5; }
 }
 
-/* Add subtle scale effect to interactive elements - fast responsive */
-.theme-transition .interactive-element:hover {
-  transition: transform 180ms cubic-bezier(0.34, 1.56, 0.64, 1); /* Quick feedback */
+/* Animation for entrance with a tactile bounce - haptic synchronized */
+@keyframes entrance {
+  0% { 
+    opacity: 0; 
+    transform: scale(0.96); 
+  }
+  60% { 
+    opacity: 0.95; 
+    transform: scale(1.02); 
+  }
+  80% {
+    opacity: 1;
+    transform: scale(0.99);
+  }
+  100% { 
+    opacity: 1; 
+    transform: scale(1); 
+  }
+}
+
+/* Default animation classes for backward compatibility */
+.animate-entrance {
+  animation: entrance 350ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Modern haptic-synchronized animation utilities */
+.haptic-entrance {
+  animation: entrance 320ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.haptic-pulse {
+  animation: pulse 380ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Expressive spring-like animation curves for responsive touch feelings */
+.ease-spring {
+  transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 :root {

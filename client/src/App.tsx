@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Switch, Route } from "wouter";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
+import { HelmetProvider } from "react-helmet-async";
 import { AutoDismissToaster } from "@/components/ui/auto-dismiss-toaster";
 import AppShell from "./components/layout/AppShell";
 import Dashboard from "./pages/dashboard";
@@ -24,6 +25,7 @@ import NotFound from "./pages/not-found";
 import Profile from './components/profile/Profile';
 import LegalPage from "./pages/legal";
 import PrivacyPage from "./pages/privacy";
+import SettingsPage from "./pages/settings";
 import CookieConsent from "./components/common/CookieConsent";
 import { ThemeProvider } from "./lib/ThemeContext";
 import { TaskVerificationProvider } from "./context/task-verification-context";
@@ -95,6 +97,7 @@ function Router() {
         <Route path="/legal" component={LegalPage} />
         <Route path="/privacy" component={PrivacyPage} />
         <Route path="/terms-of-service" component={LegalPage} />
+        <Route path="/settings" component={SettingsPage} />
         <Route path="/nav-test" component={NavigationTest} />
         <Route component={NotFound} />
       </Switch>
@@ -114,11 +117,13 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <TaskVerificationProvider>
-          <Router />
-        </TaskVerificationProvider>
-      </ThemeProvider>
+      <HelmetProvider>
+        <ThemeProvider>
+          <TaskVerificationProvider>
+            <Router />
+          </TaskVerificationProvider>
+        </ThemeProvider>
+      </HelmetProvider>
     </QueryClientProvider>
   );
 }

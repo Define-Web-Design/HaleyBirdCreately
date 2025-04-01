@@ -1,21 +1,30 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { initTouchFeedback, setTactileFeedback, cleanupTouchFeedback } from './touchFeedback';
 
 interface ThemeContextProps {
   theme: string;
   isDarkMode: boolean;
   isColorBlindMode: boolean;
+  isTactileFeedbackEnabled: boolean;
+  transitionSpeed: 'default' | 'fast' | 'luxurious';
   updateThemeColor: (color: string) => void;
   toggleDarkMode: () => void;
   toggleColorBlindMode: () => void;
+  toggleTactileFeedback: () => void;
+  setTransitionSpeed: (speed: 'default' | 'fast' | 'luxurious') => void;
 }
 
 const defaultThemeContext: ThemeContextProps = {
   theme: '#7c3aed', // Default purple
   isDarkMode: false,
   isColorBlindMode: false,
+  isTactileFeedbackEnabled: true, // Enable by default for mobile users
+  transitionSpeed: 'default',
   updateThemeColor: () => {},
   toggleDarkMode: () => {},
   toggleColorBlindMode: () => {},
+  toggleTactileFeedback: () => {},
+  setTransitionSpeed: () => {},
 };
 
 // Using named export instead of default export to fix Fast Refresh issues
@@ -33,6 +42,22 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   );
   const [isColorBlindMode, setIsColorBlindMode] = useState<boolean>(
     localStorage.getItem('colorBlindMode') === 'true'
+  );
+  const [isTactileFeedbackEnabled, setIsTactileFeedbackEnabled] = useState<boolean>(
+    () => {
+      const stored = localStorage.getItem('tactileFeedback');
+      // Default to true on mobile devices, false on desktop
+      if (stored === null) {
+        return window.matchMedia('(max-width: 768px)').matches;
+      }
+      return stored === 'true';
+    }
+  );
+  const [transitionSpeed, setTransitionSpeed] = useState<'default' | 'fast' | 'luxurious'>(
+    () => {
+      const stored = localStorage.getItem('transitionSpeed');
+      return (stored as 'default' | 'fast' | 'luxurious') || 'default';
+    }
   );
 
   // Load theme from localStorage or API on mount
@@ -67,6 +92,8 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     localStorage.setItem('themeColor', theme);
     localStorage.setItem('darkMode', String(isDarkMode));
     localStorage.setItem('colorBlindMode', String(isColorBlindMode));
+    localStorage.setItem('tactileFeedback', String(isTactileFeedbackEnabled));
+    localStorage.setItem('transitionSpeed', transitionSpeed);
 
     // Update theme via API
     const updateTheme = async () => {
@@ -121,61 +148,101 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     }
 
     // Apply dark/light mode with an elegant, sensual and luxurious transition
+    // perfectly synchronized with haptic feedback rates
     const html = document.documentElement;
     const body = document.body;
     
-    // Make sure we have transition class before toggling
+    // Make sure we have transition class before toggling to enable all transition effects
     html.classList.add('theme-transition');
     
-    // Create a more elegant transition with proper timing
+    // Create a more elegant transition with proper timing aligned with haptic feedback
     requestAnimationFrame(() => {
-      // Create a luxurious gradient overlay for smooth transition
+      // Create a luxury gradient overlay with haptic-synchronized animation
       const overlay = document.createElement('div');
       
-      // Set up a haptic-like visual transition overlay
+      // Set up a haptic-like visual transition overlay with hardware acceleration
       overlay.className = 'fixed inset-0 pointer-events-none z-[100]';
       overlay.style.opacity = '0';
-      overlay.style.transition = 'opacity 230ms cubic-bezier(0.19, 1, 0.22, 1)'; // Fast haptic-synchronized transition
+      overlay.style.transition = 'opacity 230ms cubic-bezier(0.22, 1, 0.36, 1)'; // Haptic-synchronized easing
+      overlay.style.transform = 'translateZ(0)'; // Hardware acceleration
+      overlay.setAttribute('aria-hidden', 'true'); // Accessibility
       
       // Create a subtle pulsing effect that mimics haptic feedback patterns
-      const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--color-primary') || '#7c3aed';
+      // using CSS animations matching the precise timing of device haptics
+      const primaryColorRaw = getComputedStyle(document.documentElement).getPropertyValue('--primary') || '#7c3aed';
+      const primaryColor = primaryColorRaw.trim();
       
-      // Use a gradient with primary color influence for a brand-consistent feedback
+      // Dynamic animation based on mode to create a sensorial experience
       if (isDarkMode) {
-        // Transitioning to dark - subtle pulse effect
+        // Transitioning to dark - subtle radial pulse effect with primary color influence
         overlay.style.background = `
           radial-gradient(circle at center, 
             rgba(15, 15, 15, 0) 0%, 
-            rgba(15, 15, 15, 0.05) 30%,
-            rgba(15, 15, 15, 0.1) 60%, 
-            rgba(15, 15, 15, 0.15) 100%), 
-          linear-gradient(to bottom, rgba(0,0,0,0.05), rgba(0,0,0,0.1))
+            rgba(15, 15, 15, 0.03) 30%,
+            rgba(15, 15, 15, 0.07) 60%, 
+            rgba(15, 15, 15, 0.1) 100%), 
+          linear-gradient(to bottom, 
+            rgba(${parseInt(primaryColor.slice(1, 3), 16)}, 
+                  ${parseInt(primaryColor.slice(3, 5), 16)}, 
+                  ${parseInt(primaryColor.slice(5, 7), 16)}, 0.02),
+            rgba(0, 0, 0, 0.05))
         `;
+        // Add animation that syncs with iOS haptic feedback rate
+        overlay.style.animation = 'pulse 500ms cubic-bezier(0.19, 1, 0.22, 1)';
       } else {
-        // Transitioning to light - subtle pulse effect
+        // Transitioning to light - subtle radial pulse with ambient feel
         overlay.style.background = `
           radial-gradient(circle at center, 
             rgba(255, 255, 255, 0) 0%, 
-            rgba(255, 255, 255, 0.05) 30%,
-            rgba(255, 255, 255, 0.1) 60%, 
-            rgba(255, 255, 255, 0.15) 100%),
-          linear-gradient(to bottom, rgba(255,255,255,0.05), rgba(255,255,255,0.1))
+            rgba(255, 255, 255, 0.03) 30%,
+            rgba(255, 255, 255, 0.07) 60%, 
+            rgba(255, 255, 255, 0.1) 100%),
+          linear-gradient(to bottom, 
+            rgba(${parseInt(primaryColor.slice(1, 3), 16)}, 
+                  ${parseInt(primaryColor.slice(3, 5), 16)}, 
+                  ${parseInt(primaryColor.slice(5, 7), 16)}, 0.01), 
+            rgba(255, 255, 255, 0.05))
         `;
+        // Add animation that syncs with iOS haptic feedback rate
+        overlay.style.animation = 'pulse 500ms cubic-bezier(0.19, 1, 0.22, 1)';
       }
       
       document.body.appendChild(overlay);
       
-      // Trigger the transition immediately for optimal flow
+      // Add ambient sound for enhanced luxury feel - use subtle animation instead
+      // to create a synesthetic experience without actual sound
+      document.documentElement.style.setProperty('--theme-transition-speed', '280ms');
+      
+      // Trigger the transition immediately for optimal flow with haptic timing
       requestAnimationFrame(() => {
         overlay.style.opacity = '1';
         
+        // Sequence of carefully timed transitions that match haptic feedback intervals
+        
         // Apply theme change matching standard haptic feedback timing (~50ms response)
         setTimeout(() => {
+          // Apply theme change - this triggers all CSS transitions defined in theme-transition class
           if (isDarkMode) {
             html.classList.add('dark');
           } else {
             html.classList.remove('dark');
           }
+          
+          // Update UI elements with staggered animation to create a cascading effect
+          const interactiveElements = document.querySelectorAll(
+            'button, a, .card, .panel, input, select, textarea, .theme-aware'
+          );
+          
+          // Stagger the animations of interactive elements to create a wave-like effect
+          // that mimics the ripple pattern of haptic feedback
+          interactiveElements.forEach((el, index) => {
+            const delay = 30 + (index % 5) * 15; // Stagger in groups of 5 elements
+            (el as HTMLElement).style.transitionDelay = `${delay}ms`;
+            // Reset the delay after the transition
+            setTimeout(() => {
+              (el as HTMLElement).style.transitionDelay = '0ms';
+            }, 350); // Slightly longer than transition duration
+          });
           
           // Fade out using haptic-synchronized timing (~100ms)
           setTimeout(() => {
@@ -183,16 +250,23 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
             
             // Remove overlay on completion (haptic feedback resolution ~200ms)
             setTimeout(() => {
-              document.body.removeChild(overlay);
+              if (document.body.contains(overlay)) {
+                document.body.removeChild(overlay);
+              }
               
-              // Restore normal animations
-              html.classList.remove('theme-transition');
+              // Allow a brief moment for the cascade of changes to complete
+              // then restore normal animations - this matches the haptic feedback resolution time
+              setTimeout(() => {
+                html.classList.remove('theme-transition');
+                // Reset any transition delays
+                document.documentElement.style.removeProperty('--theme-transition-speed');
+              }, 50); // Final resolution timing
             }, 180); // Aligned with touch response threshold
           }, 100); // Haptic-synchronized fade timing
-        }, 50); // Touch response timing standard
+        }, 50); // Touch response timing standard - Android/iOS haptic response time
       });
     });
-  }, [theme, isDarkMode, isColorBlindMode]);
+  }, [theme, isDarkMode, isColorBlindMode, isTactileFeedbackEnabled, transitionSpeed]);
 
   // Update theme color
   const updateThemeColor = (color: string) => {
@@ -208,6 +282,93 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const toggleColorBlindMode = () => {
     setIsColorBlindMode((prev) => !prev);
   };
+  
+  // Toggle tactile feedback
+  const toggleTactileFeedback = () => {
+    const newValue = !isTactileFeedbackEnabled;
+    setIsTactileFeedbackEnabled(newValue);
+    
+    // Apply or remove tactile feedback classes and initialize touch feedback system
+    if (newValue) {
+      document.documentElement.classList.add('tactile-feedback-enabled');
+      // Initialize the touch feedback system
+      initTouchFeedback(true);
+    } else {
+      document.documentElement.classList.remove('tactile-feedback-enabled');
+      // Set tactile feedback to disabled
+      setTactileFeedback(false);
+    }
+  };
+  
+  // Set transition speed
+  const setTransitionSpeedFn = (speed: 'default' | 'fast' | 'luxurious') => {
+    setTransitionSpeed(speed);
+    
+    // Apply appropriate CSS variables based on selected speed
+    if (speed === 'fast') {
+      document.documentElement.style.setProperty('--theme-transition-speed', '180ms');
+    } else if (speed === 'luxurious') {
+      document.documentElement.style.setProperty('--theme-transition-speed', '450ms');
+    } else {
+      document.documentElement.style.setProperty('--theme-transition-speed', '280ms');
+    }
+  };
+
+  // Initialize touch feedback system on mount
+  useEffect(() => {
+    // Initialize the touch feedback system
+    initTouchFeedback(isTactileFeedbackEnabled);
+    
+    // Clean up event listeners on component unmount
+    return () => {
+      cleanupTouchFeedback();
+    };
+  }, []);
+  
+  // Apply tactile feedback settings on mount and effect change
+  useEffect(() => {
+    const html = document.documentElement;
+    
+    // Handle tactile feedback toggle
+    if (isTactileFeedbackEnabled) {
+      html.classList.add('tactile-feedback-enabled');
+      // Update the touch feedback system
+      setTactileFeedback(true);
+    } else {
+      html.classList.remove('tactile-feedback-enabled');
+      // Update the touch feedback system
+      setTactileFeedback(false);
+    }
+    
+    // Set transition speed CSS variable and data attribute
+    let transitionSpeedValue = '280ms'; // default
+    if (transitionSpeed === 'fast') {
+      transitionSpeedValue = '180ms';
+      html.setAttribute('data-transition-speed', 'fast');
+    } else if (transitionSpeed === 'luxurious') {
+      transitionSpeedValue = '450ms';
+      html.setAttribute('data-transition-speed', 'luxurious');
+    } else {
+      html.setAttribute('data-transition-speed', 'default');
+    }
+    
+    html.style.setProperty('--theme-transition-speed', transitionSpeedValue);
+    
+    // Update body class for enhanced mobile specific animations
+    if (window.matchMedia('(max-width: 768px)').matches) {
+      document.body.classList.add('mobile-device');
+      
+      // Add enhanced touch-reactive behavior on mobile
+      if (isTactileFeedbackEnabled) {
+        document.body.classList.add('enhanced-touch');
+      } else {
+        document.body.classList.remove('enhanced-touch');
+      }
+    } else {
+      document.body.classList.remove('mobile-device');
+      document.body.classList.remove('enhanced-touch');
+    }
+  }, [isTactileFeedbackEnabled, transitionSpeed]);
 
   return (
     <ThemeContext.Provider
@@ -215,9 +376,13 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
         theme,
         isDarkMode,
         isColorBlindMode,
+        isTactileFeedbackEnabled,
+        transitionSpeed,
         updateThemeColor,
         toggleDarkMode,
         toggleColorBlindMode,
+        toggleTactileFeedback,
+        setTransitionSpeed: setTransitionSpeedFn,
       }}
     >
       {children}

@@ -1,0 +1,447 @@
+/**
+ * Haptic Animations - Synchronized with device haptic feedback
+ * 
+ * This CSS file contains animations optimized to match the timing and
+ * feeling of mobile device haptic feedback, creating a synesthetic experience
+ * between touch, sight, and perceived physical response.
+ */
+
+/* Base Transition Class */
+.theme-transition * {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  transition-duration: var(--theme-transition-speed, 280ms);
+}
+
+/* Pulse Animation for Theme Transitions */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0;
+  }
+  25% {
+    transform: scale(1.01);
+    opacity: 0.015;
+  }
+  50% {
+    transform: scale(1);
+    opacity: 0.03;
+  }
+  75% {
+    transform: scale(1.005);
+    opacity: 0.015;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+/* Haptic Feedback Timing Classes */
+.haptic-touch {
+  transition-duration: 80ms !important; /* Ultra-fast mobile tap response */
+}
+
+.haptic-press {
+  transition-duration: 230ms !important; /* Standard press feedback */
+}
+
+.haptic-long-press {
+  transition-duration: 380ms !important; /* Long press action */
+}
+
+.haptic-pulse {
+  animation: haptic-pulse 400ms cubic-bezier(0.455, 0.03, 0.515, 0.955) forwards;
+}
+
+@keyframes haptic-pulse {
+  0% { transform: scale(1); }
+  25% { transform: scale(1.1); }
+  50% { transform: scale(1); }
+  75% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+/* Haptic-synchronized animation timing function classes */
+.spring-out {
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+
+.spring-in {
+  transition-timing-function: cubic-bezier(0.47, 0, 0.745, 0.715) !important;
+}
+
+.bounce-in {
+  transition-timing-function: cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+}
+
+.bounce-out {
+  transition-timing-function: cubic-bezier(0.68, -0.55, 0.265, 1.55) !important;
+}
+
+/* Staggered Animation Wave Patterns */
+@keyframes wave-in {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Card Animations */
+.card-transition {
+  transition: all 350ms cubic-bezier(0.22, 1, 0.36, 1);
+  transform-origin: center center;
+  will-change: transform, opacity, box-shadow;
+}
+
+.card-transition:hover {
+  transform: translateY(-3px) scale(1.01);
+}
+
+.card-transition:active {
+  transform: translateY(1px) scale(0.99);
+  transition-duration: 80ms; /* Haptic touch timing */
+}
+
+/* Interactive Element Animations */
+.interactive-element {
+  transition: all 250ms cubic-bezier(0.22, 1, 0.36, 1);
+  transform-origin: center center;
+  will-change: transform, background-color, color;
+}
+
+.interactive-element:hover {
+  transform: translateY(-1px);
+}
+
+.interactive-element:active {
+  transform: translateY(1px);
+  transition-duration: 80ms; /* Haptic touch timing */
+}
+
+/* Mood-based animations - subtly different feelings for different moods */
+.mood-calm {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.mood-energetic {
+  transition-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+}
+
+.mood-focused {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.6, 1) !important;
+}
+
+.mood-playful {
+  transition-timing-function: cubic-bezier(0.32, 1.24, 0.64, 1) !important;
+}
+
+/* Mobile-optimized touch response classes */
+.touch-responsive {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* Enhanced mobile experience for devices with tactile feedback */
+.mobile-device.enhanced-touch .interactive-element:active,
+.mobile-device.enhanced-touch .touch-responsive:active,
+.mobile-device.enhanced-touch button:active {
+  transform: scale(0.96) translateY(1px);
+  transition-duration: 80ms !important;
+  transition-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1) !important;
+}
+
+/* Add subtle finger trail effect on mobile devices using radial gradient animation */
+.mobile-device.enhanced-touch .card-transition:hover::after,
+.mobile-device.enhanced-touch .interactive-element:hover::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at var(--x, center) var(--y, center), 
+              rgba(var(--primary-rgb, 124, 58, 237), 0.05) 0%, 
+              rgba(var(--primary-rgb, 124, 58, 237), 0) 60%);
+  opacity: 0;
+  z-index: 1;
+  border-radius: inherit;
+  transition: opacity 280ms ease-out;
+}
+
+.mobile-device.enhanced-touch .card-transition:active::after,
+.mobile-device.enhanced-touch .interactive-element:active::after {
+  opacity: 1;
+  transition-duration: 80ms;
+}
+
+/* Apple-like subtle animations */
+.apple-scale {
+  transition: transform 250ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.apple-scale:active {
+  transform: scale(0.97);
+  transition-duration: 80ms;
+}
+
+/* Sensual transition effects for color/theme changes */
+.color-shift {
+  transition: background-color 650ms cubic-bezier(0.25, 0.8, 0.25, 1), 
+              color 650ms cubic-bezier(0.25, 0.8, 0.25, 1),
+              border-color 650ms cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+/* Luxury branded animation styles */
+.luxury-reveal {
+  animation: luxury-fade 800ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes luxury-fade {
+  0% {
+    opacity: 0;
+    transform: scale(0.99) translateY(10px);
+    filter: blur(5px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    filter: blur(0);
+  }
+}
+
+/* Theme-aware elements that respond to theme changes */
+.theme-aware {
+  transition: background-color 280ms cubic-bezier(0.22, 1, 0.36, 1),
+              color 280ms cubic-bezier(0.22, 1, 0.36, 1),
+              border-color 280ms cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Special transition effects for modal/dialog elements */
+.modal-transition {
+  transition: opacity 280ms cubic-bezier(0.19, 1, 0.22, 1),
+              transform 280ms cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+.modal-content-transition {
+  transition: opacity 350ms cubic-bezier(0.22, 1, 0.36, 1) 50ms, /* Delayed to create sequential feel */
+              transform 350ms cubic-bezier(0.22, 1, 0.36, 1) 50ms;
+}
+
+/* Animations for content loading states */
+.content-fade-in {
+  animation: content-appear 450ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes content-appear {
+  0% {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Staggered animation helper classes for lists */
+.stagger-children > * {
+  opacity: 0;
+  animation: stagger-item 350ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes stagger-item {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Apply staggered animation delays to children */
+.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-children > *:nth-child(2) { animation-delay: 30ms; }
+.stagger-children > *:nth-child(3) { animation-delay: 60ms; }
+.stagger-children > *:nth-child(4) { animation-delay: 90ms; }
+.stagger-children > *:nth-child(5) { animation-delay: 120ms; }
+.stagger-children > *:nth-child(6) { animation-delay: 150ms; }
+.stagger-children > *:nth-child(7) { animation-delay: 180ms; }
+.stagger-children > *:nth-child(8) { animation-delay: 210ms; }
+.stagger-children > *:nth-child(9) { animation-delay: 240ms; }
+.stagger-children > *:nth-child(n+10) { animation-delay: 270ms; }
+
+/* Color Transition Component Specific Animations */
+.color-palette-item {
+  transition: transform 250ms cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 250ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.color-palette-item:hover {
+  transform: translateY(-4px) scale(1.03);
+}
+
+.color-palette-item:active {
+  transform: translateY(1px) scale(0.98);
+  transition-duration: 100ms;
+}
+
+/* Mood Capsule animations */
+.mood-capsule-item {
+  transition: transform 350ms cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 350ms cubic-bezier(0.22, 1, 0.36, 1),
+              opacity 350ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.mood-capsule-item:hover {
+  transform: translateY(-3px);
+}
+
+.mood-capsule-item:active {
+  transform: translateY(1px) scale(0.98);
+  transition-duration: 100ms;
+}
+
+/* Swipe gesture animations */
+.swipe-left-exit {
+  animation: swipe-left-out 300ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes swipe-left-out {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+}
+
+.swipe-right-exit {
+  animation: swipe-right-out 300ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes swipe-right-out {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+/* Button and Toggle Animations */
+.btn-press {
+  animation: btn-press 180ms cubic-bezier(0.39, 0.575, 0.565, 1) forwards;
+}
+
+@keyframes btn-press {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.97); }
+  100% { transform: scale(1); }
+}
+
+/* Tactile feedback animations */
+.tactile-click {
+  animation: tactile-click 280ms cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes tactile-click {
+  0% { transform: scale(1); }
+  40% { transform: scale(0.94); }
+  70% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
+/* Toggle switch animation */
+.switch-toggle {
+  transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Checkbox animations */
+.checkbox-check {
+  animation: checkbox-pop 280ms cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes checkbox-pop {
+  0% { transform: scale(0.8); opacity: 0; }
+  40% { transform: scale(1.1); opacity: 0.9; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Tactile Feedback Specific Animations */
+.tactile-feedback-enabled .interactive-element:active,
+.tactile-feedback-enabled .touch-responsive:active,
+.tactile-feedback-enabled button:active,
+.tactile-feedback-enabled .card-transition:active {
+  animation: tactile-press 180ms cubic-bezier(0.39, 0.575, 0.565, 1) forwards;
+}
+
+.tactile-feedback-enabled .checkbox-check {
+  animation: checkbox-tactile 280ms cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes checkbox-tactile {
+  0% { transform: scale(0.8); opacity: 0; }
+  40% { transform: scale(1.2); opacity: 0.9; }
+  70% { transform: scale(0.95); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes tactile-press {
+  0% { transform: translateY(0) scale(1); }
+  40% { transform: translateY(2px) scale(0.97); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+/* Enhanced animation for luxury transition speed */
+.tactile-feedback-enabled[data-transition-speed="luxurious"] .theme-transition * {
+  transition-duration: 450ms;
+}
+
+/* Fast animation for performance-prioritizing users */
+.tactile-feedback-enabled[data-transition-speed="fast"] .theme-transition * {
+  transition-duration: 180ms;
+}
+
+/* Optimize for reduced motion preferences */
+@media (prefers-reduced-motion) {
+  .theme-transition * {
+    transition-duration: 0ms !important;
+  }
+  
+  .stagger-children > * {
+    opacity: 1;
+    animation: none !important;
+  }
+  
+  .luxury-reveal,
+  .content-fade-in,
+  .haptic-pulse,
+  .btn-press,
+  .tactile-click,
+  .checkbox-check {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  
+  .bounce-in,
+  .bounce-out,
+  .spring-in,
+  .spring-out {
+    transition-timing-function: ease !important;
+  }
+}
