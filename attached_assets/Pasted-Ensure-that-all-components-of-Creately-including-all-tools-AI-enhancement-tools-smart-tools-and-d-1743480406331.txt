@@ -1,0 +1,38 @@
+Ensure that all components of Creately—including all tools, AI enhancement tools, smart tools, and data analysis tools—are fully integrated and operational. Incorporate advanced AI and machine learning concepts within these tools, as needed, to enhance user experience, foster creative symbiosis, and maximize the influence between the user and their audience. Verify that every page, including newly created pages, is added to the router, and ensure seamless navigation functionality across all platforms.
+
+Follow these directives:
+
+1. **Tool Integration and AI Enhancement:**  
+   - Fully integrate all tools, including AI enhancement tools, smart tools, and data analysis tools, ensuring they are accessible, functional, and user-friendly.  
+   - Incorporate AI and machine learning algorithms to provide personalized recommendations, data-driven insights, and predictive analytics that improve user engagement.  
+   - Optimize tools for real-time adaptability and responsiveness, allowing them to learn from user behavior and refine their outputs dynamically to better support creativity and collaboration.
+
+2. **Router and Navigation Updates:**  
+   - Ensure that all existing pages and newly created pages are correctly added to the router.  
+   - Validate that all navigation elements (sidebars, top navigation bars, buttons, and links) are functional and properly direct users to the intended destinations.  
+   - Test navigation consistency across mobile and desktop platforms, ensuring seamless user interaction.
+
+3. **Comprehensive User Experience Optimization:**  
+   - Enable tools and features to support creative symbiosis by making processes intuitive and workflows collaborative, enhancing how users interact with their audience.  
+   - Ensure accessibility features, such as color blindness modes, are fully implemented and easily configurable.  
+   - Validate that all pages and tools align aesthetically and functionally to create a cohesive and engaging experience.
+
+4. **Machine Learning Integration:**  
+   - Use machine learning to analyze user data and refine app functionalities, ensuring outputs remain relevant and valuable over time.  
+   - Implement algorithms that enhance tools, such as content generators, by adapting suggestions to user preferences and previous actions.  
+   - Incorporate sentiment analysis and audience interaction feedback loops to adjust tools in real-time for optimal results.
+
+5. **Comprehensive Testing and Iterative Validation:**  
+   - Test each tool, feature, and page for usability, efficiency, and accuracy using automated and manual testing frameworks.  
+   - Simulate real-world usage scenarios to identify potential bottlenecks or issues in functionality.  
+   - Double-check all connections and dependencies between integrated systems to eliminate errors or inconsistencies.
+
+6. **Security and Ownership Protections:**  
+   - Embed metadata and watermarks in all assets to assert ownership and protect intellectual property.  
+   - Include clear legal disclaimers, cookie consent agreements, and privacy policies that adhere to global internet laws and regulations.
+
+7. **Final Reporting:**  
+   - Do not pause or check in with me during this process. Complete all tasks comprehensively, addressing both direct requests and logically inferred needs.  
+   - Provide a detailed summary of all updates, fixes, and enhancements made, ensuring the app operates seamlessly and error-free.
+
+By following this comprehensive workflow, ensure that Creately delivers a cutting-edge user experience, protects creative and intellectual property, and fosters innovative interactions between the user and their audience.
