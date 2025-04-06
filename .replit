@@ -1084,7 +1084,7 @@ args = "pkill -f node || true"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "// Execute the validation processes sequentially"
+args = ""
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
@@ -1100,7 +1100,7 @@ args = "npx tsc --noEmit"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "const report = await validateChanges(changes);"
+args = ""
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
@@ -1112,7 +1112,7 @@ args = "node -e \"const { securityMonitor } = require('./server/services/securit
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "console.log('Validation succeeded. Proceeding to create a checkpoint');"
+args = ""
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
@@ -1132,7 +1132,7 @@ args = "node -e \"const { testKeyboardNavigation } = require('./client/src/utils
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "const checkpointResult = await taskOrchestrator.createCheckpoint();"
+args = ""
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
@@ -1144,19 +1144,7 @@ args = "node -e \"const { validateApiEndpoints, generateApiValidationReport } = 
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "console.log('CHECKPOINT STATUS:', checkpointResult.message);"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "# Run task verification and checkpoint validation"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "node -e \"const { TaskVerification } = require('./client/src/utils/task-verification.js'); TaskVerification.verifyAllTasks().then(results => console.log(JSON.stringify(results, null, 2)))\""
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "} else {"
+args = ""
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
