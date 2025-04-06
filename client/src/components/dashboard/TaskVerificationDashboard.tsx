@@ -29,7 +29,13 @@ interface Task {
 
 export default function TaskVerificationDashboard() {
   const { toast } = useToast();
-  const { verifyTask, updateTaskProgress, updateTaskStatus, refreshTasks } = useTaskVerification();
+  const { 
+    verifyTask, 
+    updateTaskProgress, 
+    updateTaskStatus, 
+    refreshTasks, 
+    webSocketConnected 
+  } = useTaskVerification();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedPriority, setSelectedPriority] = useState<string | null>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -219,7 +225,28 @@ export default function TaskVerificationDashboard() {
         <CardHeader>
           <CardTitle className="flex justify-between items-center">
             <span>Task Verification</span>
-            <Button variant="outline" size="sm" onClick={refreshTasks}>Refresh</Button>
+            <div className="flex items-center gap-2">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center gap-1 cursor-help">
+                      <div className={`h-2 w-2 rounded-full ${webSocketConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+                      <span className="text-xs text-muted-foreground">
+                        {webSocketConnected ? 'Live Updates' : 'Offline'}
+                      </span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    <p className="text-xs">
+                      {webSocketConnected 
+                        ? 'Connected to real-time updates server. Task status changes will appear instantly without refreshing.' 
+                        : 'Not connected to real-time updates server. Manual refresh required to see changes.'}
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <Button variant="outline" size="sm" onClick={refreshTasks}>Refresh</Button>
+            </div>
           </CardTitle>
           <CardDescription>Verify completed tasks to earn evolution points</CardDescription>
         </CardHeader>

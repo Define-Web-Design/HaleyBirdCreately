@@ -7,6 +7,8 @@ import MemoryStore from 'memorystore';
 import { rateLimit } from 'express-rate-limit';
 import { Pool } from '@neondatabase/serverless';
 import { serviceRegistry } from './services/serviceRegistry';
+import { initializeWebSocketServer } from './websocket';
+import { storage } from './storage';
 import dotenv from 'dotenv';
 import ws from 'ws';
 
@@ -109,6 +111,9 @@ pool.query('SELECT NOW()', (err, result) => {
     console.log('Database connected successfully at:', result.rows[0].now);
   }
 });
+
+// Initialize WebSocket server on dedicated port
+initializeWebSocketServer();
 
 server.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);

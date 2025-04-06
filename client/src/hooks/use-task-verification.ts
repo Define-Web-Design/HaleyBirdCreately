@@ -1,10 +1,48 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { apiRequest } from '@/lib/queryClient';
 import { useQueryClient } from '@tanstack/react-query';
+import webSocketClient from '@/lib/webSocketClient';
 
 export function useTaskVerification() {
   const [loading, setLoading] = useState(false);
+  const [connected, setConnected] = useState(false);
   const queryClient = useQueryClient();
+
+  // Initialize WebSocket connection
+  useEffect(() => {
+    // Handle connection events
+    const handleOpen = () => {
+      setConnected(true);
+      webSocketClient.subscribe('tasks');
+    };
+    
+    const handleClose = () => {
+      setConnected(false);
+    };
+    
+    // Handle task updates from the server
+    const handleTaskUpdate = (data: any) => {
+      console.log('Received task update:', data);
+      queryClient.invalidateQueries({ 
+        queryKey: ['/api/task-verification/tasks'] 
+      });
+    };
+    
+    // Set up event handlers
+    webSocketClient.on('connection_open', handleOpen);
+    webSocketClient.on('connection_close', handleClose);
+    webSocketClient.on('task_update', handleTaskUpdate);
+    
+    // Connect to WebSocket server
+    webSocketClient.connect();
+    
+    // Clean up on unmount
+    return () => {
+      webSocketClient.off('connection_open', handleOpen);
+      webSocketClient.off('connection_close', handleClose);
+      webSocketClient.off('task_update', handleTaskUpdate);
+    };
+  }, [queryClient]);
 
   const verifyTask = useCallback(async (taskId: string) => {
     setLoading(true);
@@ -89,7 +127,9 @@ export function useTaskVerification() {
     updateTaskStatus,
     createTask,
     refreshTasks,
-    loading
+    loading,
+    connected,
+    webSocketConnected: connected
   };
 }
 

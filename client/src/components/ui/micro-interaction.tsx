@@ -108,7 +108,7 @@ export function MicroInteraction({
       elementRef.current.appendChild(ripple);
       
       setTimeout(() => {
-        if (ripple.parentNode === elementRef.current) {
+        if (ripple.parentNode === elementRef.current && elementRef.current) {
           elementRef.current.removeChild(ripple);
         }
       }, 600);
@@ -131,7 +131,7 @@ export function MicroInteraction({
       if (elementRef.current) {
         const ripples = elementRef.current.querySelectorAll('.micro-interaction-ripple');
         ripples.forEach(ripple => {
-          if (ripple.parentNode === elementRef.current) {
+          if (ripple.parentNode === elementRef.current && elementRef.current) {
             elementRef.current.removeChild(ripple);
           }
         });
