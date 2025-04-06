@@ -1,0 +1,105 @@
+# Comprehensive Directive for Replit Agent
+
+Hello Replit Agent,
+
+Thank you for your continued efforts in refining Creately. As we strive for an optimal user experience and a cohesive Omni-channel flow, I’ve outlined additional steps to ensure the platform is both polished and robust. Please address the following directives:
+
+---
+
+## Omni-Channel Flow and Feature Consistency
+1. **Unified Features Across Platforms**:
+   - Confirm that all desktop features, including navigation bar functionality, CSS styling, and task interactions, are fully mirrored and functional in the mobile environment.
+   - Ensure all layouts, transitions, and UI interactions are congruent across mobile, desktop, and tablet platforms for seamless navigation.
+
+2. **Optimized Layouts**:
+   - Audit and adjust layouts for enhanced readability and accessibility on all screen sizes. Use dynamic spacing and responsive design principles to improve usability.
+
+---
+
+## Button and Navigation Validation
+1. **Button Functionality**:
+   - Verify that every button visible on every page works as intended and does not return a 404 error page.
+   - Test all interactive elements, including buttons on categorization and subcategorization pages, ensuring no errors occur under any scenario.
+
+2. **404 Error Handling**:
+   - Perform a comprehensive audit across the entire site to identify and eliminate any scenarios where a 404 error page might be returned.
+   - Validate all links, buttons, and navigation options within every page, category, and subcategory to ensure seamless user experience.
+
+---
+
+## Tactile Feedback Adjustments
+1. **Green Dot Removal**:
+   - Remove the green dot tactile feedback option entirely from the app.
+   - Validate any remaining tactile feedback features (e.g., haptic feedback, ripple animations) to ensure they function correctly. If no alternatives exist, remove the tactile feedback system altogether.
+
+---
+
+## UI and Icon Refinements
+1. **Icon Audit**:
+   - Review and update all button icons to ensure each one is unique and accurately represents its intended functionality.
+   - Replace redundant icons and ensure that icons align with the app’s design language and target capabilities.
+
+2. **Cookies Banner**:
+   - Ensure the cookies banner is condensed and unobtrusive, without interfering with navigation or the main interface.
+
+3. **Sidebar Navigation**:
+   - Ensure the sidebar navigation is hidden by default upon app startup and only appears when explicitly summoned by the user.
+
+4. **Pop-Up Notifications**:
+   - Remove unnecessary pop-ups, such as "Your dashboard is ready," across all pages to streamline the interface and eliminate disruptions.
+
+---
+
+## Task Verification System Enhancements
+1. **Task Categorization**:
+   - Add subcategories within task categories (e.g., "Content" → "Media Updates," "Feature" → "Bug Fixes") for improved organization.
+   - Enable users to dynamically filter tasks by category, status, priority, or due date.
+
+2. **Real-Time Updates**:
+   - Use WebSocket or polling mechanisms to implement real-time updates for task statuses, ensuring the dashboard reflects current progress without requiring page refreshes.
+
+3. **Progress Indicators**:
+   - Introduce animated progress indicators, such as filling bars or counters, to visually represent task completion and evolution points.
+
+4. **Customizable Dashboard**:
+   - Allow users to rearrange sections of the TaskVerificationDashboard, hide unused elements, and customize layouts for a personalized experience.
+
+---
+
+## Accessibility and Personalization
+1. **Accessibility Compliance**:
+   - Validate WCAG 2.1 compliance for all UI elements, ensuring proper color contrasts, keyboard navigation, and screen reader support.
+
+2. **Custom Feedback Settings**:
+   - Provide settings for users to adjust tactile feedback intensity (if retained), animation speeds, and haptic effects for a tailored experience.
+
+---
+
+## Performance and Testing
+1. **Cross-Platform Testing**:
+   - Ensure all updates, including button functionality, tactile feedback adjustments, and Omni-channel consistency, perform seamlessly across devices and browsers.
+
+2. **Scalability and Error Monitoring**:
+   - Test application performance under high traffic to ensure stable and responsive navigation.
+   - Enhance event logging to capture and analyze issues related to buttons, 404 errors, transitions, and feature behaviors for proactive debugging.
+
+---
+
+## Summary of Tasks
+1. Audit all buttons to ensure functionality and eliminate any possibility of returning a 404 error page.
+2. Confirm Omni-channel consistency between mobile, desktop, and tablet environments for features, layouts, and navigation.
+3. Remove the green dot tactile feedback and assess the need for retaining or eliminating tactile feedback systems.
+4. Review and update all icons for clarity, uniqueness, and alignment with their target functionality.
+5. Condense the cookies banner and ensure it does not obstruct the main interface.
+6. Verify the sidebar is hidden by default and only visible upon user interaction.
+7. Remove unnecessary pop-ups, such as "Your dashboard is ready," across all pages.
+8. Enhance task verification with subcategories, real-time updates, and visual progress indicators.
+9. Validate accessibility compliance and add personalization settings for tactile feedback and animations.
+10. Conduct rigorous performance testing and error monitoring for all features and functionalities.
+
+---
+
+Please prioritize these updates and provide a status report upon completion. Your meticulous attention to detail is instrumental in perfecting Creately and ensuring an exceptional user experience!
+
+Best regards,  
+Haley

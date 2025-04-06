@@ -1,0 +1,85 @@
+# Streamlined Directive for Replit Agent
+
+Hello Replit Agent,
+
+Thank you for your progress on refining Creately and addressing key aspects like removing unnecessary pop-ups, condensing the cookies banner, and ensuring the sidebar navigation is hidden on startup. Building on your efforts and addressing remaining areas, here are the streamlined directives:
+
+---
+
+## Omni-Channel Flow Optimization
+1. **Unified Features Across Platforms**:
+   - Confirm that all desktop features, including navigation bar functionality, CSS styling, and interactive elements, are fully mirrored and functional in the mobile environment.
+   - Ensure consistent behavior for layouts, transitions, and responsiveness across all platforms, including tablets.
+
+---
+
+## Button and Navigation Validation
+1. **Button Functionality**:
+   - Test every button visible on all pages to ensure functionality and verify they do not return a 404 error page.
+   - Perform a comprehensive audit to ensure no 404 errors occur across the entire site, including all categorization and subcategorization pages.
+
+---
+
+## Tactile Feedback Adjustments
+1. **Green Dot Removal**:
+   - Remove the green dot tactile feedback option entirely from the app.
+   - Validate remaining tactile feedback features (e.g., haptic feedback, ripple effects). If none remain, remove tactile feedback entirely to streamline user interaction.
+
+---
+
+## UI and Icon Refinements
+1. **Icon Audit**:
+   - Review and update all app icons to ensure each one is unique, accurately represents its functionality, and aligns with the app’s design language.
+   - Replace any redundant icons to ensure clear and distinctive visuals.
+
+2. **Sidebar Navigation Behavior**:
+   - Confirm that the sidebar navigation remains hidden by default on app startup and only appears when actively summoned by the user.
+
+---
+
+## Task Verification System Enhancements
+1. **Subcategories for Tasks**:
+   - Introduce subcategories within task categories (e.g., "Content" → "Media Updates," "Feature" → "Bug Fixes") for improved organization.
+
+2. **Real-Time Updates**:
+   - Enable real-time updates for task statuses using WebSocket or polling mechanisms to ensure dashboard accuracy without requiring page refreshes.
+
+3. **Visual Progress Indicators**:
+   - Add animations like filling bars or dynamic counters to visually represent task completion and evolution points.
+
+---
+
+## Accessibility and Personalization
+1. **WCAG Compliance**:
+   - Validate all UI elements against WCAG 2.1 standards, ensuring proper color contrasts, screen reader compatibility, and keyboard navigation.
+
+2. **Feedback Customization**:
+   - Add user settings to adjust tactile feedback intensity (if retained), animation speeds, and transition styles for personalization.
+
+---
+
+## Testing and Error Monitoring
+1. **Cross-Platform Testing**:
+   - Test all updates, including button functionality and Omni-channel flow consistency, across devices and browsers to ensure seamless functionality.
+
+2. **404 Error Monitoring**:
+   - Ensure comprehensive logging of any errors or failures related to navigation, buttons, and transitions for quick resolution.
+
+---
+
+## Summary of Tasks
+1. Test all buttons across the site to verify functionality and eliminate 404 error pages.
+2. Ensure Omni-channel consistency across mobile, desktop, and tablet environments for layouts, styling, and navigation capabilities.
+3. Remove the green dot tactile feedback option and assess remaining tactile feedback systems.
+4. Audit and update all icons for clarity, uniqueness, and alignment with their functionalities.
+5. Confirm sidebar navigation is hidden on startup and accessible upon user interaction.
+6. Enhance task verification with subcategories, real-time updates, and animated progress indicators.
+7. Validate accessibility compliance and add user customization settings for tactile feedback and animations.
+8. Conduct rigorous cross-platform testing and monitor errors for seamless performance.
+
+---
+
+Please prioritize these updates and provide a status report once completed. Thank you for your meticulous attention to improving Creately and ensuring an exceptional user experience!
+
+Best regards,  
+Haley
