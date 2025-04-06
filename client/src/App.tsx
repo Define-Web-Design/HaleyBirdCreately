@@ -30,8 +30,10 @@ import CookieConsent from "./components/common/CookieConsent";
 import { ThemeProvider } from "./lib/ThemeContext";
 import { TaskVerificationProvider } from "./context/task-verification-context";
 import { PageTransitionWrapper } from "@/components/ui/page-transition";
+import { initTouchFeedback } from "@/lib/touchFeedback";
 import './styles/color-blindness.css'; // Added for color blindness styles
 import './styles/transitions.css'; // Added for page transitions
+import './styles/touchFeedback.css'; // Added for touch feedback effects
 
 // Set up service worker for offline capabilities
 function registerServiceWorker() {
@@ -71,9 +73,9 @@ function Router() {
     <AppShell>
       <AutoDismissToaster defaultDuration={5000} />
       <PageTransitionWrapper options={{ 
-        type: 'fade', 
-        duration: 300,
-        easing: 'cubic-bezier(0.25, 1, 0.5, 1)'
+        type: 'layered', 
+        duration: 400,
+        easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)' // More spring-like feel
       }}>
         <Switch>
           <Route path="/" component={Dashboard} />
@@ -119,9 +121,10 @@ function Router() {
 }
 
 function App() {
-  // Try to register service worker on mount
+  // Try to register service worker and initialize touch feedback on mount
   useEffect(() => {
     registerServiceWorker();
+    initTouchFeedback(); // Initialize the touch feedback system
   }, []);
 
   return (

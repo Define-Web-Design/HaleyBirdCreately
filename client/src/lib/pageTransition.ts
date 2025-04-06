@@ -8,7 +8,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useLocation } from 'wouter';
 import { useMobile } from '@/hooks/use-mobile';
 
-export type TransitionType = 'fade' | 'slide' | 'zoom' | 'none';
+export type TransitionType = 'fade' | 'slide' | 'zoom' | 'parallax' | 'layered' | 'minimal' | 'none';
 
 export interface PageTransitionOptions {
   type?: TransitionType;
@@ -118,8 +118,8 @@ export function PageTransitionWrapper({
   children, 
   options = {} 
 }: { 
-  children: React.ReactNode, 
-  options?: PageTransitionOptions 
+  children: React.ReactNode; 
+  options?: PageTransitionOptions;
 }) {
   const { transitionClass, transitionStyles, isTransitioning } = usePageTransition(options);
   
