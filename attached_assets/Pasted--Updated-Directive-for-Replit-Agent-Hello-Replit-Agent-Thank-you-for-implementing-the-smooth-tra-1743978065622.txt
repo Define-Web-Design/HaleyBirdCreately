@@ -1,0 +1,47 @@
+# Updated Directive for Replit Agent
+
+Hello Replit Agent,
+
+Thank you for implementing the smooth transitions and touch feedback enhancements for mobile. As we continue refining the user experience, I’d like to address a few additional elements and ensure a streamlined approach to tactile feedback systems:
+
+---
+
+## Tactile Feedback Adjustments
+1. **Green Dot Removal**:
+   - Remove the green dot currently being used as a tactile feedback option from the application.
+   - Validate if other tactile feedback options are available (e.g., haptic feedback, ripple effects). Ensure they remain functional if present.
+
+2. **Fallback Handling**:
+   - If no tactile feedback options are available, remove the tactile feedback feature entirely to simplify the user experience.
+
+---
+
+## Additional UI Refinements
+1. **Icon Audit and Updates**:
+   - Review all button icons in the app to ensure each icon is unique, accurately represents its functionality, and aligns with the app’s visual design.
+   - Update any redundant or unclear icons to make them visually distinct and reflective of their capabilities.
+
+2. **Condensed Cookies Banner**:
+   - Redesign the cookies banner to be smaller and less obtrusive while maintaining compliance and visibility.
+
+3. **Sidebar Navigation**:
+   - Adjust the sidebar so that it is **not visible on app startup**. Ensure it only appears when summoned by the user.
+
+4. **Unnecessary Pop-Ups**:
+   - Remove pop-ups such as "Your dashboard is ready" or similar notifications from the main page and other pages to prevent unnecessary interruptions.
+
+---
+
+## Testing and Validation
+1. **Cross-Device Testing**:
+   - Verify that the tactile feedback adjustments, icon updates, and UI refinements work seamlessly across all devices, platforms, and browsers.
+
+2. **Performance Monitoring**:
+   - Ensure that removing the tactile feedback feature (if applicable) and green dot does not negatively impact system performance or responsiveness.
+
+---
+
+Let me know once these updates are implemented and share any issues or recommendations that arise during the process. Thank you for continuing to refine Creately and improving the user experience!
+
+Best regards,  
+Haley

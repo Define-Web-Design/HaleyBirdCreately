@@ -76,14 +76,7 @@ export function initTouchFeedback(enabled: boolean = true): void {
       const touchEndHandler = () => {
         element.classList.remove('touch-active');
         
-        // Add success feedback when interaction completes
-        if (loadTouchFeedbackOptions().enabled) {
-          const rect = element.getBoundingClientRect();
-          const x = rect.left + rect.width / 2;
-          const y = rect.top + rect.height / 2;
-          
-          triggerFeedback(x, y, 'success');
-        }
+        // Success feedback removed as per user request to eliminate green dot feedback
       };
       
       // Add event listeners
