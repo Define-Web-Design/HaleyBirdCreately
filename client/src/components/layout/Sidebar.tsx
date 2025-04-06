@@ -2,10 +2,10 @@ import { Link, useLocation } from 'wouter';
 import { MENU_ITEMS, SMART_TOOLS } from '@/lib/constants';
 import { useTheme } from '@/lib/ThemeContext';
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { 
-  Sun, Moon, ZoomIn, ZoomOut, Eye, EyeOff, 
-  ChevronUp, ChevronDown, ChevronRight, 
-  Settings, LogOut, User 
+import {
+  Sun, Moon, ZoomIn, ZoomOut, Eye, EyeOff,
+  ChevronUp, ChevronDown, ChevronRight,
+  Settings, LogOut, User
 } from 'lucide-react';
 import { Switch } from "@/components/ui/switch";
 import {
@@ -44,10 +44,10 @@ interface SubMenuItem {
   path: string;
 }
 
-const Sidebar = ({ 
-  fontSize = 16, 
-  setFontSize = () => {}, 
-  highContrast = false, 
+const Sidebar = ({
+  fontSize = 16,
+  setFontSize = () => {},
+  highContrast = false,
   setHighContrast = () => {},
   colorBlindMode = 'none',
   setColorBlindMode = () => {},
@@ -86,13 +86,13 @@ const Sidebar = ({
     const handleResize = () => {
       const newIsMobile = window.innerWidth < 768;
       setIsMobile(newIsMobile);
-      
+
       // Auto-collapse sidebar when switching to mobile size
       if (newIsMobile && !sessionStorage.getItem('sidebarToggled')) {
         setExpanded(false);
       }
     };
-    
+
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [setExpanded]);
@@ -100,7 +100,7 @@ const Sidebar = ({
   useEffect(() => {
     // Check if user has manually toggled the sidebar
     const userToggled = sessionStorage.getItem('sidebarToggled');
-    
+
     // Only run this effect if we have a valid setExpanded function
     if (typeof setExpanded === 'function') {
       // If on mobile and no user toggle, ensure sidebar is collapsed
@@ -111,7 +111,7 @@ const Sidebar = ({
         setExpanded(true);
       }
     }
-    
+
     // Do not remove the userToggled flag here to maintain persistence
   }, [location, setExpanded]);
 
@@ -120,34 +120,34 @@ const Sidebar = ({
   };
 
   const [_, setLocation] = useLocation();
-  
+
   const handleMenuItemClick = useCallback((item: MenuItem) => {
     // For sidebar items with submenus
     if (item.subMenu && item.subMenu.length > 0) {
       // Toggle the submenu visibility
       setExpandedSubMenu(prev => prev === item.path ? null : item.path);
-      setExpanded(true); 
-      
+      setExpanded(true);
+
       // Trigger any custom handler
       if (item.onCategoryClick) {
         item.onCategoryClick(item);
       }
-      
+
       // Navigate to the main path if not already there
       if (location !== item.path) {
         setLocation(item.path);
       }
-    } 
+    }
     // For regular sidebar items without submenus
     else {
       // Navigate to the path using wouter's setLocation
       setLocation(item.path);
-      
+
       // Trigger any custom handler
       if (item.onSubCategoryClick) {
         item.onSubCategoryClick(item);
       }
-      
+
       // On mobile, collapse sidebar after navigating
       if (isMobile) {
         setTimeout(() => {
@@ -159,12 +159,12 @@ const Sidebar = ({
   }, [setExpanded, location, setLocation, isMobile]);
 
   return (
-    <div 
+    <div
       ref={sidebarRef}
       {...swipeHandlers}
-      className={`flex flex-col ${expanded ? 'w-64' : 'w-0 md:w-20'} bg-background border-r border-border 
+      className={`flex flex-col ${expanded ? (isMobile ? 'w-full max-w-[250px]' : 'w-64') : (isMobile ? 'w-0' : 'w-20')} bg-background border-r border-border
       h-full transition-all duration-300 ease-in-out overflow-hidden overscroll-none`}
-      style={{ 
+      style={{
         willChange: 'width, transform',
         overscrollBehavior: 'none',
         WebkitOverflowScrolling: 'touch'
@@ -174,15 +174,15 @@ const Sidebar = ({
       aria-label="Main Navigation"
     >
       {/* Compact Logo Section */}
-      <Link 
-        href="/" 
+      <Link
+        href="/"
         className="py-2 px-3 flex items-center cursor-pointer hover:opacity-90 transition-all duration-300 ease-in-out group"
       >
-        <div className="bg-gradient-to-r from-[#F2994A] to-[#FF9DAE] h-8 w-8 rounded-lg flex items-center justify-center text-white font-bold text-lg mr-3 shrink-0 
+        <div className="bg-gradient-to-r from-[#F2994A] to-[#FF9DAE] h-8 w-8 rounded-lg flex items-center justify-center text-white font-bold text-lg mr-3 shrink-0
         shadow-sm transition-transform duration-300 ease-out hover:scale-110 group-hover:shadow-md">
           C
         </div>
-        <h1 className={`text-lg font-medium transition-all duration-300 ease-in-out 
+        <h1 className={`text-lg font-medium transition-all duration-300 ease-in-out
         ${expanded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 w-0 overflow-hidden md:opacity-0 md:w-0 md:hidden'}`}>
           Creately
         </h1>
@@ -191,7 +191,7 @@ const Sidebar = ({
       {/* Main Navigation - Expanded to be the majority of the sidebar */}
       <nav className="flex-1 overflow-y-auto py-4 flex flex-col">
         {/* Workspace Section */}
-        <div className={`px-3 mb-2 transition-all duration-300 ease-in-out 
+        <div className={`px-3 mb-2 transition-all duration-300 ease-in-out
         ${expanded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 h-0 mb-0 overflow-hidden md:opacity-100 md:h-auto md:mb-2 md:translate-x-0'}`}>
           <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Workspace</h2>
         </div>
@@ -212,21 +212,21 @@ const Sidebar = ({
             const animDelay = `${index * 0.03}s`;
 
             return (
-              <li key={item.path} className="px-1.5" style={{animationDelay: animDelay}}>
+              <li key={item.path} className="px-1.5" style={{ animationDelay: animDelay }}>
                 <div>
                   {hasSubMenu ? (
-                    <button 
+                    <button
                       onClick={() => handleMenuItemClick(itemWithSubMenu as MenuItem)}
-                      className={`w-full flex items-center justify-between px-3 py-2 rounded-md 
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-md
                       transition-all duration-200 ease-in-out hover:scale-[1.02] active:scale-[0.98] ${
-                        location === item.path || isSubMenuExpanded 
-                        ? 'text-primary bg-primary/10 shadow-sm' 
-                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/50'
-                      }`}
+                        location === item.path || isSubMenuExpanded
+                          ? 'text-primary bg-primary/10 shadow-sm'
+                          : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/50'
+                        }`}
                     >
                       <div className="flex items-center">
                         <i className={`${item.icon} w-4 mr-2.5 text-base shrink-0`}></i>
-                        <span className={`transition-all duration-300 ease-in-out 
+                        <span className={`transition-all duration-300 ease-in-out
                         ${expanded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 w-0 overflow-hidden md:opacity-100 md:w-auto md:transform-none md:overflow-visible'}`}>
                           {item.name}
                         </span>
@@ -245,19 +245,19 @@ const Sidebar = ({
                       </div>
                     </button>
                   ) : (
-                    <Link 
-                      href={item.path} 
+                    <Link
+                      href={item.path}
                       onClick={() => handleMenuItemClick(item as MenuItem)}
-                      className={`flex items-center px-3 py-2 rounded-md 
+                      className={`flex items-center px-3 py-2 rounded-md
                       transition-all duration-200 ease-in-out hover:scale-[1.02] active:scale-[0.98] ${
-                        location === item.path 
-                        ? 'text-primary bg-primary/10 shadow-sm' 
-                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/50'
-                      }`}
+                        location === item.path
+                          ? 'text-primary bg-primary/10 shadow-sm'
+                          : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/50'
+                        }`}
                     >
-                      <i className={`${item.icon} w-4 mr-2.5 text-base shrink-0 transition-transform duration-300 ease-in-out 
+                      <i className={`${item.icon} w-4 mr-2.5 text-base shrink-0 transition-transform duration-300 ease-in-out
                       ${location === item.path ? 'scale-110' : ''}`}></i>
-                      <span className={`transition-all duration-300 ease-in-out 
+                      <span className={`transition-all duration-300 ease-in-out
                       ${expanded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 w-0 overflow-hidden md:opacity-100 md:w-auto md:transform-none md:overflow-visible'}`}>
                         {item.name}
                       </span>
@@ -270,11 +270,11 @@ const Sidebar = ({
                   )}
 
                   {hasSubMenu && isSubMenuExpanded && (
-                    <ul className="ml-6 mt-1 space-y-0.5 border-l border-gray-200 dark:border-gray-700 pl-2 
-                    animate-in slide-in-from-left-2 duration-300 ease-in-out">
+                    <ul className={`ml-6 mt-1 space-y-0.5 border-l border-gray-200 dark:border-gray-700 pl-2
+                    animate-in slide-in-from-left-2 duration-300 ease-in-out ${isMobile ? 'max-h-[200px] overflow-y-auto' : ''}`}> {/* Added overflow-y-auto for submenus on mobile */}
                       {subMenu.map((subItem) => (
                         <li key={subItem.path}>
-                          <Link 
+                          <Link
                             href={subItem.path}
                             onClick={() => {
                               // Only close sidebar on mobile, keep expanded on desktop
@@ -285,12 +285,12 @@ const Sidebar = ({
                                 }, 150);
                               }
                             }}
-                            className={`flex items-center px-2 py-1.5 text-sm rounded-md 
+                            className={`flex items-center px-2 py-1.5 text-sm rounded-md
                             transition-all duration-200 ease-in-out hover:scale-[1.02] active:scale-[0.98] ${
                               location === subItem.path
-                              ? 'text-primary bg-primary/5 shadow-sm' 
-                              : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/30'
-                            }`}
+                                ? 'text-primary bg-primary/5 shadow-sm'
+                                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/30'
+                              }`}
                           >
                             {subItem.name}
                           </Link>
@@ -305,7 +305,7 @@ const Sidebar = ({
         </ul>
 
         {/* Smart Tools Section */}
-        <div className={`px-3 mb-2 transition-all duration-300 ease-in-out 
+        <div className={`px-3 mb-2 transition-all duration-300 ease-in-out
         ${expanded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 h-0 mb-0 overflow-hidden md:opacity-100 md:h-auto md:mb-2 md:translate-x-0'}`}>
           <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Smart Tools</h2>
         </div>
@@ -314,22 +314,22 @@ const Sidebar = ({
           {SMART_TOOLS.map((tool, index) => {
             // Staggered animation delay for tool items
             const animDelay = `${0.2 + (index * 0.03)}s`;
-            
+
             return (
-              <li key={tool.path} className="px-1.5" style={{animationDelay: animDelay}}>
-                <Link 
-                  href={tool.path} 
+              <li key={tool.path} className="px-1.5" style={{ animationDelay: animDelay }}>
+                <Link
+                  href={tool.path}
                   onClick={() => handleMenuItemClick(tool as MenuItem)}
-                  className={`flex items-center px-3 py-2 rounded-md 
+                  className={`flex items-center px-3 py-2 rounded-md
                   transition-all duration-200 ease-in-out hover:scale-[1.02] active:scale-[0.98] ${
-                    location === tool.path 
-                    ? 'text-primary bg-primary/10 shadow-sm' 
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/50'
-                  }`}
+                    location === tool.path
+                      ? 'text-primary bg-primary/10 shadow-sm'
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/50'
+                    }`}
                 >
-                  <i className={`${tool.icon} w-4 mr-2.5 text-base shrink-0 transition-transform duration-300 ease-in-out 
+                  <i className={`${tool.icon} w-4 mr-2.5 text-base shrink-0 transition-transform duration-300 ease-in-out
                   ${location === tool.path ? 'scale-110' : ''}`}></i>
-                  <span className={`transition-all duration-300 ease-in-out 
+                  <span className={`transition-all duration-300 ease-in-out
                   ${expanded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 w-0 overflow-hidden md:opacity-100 md:w-auto md:transform-none md:overflow-visible'}`}>
                     {tool.name}
                   </span>
@@ -346,12 +346,12 @@ const Sidebar = ({
         <div className="p-2 flex items-center justify-between">
           <DropdownMenu>
             <DropdownMenuTrigger className="flex items-center space-x-2 rounded-md p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800/30 transition-colors duration-200 w-full">
-              <img 
-                src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=120&h=120&q=80" 
-                alt="User avatar" 
+              <img
+                src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=120&h=120&q=80"
+                alt="User avatar"
                 className="h-7 w-7 rounded-full object-cover shrink-0 border-2 border-primary/20 shadow-sm"
               />
-              <div className={`flex flex-row items-center gap-2 transition-all duration-300 ease-in-out 
+              <div className={`flex flex-row items-center gap-2 transition-all duration-300 ease-in-out
               ${expanded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 w-0 overflow-hidden'}`}>
                 <span className="text-sm font-medium truncate">Sophia</span>
                 <Settings className="h-3.5 w-3.5 text-muted-foreground" />
@@ -378,18 +378,17 @@ const Sidebar = ({
         </div>
 
         {/* Compact Settings Controls */}
-        <div className={`px-2 pb-2 transition-all duration-300 ease-out 
+        <div className={`px-2 pb-2 transition-all duration-300 ease-out
         ${expanded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 h-0 overflow-hidden md:opacity-100 md:h-auto md:translate-y-0'}`}>
           {/* Theme Toggle */}
           <div className="flex items-center justify-between p-1.5 mb-1 rounded-md bg-gray-50 dark:bg-gray-800/50">
             <div className="flex items-center gap-1.5">
-              {isDarkMode 
-                ? <Moon className="h-3.5 w-3.5 text-indigo-400" /> 
-                : <Sun className="h-3.5 w-3.5 text-amber-500 animate-pulse" />
-              }
+              {isDarkMode
+                ? <Moon className="h-3.5 w-3.5 text-indigo-400" />
+                : <Sun className="h-3.5 w-3.5 text-amber-500 animate-pulse" />}
               <span className="text-xs font-medium">{isDarkMode ? 'Dark' : 'Light'}</span>
             </div>
-            <Switch 
+            <Switch
               checked={isDarkMode}
               onCheckedChange={toggleDarkMode}
               aria-label="Toggle theme"
@@ -404,16 +403,16 @@ const Sidebar = ({
               <span className="text-xs font-medium">Size</span>
             </div>
             <div className="flex items-center">
-              <button 
-                onClick={() => setFontSize(Math.max(fontSize - 1, 12))} 
+              <button
+                onClick={() => setFontSize(Math.max(fontSize - 1, 12))}
                 aria-label="Smaller text"
                 className="w-5 h-5 flex items-center justify-center rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
               >
                 −
               </button>
               <span className="text-xs mx-1 w-3 text-center">{fontSize}</span>
-              <button 
-                onClick={() => setFontSize(Math.min(fontSize + 1, 20))} 
+              <button
+                onClick={() => setFontSize(Math.min(fontSize + 1, 20))}
                 aria-label="Larger text"
                 className="w-5 h-5 flex items-center justify-center rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
               >

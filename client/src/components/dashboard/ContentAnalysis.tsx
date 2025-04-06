@@ -118,34 +118,34 @@ export function ContentAnalysis({ contentId }: ContentAnalysisProps) {
 
         {activeTab === 'overview' && (
           <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Content Score</span>
-                  <BarChart className="h-4 w-4 text-blue-500" />
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+              <div className="bg-gray-50 dark:bg-gray-700 p-3 sm:p-4 rounded-lg">
+                <div className="flex justify-between items-center mb-1 sm:mb-2">
+                  <span className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">Content Score</span>
+                  <BarChart className="h-3 w-3 sm:h-4 sm:w-4 text-blue-500" />
                 </div>
-                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{analysisData.overview.contentScore}/100</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">{analysisData.overview.contentScore}/100</p>
               </div>
-              <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Readability</span>
-                  <Activity className="h-4 w-4 text-green-500" />
+              <div className="bg-gray-50 dark:bg-gray-700 p-3 sm:p-4 rounded-lg">
+                <div className="flex justify-between items-center mb-1 sm:mb-2">
+                  <span className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">Readability</span>
+                  <Activity className="h-3 w-3 sm:h-4 sm:w-4 text-green-500" />
                 </div>
-                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{analysisData.overview.readabilityScore}/100</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">{analysisData.overview.readabilityScore}/100</p>
               </div>
-              <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Engagement</span>
-                  <Activity className="h-4 w-4 text-purple-500" />
+              <div className="bg-gray-50 dark:bg-gray-700 p-3 sm:p-4 rounded-lg">
+                <div className="flex justify-between items-center mb-1 sm:mb-2">
+                  <span className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">Engagement</span>
+                  <Activity className="h-3 w-3 sm:h-4 sm:w-4 text-purple-500" />
                 </div>
-                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{analysisData.overview.engagementScore}/100</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">{analysisData.overview.engagementScore}/100</p>
               </div>
-              <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-medium text-gray-500 dark:text-gray-400">SEO Score</span>
-                  <Activity className="h-4 w-4 text-yellow-500" />
+              <div className="bg-gray-50 dark:bg-gray-700 p-3 sm:p-4 rounded-lg">
+                <div className="flex justify-between items-center mb-1 sm:mb-2">
+                  <span className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">SEO Score</span>
+                  <Activity className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-500" />
                 </div>
-                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{analysisData.overview.seoScore}/100</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">{analysisData.overview.seoScore}/100</p>
               </div>
             </div>
 

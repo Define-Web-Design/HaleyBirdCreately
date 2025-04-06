@@ -138,3 +138,74 @@ const InteractiveButton = React.forwardRef<HTMLButtonElement, InteractiveButtonP
 InteractiveButton.displayName = "InteractiveButton";
 
 export { InteractiveButton };
+import React from 'react';
+import { Button, ButtonProps } from '@/components/ui/button';
+import { shortFeedback } from '@/lib/touchFeedback';
+import { useMobile } from '@/hooks/use-mobile';
+
+interface InteractiveButtonProps extends ButtonProps {
+  feedbackType?: 'short' | 'medium' | 'success' | 'error';
+  onLongPress?: () => void;
+  longPressDelay?: number;
+}
+
+export function InteractiveButton({
+  children,
+  feedbackType = 'short',
+  onLongPress,
+  longPressDelay = 500,
+  onClick,
+  className,
+  ...props
+}: InteractiveButtonProps) {
+  const { isMobile } = useMobile();
+  const pressTimer = React.useRef<NodeJS.Timeout | null>(null);
+  const [isPressing, setIsPressing] = useState(false);
+
+  // Handle touch feedback
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (isMobile) {
+      shortFeedback();
+    }
+    
+    if (onClick) {
+      onClick(e);
+    }
+  };
+
+  // Handle long press for mobile
+  const handleTouchStart = () => {
+    if (!onLongPress) return;
+    
+    setIsPressing(true);
+    pressTimer.current = setTimeout(() => {
+      if (onLongPress) {
+        onLongPress();
+        shortFeedback();
+      }
+    }, longPressDelay);
+  };
+
+  const handleTouchEnd = () => {
+    if (pressTimer.current) {
+      clearTimeout(pressTimer.current);
+      pressTimer.current = null;
+    }
+    setIsPressing(false);
+  };
+
+  return (
+    <Button
+      className={`${className} ${isPressing ? 'scale-95' : ''}`}
+      onClick={handleClick}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchEnd}
+      {...props}
+    >
+      {children}
+    </Button>
+  );
+}
+
+export default InteractiveButton;

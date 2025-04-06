@@ -134,3 +134,85 @@ export const SwipeableContainer: React.FC<SwipeableContainerProps> = ({
     </div>
   );
 };
+import React, { useState, useRef, useEffect } from 'react';
+
+interface SwipeableContainerProps {
+  children: React.ReactNode;
+  onSwipeLeft?: () => void;
+  onSwipeRight?: () => void;
+  threshold?: number;
+  className?: string;
+}
+
+export function SwipeableContainer({
+  children,
+  onSwipeLeft,
+  onSwipeRight,
+  threshold = 100,
+  className = '',
+}: SwipeableContainerProps) {
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const [isSwiping, setIsSwiping] = useState(false);
+  const [swipeDistance, setSwipeDistance] = useState(0);
+  
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Calculate direction and distance
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.targetTouches[0].clientX);
+    setTouchEnd(null);
+    setIsSwiping(true);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchStart) return;
+    setTouchEnd(e.targetTouches[0].clientX);
+    
+    const distance = touchStart - e.targetTouches[0].clientX;
+    setSwipeDistance(distance);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > threshold;
+    const isRightSwipe = distance < -threshold;
+    
+    if (isLeftSwipe && onSwipeLeft) {
+      onSwipeLeft();
+    }
+    
+    if (isRightSwipe && onSwipeRight) {
+      onSwipeRight();
+    }
+    
+    // Reset state
+    setTouchStart(null);
+    setTouchEnd(null);
+    setIsSwiping(false);
+    setSwipeDistance(0);
+  };
+
+  // Apply visual feedback during swipe
+  const swipeStyle = isSwiping ? {
+    transform: `translateX(${-swipeDistance * 0.2}px)`,
+    transition: 'transform 0.1s ease',
+  } : {};
+
+  return (
+    <div
+      ref={containerRef}
+      className={`touch-manipulation ${className}`}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      style={swipeStyle}
+    >
+      {children}
+    </div>
+  );
+}
+
+export default SwipeableContainer;

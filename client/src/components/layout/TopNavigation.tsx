@@ -1,13 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { Button } from '@/components/ui/button';
+import { Bell, Settings, User, Menu } from 'lucide-react';
+import { useMobile } from '@/hooks/use-mobile';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Link, useLocation, useRoute } from 'wouter';
 
-export default function TopNavigation({ toggleSidebar, isMobile }: { toggleSidebar: () => void, isMobile: boolean }) {
+export default function TopNavigation({ toggleSidebar }: { toggleSidebar: () => void }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [hasNotifications, setHasNotifications] = useState(true);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const [location, setLocation] = useLocation();
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [isOnDashboard] = useRoute('/');
+  const { isMobile } = useMobile();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Get sidebar state from session storage to keep sidebar toggle state consistent
   const sidebarOpen = sessionStorage.getItem('sidebarToggled') === 'true';
@@ -372,7 +379,7 @@ export default function TopNavigation({ toggleSidebar, isMobile }: { toggleSideb
                 <div className="p-3 rounded-md border hover:border-border/80 transition-colors cursor-pointer active:bg-muted/30">
                   <div className="flex items-start">
                     <div className="bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full p-2 mr-3 shrink-0">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
                         <circle cx="9" cy="7" r="4"></circle>
                         <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
@@ -396,6 +403,7 @@ export default function TopNavigation({ toggleSidebar, isMobile }: { toggleSideb
       )}
     </header>
   );
+};
 
   return isMobile ? renderMobileView() : renderDesktopView();
 }

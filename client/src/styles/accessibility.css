@@ -42,6 +42,63 @@
   --chart-3: hsl(190, 100%, 50%);
   --chart-4: hsl(280, 70%, 70%);
   --chart-5: hsl(0, 0%, 75%);
+
+/* Mobile accessibility improvements */
+@media (max-width: 768px) {
+  /* Increase text size for better readability */
+  html.text-large {
+    font-size: 18px;
+  }
+  
+  html.text-x-large {
+    font-size: 20px;
+  }
+  
+  /* Improve focus outlines on mobile */
+  :focus {
+    outline: 3px solid var(--focus-ring-color, #1a73e8);
+    outline-offset: 2px;
+  }
+  
+  /* Increase spacing for touch targets */
+  button, 
+  a, 
+  [role="button"],
+  [role="link"] {
+    padding: 0.5rem;
+    margin: 0.25rem;
+  }
+  
+  /* Zoom in or out on double-tap */
+  .zoomable {
+    touch-action: manipulation;
+  }
+  
+  /* Improve form controls on mobile */
+  input, 
+  select, 
+  textarea {
+    padding: 0.75rem;
+    min-height: 44px;
+  }
+}
+
+/* High contrast mode for mobile */
+@media (max-width: 768px) {
+  html.high-contrast button,
+  html.high-contrast a,
+  html.high-contrast [role="button"] {
+    border: 2px solid currentColor !important;
+  }
+  
+  html.high-contrast input,
+  html.high-contrast select,
+  html.high-contrast textarea {
+    border: 2px solid currentColor !important;
+    background-color: var(--input-background, #fff) !important;
+  }
+}
+
 }
 
 /* Tritanopia (blue-blind) */

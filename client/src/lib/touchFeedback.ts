@@ -143,3 +143,72 @@ export default {
   setTactileFeedback,
   useTouchFeedback
 };
+/**
+ * Utility for providing haptic feedback on mobile devices
+ */
+
+// Check if the device supports vibration
+export const supportsHapticFeedback = (): boolean => {
+  return 'vibrate' in navigator;
+};
+
+// Provide short vibration feedback (for button presses, etc.)
+export const shortFeedback = (): void => {
+  if (supportsHapticFeedback()) {
+    navigator.vibrate(10);
+  }
+};
+
+// Provide medium vibration feedback (for selections, confirmations)
+export const mediumFeedback = (): void => {
+  if (supportsHapticFeedback()) {
+    navigator.vibrate(30);
+  }
+};
+
+// Provide error/warning vibration feedback (for errors, warnings)
+export const errorFeedback = (): void => {
+  if (supportsHapticFeedback()) {
+    navigator.vibrate([30, 50, 30]);
+  }
+};
+
+// Provide success vibration feedback (for successful actions)
+export const successFeedback = (): void => {
+  if (supportsHapticFeedback()) {
+    navigator.vibrate([10, 30, 10, 30]);
+  }
+};
+
+// Enhanced button press feedback
+export const buttonFeedback = (): void => {
+  shortFeedback();
+};
+
+// Apply this feedback to interactive elements
+export function applyTouchFeedback(): void {
+  if (!supportsHapticFeedback()) return;
+  
+  document.addEventListener('click', (event) => {
+    const target = event.target as HTMLElement;
+    
+    // Check if the clicked element is a button or other interactive element
+    if (
+      target.tagName === 'BUTTON' ||
+      target.getAttribute('role') === 'button' ||
+      target.classList.contains('interactive')
+    ) {
+      buttonFeedback();
+    }
+  });
+}
+
+export default {
+  shortFeedback,
+  mediumFeedback,
+  errorFeedback,
+  successFeedback,
+  buttonFeedback,
+  applyTouchFeedback,
+  supportsHapticFeedback
+};

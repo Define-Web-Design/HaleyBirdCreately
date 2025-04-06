@@ -17,6 +17,54 @@
   from { 
     opacity: 0; 
     transform: translateY(20px);
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+  }
+  
+  /* Increase touch targets for mobile */
+  button, 
+  .button, 
+  [role="button"],
+  input[type="submit"],
+  input[type="reset"],
+  input[type="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Improve form elements on mobile */
+  input, 
+  select, 
+  textarea {
+    font-size: 16px !important; /* Prevents iOS zoom on focus */
+  }
+  
+  /* Improve card layouts on mobile */
+  .card {
+    margin-bottom: 1rem;
+  }
+}
+
+/* Tablet Responsiveness */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .grid-cols-3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) {
+  /* Enhance active states for touch devices */
+  button:active, 
+  .button:active, 
+  [role="button"]:active {
+    transform: scale(0.98);
+  }
+}
+
   }
   to { 
     opacity: 1;

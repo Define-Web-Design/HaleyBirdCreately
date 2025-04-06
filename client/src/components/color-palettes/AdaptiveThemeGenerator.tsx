@@ -321,11 +321,11 @@ const AdaptiveThemeGenerator: React.FC<AdaptiveThemeGeneratorProps> = ({ onTheme
           <div className="pt-2 space-y-4">
             <h3 className="text-lg font-medium">Generated Theme</h3>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
               {Object.entries(generatedTheme).map(([key, color]) => (
                 <div key={key} className="space-y-1">
                   <div 
-                    className="h-12 rounded-md cursor-pointer hover:transform hover:scale-105 transition-transform"
+                    className="h-10 sm:h-12 rounded-md cursor-pointer hover:transform hover:scale-105 transition-transform"
                     style={{ backgroundColor: color }}
                     title={`${key}: ${color}`}
                     onClick={() => {
@@ -336,9 +336,9 @@ const AdaptiveThemeGenerator: React.FC<AdaptiveThemeGeneratorProps> = ({ onTheme
                       });
                     }}
                   />
-                  <div className="flex justify-between text-xs">
-                    <span className="capitalize">{key}</span>
-                    <span className="text-muted-foreground">{color}</span>
+                  <div className="flex flex-col sm:flex-row sm:justify-between text-xs">
+                    <span className="capitalize truncate">{key}</span>
+                    <span className="text-muted-foreground text-xs">{color}</span>
                   </div>
                 </div>
               ))}

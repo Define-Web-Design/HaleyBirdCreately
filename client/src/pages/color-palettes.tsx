@@ -62,7 +62,7 @@ const ColorPalettesPage = (props: { params?: { section?: string } }) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [location] = useLocation();
-  
+
   // Set activeTab based on URL path
   const determineActiveTab = () => {
     if (location.includes('/recent')) return 'recent';
@@ -70,7 +70,7 @@ const ColorPalettesPage = (props: { params?: { section?: string } }) => {
     if (location.includes('/favorites')) return 'favorites';
     return 'all';
   };
-  
+
   const [activeTab, setActiveTab] = useState(determineActiveTab());
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedColor, setSelectedColor] = useState<string>('#FFD166');
@@ -100,7 +100,7 @@ const ColorPalettesPage = (props: { params?: { section?: string } }) => {
 
   // Mutation to create a new color palette
   const createPaletteMutation = useMutation({
-    mutationFn: (palette: Omit<ColorPalette, 'id' | 'userId' | 'usageCount' | 'createdAt' | 'updatedAt'>) => 
+    mutationFn: (palette: Omit<ColorPalette, 'id' | 'userId' | 'usageCount' | 'createdAt' | 'updatedAt'>) =>
       apiRequest({
         method: 'POST',
         url: '/api/color-palettes',
@@ -126,7 +126,7 @@ const ColorPalettesPage = (props: { params?: { section?: string } }) => {
 
   // Mutation to toggle favorite status
   const toggleFavoriteMutation = useMutation({
-    mutationFn: ({ id, isFavorite }: { id: number, isFavorite: boolean }) => 
+    mutationFn: ({ id, isFavorite }: { id: number, isFavorite: boolean }) =>
       apiRequest({
         method: 'PUT',
         url: `/api/color-palettes/${id}`,
@@ -139,7 +139,7 @@ const ColorPalettesPage = (props: { params?: { section?: string } }) => {
 
   // Mutation to increment usage count
   const incrementUsageMutation = useMutation({
-    mutationFn: (id: number) => 
+    mutationFn: (id: number) =>
       apiRequest({
         method: 'POST',
         url: `/api/color-palettes/${id}/increment-usage`
@@ -197,7 +197,7 @@ const ColorPalettesPage = (props: { params?: { section?: string } }) => {
       description: `${color} copied to clipboard`,
     });
   };
-  
+
   // Helper function to apply a palette to the application theme
   const applyPaletteToTheme = (palette: ColorPalette) => {
     if (palette.colors.length > 0) {
@@ -206,17 +206,17 @@ const ColorPalettesPage = (props: { params?: { section?: string } }) => {
         accent: palette.colors.length > 1 ? palette.colors[1] : undefined,
         background: palette.colors.length > 2 ? palette.colors[2] : undefined,
       });
-      
+
       toast({
         title: 'Palette Applied',
         description: `${palette.name} applied to application theme`,
       });
-      
+
       // Increment usage count
       incrementUsageMutation.mutate(palette.id);
     }
   };
-  
+
   // Helper function to reset the application theme
   const resetApplicationTheme = () => {
     resetPalette();
@@ -229,24 +229,24 @@ const ColorPalettesPage = (props: { params?: { section?: string } }) => {
   // Helper function to filter palettes based on active tab
   const getFilteredPalettes = () => {
     if (!colorPalettes || !Array.isArray(colorPalettes)) return [];
-    
+
     switch (activeTab) {
       case 'favorites':
         return colorPalettes.filter((palette: ColorPalette) => palette.isFavorite);
       case 'recent':
         // Sort by date and get the most recent palettes
-        return [...colorPalettes].sort((a, b) => 
+        return [...colorPalettes].sort((a, b) =>
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         ).slice(0, 12);
       case 'categories':
         // Get URL parameters for potential mood filter
         const urlParams = new URLSearchParams(window.location.search);
         const moodFilter = urlParams.get('mood');
-        
+
         if (moodFilter && MOODS.some(m => m.value === moodFilter)) {
           return colorPalettes.filter((palette: ColorPalette) => palette.mood === moodFilter);
         }
-        
+
         // If no specific mood filter, group by mood for the categories page
         // We'll just return all here but in a real app you might want to organize differently
         return colorPalettes;
@@ -275,7 +275,7 @@ const ColorPalettesPage = (props: { params?: { section?: string } }) => {
     document.body.appendChild(downloadAnchorNode);
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
-    
+
     // Increment usage count
     incrementUsageMutation.mutate(palette.id);
   };
@@ -291,7 +291,7 @@ const ColorPalettesPage = (props: { params?: { section?: string } }) => {
       });
       return;
     }
-    
+
     createPaletteMutation.mutate(newPalette);
   };
 
@@ -348,8 +348,8 @@ const ColorPalettesPage = (props: { params?: { section?: string } }) => {
                       {MOODS.map((mood) => (
                         <SelectItem key={mood.value} value={mood.value}>
                           <div className="flex items-center">
-                            <div 
-                              className="w-3 h-3 rounded-full mr-2" 
+                            <div
+                              className="w-3 h-3 rounded-full mr-2"
                               style={{ backgroundColor: mood.color }}
                             />
                             {mood.label}
@@ -447,8 +447,8 @@ const ColorPalettesPage = (props: { params?: { section?: string } }) => {
       {activePalette.isPaletteActive && (
         <div className="bg-secondary/40 rounded-lg p-4 flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <div 
-              className="w-6 h-6 rounded-full border shadow-sm" 
+            <div
+              className="w-6 h-6 rounded-full border shadow-sm"
               style={{ backgroundColor: activePalette.primary }}
             />
             <div>
@@ -461,12 +461,12 @@ const ColorPalettesPage = (props: { params?: { section?: string } }) => {
           </Button>
         </div>
       )}
-      
+
       {/* Advanced Color Tools Toggle */}
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold">Color Palettes</h2>
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           onClick={() => setShowAdvancedTools(!showAdvancedTools)}
           className="flex items-center gap-2"
         >
@@ -474,15 +474,15 @@ const ColorPalettesPage = (props: { params?: { section?: string } }) => {
           {showAdvancedTools ? "Hide Tools" : "Show Advanced Tools"}
         </Button>
       </div>
-      
+
       {/* Advanced Color Tools */}
       {showAdvancedTools && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <div className="space-y-4">
-            <VoiceColorSelector 
+            <VoiceColorSelector
               onColorSelected={(color) => {
                 setSelectedColor(color);
-                
+
                 // Add the color to the new palette if creating one
                 if (isCreateDialogOpen && newPalette.colors.length < 8) {
                   // Replace the last color with the new one or add it if there's room
@@ -492,18 +492,18 @@ const ColorPalettesPage = (props: { params?: { section?: string } }) => {
                   } else {
                     newColors[newColors.length - 1] = color;
                   }
-                  
+
                   setNewPalette({
                     ...newPalette,
                     colors: newColors
                   });
                 }
-                
+
                 toast({
                   title: "Color Selected",
                   description: `Selected ${color} using voice recognition!`,
                 });
-                
+
                 // If dialog isn't open, let's apply it to the theme directly
                 if (!isCreateDialogOpen) {
                   setActivePalette({
@@ -512,11 +512,11 @@ const ColorPalettesPage = (props: { params?: { section?: string } }) => {
                     background: undefined,
                   });
                 }
-              }} 
+              }}
             />
-            
+
             <ColorTheoryTutorial />
-            
+
             {/* Mood Animations preview */}
             <Card>
               <CardHeader className="pb-2">
@@ -528,9 +528,9 @@ const ColorPalettesPage = (props: { params?: { section?: string } }) => {
               </CardContent>
             </Card>
           </div>
-          
+
           <div className="space-y-4">
-            <AdaptiveThemeGenerator 
+            <AdaptiveThemeGenerator
               onThemeGenerated={(theme) => {
                 setActivePalette({
                   primary: theme.primary,
@@ -541,19 +541,19 @@ const ColorPalettesPage = (props: { params?: { section?: string } }) => {
                   title: "Theme Applied",
                   description: "Generated theme has been applied to the application",
                 });
-              }} 
+              }}
             />
-            
-            <SocialMediaSharing 
-              paletteName="My Creative Palette" 
+
+            <SocialMediaSharing
+              paletteName="My Creative Palette"
               paletteColors={newPalette.colors}
             />
           </div>
         </div>
       )}
 
-      <Tabs 
-        value={activeTab} 
+      <Tabs
+        value={activeTab}
         onValueChange={(value) => {
           setActiveTab(value);
           // Update URL based on selected tab
@@ -565,10 +565,10 @@ const ColorPalettesPage = (props: { params?: { section?: string } }) => {
           } else {
             newPath = `/color-palettes/categories?mood=${value}`;
           }
-          
+
           // Navigate to the new path using wouter
           window.history.pushState(null, '', newPath);
-        }} 
+        }}
         className="w-full"
       >
         <TabsList className="w-full justify-start">
@@ -583,7 +583,7 @@ const ColorPalettesPage = (props: { params?: { section?: string } }) => {
             </TabsTrigger>
           ))}
         </TabsList>
-        
+
         <TabsContent value={activeTab} className="mt-6">
           {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -598,7 +598,7 @@ const ColorPalettesPage = (props: { params?: { section?: string } }) => {
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 sm:gap-6"> {/* Added responsiveness */}
               {getFilteredPalettes().length > 0 ? (
                 getFilteredPalettes().map((palette) => (
                   <Card key={palette.id} className="w-full overflow-hidden transition-all hover:shadow-md">
@@ -624,16 +624,16 @@ const ColorPalettesPage = (props: { params?: { section?: string } }) => {
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => toggleFavoriteMutation.mutate({ 
-                            id: palette.id, 
-                            isFavorite: !palette.isFavorite 
+                          onClick={() => toggleFavoriteMutation.mutate({
+                            id: palette.id,
+                            isFavorite: !palette.isFavorite
                           })}
                         >
-                          <Heart 
+                          <Heart
                             className={cn(
-                              "h-5 w-5", 
+                              "h-5 w-5",
                               palette.isFavorite ? "fill-red-500 text-red-500" : "text-gray-400"
-                            )} 
+                            )}
                           />
                         </Button>
                       </div>
