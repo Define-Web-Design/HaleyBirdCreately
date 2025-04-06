@@ -490,10 +490,13 @@ export const taskVerification = pgTable("task_verification", {
   description: text("description"),
   status: text("status").notNull().default("pending"), // pending, in-progress, completed, verified
   category: text("category").notNull(), // content, feature, security, system
+  subcategory: text("subcategory"), // Subcategory for more detailed categorization
+  priority: text("priority").default("medium"), // low, medium, high
   points: integer("points").notNull().default(10),
   createdAt: timestamp("created_at").defaultNow(),
   completedAt: timestamp("completed_at"),
   verifiedAt: timestamp("verified_at"),
+  progressPercentage: integer("progress_percentage").default(0), // Track progress percentage for in-progress tasks
 });
 
 // Export insert schema for Task Verification
@@ -503,8 +506,11 @@ export const insertTaskVerificationSchema = createInsertSchema(taskVerification)
   description: true,
   status: true,
   category: true,
+  subcategory: true,
+  priority: true,
   points: true,
   completedAt: true,
+  progressPercentage: true,
 });
 
 // Export types for Task Verification

@@ -850,18 +850,74 @@ class Storage {
     return updatedTask.length > 0 ? updatedTask[0] : null;
   }
   
-  async updateTaskStatus(taskId: number, status: string): Promise<TaskVerification | null> {
-    const updates: any = { status };
+  async updateTaskProgress(taskId: string, userId: number, progressPercentage: number): Promise<TaskVerification | null> {
+    const taskIdNum = parseInt(taskId);
     
-    // If the status is being set to completed, update completedAt
-    if (status === 'completed') {
-      updates.completedAt = new Date();
+    if (isNaN(taskIdNum)) {
+      return null;
     }
     
+    // Get the task first to ensure it exists
+    const task = await this.getTaskById(taskIdNum);
+    
+    if (!task || task.userId !== userId) {
+      return null;
+    }
+    
+    // Validate progress percentage
+    const validatedProgress = Math.max(0, Math.min(100, progressPercentage));
+    
+    // Update the task progress
     const updatedTask = await db
       .update(taskVerification)
-      .set(updates)
-      .where(eq(taskVerification.id, taskId))
+      .set({ 
+        progressPercentage: validatedProgress,
+        // If progress is 100%, automatically set status to completed
+        ...(validatedProgress === 100 && task.status === 'in-progress' ? { 
+          status: 'completed',
+          completedAt: new Date()
+        } : {})
+      })
+      .where(eq(taskVerification.id, taskIdNum))
+      .returning();
+    
+    return updatedTask.length > 0 ? updatedTask[0] : null;
+  }
+  
+  async updateTaskStatus(taskId: string, userId: number, status: string): Promise<TaskVerification | null> {
+    const taskIdNum = parseInt(taskId);
+    
+    if (isNaN(taskIdNum)) {
+      return null;
+    }
+    
+    // Get the task first to ensure it exists
+    const task = await this.getTaskById(taskIdNum);
+    
+    if (!task || task.userId !== userId) {
+      return null;
+    }
+    
+    // Validate status
+    if (!['pending', 'in-progress', 'completed', 'verified'].includes(status)) {
+      return null;
+    }
+    
+    // Prepare update data
+    const updateData: any = { status };
+    
+    // Add timestamp fields based on status
+    if (status === 'completed') {
+      updateData.completedAt = new Date();
+    } else if (status === 'verified') {
+      updateData.verifiedAt = new Date();
+    }
+    
+    // Update the task status
+    const updatedTask = await db
+      .update(taskVerification)
+      .set(updateData)
+      .where(eq(taskVerification.id, taskIdNum))
       .returning();
     
     return updatedTask.length > 0 ? updatedTask[0] : null;

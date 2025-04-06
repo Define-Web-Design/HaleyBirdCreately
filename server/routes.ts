@@ -534,8 +534,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         description: taskData.description || null,
         status: taskData.status || 'pending',
         category: taskData.category,
+        subcategory: taskData.subcategory || null,
+        priority: taskData.priority || 'medium',
         points: taskData.points || 10,
-        completedAt: null
+        completedAt: null,
+        progressPercentage: taskData.progressPercentage || 0
       });
       
       res.json({
@@ -552,13 +555,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Update task status
-  app.put(`${apiPrefix}/task-verification/tasks/:taskId`, async (req: Request, res: Response) => {
+  app.patch(`${apiPrefix}/task-verification/status/:taskId`, async (req: Request, res: Response) => {
     try {
       const { taskId } = req.params;
       const { status } = req.body;
-      const taskIdNum = parseInt(taskId);
+      const userId = req.session?.userId || 1; // Mock user ID for demo
       
-      if (!taskId || !status || isNaN(taskIdNum)) {
+      if (!taskId || !status) {
         return res.status(400).json({
           success: false,
           message: 'Task ID and status are required'
@@ -566,7 +569,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Update the task status
-      const task = await storage.updateTaskStatus(taskIdNum, status);
+      const task = await storage.updateTaskStatus(taskId, userId, status);
       
       if (!task) {
         return res.status(404).json({
@@ -584,6 +587,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ 
         success: false, 
         message: 'Failed to update task status' 
+      });
+    }
+  });
+  
+  // Update task progress
+  app.patch(`${apiPrefix}/task-verification/progress/:taskId`, async (req: Request, res: Response) => {
+    try {
+      const { taskId } = req.params;
+      const { progressPercentage } = req.body;
+      const userId = req.session?.userId || 1; // Mock user ID for demo
+      
+      if (!taskId || progressPercentage === undefined) {
+        return res.status(400).json({
+          success: false,
+          message: 'Task ID and progress percentage are required'
+        });
+      }
+      
+      // Update the task progress
+      const task = await storage.updateTaskProgress(taskId, userId, progressPercentage);
+      
+      if (!task) {
+        return res.status(404).json({
+          success: false,
+          message: 'Task not found'
+        });
+      }
+      
+      // If task is automatically marked as completed, award points
+      let pointsAwarded = 0;
+      if (task.status === 'completed' && progressPercentage === 100) {
+        pointsAwarded = task.points || 0;
+        if (pointsAwarded > 0) {
+          await storage.addEvolutionPoints(userId, pointsAwarded);
+          
+          // Track this activity in user engagement
+          await storage.trackUserEngagement({
+            userId,
+            engagementType: 'task_completed',
+            engagementDetails: JSON.stringify({
+              taskId,
+              points: pointsAwarded,
+              timestamp: new Date().toISOString()
+            })
+          });
+        }
+      }
+      
+      res.json({
+        success: true,
+        task,
+        pointsAwarded
+      });
+    } catch (error) {
+      console.error('Error updating task progress:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Failed to update task progress' 
       });
     }
   });

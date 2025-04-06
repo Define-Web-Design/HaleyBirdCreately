@@ -1,0 +1,74 @@
+# Updated Directive for Replit Agent
+
+Hello Replit Agent,
+
+Thank you for your efforts in refining Creately. Based on the progress made and areas for further improvement, here are additional directives to enhance functionality and user experience:
+
+---
+
+## Navigation and Error Handling
+1. **Extended Navigation Testing**:
+   - Test all navigation elements, including dropdown menus, hyperlinks, sidebars, and external links, to ensure there are no broken links or 404 errors.
+   - Confirm proper accessibility and smooth redirection for all navigation systems.
+
+---
+
+## Onboarding Experience
+1. **User-Friendly Onboarding**:
+   - Develop a guided tutorial or tooltip system to introduce first-time users to key features like task verification, navigation, and customization options.
+   - Ensure onboarding is intuitive and helpful without overwhelming the user.
+
+---
+
+## Analytics and Insights
+1. **User Engagement Dashboard**:
+   - Build an analytics dashboard to track user activity, task completion trends, and feature effectiveness.
+   - Provide personalized insights to users based on their activity to encourage engagement.
+
+---
+
+## UI Simplification
+1. **Workflow Streamlining**:
+   - Simplify workflows like task verification and evolution point calculations for intuitive use.
+   - Optimize layouts for a clean and distraction-free interface.
+
+---
+
+## Mobile Responsiveness
+1. **Performance Validation**:
+   - Ensure all touch gestures, animations, and navigation elements function seamlessly on various mobile devices.
+   - Optimize performance for devices with lower processing power.
+
+---
+
+## Accessibility Enhancements
+1. **Expanded Accessibility Features**:
+   - Strengthen options for color-blind users and include audio descriptions for key interactions or notifications.
+   - Confirm compliance with WCAG 2.1 standards across all elements.
+
+---
+
+## Feedback System
+1. **Interactive Feedback Mechanism**:
+   - Develop a feature where users can rate app features, report bugs, or suggest improvements directly from the interface.
+
+---
+
+## Customization Depth
+1. **Advanced Personalization**:
+   - Allow users to save multiple themes or dashboard settings profiles.
+   - Expand customization for progress tracking by enabling custom categories and milestones.
+
+---
+
+## Security Features
+1. **Security Audit**:
+   - Conduct a comprehensive audit to ensure data integrity and protection across workflows.
+   - Confirm compliance with privacy regulations and standards.
+
+---
+
+Please prioritize these updates and provide a status report upon completion. Your continued dedication to refining Creately is greatly appreciated!
+
+Best regards,  
+Haley
