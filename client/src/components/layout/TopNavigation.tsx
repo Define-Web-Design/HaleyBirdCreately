@@ -6,14 +6,16 @@ import { useMobile } from '@/hooks/use-mobile';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Link, useLocation, useRoute } from 'wouter';
 
-export default function TopNavigation({ toggleSidebar }: { toggleSidebar: () => void }) {
+export default function TopNavigation({ toggleSidebar, isMobile }: { toggleSidebar: () => void, isMobile?: boolean }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [hasNotifications, setHasNotifications] = useState(true);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const [location, setLocation] = useLocation();
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [isOnDashboard] = useRoute('/');
-  const { isMobile } = useMobile();
+  const mobileContext = useMobile();
+  // Use passed in isMobile prop if provided, otherwise use context
+  const isMobileDevice = isMobile !== undefined ? isMobile : mobileContext.isMobile;
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Get sidebar state from session storage to keep sidebar toggle state consistent
@@ -369,5 +371,5 @@ export default function TopNavigation({ toggleSidebar }: { toggleSidebar: () => 
     </header>
   );
 
-  return isMobile ? renderMobileView() : renderDesktopView();
+  return isMobileDevice ? renderMobileView() : renderDesktopView();
 }

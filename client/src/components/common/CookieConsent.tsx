@@ -36,39 +36,34 @@ function CookieConsent({ privacyPolicyUrl, termsOfServiceUrl }: CookieConsentPro
   if (!isVisible) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-800 p-4 shadow-lg z-50 border-t border-gray-200 dark:border-gray-700">
-      <div className="container mx-auto flex flex-col md:flex-row items-center justify-between">
-        <div className="mb-4 md:mb-0 pr-8">
-          <h3 className="text-lg font-semibold mb-1 dark:text-white">Cookie Consent</h3>
-          <p className="text-gray-600 dark:text-gray-300 max-w-3xl">
-            We use cookies to enhance your experience on our site, analyze site usage, and assist in our marketing efforts. 
-            By clicking "Accept", you agree to the storing of cookies on your device.
-            {(privacyPolicyUrl || termsOfServiceUrl) && (
-              <span className="ml-1">
-                {privacyPolicyUrl && (
-                  <a href={privacyPolicyUrl} className="text-primary hover:underline ml-1">Privacy Policy</a>
-                )}
-                {privacyPolicyUrl && termsOfServiceUrl && (
-                  <span className="mx-1">•</span>
-                )}
-                {termsOfServiceUrl && (
-                  <a href={termsOfServiceUrl} className="text-primary hover:underline">Terms of Service</a>
-                )}
-              </span>
+    <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm px-3 py-2 shadow-md z-50 border-t border-border flex items-center justify-between">
+      <p className="text-xs text-muted-foreground flex-1 mr-2">
+        <span className="font-medium text-foreground">Cookies</span>
+        {" "}used to improve experience.
+        {(privacyPolicyUrl || termsOfServiceUrl) && (
+          <span className="ml-1 whitespace-nowrap">
+            {privacyPolicyUrl && (
+              <a href={privacyPolicyUrl} className="text-primary hover:underline text-xs">Privacy</a>
             )}
-          </p>
-        </div>
-        <div className="flex space-x-3">
-          <Button variant="outline" onClick={handleReject}>
-            Reject Non-Essential
-          </Button>
-          <Button variant="default" onClick={handleAccept}>
-            Accept All
-          </Button>
-          <Button variant="ghost" size="icon" onClick={handleClose} aria-label="Close">
-            <X className="h-5 w-5" />
-          </Button>
-        </div>
+            {privacyPolicyUrl && termsOfServiceUrl && (
+              <span className="mx-1">•</span>
+            )}
+            {termsOfServiceUrl && (
+              <a href={termsOfServiceUrl} className="text-primary hover:underline text-xs">Terms</a>
+            )}
+          </span>
+        )}
+      </p>
+      <div className="flex items-center gap-1 shrink-0">
+        <Button variant="ghost" size="sm" onClick={handleReject} className="h-6 px-2 text-xs">
+          Reject
+        </Button>
+        <Button variant="default" size="sm" onClick={handleAccept} className="h-6 px-2 text-xs">
+          Accept
+        </Button>
+        <Button variant="ghost" size="icon" onClick={handleClose} aria-label="Close" className="h-6 w-6">
+          <X className="h-3 w-3" />
+        </Button>
       </div>
     </div>
   );

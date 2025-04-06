@@ -8,6 +8,7 @@ import { MenuIcon, XIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
+  // Default sidebar to closed for all devices as per user request
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [fontSize, setFontSize] = useState(16);
@@ -48,15 +49,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       // Check for user preference before auto-collapsing
       const userToggled = sessionStorage.getItem('sidebarToggled');
 
-      // On mobile, always ensure sidebar starts closed for better UX
-      if (mobile.isMobile && !userToggled) {
+      // Always ensure sidebar starts closed by default for better UX
+      if (!userToggled) {
         setSidebarOpen(false);
         // Store this preference
         sessionStorage.setItem('sidebarToggled', 'false');
-      } else if (!mobile.isMobile && !userToggled) {
-        setSidebarOpen(true);
-        // Store this preference
-        sessionStorage.setItem('sidebarToggled', 'true');
       }
 
       // Add touch-specific class to body for touch-specific CSS

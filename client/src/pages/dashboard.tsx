@@ -11,13 +11,7 @@ import { AnalyticsData, ContentItem, User } from '@/lib/types';
 const Dashboard = () => {
   const { toast } = useToast();
   
-  // Welcome toast with application info
-  useEffect(() => {
-    toast({
-      title: "Welcome back",
-      description: "Your creative dashboard is ready",
-    });
-  }, []);
+  // Welcome toast removed as per user request to eliminate unnecessary pop-ups
   
   // Queries for data
   const { data: user, isLoading: isLoadingUser } = useQuery<User | null>({
