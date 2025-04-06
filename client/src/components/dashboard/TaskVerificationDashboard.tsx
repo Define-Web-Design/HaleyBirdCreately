@@ -210,3 +210,189 @@ export function TaskVerificationDashboard() {
 }
 
 export default TaskVerificationDashboard;
+import { useQuery } from '@tanstack/react-query';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useToast } from '@/hooks/use-toast';
+import { useTaskVerification } from '@/hooks/use-task-verification';
+
+interface Task {
+  id: string;
+  title: string;
+  description: string;
+  status: 'pending' | 'in-progress' | 'completed' | 'verified';
+  category: 'content' | 'feature' | 'security' | 'system';
+  points: number;
+  createdAt: string;
+  completedAt?: string;
+}
+
+export default function TaskVerificationDashboard() {
+  const { toast } = useToast();
+  const { verifyTask, refreshTasks } = useTaskVerification();
+  
+  const { data: tasks = [], isLoading } = useQuery<Task[]>({
+    queryKey: ['/api/task-verification/tasks'],
+    enabled: true,
+  });
+
+  const handleVerifyTask = async (taskId: string) => {
+    try {
+      await verifyTask(taskId);
+      toast({
+        title: "Task Verified",
+        description: "The task has been successfully verified.",
+        variant: "default"
+      });
+      await refreshTasks();
+    } catch (error) {
+      toast({
+        title: "Verification Failed",
+        description: "There was an error verifying the task.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Calculate progress statistics
+  const totalTasks = tasks.length;
+  const completedTasks = tasks.filter(task => task.status === 'completed' || task.status === 'verified').length;
+  const verifiedTasks = tasks.filter(task => task.status === 'verified').length;
+  const completionPercentage = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+  const verificationPercentage = completedTasks > 0 ? (verifiedTasks / completedTasks) * 100 : 0;
+
+  // Group tasks by category for better organization
+  const tasksByCategory = tasks.reduce((acc, task) => {
+    if (!acc[task.category]) {
+      acc[task.category] = [];
+    }
+    acc[task.category].push(task);
+    return acc;
+  }, {} as Record<string, Task[]>);
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Task Verification</CardTitle>
+          <CardDescription>Loading tasks...</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="h-16 bg-muted/50 rounded-md animate-pulse"></div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // No tasks case
+  if (totalTasks === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Task Verification</CardTitle>
+          <CardDescription>No tasks available for verification</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8 text-muted-foreground">
+            <p>No tasks have been created yet. Tasks will appear here when they are created.</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex justify-between items-center">
+          <span>Task Verification</span>
+          <Button variant="outline" size="sm" onClick={refreshTasks}>Refresh</Button>
+        </CardTitle>
+        <CardDescription>Verify completed tasks to earn evolution points</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-6">
+          {/* Overall Progress */}
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span>Overall Completion</span>
+              <span className="font-medium">{completedTasks} / {totalTasks} Tasks</span>
+            </div>
+            <Progress value={completionPercentage} className="h-2" />
+            
+            <div className="flex justify-between text-sm mt-4">
+              <span>Verification Progress</span>
+              <span className="font-medium">{verifiedTasks} / {completedTasks} Tasks</span>
+            </div>
+            <Progress value={verificationPercentage} className="h-2" />
+          </div>
+
+          {/* Tasks by Category */}
+          <div className="space-y-6">
+            {Object.entries(tasksByCategory).map(([category, categoryTasks]) => (
+              <div key={category}>
+                <h3 className="font-medium text-sm mb-3 capitalize">{category} Tasks</h3>
+                <div className="space-y-3">
+                  {categoryTasks.map(task => (
+                    <div key={task.id} className="border rounded-md p-3">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h4 className="font-medium text-sm">{task.title}</h4>
+                          <p className="text-xs text-muted-foreground mt-1">{task.description}</p>
+                        </div>
+                        <Badge variant={
+                          task.status === 'verified' ? 'default' :
+                          task.status === 'completed' ? 'outline' :
+                          task.status === 'in-progress' ? 'secondary' : 'destructive'
+                        }>
+                          {task.status}
+                        </Badge>
+                      </div>
+                      
+                      {task.status === 'completed' && (
+                        <div className="mt-3 flex items-center justify-between">
+                          <span className="text-xs text-muted-foreground">
+                            {task.completedAt ? `Completed: ${new Date(task.completedAt).toLocaleDateString()}` : 'Ready for verification'}
+                          </span>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button 
+                                  variant="secondary" 
+                                  size="sm"
+                                  onClick={() => handleVerifyTask(task.id)}
+                                >
+                                  Verify ({task.points} points)
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p className="text-xs">Earn {task.points} evolution points by verifying this task</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
+                      )}
+                      
+                      {task.status === 'verified' && (
+                        <div className="mt-3 text-xs text-muted-foreground">
+                          Verified and awarded {task.points} evolution points
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}

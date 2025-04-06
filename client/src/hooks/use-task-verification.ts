@@ -75,3 +75,45 @@ export function useTaskVerification() {
 }
 
 export default useTaskVerification;
+import { useQueryClient } from '@tanstack/react-query';
+import { useToast } from './use-toast';
+import { apiRequest } from '@/lib/queryClient';
+
+export function useTaskVerification() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  const verifyTask = async (taskId: string) => {
+    try {
+      const response = await apiRequest({
+        url: `/api/task-verification/verify/${taskId}`,
+        method: 'POST'
+      });
+      
+      return response;
+    } catch (error) {
+      console.error('Error verifying task:', error);
+      throw error;
+    }
+  };
+
+  const refreshTasks = async () => {
+    try {
+      await queryClient.invalidateQueries({ queryKey: ['/api/task-verification/tasks'] });
+      await queryClient.invalidateQueries({ queryKey: ['/api/evolution-points'] });
+    } catch (error) {
+      console.error('Error refreshing tasks:', error);
+      toast({
+        title: "Refresh Failed",
+        description: "There was an error refreshing the tasks.",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
+  return {
+    verifyTask,
+    refreshTasks
+  };
+}

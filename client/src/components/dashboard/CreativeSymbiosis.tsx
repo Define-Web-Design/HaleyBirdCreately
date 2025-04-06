@@ -11,7 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { verifyContentIntegrity } from '@/lib/security-verification';
-import TaskVerificationDashboard from './TaskVerificationDashboard'; // Import added
+import TaskVerificationDashboard from './TaskVerificationDashboard';
 
 interface EvolutionPoints {
   userId: number;
@@ -102,54 +102,64 @@ export function EvolutionProgressCard({ className }: CardProps) {
     day: 'numeric',
   });
 
-  // Determine tier-specific styles and maximum energy
-  const getTierStyles = (tier: string) => {
-    switch (tier.toLowerCase()) {
-      case 'expert':
-        return {
-          color: 'text-purple-500',
-          bg: 'bg-purple-500/10',
-          border: 'border-purple-500/50',
-          gradient: 'from-purple-400 to-purple-600',
-          energyCap: 200
-        };
-      case 'advanced':
-        return {
-          color: 'text-blue-500',
-          bg: 'bg-blue-500/10',
-          border: 'border-blue-500/50',
-          gradient: 'from-blue-400 to-blue-600',
-          energyCap: 150
-        };
-      case 'established':
-        return {
-          color: 'text-green-500',
-          bg: 'bg-green-500/10',
-          border: 'border-green-500/50',
-          gradient: 'from-green-400 to-green-600',
-          energyCap: 125
-        };
-      case 'growing':
-        return {
-          color: 'text-amber-500',
-          bg: 'bg-amber-500/10',
-          border: 'border-amber-500/50',
-          gradient: 'from-amber-400 to-amber-600',
-          energyCap: 110
-        };
-      default:
-        return {
-          color: 'text-primary',
-          bg: 'bg-primary/10',
-          border: 'border-primary/50',
-          gradient: 'from-primary/70 to-primary',
-          energyCap: 100
-        };
+  // Tier configuration with consistent progression
+  const TIER_CONFIG = {
+    starter: {
+      color: 'text-primary',
+      bg: 'bg-primary/10',
+      border: 'border-primary/50',
+      gradient: 'from-primary/70 to-primary',
+      energyCap: 100,
+      nextTier: 'growing',
+      pointsRequired: 100
+    },
+    growing: {
+      color: 'text-amber-500',
+      bg: 'bg-amber-500/10',
+      border: 'border-amber-500/50',
+      gradient: 'from-amber-400 to-amber-600',
+      energyCap: 110,
+      nextTier: 'established',
+      pointsRequired: 250
+    },
+    established: {
+      color: 'text-green-500',
+      bg: 'bg-green-500/10',
+      border: 'border-green-500/50',
+      gradient: 'from-green-400 to-green-600',
+      energyCap: 125,
+      nextTier: 'advanced',
+      pointsRequired: 500
+    },
+    advanced: {
+      color: 'text-blue-500',
+      bg: 'bg-blue-500/10',
+      border: 'border-blue-500/50',
+      gradient: 'from-blue-400 to-blue-600',
+      energyCap: 150,
+      nextTier: 'expert',
+      pointsRequired: 1000
+    },
+    expert: {
+      color: 'text-purple-500',
+      bg: 'bg-purple-500/10',
+      border: 'border-purple-500/50',
+      gradient: 'from-purple-400 to-purple-600',
+      energyCap: 200,
+      nextTier: null,
+      pointsRequired: Infinity
     }
   };
 
+  // Get tier-specific styles and settings with optimized caching
+  const getTierStyles = (tier: string) => {
+    const normalizedTier = tier.toLowerCase();
+    return TIER_CONFIG[normalizedTier as keyof typeof TIER_CONFIG] || TIER_CONFIG.starter;
+  };
+
   const tierStyles = getTierStyles(evolutionPoints.currentTier || 'starter');
-  const energyPercentage = (evolutionPoints.creativeEnergyPoints / tierStyles.energyCap) * 100;
+  const creativeEnergy = evolutionPoints.creativeEnergyPoints || 0;
+  const energyPercentage = Math.min(100, (creativeEnergy / tierStyles.energyCap) * 100);
 
   // Create milestone markers (evenly spaced)
   const milestones = [
@@ -806,6 +816,17 @@ export default function CreativeSymbiosisSection() {
     setError(null);
 
     try {
+      // Verify content integrity first for security
+      const securityVerification = await verifyContentIntegrity({
+        actionType,
+        userId: evolutionPoints?.userId || 1,
+        timestamp: new Date().toISOString()
+      });
+      
+      if (!securityVerification.valid) {
+        throw new Error(securityVerification.message || "Security verification failed");
+      }
+
       // Track user engagement with the symbiosis framework
       await apiRequest({
         url: '/api/user-engagement',
@@ -814,7 +835,8 @@ export default function CreativeSymbiosisSection() {
           engagementType: 'symbiosis_interaction',
           engagementDetails: JSON.stringify({
             actionType,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            securityToken: securityVerification.token
           })
         }
       });
@@ -826,7 +848,8 @@ export default function CreativeSymbiosisSection() {
           method: 'POST',
           data: {
             pointsToAdd: 10,
-            activityType: 'platform_exploration'
+            activityType: 'platform_exploration',
+            securityToken: securityVerification.token
           }
         });
         
