@@ -55,7 +55,7 @@ localPort = 8425
 externalPort = 3002
 
 [workflows]
-runButton = "Unified Workflow Validation"
+runButton = "Creately Comprehensive Development"
 
 [[workflows.workflow]]
 name = "Project"
@@ -1238,3 +1238,44 @@ args = "nodejs"
 [[workflows.workflow.tasks]]
 task = "workflow.run"
 args = "Run lint command "
+
+[[workflows.workflow]]
+name = "Creately Comprehensive Development"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Kill any running processes"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pkill -f node || true"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Start with code quality checks"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run lint"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npx tsc --noEmit"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run the development server"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"

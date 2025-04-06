@@ -318,10 +318,13 @@ class Storage {
     const palette = await this.getColorPaletteById(id);
     if (!palette) throw new Error("Palette not found");
     
+    // Safely handle null usageCount
+    const currentUsageCount = palette.usageCount || 0;
+    
     const updatedPalettes = await db
       .update(colorPalettes)
       .set({ 
-        usageCount: palette.usageCount + 1,
+        usageCount: currentUsageCount + 1,
         updatedAt: new Date()
       })
       .where(eq(colorPalettes.id, id))
@@ -428,8 +431,9 @@ class Storage {
       });
     }
     
-    // Add points and determine new tier
-    const newTotalPoints = userPoints.totalPoints + pointsToAdd;
+    // Add points and determine new tier (safely handle null)
+    const currentTotalPoints = userPoints.totalPoints || 0;
+    const newTotalPoints = currentTotalPoints + pointsToAdd;
     let currentTier = userPoints.currentTier;
     let nextMilestone = userPoints.nextMilestone;
     
@@ -630,7 +634,8 @@ class Storage {
     
     // Calculate time since last refresh
     const now = new Date();
-    const lastRefresh = new Date(userPoints.lastEnergyRefresh);
+    // Safely handle null lastEnergyRefresh
+    const lastRefresh = userPoints.lastEnergyRefresh ? new Date(userPoints.lastEnergyRefresh) : new Date(Date.now() - 3600000); // Default to 1 hour ago
     const hoursSinceRefresh = (now.getTime() - lastRefresh.getTime()) / (1000 * 60 * 60);
     
     // Calculate points to add (5 per hour)
@@ -654,7 +659,9 @@ class Storage {
     }
     
     // Calculate new energy points (not exceeding max)
-    const newEnergyPoints = Math.min(userPoints.creativeEnergyPoints + pointsToAdd, maxPoints);
+    // Safely handle null creativeEnergyPoints
+    const currentEnergyPoints = userPoints.creativeEnergyPoints || 0;
+    const newEnergyPoints = Math.min(currentEnergyPoints + pointsToAdd, maxPoints);
     
     // Update points in database
     return await this.updateEvolutionPoints(userId, {

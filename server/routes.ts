@@ -481,7 +481,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validPoints = Math.min(Math.abs(parseInt(pointsToAdd)), 50);
 
       // Update evolution points
-      const updatedPoints = await storage.updateEvolutionPoints(userId, validPoints);
+      const updatedPoints = await storage.addEvolutionPoints(userId, validPoints);
 
       // Track this activity in user engagement
       await storage.trackUserEngagement({
@@ -601,17 +601,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update creative history
-  app.put(`${apiPrefix}/creative-history/:period`, async (req: Request, res: Response) => {
+  app.put(`${apiPrefix}/creative-history/:id`, async (req: Request, res: Response) => {
     try {
-      const { period } = req.params;
+      const { id } = req.params;
       const updates = req.body;
-      const userId = 1; // Mock user ID
 
-      if (!period) {
-        return res.status(400).json({ message: "Period is required" });
+      if (!id) {
+        return res.status(400).json({ message: "History ID is required" });
       }
 
-      const history = await storage.updateCreativeHistory(userId, period, updates);
+      const history = await storage.updateCreativeHistory(parseInt(id), updates);
 
       res.json(history);
     } catch (error: any) {
