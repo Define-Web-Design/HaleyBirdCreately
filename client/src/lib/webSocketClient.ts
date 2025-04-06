@@ -29,11 +29,10 @@ class WebSocketClient {
       this.close();
     }
 
-    // Use a different port for our WebSocket to avoid conflict with Vite's WebSocket
+    // Use the same server but with a specific path for our WebSocket
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = window.location.hostname;
-    const port = '5001'; // Use a different port specifically for our WebSocket
-    const wsUrl = `${protocol}//${host}:${port}`;
+    const host = window.location.host; // Host includes both hostname and port
+    const wsUrl = `${protocol}//${host}/ws-api`; // Use the specific WebSocket path
     
     try {
       console.log(`Connecting to WebSocket at ${wsUrl}`);

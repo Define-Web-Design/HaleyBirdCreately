@@ -46,7 +46,7 @@ const limiter = rateLimit({
 
 const app = express();
 const server = createServer(app);
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 5000; // Use port 5000 as required by Replit
 const isProduction = process.env.NODE_ENV === 'production';
 
 // Set trust proxy to handle X-Forwarded-For header correctly in Replit environment
@@ -112,8 +112,9 @@ pool.query('SELECT NOW()', (err, result) => {
   }
 });
 
-// Initialize WebSocket server on dedicated port
-initializeWebSocketServer();
+// Initialize WebSocket server with the HTTP server
+// Note: We need to pass the HTTP server to the WebSocket server
+initializeWebSocketServer(server);
 
 server.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);

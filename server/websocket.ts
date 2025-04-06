@@ -11,11 +11,20 @@ export interface WebSocketMessage {
 // Store connected clients
 const clients = new Map();
 
-// Initialize WebSocket server on a different port to avoid conflict with Vite
-export function initializeWebSocketServer(server?: Server) {
-  // Use a dedicated port for WebSocket to avoid conflict with Vite's WebSocket
-  const wss = new WebSocketServer({ port: 5001 });
-  console.log('WebSocket server started on port 5001');
+// Initialize WebSocket server on the HTTP server
+export function initializeWebSocketServer(server: Server) {
+  if (!server) {
+    console.error('Cannot initialize WebSocket server: HTTP server not provided');
+    return null;
+  }
+  
+  // Use the same HTTP server for WebSockets to avoid port conflicts
+  // Create a path-based WebSocket server to avoid conflicts with Vite
+  const wss = new WebSocketServer({ 
+    server,
+    path: '/ws-api'  // Use a specific path for our WebSocket connections
+  });
+  console.log('WebSocket server initialized with path: /ws-api');
 
   wss.on('connection', (ws) => {
     const clientId = generateClientId();
