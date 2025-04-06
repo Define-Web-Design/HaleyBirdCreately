@@ -4,7 +4,7 @@ import { ActivePalette } from '@/lib/types';
 export const useTheme = () => {
   // Check if user prefers dark mode
   const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-  
+
   // Initialize dark mode state with localStorage value or system preference
   const [isDark, setIsDark] = useState(() => {
     const savedTheme = localStorage.getItem('darkMode');
@@ -27,13 +27,14 @@ export const useTheme = () => {
   // Apply theme class to html element
   useEffect(() => {
     const htmlEl = document.documentElement;
-    
+    htmlEl.classList.remove('light', 'dark'); //Added to remove previous classes
+
     if (isDark) {
       htmlEl.classList.add('dark');
     } else {
-      htmlEl.classList.remove('dark');
+      htmlEl.classList.add('light'); // Added to explicitly set light mode
     }
-    
+
     // Save preference to localStorage
     localStorage.setItem('darkMode', isDark.toString());
   }, [isDark]);
@@ -41,19 +42,19 @@ export const useTheme = () => {
   // Apply palette colors to CSS variables
   useEffect(() => {
     const htmlEl = document.documentElement;
-    
+
     if (activePalette.isPaletteActive && activePalette.primary) {
       // Set CSS variables for palette colors
       htmlEl.style.setProperty('--palette-primary', activePalette.primary);
-      
+
       if (activePalette.accent) {
         htmlEl.style.setProperty('--palette-accent', activePalette.accent);
       }
-      
+
       if (activePalette.background) {
         htmlEl.style.setProperty('--palette-background', activePalette.background);
       }
-      
+
       // Add class to indicate a palette is active
       htmlEl.classList.add('palette-active');
     } else {
@@ -63,7 +64,7 @@ export const useTheme = () => {
       htmlEl.style.removeProperty('--palette-background');
       htmlEl.classList.remove('palette-active');
     }
-    
+
     // Save active palette to localStorage
     localStorage.setItem('activePalette', JSON.stringify(activePalette));
   }, [activePalette]);

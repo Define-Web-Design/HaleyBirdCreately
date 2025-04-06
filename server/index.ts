@@ -1,107 +1,102 @@
-import express, { type Request, Response, NextFunction } from "express";
-import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
+import express from 'express';
+import { createServer } from 'node:http';
+import { routes } from './routes';
+import { viteServerMiddleware } from './vite';
+import session from 'express-session';
+import MemoryStore from 'memorystore';
+import { rateLimit } from 'express-rate-limit';
+import { Pool } from '@neondatabase/serverless';
+import { serviceRegistry } from './services/serviceRegistry';
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
+
+// Initialize database connection
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
+
+// Initialize service registry with database connection
+serviceRegistry.registerServices(pool);
+
+// Rate limiter to prevent abuse
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per window
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 const app = express();
-// Trust proxy needed for express-rate-limit in Replit environment
-app.set('trust proxy', 1);
+const server = createServer(app);
+const port = process.env.PORT || 5000;
+const isProduction = process.env.NODE_ENV === 'production';
+
+// Enhanced session store
+const SessionStore = MemoryStore(session);
+
+// Session middleware
+app.use(session({
+  cookie: { maxAge: 86400000 }, // 24 hours
+  store: new SessionStore({
+    checkPeriod: 86400000 // prune expired entries every 24h
+  }),
+  resave: false,
+  saveUninitialized: false,
+  secret: process.env.SESSION_SECRET || 'creately-secret-key'
+}));
+
+// Body parsing middleware
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({ extended: true }));
 
-// Global error handler for uncaught exceptions
-process.on('uncaughtException', (error) => {
-  console.error('UNCAUGHT EXCEPTION:');
-  console.error(error);
-  // Do not exit the process in development to allow for hot reloading
-  if (process.env.NODE_ENV === 'production') {
-    process.exit(1);
-  }
-});
+// Apply rate limiter to all requests
+app.use(limiter);
 
-// Global error handler for unhandled promise rejections
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('UNHANDLED REJECTION:', reason);
-  // Log the promise that caused the rejection
-  console.error('Promise:', promise);
-});
-
+// Add database connection to request object
 app.use((req, res, next) => {
-  const start = Date.now();
-  const path = req.path;
-  let capturedJsonResponse: Record<string, any> | undefined = undefined;
-
-  const originalResJson = res.json;
-  res.json = function (bodyJson, ...args) {
-    capturedJsonResponse = bodyJson;
-    return originalResJson.apply(res, [bodyJson, ...args]);
-  };
-
-  res.on("finish", () => {
-    const duration = Date.now() - start;
-    if (path.startsWith("/api")) {
-      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
-      }
-
-      if (logLine.length > 80) {
-        logLine = logLine.slice(0, 79) + "…";
-      }
-
-      log(logLine);
-    }
-  });
-
+  req.db = pool;
   next();
 });
 
-(async () => {
-  const server = await registerRoutes(app);
+// API routes
+app.use('/api', routes);
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
+// Serve static files in production
+if (isProduction) {
+  app.use(express.static('dist'));
+} else {
+  // In development, use Vite's dev server
+  app.use(viteServerMiddleware);
+}
 
-    res.status(status).json({ message });
-    throw err;
+// Fallback for client-side routing in production
+if (isProduction) {
+  app.get('*', (req, res) => {
+    res.sendFile('dist/index.html', { root: '.' });
   });
+}
 
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
-  if (app.get("env") === "development") {
-    await setupVite(app, server);
+// Check database connection
+pool.query('SELECT NOW()', (err, result) => {
+  if (err) {
+    console.error('Database connection error:', err);
   } else {
-    serveStatic(app);
+    console.log('Database connected successfully at:', result.rows[0].now);
   }
+});
 
-  // Try to use port 5000 first (recommended for Replit), then fall back to alternatives
-  const tryPorts = [5000, 3000, 3001, 8080];
-  let currentPortIndex = 0;
-  
-  function listenOnPort(portIndex: number) {
-    const port = process.env.PORT ? parseInt(process.env.PORT) : tryPorts[portIndex];
-    
-    server.listen({
-      port,
-      host: "0.0.0.0",
-    }).on('error', (e: any) => {
-      if (e.code === 'EADDRINUSE') {
-        currentPortIndex++;
-        if (currentPortIndex < tryPorts.length) {
-          log(`Port ${port} is in use, trying port ${tryPorts[currentPortIndex]} instead...`);
-          listenOnPort(currentPortIndex);
-        } else {
-          log('All predefined ports are in use. Please free up a port or specify a different port via PORT env variable.');
-          throw e;
-        }
-      } else {
-        throw e;
-      }
-    }).on('listening', () => {
-      log(`serving on port ${port}`);
-    });
-  }
-  
-  listenOnPort(currentPortIndex);
-})();
+server.listen(port, () => {
+  console.log(`Server running on http://localhost:${port}`);
+});
+
+// Graceful shutdown
+process.on('SIGTERM', async () => {
+  console.log('SIGTERM signal received: closing HTTP server');
+  await pool.end();
+  server.close(() => {
+    console.log('HTTP server closed');
+    process.exit(0);
+  });
+});

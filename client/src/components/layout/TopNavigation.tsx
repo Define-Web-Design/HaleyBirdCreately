@@ -8,7 +8,7 @@ export default function TopNavigation({ toggleSidebar, isMobile }: { toggleSideb
   const [location, setLocation] = useLocation();
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [isOnDashboard] = useRoute('/');
-  
+
   // Get sidebar state from session storage to keep sidebar toggle state consistent
   const sidebarOpen = sessionStorage.getItem('sidebarToggled') === 'true';
 
@@ -119,7 +119,7 @@ export default function TopNavigation({ toggleSidebar, isMobile }: { toggleSideb
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
           </button>
-          
+
           <button 
             className="p-3 rounded-md hover:bg-accent/80 relative group transition-colors duration-200 focus:ring-2 focus:ring-primary focus:outline-none active:bg-accent"
             onClick={toggleNotifications}
@@ -135,7 +135,7 @@ export default function TopNavigation({ toggleSidebar, isMobile }: { toggleSideb
               <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-primary rounded-full ring-2 ring-background animate-pulse"></span>
             )}
           </button>
-          
+
           <Link 
             href="/content-library" 
             className="p-3 rounded-md bg-gradient-to-r from-[#F2994A] to-[#FF9DAE] text-white hover:opacity-90 transition-all duration-300 ease-in-out focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:outline-none shadow-sm active:opacity-80 hover:shadow-md"
@@ -156,7 +156,7 @@ export default function TopNavigation({ toggleSidebar, isMobile }: { toggleSideb
             </div>
           </Link>
         </div>
-        
+
         {/* Mobile optimized notifications overlay - full screen on small devices */}
         {notificationsOpen && (
           <>
@@ -333,7 +333,7 @@ export default function TopNavigation({ toggleSidebar, isMobile }: { toggleSideb
           </div>
         </Link>
       </div>
-      
+
       {/* Enhanced desktop notifications dropdown */}
       {notificationsOpen && (
         <>

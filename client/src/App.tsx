@@ -29,6 +29,7 @@ import SettingsPage from "./pages/settings";
 import CookieConsent from "./components/common/CookieConsent";
 import { ThemeProvider } from "./lib/ThemeContext";
 import { TaskVerificationProvider } from "./context/task-verification-context";
+import './styles/color-blindness.css'; // Added for color blindness styles
 
 // Set up service worker for offline capabilities
 function registerServiceWorker() {
@@ -48,16 +49,16 @@ function registerServiceWorker() {
 function Router() {
   // Detect if running on a mobile device
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-  
+
   // Add mobile-specific body class
   useEffect(() => {
     if (isMobile) {
       document.body.classList.add('mobile-device');
     }
-    
+
     // Prevent overscroll behavior on mobile
     document.body.style.overscrollBehavior = 'none';
-    
+
     return () => {
       document.body.classList.remove('mobile-device');
       document.body.style.overscrollBehavior = 'auto';
@@ -120,6 +121,36 @@ function App() {
       <HelmetProvider>
         <ThemeProvider>
           <TaskVerificationProvider>
+            <div className="color-blindness-filters"> {/* Added color blindness filters */}
+              <svg xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <filter id="protanopia-filter">
+                    <feColorMatrix in="SourceGraphic" type="matrix" values="0.567, 0.433, 0, 0, 0
+                                                                            0.558, 0.442, 0, 0, 0
+                                                                            0, 0.242, 0.758, 0, 0
+                                                                            0, 0, 0, 1, 0" />
+                  </filter>
+                  <filter id="deuteranopia-filter">
+                    <feColorMatrix in="SourceGraphic" type="matrix" values="0.625, 0.375, 0, 0, 0
+                                                                            0.7, 0.3, 0, 0, 0
+                                                                            0, 0.3, 0.7, 0, 0
+                                                                            0, 0, 0, 1, 0" />
+                  </filter>
+                  <filter id="tritanopia-filter">
+                    <feColorMatrix in="SourceGraphic" type="matrix" values="0.95, 0.05, 0, 0, 0
+                                                                            0, 0.433, 0.567, 0, 0
+                                                                            0, 0.475, 0.525, 0, 0
+                                                                            0, 0, 0, 1, 0" />
+                  </filter>
+                  <filter id="achromatopsia-filter">
+                    <feColorMatrix in="SourceGraphic" type="matrix" values="0.299, 0.587, 0.114, 0, 0
+                                                                            0.299, 0.587, 0.114, 0, 0
+                                                                            0.299, 0.587, 0.114, 0, 0
+                                                                            0, 0, 0, 1, 0" />
+                  </filter>
+                </defs>
+              </svg>
+            </div>
             <Router />
           </TaskVerificationProvider>
         </ThemeProvider>

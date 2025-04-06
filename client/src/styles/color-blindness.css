@@ -1,0 +1,26 @@
+
+/* Color blindness simulation filters */
+
+.protanopia {
+  filter: url('#protanopia-filter');
+}
+
+.deuteranopia {
+  filter: url('#deuteranopia-filter');
+}
+
+.tritanopia {
+  filter: url('#tritanopia-filter');
+}
+
+.achromatopsia {
+  filter: url('#achromatopsia-filter');
+}
+
+/* This SVG container will be hidden but provides the filter definitions */
+.color-blindness-filters {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}

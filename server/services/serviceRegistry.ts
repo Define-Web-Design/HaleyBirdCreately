@@ -124,3 +124,48 @@ export class ServiceRegistry {
     console.log('Service Registry shutdown complete');
   }
 }
+import { moodCapsuleService } from './moodCapsuleService';
+import { paletteGenerator } from './paletteGenerator';
+import { securityMonitor } from './securityMonitor';
+
+// Database connection pool for sharing across services
+let dbConnectionPool: any = null;
+
+interface ServiceRegistry {
+  registerServices: (pool: any) => void;
+  getService: (serviceName: string) => any;
+  getAllServiceNames: () => string[];
+  getConnectionPool: () => any;
+}
+
+const services: Record<string, any> = {};
+
+export const serviceRegistry: ServiceRegistry = {
+  registerServices: (pool) => {
+    dbConnectionPool = pool;
+    
+    // Register all services here with the shared connection pool
+    services['moodCapsule'] = moodCapsuleService;
+    services['paletteGenerator'] = paletteGenerator;
+    services['securityMonitor'] = securityMonitor;
+    
+    // Initialize services that need database connections
+    Object.values(services).forEach(service => {
+      if (service.initialize && typeof service.initialize === 'function') {
+        service.initialize(pool);
+      }
+    });
+  },
+
+  getService: (serviceName) => {
+    return services[serviceName] || null;
+  },
+  
+  getAllServiceNames: () => {
+    return Object.keys(services);
+  },
+  
+  getConnectionPool: () => {
+    return dbConnectionPool;
+  }
+};
