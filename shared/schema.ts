@@ -481,3 +481,32 @@ export type AccessAttempt = typeof accessAttempts.$inferSelect;
 
 export type InsertAssetOwnership = z.infer<typeof insertAssetOwnershipSchema>;
 export type AssetOwnership = typeof assetOwnership.$inferSelect;
+
+// Task Verification table
+export const taskVerification = pgTable("task_verification", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  title: text("title").notNull(),
+  description: text("description"),
+  status: text("status").notNull().default("pending"), // pending, in-progress, completed, verified
+  category: text("category").notNull(), // content, feature, security, system
+  points: integer("points").notNull().default(10),
+  createdAt: timestamp("created_at").defaultNow(),
+  completedAt: timestamp("completed_at"),
+  verifiedAt: timestamp("verified_at"),
+});
+
+// Export insert schema for Task Verification
+export const insertTaskVerificationSchema = createInsertSchema(taskVerification).pick({
+  userId: true,
+  title: true,
+  description: true,
+  status: true,
+  category: true,
+  points: true,
+  completedAt: true,
+});
+
+// Export types for Task Verification
+export type InsertTaskVerification = z.infer<typeof insertTaskVerificationSchema>;
+export type TaskVerification = typeof taskVerification.$inferSelect;

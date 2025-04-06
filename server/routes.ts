@@ -444,6 +444,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Task Verification Routes
+
+  // Get all tasks
+  app.get(`${apiPrefix}/task-verification/tasks`, async (req: Request, res: Response) => {
+    try {
+      const userId = req.session?.userId || 1; // Mock user ID for demo
+      const tasks = await storage.getTaskVerificationTasksByUserId(userId);
+      res.json(tasks);
+    } catch (error) {
+      console.error('Error fetching task verification tasks:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Failed to fetch task verification tasks' 
+      });
+    }
+  });
+  
+  // Verify a specific task
+  app.post(`${apiPrefix}/task-verification/verify/:taskId`, async (req: Request, res: Response) => {
+    try {
+      const { taskId } = req.params;
+      const userId = req.session?.userId || 1; // Mock user ID for demo
+      
+      if (!taskId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Task ID is required'
+        });
+      }
+      
+      // Update task status to verified
+      const task = await storage.verifyTask(taskId, userId);
+      
+      if (!task) {
+        return res.status(404).json({
+          success: false,
+          message: 'Task not found or already verified'
+        });
+      }
+      
+      // Add evolution points for verifying the task
+      const pointsAwarded = task.points || 10;
+      await storage.addEvolutionPoints(userId, pointsAwarded);
+      
+      // Track this activity in user engagement
+      await storage.trackUserEngagement({
+        userId,
+        engagementType: 'task_verified',
+        engagementDetails: JSON.stringify({
+          taskId,
+          points: pointsAwarded,
+          timestamp: new Date().toISOString()
+        })
+      });
+      
+      res.json({
+        success: true,
+        task,
+        pointsAwarded
+      });
+    } catch (error) {
+      console.error('Error verifying task:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Failed to verify task' 
+      });
+    }
+  });
+
   // Creative Symbiosis Framework Routes
 
   // Get user's evolution points

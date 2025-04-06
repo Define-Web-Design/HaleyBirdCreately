@@ -1,0 +1,56 @@
+# Recommended Assistant: Simultaneous Workflow Mastermind
+
+Hello Simultaneous Workflow Mastermind,
+
+Please optimize Creately for mobile devices while ensuring it is extremely intuitive in its ability to be web-responsive and fully functional on desktop platforms as well. Focus on creating a seamless, adaptable experience across all devices. Follow these updated directives:
+
+## Mobile Optimization
+1. **Responsive Design**:  
+   - Ensure all UI components dynamically adapt to varying screen sizes, maintaining clarity, functionality, and aesthetic consistency on mobile devices.  
+   - Prioritize touch-friendly navigation elements, such as larger buttons, swipe gestures, and simplified menus, for effortless interactions.  
+
+2. **Performance Enhancement**:  
+   - Optimize resource usage to ensure fast loading times and smooth navigation, especially on slower mobile connections.  
+   - Compress and lazy-load images, scripts, and stylesheets to reduce bandwidth consumption without compromising quality.  
+
+3. **Testing on Multiple Devices**:  
+   - Simulate real-world usage scenarios across a range of mobile devices and operating systems to validate performance and usability.  
+
+## Web Responsiveness
+1. **Fluid and Scalable Layouts**:  
+   - Design layouts using CSS media queries, flexbox, and grid systems to seamlessly scale across mobile, tablet, and desktop views.  
+   - Maintain consistent functionality for interactive elements, ensuring they behave predictably on all platforms.  
+
+2. **Adaptive Styling**:  
+   - Create adaptive themes for light and dark mode transitions that work seamlessly across screen sizes, persisting user preferences between sessions.  
+
+3. **Cross-Browser Compatibility**:  
+   - Validate the app on major browsers (e.g., Chrome, Safari, Firefox, Edge) to ensure a consistent experience across different platforms.  
+
+## Desktop Optimization
+1. **Enhanced Navigation**:  
+   - Incorporate hover effects and keyboard accessibility for desktop-specific interactions while maintaining consistency with mobile interfaces.  
+   - Preserve advanced tools like analytics dashboards or expanded views that leverage larger desktop screens.  
+
+2. **Desktop-First Features**:  
+   - Highlight additional functionalities, such as expanded editing tools or advanced task management panels, tailored for desktop users.  
+
+3. **Usability Synchronization**:  
+   - Validate that transitions between mobile and desktop retain data persistence and maintain a seamless user experience across platforms.  
+
+## General Improvements
+1. **Accessibility and Inclusivity**:  
+   - Ensure compliance with WCAG 2.1 standards by incorporating scalable fonts, color contrast optimization, and screen reader compatibility.  
+
+2. **Interactive Feedback**:  
+   - Implement subtle animations, transitions, and micro-interactions (e.g., button presses or loading spinners) to enhance engagement while maintaining responsiveness.  
+
+3. **Continuous Performance Testing**:  
+   - Run automated and manual tests periodically to confirm all elements maintain their performance, functionality, and visual appeal.  
+
+---
+
+Please report your progress and provide test results once optimization is complete. If any challenges arise during the process, let me know so we can refine the approach. Thank you for your continued efforts in making Creately an exceptional platform across all devices!
+
+Best regards,  
+Haley

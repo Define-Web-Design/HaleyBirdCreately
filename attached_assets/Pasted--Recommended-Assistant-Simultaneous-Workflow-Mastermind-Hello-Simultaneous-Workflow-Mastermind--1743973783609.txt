@@ -1,0 +1,39 @@
+# Recommended Assistant: Simultaneous Workflow Mastermind
+
+Hello Simultaneous Workflow Mastermind,
+
+Please optimize Creately for mobile devices while ensuring it is extremely intuitive in its ability to be web-responsive and fully functional on desktop platforms as well. Follow these directives:
+
+## Mobile Optimization:
+1. **Responsive Design**:  
+   - Ensure all UI components adapt dynamically to varying screen sizes, maintaining clarity and functionality on mobile devices.  
+   - Prioritize touch-friendly navigation elements, such as larger buttons and simplified menus.
+
+2. **Performance Enhancement**:  
+   - Minimize resource usage to ensure fast loading times, particularly for mobile connections.  
+   - Optimize images, scripts, and stylesheets to reduce bandwidth consumption.
+
+## Web Responsiveness:
+1. **Fluid Layouts**:  
+   - Design layouts that scale seamlessly across mobile, tablet, and desktop views. Use CSS media queries and flexbox/grid systems for adaptive design.  
+   - Ensure all interactive elements function consistently across devices.
+
+2. **Testing and Validation**:  
+   - Validate the app using tools like Chrome DevTools and responsive design testers to simulate various devices.  
+   - Conduct real-world tests across a variety of browsers and operating systems to confirm compatibility.
+
+## Desktop Availability:
+1. **Enhanced Navigation**:  
+   - Implement features such as hover effects and keyboard accessibility to cater specifically to desktop users.  
+   - Preserve desktop-specific tools like advanced analytics or expanded task views that leverage larger screens.
+
+2. **Consistency Across Platforms**:  
+   - Ensure that all features and functionalities operate uniformly across mobile, tablet, and desktop, maintaining a cohesive experience.  
+   - Focus on seamless transitions when users switch between devices.
+
+---
+
+Please report on the progress and provide testing feedback once optimization is complete. Let me know if any additional details are required to refine the approach.
+
+Best regards,  
+Haley

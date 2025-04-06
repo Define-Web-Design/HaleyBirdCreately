@@ -16,7 +16,8 @@ import {
   legalAcceptance, LegalAcceptance, InsertLegalAcceptance,
   securityAlerts, SecurityAlert, InsertSecurityAlert,
   accessAttempts, AccessAttempt, InsertAccessAttempt,
-  assetOwnership, AssetOwnership, InsertAssetOwnership
+  assetOwnership, AssetOwnership, InsertAssetOwnership,
+  taskVerification, TaskVerification, InsertTaskVerification
 } from '../shared/schema';
 
 class Storage {
@@ -668,6 +669,74 @@ class Storage {
       creativeEnergyPoints: newEnergyPoints,
       lastEnergyRefresh: now
     });
+  }
+
+  // Task Verification functions
+  async createTask(data: InsertTaskVerification): Promise<TaskVerification> {
+    const insertedTask = await db.insert(taskVerification).values(data).returning();
+    return insertedTask[0];
+  }
+  
+  async getTaskVerificationTasksByUserId(userId: number): Promise<TaskVerification[]> {
+    return await db
+      .select()
+      .from(taskVerification)
+      .where(eq(taskVerification.userId, userId))
+      .orderBy(desc(taskVerification.createdAt));
+  }
+  
+  async getTaskById(taskId: number): Promise<TaskVerification | null> {
+    const result = await db
+      .select()
+      .from(taskVerification)
+      .where(eq(taskVerification.id, taskId))
+      .limit(1);
+    
+    return result.length > 0 ? result[0] : null;
+  }
+  
+  async verifyTask(taskId: string, userId: number): Promise<TaskVerification | null> {
+    const taskIdNum = parseInt(taskId);
+    
+    if (isNaN(taskIdNum)) {
+      return null;
+    }
+    
+    // Get the task first to ensure it exists
+    const task = await this.getTaskById(taskIdNum);
+    
+    if (!task || task.userId !== userId || task.status !== 'completed') {
+      return null;
+    }
+    
+    // Update the task status to verified
+    const updatedTask = await db
+      .update(taskVerification)
+      .set({ 
+        status: 'verified',
+        verifiedAt: new Date()
+      })
+      .where(eq(taskVerification.id, taskIdNum))
+      .returning();
+    
+    return updatedTask.length > 0 ? updatedTask[0] : null;
+  }
+  
+  async updateTaskStatus(taskId: number, status: string): Promise<TaskVerification | null> {
+    const updates: any = { status };
+    
+    // If the status is being set to completed, update completedAt
+    if (status === 'completed') {
+      updates.completedAt = new Date();
+    }
+    
+    const updatedTask = await db
+      .update(taskVerification)
+      .set(updates)
+      .where(eq(taskVerification.id, taskId))
+      .returning();
+    
+    return updatedTask.length > 0 ? updatedTask[0] : null;
   }
 }
 
