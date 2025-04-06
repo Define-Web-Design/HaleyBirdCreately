@@ -304,3 +304,9 @@ function generateFallbackPalette(description: string): Palette {
     };
   }
 }
+
+// Export as a service object for the registry to use
+export const paletteGenerator = {
+  generateMoodPalette,
+  generateAIPalette
+};

@@ -2,7 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import { Button } from '../ui/button';
 
-export function CookieConsent() {
+interface CookieConsentProps {
+  privacyPolicyUrl?: string;
+  termsOfServiceUrl?: string;
+}
+
+function CookieConsent({ privacyPolicyUrl, termsOfServiceUrl }: CookieConsentProps) {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -38,6 +43,19 @@ export function CookieConsent() {
           <p className="text-gray-600 dark:text-gray-300 max-w-3xl">
             We use cookies to enhance your experience on our site, analyze site usage, and assist in our marketing efforts. 
             By clicking "Accept", you agree to the storing of cookies on your device.
+            {(privacyPolicyUrl || termsOfServiceUrl) && (
+              <span className="ml-1">
+                {privacyPolicyUrl && (
+                  <a href={privacyPolicyUrl} className="text-primary hover:underline ml-1">Privacy Policy</a>
+                )}
+                {privacyPolicyUrl && termsOfServiceUrl && (
+                  <span className="mx-1">•</span>
+                )}
+                {termsOfServiceUrl && (
+                  <a href={termsOfServiceUrl} className="text-primary hover:underline">Terms of Service</a>
+                )}
+              </span>
+            )}
           </p>
         </div>
         <div className="flex space-x-3">
@@ -55,3 +73,5 @@ export function CookieConsent() {
     </div>
   );
 }
+
+export default CookieConsent;

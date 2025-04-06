@@ -1,20 +1,34 @@
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import { createServer } from 'node:http';
-import { routes } from './routes';
-import { viteServerMiddleware } from './vite';
+import { registerRoutes } from './routes';
+import { setupVite } from './vite';
 import session from 'express-session';
 import MemoryStore from 'memorystore';
 import { rateLimit } from 'express-rate-limit';
 import { Pool } from '@neondatabase/serverless';
 import { serviceRegistry } from './services/serviceRegistry';
 import dotenv from 'dotenv';
+import ws from 'ws';
+
+// Extend the request type to include database connection
+declare global {
+  namespace Express {
+    interface Request {
+      db?: Pool;
+    }
+  }
+}
 
 // Load environment variables
 dotenv.config();
 
-// Initialize database connection
+// Initialize database connection with WebSocket for Replit environment
+// @ts-ignore - WebSocket is needed by Neon in serverless environments
+globalThis.WebSocket = ws;
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
+  ssl: process.env.NODE_ENV === 'production' ? true : false, // Only use SSL in production
 });
 
 // Initialize service registry with database connection
@@ -32,6 +46,9 @@ const app = express();
 const server = createServer(app);
 const port = process.env.PORT || 5000;
 const isProduction = process.env.NODE_ENV === 'production';
+
+// Set trust proxy to handle X-Forwarded-For header correctly in Replit environment
+app.set('trust proxy', 1);
 
 // Enhanced session store
 const SessionStore = MemoryStore(session);
@@ -55,20 +72,26 @@ app.use(express.urlencoded({ extended: true }));
 app.use(limiter);
 
 // Add database connection to request object
-app.use((req, res, next) => {
+app.use((req: Request, res: Response, next: NextFunction) => {
   req.db = pool;
   next();
 });
 
-// API routes
-app.use('/api', routes);
+// Register API routes
+registerRoutes(app).then(httpServer => {
+  console.log('API routes registered successfully');
+}).catch(error => {
+  console.error('Error registering API routes:', error);
+});
 
 // Serve static files in production
 if (isProduction) {
   app.use(express.static('dist'));
 } else {
   // In development, use Vite's dev server
-  app.use(viteServerMiddleware);
+  setupVite(app, server).catch(error => {
+    console.error('Error setting up Vite:', error);
+  });
 }
 
 // Fallback for client-side routing in production
