@@ -1,0 +1,148 @@
+/* 
+ * Page Transitions CSS
+ * This file contains styles for smooth transitions between pages
+ * to enhance the user experience, especially on mobile
+ */
+
+.page-transition-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: calc(100vh - 65px); /* Adjusted for top navigation */
+  overflow: hidden;
+}
+
+/* CSS Variables for transition customization */
+:root {
+  --transition-duration: 300ms;
+  --transition-easing: cubic-bezier(0.25, 1, 0.5, 1); /* Spring-like easing */
+}
+
+/* Base transition styles */
+.page-transition-wrapper {
+  transition-property: opacity, transform;
+  transition-duration: var(--transition-duration);
+  transition-timing-function: var(--transition-easing);
+}
+
+/* Fade transition */
+.transition-fade.transition-enter {
+  opacity: 0;
+}
+
+.transition-fade.transition-exit {
+  opacity: 1;
+}
+
+/* Slide transitions - horizontal */
+.transition-slide.transition-horizontal.transition-enter {
+  transform: translateX(30px);
+  opacity: 0;
+}
+
+.transition-slide.transition-horizontal.transition-exit {
+  transform: translateX(-30px);
+  opacity: 0;
+}
+
+/* Slide transitions - vertical */
+.transition-slide.transition-vertical.transition-enter {
+  transform: translateY(30px);
+  opacity: 0;
+}
+
+.transition-slide.transition-vertical.transition-exit {
+  transform: translateY(-30px);
+  opacity: 0;
+}
+
+/* Zoom transitions */
+.transition-zoom.transition-enter {
+  transform: scale(0.95);
+  opacity: 0;
+}
+
+.transition-zoom.transition-exit {
+  transform: scale(1.05);
+  opacity: 0;
+}
+
+/* Mobile-specific optimizations */
+@media (max-width: 768px) {
+  .page-transition-wrapper {
+    /* Shorter transitions on mobile for better performance */
+    --transition-duration: 250ms;
+  }
+  
+  /* Smaller transform distances on mobile for smoother feel */
+  .transition-slide.transition-horizontal.transition-enter {
+    transform: translateX(20px);
+  }
+  
+  .transition-slide.transition-horizontal.transition-exit {
+    transform: translateX(-20px);
+  }
+  
+  .transition-slide.transition-vertical.transition-enter {
+    transform: translateY(20px);
+  }
+  
+  .transition-slide.transition-vertical.transition-exit {
+    transform: translateY(-20px);
+  }
+}
+
+/* Haptic feedback indicators
+ * These subtle animations provide visual cues that 
+ * complement the device's haptic feedback
+ */
+.haptic-feedback-ripple {
+  position: absolute;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.4);
+  transform: scale(0);
+  animation: haptic-ripple-animation 0.6s var(--transition-easing);
+  pointer-events: none;
+}
+
+@keyframes haptic-ripple-animation {
+  0% {
+    transform: scale(0);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+/* Touch trail effect for enhanced mobile interaction */
+.touch-trail {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: rgba(124, 58, 237, 0.3); /* Use primary color with transparency */
+  pointer-events: none;
+  transition: opacity 0.3s;
+  z-index: 9999;
+  mix-blend-mode: screen;
+}
+
+/* Custom animation for page content that respects user preferences */
+@media (prefers-reduced-motion: no-preference) {
+  .page-content-animation {
+    animation: subtle-fade-in 0.5s var(--transition-easing);
+  }
+  
+  @keyframes subtle-fade-in {
+    from {
+      opacity: 0.8;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}

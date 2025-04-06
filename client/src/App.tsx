@@ -29,7 +29,9 @@ import SettingsPage from "./pages/settings";
 import CookieConsent from "./components/common/CookieConsent";
 import { ThemeProvider } from "./lib/ThemeContext";
 import { TaskVerificationProvider } from "./context/task-verification-context";
+import { PageTransitionWrapper } from "@/components/ui/page-transition";
 import './styles/color-blindness.css'; // Added for color blindness styles
+import './styles/transitions.css'; // Added for page transitions
 
 // Set up service worker for offline capabilities
 function registerServiceWorker() {
@@ -68,40 +70,46 @@ function Router() {
   return (
     <AppShell>
       <AutoDismissToaster defaultDuration={5000} />
-      <Switch>
-        <Route path="/" component={Dashboard} />
-        <Route path="/content-library" component={ContentLibrary} />
-        <Route path="/content-library/all" component={ContentLibrary} />
-        <Route path="/content-library/recent" component={ContentLibrary} />
-        <Route path="/content-library/categories" component={ContentLibrary} />
-        <Route path="/content-library/favorites" component={ContentLibrary} />
-        <Route path="/content/:id" component={ContentDetail} />
-        <Route path="/content-calendar" component={ContentCalendar} />
-        <Route path="/analytics" component={Analytics} />
-        <Route path="/mood-boards" component={MoodBoards} />
-        <Route path="/content-vault" component={ContentVault} />
-        <Route path="/apple-photos" component={ApplePhotos} />
-        <Route path="/creative-symbiosis" component={CreativeSymbiosis} />
-        <Route path="/color-palettes" component={ColorPalettes} />
-        <Route path="/color-palettes/all" component={ColorPalettes} />
-        <Route path="/color-palettes/recent" component={ColorPalettes} />
-        <Route path="/color-palettes/categories" component={ColorPalettes} />
-        <Route path="/color-palettes/favorites" component={ColorPalettes} />
-        <Route path="/mood-capsules" component={MoodCapsules} />
-        <Route path="/ai-enhancement" component={AIEnhancement} />
-        <Route path="/creative-prompts" component={CreativePrompts} />
-        <Route path="/creative-tools" component={CreativeTools} />
-        <Route path="/cross-platform-tools" component={CrossPlatformTools} />
-        <Route path="/profile" component={Profile} />
-        <Route path="/profile/accessibility" component={Profile} />
-        <Route path="/profile/integrations" component={Profile} />
-        <Route path="/legal" component={LegalPage} />
-        <Route path="/privacy" component={PrivacyPage} />
-        <Route path="/terms-of-service" component={LegalPage} />
-        <Route path="/settings" component={SettingsPage} />
-        <Route path="/nav-test" component={NavigationTest} />
-        <Route component={NotFound} />
-      </Switch>
+      <PageTransitionWrapper options={{ 
+        type: 'fade', 
+        duration: 300,
+        easing: 'cubic-bezier(0.25, 1, 0.5, 1)'
+      }}>
+        <Switch>
+          <Route path="/" component={Dashboard} />
+          <Route path="/content-library" component={ContentLibrary} />
+          <Route path="/content-library/all" component={ContentLibrary} />
+          <Route path="/content-library/recent" component={ContentLibrary} />
+          <Route path="/content-library/categories" component={ContentLibrary} />
+          <Route path="/content-library/favorites" component={ContentLibrary} />
+          <Route path="/content/:id" component={ContentDetail} />
+          <Route path="/content-calendar" component={ContentCalendar} />
+          <Route path="/analytics" component={Analytics} />
+          <Route path="/mood-boards" component={MoodBoards} />
+          <Route path="/content-vault" component={ContentVault} />
+          <Route path="/apple-photos" component={ApplePhotos} />
+          <Route path="/creative-symbiosis" component={CreativeSymbiosis} />
+          <Route path="/color-palettes" component={ColorPalettes} />
+          <Route path="/color-palettes/all" component={ColorPalettes} />
+          <Route path="/color-palettes/recent" component={ColorPalettes} />
+          <Route path="/color-palettes/categories" component={ColorPalettes} />
+          <Route path="/color-palettes/favorites" component={ColorPalettes} />
+          <Route path="/mood-capsules" component={MoodCapsules} />
+          <Route path="/ai-enhancement" component={AIEnhancement} />
+          <Route path="/creative-prompts" component={CreativePrompts} />
+          <Route path="/creative-tools" component={CreativeTools} />
+          <Route path="/cross-platform-tools" component={CrossPlatformTools} />
+          <Route path="/profile" component={Profile} />
+          <Route path="/profile/accessibility" component={Profile} />
+          <Route path="/profile/integrations" component={Profile} />
+          <Route path="/legal" component={LegalPage} />
+          <Route path="/privacy" component={PrivacyPage} />
+          <Route path="/terms-of-service" component={LegalPage} />
+          <Route path="/settings" component={SettingsPage} />
+          <Route path="/nav-test" component={NavigationTest} />
+          <Route component={NotFound} />
+        </Switch>
+      </PageTransitionWrapper>
       <CookieConsent 
         privacyPolicyUrl="/privacy"
         termsOfServiceUrl="/terms-of-service"
