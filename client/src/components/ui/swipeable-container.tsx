@@ -7,6 +7,7 @@ interface SwipeableContainerProps {
   onSwipeLeft?: () => void;
   onSwipeRight?: () => void;
   swipeThreshold?: number;
+  threshold?: number; // For backwards compatibility
   leftAction?: React.ReactNode;
   rightAction?: React.ReactNode;
   disabled?: boolean;
@@ -17,11 +18,15 @@ export const SwipeableContainer: React.FC<SwipeableContainerProps> = ({
   className = '',
   onSwipeLeft,
   onSwipeRight,
-  swipeThreshold = 100,
+  swipeThreshold,
+  threshold = 100, // For backwards compatibility
   leftAction,
   rightAction,
   disabled = false,
 }) => {
+  // Use provided swipeThreshold or fall back to threshold for backwards compatibility
+  const effectiveThreshold = swipeThreshold || threshold;
+  
   const [offset, setOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const initialX = useRef<number | null>(null);
@@ -60,9 +65,9 @@ export const SwipeableContainer: React.FC<SwipeableContainerProps> = ({
     if (disabled || initialX.current === null) return;
     
     // Check if swipe was long enough to trigger action
-    if (offset > swipeThreshold && onSwipeRight) {
+    if (offset > effectiveThreshold && onSwipeRight) {
       onSwipeRight();
-    } else if (offset < -swipeThreshold && onSwipeLeft) {
+    } else if (offset < -effectiveThreshold && onSwipeLeft) {
       onSwipeLeft();
     }
     
@@ -100,8 +105,8 @@ export const SwipeableContainer: React.FC<SwipeableContainerProps> = ({
           className="absolute inset-y-0 right-0 flex items-center justify-center bg-red-500 text-white px-4"
           style={{
             transform: `translateX(100%) ${offset < 0 ? `translateX(${offset}px)` : ''}`,
-            opacity: offset < 0 ? Math.min(Math.abs(offset) / swipeThreshold, 1) : 0,
-            width: swipeThreshold,
+            opacity: offset < 0 ? Math.min(Math.abs(offset) / effectiveThreshold, 1) : 0,
+            width: effectiveThreshold,
           }}
         >
           {leftAction}
@@ -114,8 +119,8 @@ export const SwipeableContainer: React.FC<SwipeableContainerProps> = ({
           className="absolute inset-y-0 left-0 flex items-center justify-center bg-green-500 text-white px-4"
           style={{
             transform: `translateX(-100%) ${offset > 0 ? `translateX(${offset}px)` : ''}`,
-            opacity: offset > 0 ? Math.min(offset / swipeThreshold, 1) : 0,
-            width: swipeThreshold,
+            opacity: offset > 0 ? Math.min(offset / effectiveThreshold, 1) : 0,
+            width: effectiveThreshold,
           }}
         >
           {rightAction}
@@ -134,85 +139,6 @@ export const SwipeableContainer: React.FC<SwipeableContainerProps> = ({
     </div>
   );
 };
-import React, { useState, useRef, useEffect } from 'react';
 
-interface SwipeableContainerProps {
-  children: React.ReactNode;
-  onSwipeLeft?: () => void;
-  onSwipeRight?: () => void;
-  threshold?: number;
-  className?: string;
-}
-
-export function SwipeableContainer({
-  children,
-  onSwipeLeft,
-  onSwipeRight,
-  threshold = 100,
-  className = '',
-}: SwipeableContainerProps) {
-  const [touchStart, setTouchStart] = useState<number | null>(null);
-  const [touchEnd, setTouchEnd] = useState<number | null>(null);
-  const [isSwiping, setIsSwiping] = useState(false);
-  const [swipeDistance, setSwipeDistance] = useState(0);
-  
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  // Calculate direction and distance
-  const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchStart(e.targetTouches[0].clientX);
-    setTouchEnd(null);
-    setIsSwiping(true);
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!touchStart) return;
-    setTouchEnd(e.targetTouches[0].clientX);
-    
-    const distance = touchStart - e.targetTouches[0].clientX;
-    setSwipeDistance(distance);
-  };
-
-  const handleTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
-    
-    const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance > threshold;
-    const isRightSwipe = distance < -threshold;
-    
-    if (isLeftSwipe && onSwipeLeft) {
-      onSwipeLeft();
-    }
-    
-    if (isRightSwipe && onSwipeRight) {
-      onSwipeRight();
-    }
-    
-    // Reset state
-    setTouchStart(null);
-    setTouchEnd(null);
-    setIsSwiping(false);
-    setSwipeDistance(0);
-  };
-
-  // Apply visual feedback during swipe
-  const swipeStyle = isSwiping ? {
-    transform: `translateX(${-swipeDistance * 0.2}px)`,
-    transition: 'transform 0.1s ease',
-  } : {};
-
-  return (
-    <div
-      ref={containerRef}
-      className={`touch-manipulation ${className}`}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-      style={swipeStyle}
-    >
-      {children}
-    </div>
-  );
-}
-
+// Default export for backward compatibility
 export default SwipeableContainer;

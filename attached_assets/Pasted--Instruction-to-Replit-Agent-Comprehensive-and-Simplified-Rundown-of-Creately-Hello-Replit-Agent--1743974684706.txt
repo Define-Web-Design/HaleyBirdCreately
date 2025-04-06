@@ -1,0 +1,61 @@
+# Instruction to Replit Agent: Comprehensive and Simplified Rundown of Creately
+
+Hello Replit Agent,
+
+Thank you for your continued hard work in managing and translating input for Creately’s development. To get a clear and simplified view of the platform’s progress, I’d like you to create an updated summary covering everything comprising Creately from inception until now. This will help ensure we maintain alignment and identify any gaps. Please follow these steps:
+
+---
+
+## Steps to Create the Rundown:
+1. **Feature Overview**:  
+   - Provide a list of all implemented features categorized as follows:  
+     - **Front-End**: User-facing tools, components, and interactive elements.  
+     - **Back-End**: Core logic, frameworks, database integrations, and APIs.  
+     - **Infrastructure**: Workflow configurations, server setup, and security protocols.  
+
+2. **Creative Symbiosis Framework**:  
+   - Summarize the framework’s key functionalities, such as:  
+     - User engagement tracking.  
+     - Evolution points system.  
+     - Tier progression and regenerating energy points.  
+     - Task Verification Dashboard details (categories, statuses, and progress indicators).  
+
+3. **Workflows**:  
+   - List the primary workflows, including:  
+     - Task verification system integration and checkpoints.  
+     - Simultaneous task execution mechanisms.  
+     - Validation and logging processes.  
+
+4. **Tools and Integrations**:  
+   - Include all external tools, libraries, and APIs used, along with their purposes (e.g., accessibility features, AI integrations, etc.).  
+
+5. **Accessibility and Design Enhancements**:  
+   - Note updates like light/dark mode toggle, responsive design, and accessibility compliance (e.g., color blindness simulation).  
+
+6. **Performance and Optimization**:  
+   - Highlight server optimizations, error handling mechanisms, and workflow synchronization strategies.  
+
+7. **Active Projects and Gaps**:  
+   - Include features still under development, unresolved issues, or future plans to ensure transparency on what remains to be addressed.  
+
+---
+
+## Suggested Format for the Rundown:
+- **Front-End Features**: Bullet-point list of all UI components and functionality.  
+- **Back-End Features**: High-level summary of server-side logic, database, and frameworks.  
+- **Workflows**: Simplified descriptions of all workflows and their roles.  
+- **Tools and Integrations**: Concise list of dependencies and their purposes.  
+- **Accessibility**: Summary of accessibility improvements.  
+- **Open Tasks**: Bullet points for ongoing or planned work.  
+
+---
+
+## Visual Presentation *(Optional)*:
+If possible, include:  
+1. **A diagram or chart** summarizing Creately’s structure and feature connections for an easier overview.  
+2. **Key Metrics or Analytics** to showcase user engagement, task progress, and system performance.  
+
+Once the summary is complete, present it in a super simplified format that is clear, well-organized, and easy to share. Let me know if you encounter any challenges or require further input.
+
+Best regards,  
+Haley

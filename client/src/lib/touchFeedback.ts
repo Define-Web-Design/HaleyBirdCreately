@@ -137,12 +137,6 @@ export const useTouchFeedback = () => {
   };
 };
 
-export default {
-  initTouchFeedback,
-  cleanupTouchFeedback,
-  setTactileFeedback,
-  useTouchFeedback
-};
 /**
  * Utility for providing haptic feedback on mobile devices
  */
@@ -203,7 +197,15 @@ export function applyTouchFeedback(): void {
   });
 }
 
+// Export a combined default object with all functionality
 export default {
+  // Touch feedback functions
+  initTouchFeedback,
+  cleanupTouchFeedback,
+  setTactileFeedback,
+  useTouchFeedback,
+  
+  // Haptic feedback functions
   shortFeedback,
   mediumFeedback,
   errorFeedback,

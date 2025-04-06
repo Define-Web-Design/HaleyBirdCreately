@@ -1390,3 +1390,84 @@ args = "# Run full validation and create checkpoint if all pass"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "node -e \"const { runTaskVerificationWorkflow } = require('./client/src/utils/workflow-validator.js'); const tasks = [{ id: 'security', description: 'Validate security measures', validationFn: async () => { const { securityMonitor } = require('./server/services/securityMonitor.js'); const result = await securityMonitor.validateAssetIntegrity(); return result.valid; } }, { id: 'accessibility', description: 'Validate accessibility standards', validationFn: async () => { const { runAccessibilityAudit } = require('./client/src/utils/navigation-tester.js'); const result = await runAccessibilityAudit(); return result.score >= 80; } }, { id: 'api', description: 'Validate API endpoints', validationFn: async () => { const { validateApiEndpoints } = require('./client/src/utils/api-validator.js'); const result = await validateApiEndpoints(); return result.success; } }, { id: 'implementation', description: 'Validate overall implementation', validationFn: async () => { const { validateImplementation } = require('./client/src/utils/validate-implementation.js'); const result = await validateImplementation(); return result.success; } }]; runTaskVerificationWorkflow(tasks, 'Comprehensive Checkpoint').then(success => { console.log(success ? '✅ Checkpoint created successfully' : '❌ Cannot create checkpoint - validation failed'); process.exit(success ? 0 : 1); });\""
+
+[[workflows.workflow]]
+name = "Responsive Testing Suite"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Kill any running processes first"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pkill -f node || true"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Start the development server"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev &"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "sleep 5"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run responsive design validation"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"Running responsive design validation...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node -e \""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "  const { verifyResponsiveDesign } = require('./client/src/utils/navigation-tester.js');"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "  verifyResponsiveDesign().then(results => {"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "    console.log('Responsive Design Validation Results:');"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "    console.log(JSON.stringify(results, null, 2));"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "    console.log(results.success ? '✅ All responsive design tests passed' : '❌ Some responsive design tests failed');"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "  }).catch(err => {"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "    console.error('Error during responsive design validation:', err);"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "  });"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "\""
