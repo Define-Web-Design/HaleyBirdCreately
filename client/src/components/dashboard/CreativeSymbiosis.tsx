@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 import { verifyContentIntegrity } from '@/lib/security-verification';
 import TaskVerificationDashboard from './TaskVerificationDashboard'; // Import added
 
@@ -799,19 +800,43 @@ export default function CreativeSymbiosisSection() {
   const currentTier = evolutionPoints?.currentTier?.toLowerCase() || 'starter';
   const tierInfo = getTierInfo(currentTier);
 
+  const queryClient = useQueryClient();
   const handleSymbiosisAction = async (actionType: string) => {
     setLoading(true);
     setError(null);
 
     try {
-      // This would be a real API call in production
-      await new Promise(resolve => setTimeout(resolve, 800));
-
-      // Verify integrity of framework components
-      const integrityVerified = await verifyContentIntegrity(1);
-
-      if (!integrityVerified) {
-        throw new Error("Component integrity verification failed");
+      // Track user engagement with the symbiosis framework
+      await apiRequest({
+        url: '/api/user-engagement',
+        method: 'POST',
+        data: {
+          engagementType: 'symbiosis_interaction',
+          engagementDetails: JSON.stringify({
+            actionType,
+            timestamp: new Date().toISOString()
+          })
+        }
+      });
+      
+      // If the action is earning points, make the appropriate API call
+      if (actionType === 'Earn Points') {
+        await apiRequest({
+          url: '/api/evolution-points/earn',
+          method: 'POST',
+          data: {
+            pointsToAdd: 10,
+            activityType: 'platform_exploration'
+          }
+        });
+        
+        // Refresh evolution points data
+        await queryClient.invalidateQueries({ queryKey: ['/api/evolution-points'] });
+      }
+      
+      // If the action is refreshing energy, refresh the points
+      if (actionType === 'Refresh Energy') {
+        await queryClient.invalidateQueries({ queryKey: ['/api/evolution-points'] });
       }
 
       toast({

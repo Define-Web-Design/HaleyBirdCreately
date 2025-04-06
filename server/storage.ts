@@ -370,6 +370,18 @@ class Storage {
     const createdEngagements = await db.insert(userEngagement).values(engagementData).returning();
     return createdEngagements[0];
   }
+  
+  async trackUserEngagement(engagementData: InsertUserEngagement): Promise<UserEngagement> {
+    // Create engagement record
+    const engagement = await this.createUserEngagement(engagementData);
+    
+    // If points are included, add them to user's evolution points
+    if (engagementData.points && engagementData.points > 0) {
+      await this.addEvolutionPoints(engagementData.userId, engagementData.points);
+    }
+    
+    return engagement;
+  }
 
   async getUserEngagementsByUserId(userId: number): Promise<UserEngagement[]> {
     return await db
@@ -453,12 +465,19 @@ class Storage {
       .from(userCapabilities)
       .where(eq(userCapabilities.userId, userId));
   }
+  
+  async getUserCapabilitiesByUserId(userId: number): Promise<UserCapabilities[]> {
+    return await db
+      .select()
+      .from(userCapabilities)
+      .where(eq(userCapabilities.userId, userId));
+  }
 
   async createUserCapability(capabilityData: InsertUserCapabilities): Promise<UserCapabilities> {
     const createdCapabilities = await db.insert(userCapabilities).values(capabilityData).returning();
     return createdCapabilities[0];
   }
-
+  
   async updateUserCapability(id: number, capabilityData: Partial<UserCapabilities>): Promise<UserCapabilities> {
     const updatedCapabilities = await db
       .update(userCapabilities)
@@ -468,9 +487,14 @@ class Storage {
     return updatedCapabilities[0];
   }
 
-  async unlockUserCapability(userId: number, capabilityName: string, level: number = 1): Promise<UserCapabilities> {
+  async unlockUserCapability(capabilityData: InsertUserCapabilities): Promise<UserCapabilities> {
+    // Extract data
+    const userId = capabilityData.userId;
+    const capabilityName = capabilityData.capabilityName;
+    const level = capabilityData.level || 1;
+    
     // Check if capability already exists
-    const existingCapabilities = await db
+    const existingCapability = await db
       .select()
       .from(userCapabilities)
       .where(
@@ -478,24 +502,89 @@ class Storage {
           eq(userCapabilities.userId, userId),
           eq(userCapabilities.capabilityName, capabilityName)
         )
-      );
-    
-    if (existingCapabilities.length > 0) {
+      )
+      .limit(1);
+      
+    if (existingCapability.length > 0) {
       // Update existing capability
-      return await this.updateUserCapability(existingCapabilities[0].id, {
-        isUnlocked: true,
-        level,
-        unlockedAt: new Date()
-      });
-    } else {
-      // Create new capability
-      return await this.createUserCapability({
+      const result = await db.update(userCapabilities)
+        .set({ 
+          isUnlocked: true,
+          level: level || existingCapability[0].level,
+          unlockedAt: new Date()
+        })
+        .where(eq(userCapabilities.id, existingCapability[0].id))
+        .returning();
+      return result[0];
+    }
+    
+    // Create new capability record
+    const now = new Date();
+    const result = await db.insert(userCapabilities)
+      .values({
         userId,
         capabilityName,
         isUnlocked: true,
-        level
-      });
+        level: level || 1,
+        unlockedAt: now
+      })
+      .returning();
+    
+    // Update user engagement and creative history
+    await this.trackUserEngagement({
+      userId,
+      engagementType: 'capability_unlocked',
+      engagementDetails: JSON.stringify({
+        capabilityName,
+        timestamp: now.toISOString()
+      }),
+      points: 10 // Award extra points for unlocking capabilities
+    });
+    
+    return result[0];
+  }
+  
+  async upgradeCapabilityLevel(userId: number, capabilityName: string): Promise<UserCapabilities> {
+    // Find the capability
+    const capability = await db
+      .select()
+      .from(userCapabilities)
+      .where(
+        and(
+          eq(userCapabilities.userId, userId),
+          eq(userCapabilities.capabilityName, capabilityName)
+        )
+      )
+      .limit(1);
+      
+    if (capability.length === 0) {
+      throw new Error("Capability not found");
     }
+    
+    // Calculate new level
+    const currentLevel = capability[0].level || 1;
+    const newLevel = currentLevel + 1;
+    
+    // Update the capability
+    const result = await db.update(userCapabilities)
+      .set({ level: newLevel })
+      .where(eq(userCapabilities.id, capability[0].id))
+      .returning();
+    
+    // Update user engagement
+    await this.trackUserEngagement({
+      userId,
+      engagementType: 'capability_upgraded',
+      engagementDetails: JSON.stringify({
+        capabilityName,
+        fromLevel: currentLevel,
+        toLevel: newLevel,
+        timestamp: new Date().toISOString()
+      }),
+      points: 5 // Award points for upgrading
+    });
+    
+    return result[0];
   }
 
   async getCreativeHistory(userId: number, period: string): Promise<CreativeHistory | null> {
@@ -512,6 +601,10 @@ class Storage {
       .limit(1);
     
     return result.length > 0 ? result[0] : null;
+  }
+  
+  async getCreativeHistoryByUserIdAndPeriod(userId: number, period: string): Promise<CreativeHistory | null> {
+    return this.getCreativeHistory(userId, period);
   }
 
   async createCreativeHistory(historyData: InsertCreativeHistory): Promise<CreativeHistory> {
