@@ -512,6 +512,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+  
+  // Create a new task
+  app.post(`${apiPrefix}/task-verification/tasks`, async (req: Request, res: Response) => {
+    try {
+      const userId = req.session?.userId || 1; // Mock user ID for demo
+      const taskData = req.body;
+      
+      // Validate required fields
+      if (!taskData.title || !taskData.category) {
+        return res.status(400).json({
+          success: false,
+          message: 'Task title and category are required'
+        });
+      }
+      
+      // Create the task
+      const task = await storage.createTask({
+        userId,
+        title: taskData.title,
+        description: taskData.description || null,
+        status: taskData.status || 'pending',
+        category: taskData.category,
+        points: taskData.points || 10,
+        completedAt: null
+      });
+      
+      res.json({
+        success: true,
+        task
+      });
+    } catch (error) {
+      console.error('Error creating task:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Failed to create task' 
+      });
+    }
+  });
+  
+  // Update task status
+  app.put(`${apiPrefix}/task-verification/tasks/:taskId`, async (req: Request, res: Response) => {
+    try {
+      const { taskId } = req.params;
+      const { status } = req.body;
+      const taskIdNum = parseInt(taskId);
+      
+      if (!taskId || !status || isNaN(taskIdNum)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Task ID and status are required'
+        });
+      }
+      
+      // Update the task status
+      const task = await storage.updateTaskStatus(taskIdNum, status);
+      
+      if (!task) {
+        return res.status(404).json({
+          success: false,
+          message: 'Task not found'
+        });
+      }
+      
+      res.json({
+        success: true,
+        task
+      });
+    } catch (error) {
+      console.error('Error updating task status:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Failed to update task status' 
+      });
+    }
+  });
 
   // Creative Symbiosis Framework Routes
 

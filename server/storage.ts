@@ -143,6 +143,32 @@ class Storage {
       .returning();
     return updatedCapsules[0];
   }
+  
+  // Delete a mood capsule
+  async deleteMoodCapsule(id: number): Promise<boolean> {
+    try {
+      await db
+        .delete(moodCapsules)
+        .where(eq(moodCapsules.id, id));
+      return true;
+    } catch (error) {
+      console.error('Error deleting mood capsule:', error);
+      return false;
+    }
+  }
+
+  // Archive a mood capsule
+  async archiveMoodCapsule(id: number): Promise<MoodCapsule> {
+    const updatedCapsule = await db
+      .update(moodCapsules)
+      .set({
+        isArchived: true,
+        updatedAt: new Date()
+      })
+      .where(eq(moodCapsules.id, id))
+      .returning();
+    return updatedCapsule[0];
+  }
 
   // Security and Legal functions
   async insertLegalAcceptance(data: InsertLegalAcceptance): Promise<LegalAcceptance> {
@@ -332,6 +358,11 @@ class Storage {
       .returning();
     return updatedPalettes[0];
   }
+  
+  // Alias method to match route name
+  async incrementColorPaletteUsage(id: number): Promise<ColorPalette> {
+    return this.incrementPaletteUsage(id);
+  }
 
   // ContentSentiment functions
   async createContentSentiment(sentimentData: InsertContentSentiment): Promise<ContentSentiment> {
@@ -367,6 +398,103 @@ class Storage {
       .where(eq(contentSentiment.id, id))
       .returning();
     return updatedSentiments[0];
+  }
+  
+  // Analyze content sentiment using AI
+  async analyzeContentSentiment(userId: number, contentId: number): Promise<ContentSentiment> {
+    try {
+      // First, get the content
+      const contentItem = await this.getContentById(contentId);
+      if (!contentItem) {
+        throw new Error("Content not found");
+      }
+      
+      // Check if sentiment already exists
+      const existingSentiment = await this.getContentSentimentByContentId(contentId);
+      if (existingSentiment) {
+        return existingSentiment;
+      }
+      
+      // Simple mock sentiment analysis for now
+      // In a real app, this would use the OpenAI API to analyze content
+      const mockSentiments = ["happy", "excited", "calm", "thoughtful", "passionate", "nostalgic"];
+      const randomSentiment = mockSentiments[Math.floor(Math.random() * mockSentiments.length)];
+      const sentimentScore = Math.random() * 10; // 0-10 score
+      
+      // Create sentiment record
+      const newSentiment = await this.createContentSentiment({
+        userId,
+        contentId,
+        dominantEmotion: randomSentiment,
+        sentimentScore,
+        keywords: JSON.stringify(["creative", "colorful", "expressive"]),
+        emotionalTags: JSON.stringify([randomSentiment, "creative"]),
+        analysisDetails: JSON.stringify({
+          sentiment: randomSentiment,
+          score: sentimentScore,
+          confidence: 0.85
+        })
+      });
+      
+      return newSentiment;
+    } catch (error) {
+      console.error("Error analyzing content sentiment:", error);
+      throw error;
+    }
+  }
+  
+  // Generate captions for mood capsules
+  async generateCaptionForMoodCapsule(moodCapsuleId: number, emotionalTone: string, captionTone: string): Promise<string> {
+    try {
+      // Get the mood capsule
+      const capsule = await this.getMoodCapsuleById(moodCapsuleId);
+      if (!capsule) {
+        throw new Error("Mood capsule not found");
+      }
+      
+      // Get content IDs from the capsule
+      const contentIds = capsule.contentIds as number[];
+      if (!contentIds || contentIds.length === 0) {
+        throw new Error("No content found in the mood capsule");
+      }
+      
+      // Simple mock caption generation for now
+      // In a real app, this would use the OpenAI API to generate captions
+      const toneAdjectives = {
+        "professional": ["refined", "authoritative", "established"],
+        "casual": ["relaxed", "approachable", "friendly"],
+        "witty": ["clever", "playful", "engaging"],
+        "inspirational": ["uplifting", "motivational", "encouraging"]
+      };
+      
+      const emotionAdjectives = {
+        "happy": ["joyful", "delighted", "cheerful"],
+        "calm": ["peaceful", "tranquil", "serene"],
+        "nostalgic": ["reminiscent", "wistful", "retrospective"],
+        "energetic": ["vibrant", "dynamic", "lively"]
+      };
+      
+      // Default to casual and happy if tones not provided
+      const toneList = toneAdjectives[captionTone] || toneAdjectives.casual;
+      const emotionList = emotionAdjectives[emotionalTone] || emotionAdjectives.happy;
+      
+      // Pick random adjectives
+      const toneAdj = toneList[Math.floor(Math.random() * toneList.length)];
+      const emotionAdj = emotionList[Math.floor(Math.random() * emotionList.length)];
+      
+      // Construct simple caption
+      const captions = [
+        `Feeling ${emotionAdj} today. Here's a ${toneAdj} moment captured in my creative journey.`,
+        `This ${emotionAdj} collection reflects my ${toneAdj} side.`,
+        `Embracing ${emotionAdj} vibes with this ${toneAdj} creative expression.`,
+        `A ${toneAdj} glimpse into my ${emotionAdj} creative world.`
+      ];
+      
+      return captions[Math.floor(Math.random() * captions.length)];
+    } catch (error) {
+      console.error("Error generating caption:", error);
+      throw error;
+    }
   }
 
   // Creative Symbiosis Framework functions

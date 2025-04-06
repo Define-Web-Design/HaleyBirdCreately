@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import CreativeSymbiosisSection from '@/components/dashboard/CreativeSymbiosis';
 import AICapabilities from '@/components/dashboard/AICapabilities';
+import TaskVerificationDashboard from '@/components/dashboard/TaskVerificationDashboard';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -66,9 +67,10 @@ export default function CreativeSymbiosisPage() {
       </div>
       
       <Tabs defaultValue="symbiosis" value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="w-full max-w-md mx-auto grid grid-cols-2">
+        <TabsList className="w-full max-w-md mx-auto grid grid-cols-3">
           <TabsTrigger value="symbiosis">Symbiosis Framework</TabsTrigger>
           <TabsTrigger value="capabilities">AI Capabilities</TabsTrigger>
+          <TabsTrigger value="tasks">Task Verification</TabsTrigger>
         </TabsList>
         
         <TabsContent value="symbiosis" className="mt-6">
@@ -77,6 +79,10 @@ export default function CreativeSymbiosisPage() {
         
         <TabsContent value="capabilities" className="mt-6">
           <AICapabilities />
+        </TabsContent>
+        
+        <TabsContent value="tasks" className="mt-6">
+          <TaskVerificationDashboard />
         </TabsContent>
       </Tabs>
     </div>
