@@ -142,3 +142,209 @@ export const PerformanceProfiler = {
   generatePerformanceReport,
   testApiEndpointPerformance,
 };
+/**
+ * Performance Profiler Utility
+ * 
+ * A utility for measuring and tracking performance metrics throughout the application.
+ * Helps identify bottlenecks and performance issues.
+ */
+
+interface PerformanceMeasurement {
+  name: string;
+  startTime: number;
+  endTime?: number;
+  duration?: number;
+}
+
+interface PerformanceReport {
+  measurements: PerformanceMeasurement[];
+  slowestOperations: PerformanceMeasurement[];
+  totalMeasurements: number;
+  averageDuration: number;
+}
+
+export class PerformanceProfiler {
+  private static measurements: PerformanceMeasurement[] = [];
+  private static thresholds = {
+    slow: 300, // ms
+    critical: 1000 // ms
+  };
+
+  /**
+   * Start measuring performance for a named operation
+   */
+  public static startMeasure(name: string): void {
+    PerformanceProfiler.measurements.push({
+      name,
+      startTime: performance.now()
+    });
+    
+    console.log(`🕒 Starting performance measurement: ${name}`);
+  }
+
+  /**
+   * End measuring performance for a named operation
+   * @returns The duration of the operation in milliseconds
+   */
+  public static endMeasure(name: string): number | undefined {
+    const measurementIndex = PerformanceProfiler.measurements.findIndex(
+      m => m.name === name && m.endTime === undefined
+    );
+    
+    if (measurementIndex === -1) {
+      console.warn(`⚠️ No active measurement found for: ${name}`);
+      return undefined;
+    }
+    
+    const endTime = performance.now();
+    const measurement = PerformanceProfiler.measurements[measurementIndex];
+    const duration = endTime - measurement.startTime;
+    
+    PerformanceProfiler.measurements[measurementIndex] = {
+      ...measurement,
+      endTime,
+      duration
+    };
+    
+    // Log with different indicators based on performance
+    if (duration > PerformanceProfiler.thresholds.critical) {
+      console.error(`⛔ CRITICAL PERFORMANCE ISSUE: ${name} took ${duration.toFixed(2)}ms`);
+    } else if (duration > PerformanceProfiler.thresholds.slow) {
+      console.warn(`⚠️ SLOW OPERATION: ${name} took ${duration.toFixed(2)}ms`);
+    } else {
+      console.log(`✅ Completed ${name} in ${duration.toFixed(2)}ms`);
+    }
+    
+    return duration;
+  }
+
+  /**
+   * Measure the performance of a function
+   */
+  public static async measure<T>(
+    name: string, 
+    fn: () => Promise<T> | T
+  ): Promise<T> {
+    PerformanceProfiler.startMeasure(name);
+    try {
+      const result = await fn();
+      PerformanceProfiler.endMeasure(name);
+      return result;
+    } catch (error) {
+      PerformanceProfiler.endMeasure(name);
+      throw error;
+    }
+  }
+
+  /**
+   * Generate a performance report
+   */
+  public static generatePerformanceReport(): PerformanceReport {
+    const completedMeasurements = PerformanceProfiler.measurements.filter(
+      m => m.duration !== undefined
+    );
+    
+    const totalDuration = completedMeasurements.reduce(
+      (sum, m) => sum + (m.duration || 0), 
+      0
+    );
+    
+    const averageDuration = completedMeasurements.length > 0 
+      ? totalDuration / completedMeasurements.length 
+      : 0;
+    
+    // Find slowest operations
+    const sortedMeasurements = [...completedMeasurements]
+      .sort((a, b) => (b.duration || 0) - (a.duration || 0));
+    
+    const slowestOperations = sortedMeasurements.slice(0, 5);
+    
+    return {
+      measurements: completedMeasurements,
+      slowestOperations,
+      totalMeasurements: completedMeasurements.length,
+      averageDuration
+    };
+  }
+
+  /**
+   * Clear all measurements
+   */
+  public static clearMeasurements(): void {
+    PerformanceProfiler.measurements = [];
+    console.log('Performance measurements cleared');
+  }
+
+  /**
+   * Set custom thresholds for slow and critical operations
+   */
+  public static setThresholds(slow: number, critical: number): void {
+    PerformanceProfiler.thresholds = { slow, critical };
+  }
+
+  /**
+   * Get performance insights for the application
+   */
+  public static getPerformanceInsights(): string {
+    const report = PerformanceProfiler.generatePerformanceReport();
+    
+    let insights = `# Performance Insights\n\n`;
+    insights += `## Summary\n`;
+    insights += `- Total operations measured: ${report.totalMeasurements}\n`;
+    insights += `- Average operation duration: ${report.averageDuration.toFixed(2)}ms\n\n`;
+    
+    insights += `## Slowest Operations\n`;
+    report.slowestOperations.forEach((op, index) => {
+      insights += `${index + 1}. ${op.name}: ${op.duration?.toFixed(2)}ms\n`;
+    });
+    
+    insights += `\n## Recommendations\n`;
+    
+    // Add recommendations based on slow operations
+    const criticalOps = report.measurements.filter(
+      m => (m.duration || 0) > PerformanceProfiler.thresholds.critical
+    );
+    
+    if (criticalOps.length > 0) {
+      insights += `- Critical performance issues detected in ${criticalOps.length} operations\n`;
+      criticalOps.forEach(op => {
+        insights += `  - Optimize ${op.name} (${op.duration?.toFixed(2)}ms)\n`;
+      });
+    }
+    
+    // General recommendations
+    if (report.averageDuration > PerformanceProfiler.thresholds.slow) {
+      insights += `- Overall performance is below target, consider reviewing resource usage\n`;
+    }
+    
+    return insights;
+  }
+
+  /**
+   * Get all measurements for a specific operation
+   */
+  public static getMeasurementsForOperation(name: string): PerformanceMeasurement[] {
+    return PerformanceProfiler.measurements.filter(m => m.name === name);
+  }
+}
+
+/**
+ * Create a higher-order component to measure render performance
+ */
+export function withPerformanceTracking<P>(
+  Component: React.ComponentType<P>,
+  operationName: string
+): React.FC<P> {
+  return (props: P) => {
+    React.useEffect(() => {
+      const name = `Render_${operationName}`;
+      PerformanceProfiler.startMeasure(name);
+      
+      return () => {
+        PerformanceProfiler.endMeasure(name);
+      };
+    }, []);
+    
+    return <Component {...props} />;
+  };
+}

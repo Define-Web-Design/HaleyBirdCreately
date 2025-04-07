@@ -11,7 +11,7 @@ import { initializeWebSocketServer } from './websocket';
 import { storage } from './storage';
 import dotenv from 'dotenv';
 import ws from 'ws';
-import logger, { requestLogger } from './utils/logger';
+import logger, { requestLogger } from './utils/logger'; //Import the logger
 
 // Extend the request type to include database connection
 declare global {
@@ -84,9 +84,9 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
 // Register API routes
 registerRoutes(app).then(httpServer => {
-  console.log('API routes registered successfully');
+  logger.info('API routes registered successfully'); //Use the structured logger
 }).catch(error => {
-  console.error('Error registering API routes:', error);
+  logger.error('Error registering API routes:', error); //Use the structured logger
 });
 
 // Serve static files in production
@@ -95,7 +95,7 @@ if (isProduction) {
 } else {
   // In development, use Vite's dev server
   setupVite(app, server).catch(error => {
-    console.error('Error setting up Vite:', error);
+    logger.error('Error setting up Vite:', error); //Use the structured logger
   });
 }
 
@@ -109,9 +109,9 @@ if (isProduction) {
 // Check database connection
 pool.query('SELECT NOW()', (err, result) => {
   if (err) {
-    console.error('Database connection error:', err);
+    logger.error('Database connection error:', err); //Use the structured logger
   } else {
-    console.log('Database connected successfully at:', result.rows[0].now);
+    logger.info('Database connected successfully at:', result.rows[0].now); //Use the structured logger
   }
 });
 
@@ -120,15 +120,37 @@ pool.query('SELECT NOW()', (err, result) => {
 initializeWebSocketServer(server);
 
 server.listen(port, () => {
-  console.log(`Server running on http://localhost:${port}`);
+  logger.info(`Server running on http://localhost:${port}`, {port}); //Use the structured logger
+});
+
+
+// Global error handler
+process.on('uncaughtException', (error) => {
+  logger.error(error, {
+    type: 'uncaughtException',
+    fatal: true
+  });
+
+  // Give logger time to write to files before exiting
+  setTimeout(() => {
+    process.exit(1);
+  }, 1000);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  logger.error('Unhandled Promise Rejection', {
+    type: 'unhandledRejection',
+    reason,
+    promise
+  });
 });
 
 // Graceful shutdown
 process.on('SIGTERM', async () => {
-  console.log('SIGTERM signal received: closing HTTP server');
+  logger.info('SIGTERM signal received: closing HTTP server'); //Use the structured logger
   await pool.end();
   server.close(() => {
-    console.log('HTTP server closed');
+    logger.info('HTTP server closed'); //Use the structured logger
     process.exit(0);
   });
 });
