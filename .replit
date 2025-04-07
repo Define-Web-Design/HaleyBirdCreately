@@ -3680,11 +3680,27 @@ args = ""
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "# Start the development server in ESM mode"
+args = "# Run code quality checks"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "NODE_ENV=development NODE_OPTIONS=--experimental-vm-modules npm run dev"
+args = "npm run lint"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npx tsc --noEmit"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Start the development server"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
 
 [[workflows.workflow]]
 name = "Code Quality"
