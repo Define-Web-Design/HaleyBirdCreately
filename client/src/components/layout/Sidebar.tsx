@@ -173,20 +173,24 @@ const Sidebar = ({
       role="navigation"
       aria-label="Main Navigation"
     >
-      {/* Logo Section */}
-      <div className="pt-4 pb-2 px-3 flex items-center">
+      {/* Logo Section - Refined */}
+      <div className="pt-4 pb-3 px-3 flex items-center justify-center md:justify-start border-b border-border/30">
         <Link
           href="/"
-          className="flex items-center cursor-pointer hover:opacity-90 transition-all duration-300 ease-in-out group"
+          className={`flex items-center cursor-pointer hover:opacity-90 transition-all duration-300 ease-in-out group ${expanded ? '' : 'justify-center w-full'}`}
         >
-          <div className="bg-gradient-to-r from-[#F2994A] to-[#FF9DAE] h-8 w-8 rounded-lg flex items-center justify-center text-white font-bold text-lg mr-3 shrink-0
+          <div className="bg-gradient-to-r from-[#F2994A] to-[#FF9DAE] h-8 w-8 rounded-lg flex items-center justify-center text-white font-bold text-lg shrink-0
           shadow-sm transition-transform duration-300 ease-out hover:scale-110 group-hover:shadow-md">
             C
           </div>
-          <h1 className={`text-lg font-medium transition-all duration-300 ease-in-out
-          ${expanded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 w-0 overflow-hidden'}`}>
-            Creately
-          </h1>
+          {expanded && (
+            <div className="ml-3 overflow-hidden">
+              <h1 className="text-lg font-medium transition-all duration-300 ease-in-out">
+                Creately
+              </h1>
+              <p className="text-xs text-muted-foreground -mt-0.5">Creative Intelligence</p>
+            </div>
+          )}
         </Link>
       </div>
 

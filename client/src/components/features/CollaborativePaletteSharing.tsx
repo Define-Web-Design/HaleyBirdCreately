@@ -149,7 +149,7 @@ const CollaborativePaletteSharing = () => {
           <div className="bg-card border border-border rounded-lg p-3">
             <div className="flex justify-between items-center mb-2">
               <h3 className="text-sm font-medium">{palette.name}</h3>
-              <Badge variant="outline" size="sm" className="text-xs">
+              <Badge variant="outline" className="text-xs px-2 py-0.5">
                 {palette.isPublic ? 'Public' : 'Private'}
               </Badge>
             </div>

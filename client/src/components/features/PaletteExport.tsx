@@ -5,8 +5,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { 
   Download, 
   FileImage, 
-  FilePdf, 
-  FileJson, 
+  File, 
+  FileText, 
   Layers, 
   Check,
   Copy,
@@ -125,13 +125,13 @@ const PaletteExport = () => {
 
   const getFormatIcon = (format: string) => {
     switch (format) {
-      case 'pdf': return <FilePdf className="h-4 w-4" />;
+      case 'pdf': return <File className="h-4 w-4" />;
       case 'png': 
       case 'jpg':
       case 'svg': return <FileImage className="h-4 w-4" />;
       case 'json':
       case 'css':
-      case 'scss': return <FileJson className="h-4 w-4" />;
+      case 'scss': return <FileText className="h-4 w-4" />;
       default: return <Download className="h-4 w-4" />;
     }
   };

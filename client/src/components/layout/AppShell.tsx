@@ -248,13 +248,18 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             )}
             {children}
 
-            {/* Condensed Footer */}
+            {/* Condensed Footer with Creative Intelligence tagline */}
             <footer className="mt-6 pt-3 border-t border-border">
               <div className="container mx-auto px-2">
-                <div className="flex flex-row flex-wrap justify-between items-center py-2">
-                  <p className="text-xs text-muted-foreground">
-                    &copy; {new Date().getFullYear()} Creately
-                  </p>
+                <div className="flex flex-wrap justify-between items-center gap-2 py-2">
+                  <div className="flex flex-col">
+                    <p className="text-xs text-muted-foreground">
+                      &copy; {new Date().getFullYear()} Creately
+                    </p>
+                    <p className="text-xs text-primary/70 font-medium">
+                      Unleash your creative intelligence
+                    </p>
+                  </div>
                   <div className="flex flex-row gap-3 text-xs">
                     <a href="/legal" className="text-muted-foreground hover:text-foreground transition-colors">
                       Terms

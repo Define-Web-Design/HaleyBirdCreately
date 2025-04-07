@@ -23,6 +23,7 @@ import CreativeTools from "./pages/CreativeTools";
 import NavigationTest from "./pages/nav-test";
 import NotFound from "./pages/not-found";
 import Profile from './components/profile/Profile';
+import FeaturesShowcase from "./pages/FeaturesShowcase";
 import LegalPage from "./pages/legal";
 import PrivacyPage from "./pages/privacy";
 import SettingsPage from "./pages/settings";
@@ -110,6 +111,7 @@ function Router() {
           <Route path="/creative-prompts" component={CreativePrompts} />
           <Route path="/creative-tools" component={CreativeTools} />
           <Route path="/cross-platform-tools" component={CrossPlatformTools} />
+          <Route path="/features-showcase" component={FeaturesShowcase} />
           <Route path="/profile" component={Profile} />
           <Route path="/profile/accessibility" component={Profile} />
           <Route path="/profile/integrations" component={Profile} />
