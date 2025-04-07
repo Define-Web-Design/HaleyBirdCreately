@@ -1,0 +1,41 @@
+#   Replit Assistant Prompt: Simultaneous Workflow Mastermind - App Status Inquiry (Revised)
+
+**Task:** Provide a comprehensive and user-centric overview of Creately's current running status, considering various aspects of its operation and their impact on the user experience.
+
+**Instructions:**
+
+1.  **Replit Environment Status & User Impact:**
+    -   Assess the current status of Creately within the Replit environment.
+    -   Are all services (front-end, back-end, database) online and functioning correctly, ensuring a seamless user experience?
+    -   Report any Replit-specific issues (e.g., deployment errors, resource constraints) and explain how these issues might affect users.
+
+2.  **Performance Metrics & Creative Flow:**
+    -   Provide key performance indicators (KPIs) such as:
+        -   Response times for API requests (and their impact on user interaction).
+        -   Page load speeds (and their effect on user engagement).
+        -   Database query execution times (and their influence on data retrieval).
+    -   Identify any performance bottlenecks that might disrupt the user's creative flow or workflow.
+
+3.  **Error Logs, Debugging, & User Frustration:**
+    -   Summarize recent error logs, focusing on errors that users are likely to encounter.
+    -   Highlight any critical errors or recurring issues that might lead to user frustration or data loss.
+    -   Provide guidance on how to further investigate specific errors, prioritizing solutions that are quick and easy to implement.
+
+4.  **User Feedback, Engagement, & Emotional Response:**
+    -   Summarize recent user feedback related to app stability, performance, and overall user satisfaction.
+    -   Report any significant changes in user engagement metrics, considering the potential emotional impact on users.
+
+5.  **Resource Utilization & Sustainability:**
+    -   If available, report on resource utilization within Replit (e.g., CPU usage, memory consumption).
+    -   Suggest optimizations to improve resource efficiency and ensure long-term sustainability of the platform.
+
+6.  **Contextual Awareness (Haley's Vision):**
+    -   Frame the response with a strong awareness of user-centricity, emotional resonance, and Haley's overall vision for Creately.
+    -   For example, instead of just reporting "high latency," consider "Users may be experiencing delays in loading certain pages, which could disrupt their creative flow and negatively impact their overall mood and engagement with the app."
+
+7.  **Actionable & User-Empowering Insights:**
+    -   Provide clear, actionable, and user-empowering recommendations for addressing any identified issues, focusing on solutions that improve the user experience.
+    -   Prioritize solutions that align with efficient workflow management, long-term scalability, and enhancing the user's sense of control and creative empowerment.
+
+**Example Response Structure (Guideline - The format may vary):**
+
