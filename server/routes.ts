@@ -217,36 +217,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register theme routes before applying access validation
   // Theme configuration - publicly accessible
-  app.post('/api/theme', async (req, res) => {
-    try {
-      const { primary, appearance, variant, radius } = req.body;
-
-      if (!primary) {
-        return res.status(400).json({ 
-          message: "Primary color is required" 
-        });
-      }
-
-      console.log('Theme update received:', { primary, appearance, variant, radius });
-
-      // In a real implementation, this would update theme.json
-      // For now, we'll just return success
-      res.json({ 
-        success: true,
-        theme: {
-          primary,
-          appearance: appearance || 'light',
-          variant: variant || 'vibrant',
-          radius: radius || 0.5
-        }
-      });
-    } catch (error: any) {
-      console.error('Error in theme API:', error);
-      res.status(500).json({ 
-        message: error.message 
-      });
-    }
-  });
+  // REMOVED duplicate POST route to /api/theme (moved below)
 
   // Theme routes - both public and authenticated
   app.get('/api/public/theme', (req, res) => {
