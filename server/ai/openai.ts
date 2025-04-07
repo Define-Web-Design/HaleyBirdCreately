@@ -8,13 +8,18 @@ dotenv.config();
 const MODEL = "gpt-4o";
 const VISION_MODEL = "gpt-4o"; // Model with vision capabilities
 
-// Initialize OpenAI client with API key from environment variables
+// Attempt to get API key from different possible sources
+const apiKey = process.env.OPENAI_API_KEY || 
+               process.env.OPENAI_API_KEY_ENV_VAR || 
+               "PLACEHOLDER_REPLACE_WITH_YOUR_OPENAI_API_KEY";
+               
+// Initialize OpenAI client with API key
 const openai = new OpenAI({ 
-  apiKey: process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY_ENV_VAR
+  apiKey: apiKey
 });
 
-// Check if API key is valid
-const isConfigured = !!process.env.OPENAI_API_KEY || !!process.env.OPENAI_API_KEY_ENV_VAR;
+// Check if API key is valid (not the placeholder)
+const isConfigured = apiKey !== "PLACEHOLDER_REPLACE_WITH_YOUR_OPENAI_API_KEY";
 
 /**
  * Generates a response using OpenAI's chat completions API
