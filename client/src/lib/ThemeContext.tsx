@@ -71,14 +71,32 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
       } else {
         // Otherwise, try to get default theme from the API
         try {
-          // Try authenticated endpoint first
+          // Try authenticated endpoint first with cache control
           let themeResponse = await fetch('/api/theme', {
             credentials: 'include', // Include cookies for authentication
-          }).catch(() => null); // Catch and return null if it fails
+            cache: 'no-cache', // Prevent browser caching
+            headers: {
+              'Cache-Control': 'no-cache, no-store, must-revalidate',
+              'Pragma': 'no-cache'
+            }
+          }).catch((error) => {
+            console.log('Authenticated theme fetch error:', error);
+            return null;
+          }); // Catch and return null if it fails
           
-          // If authenticated endpoint fails, fallback to public theme
+          // If authenticated endpoint fails, fallback to public theme with cache control
           if (!themeResponse || !themeResponse.ok) {
-            themeResponse = await fetch('/api/public/theme').catch(() => null);
+            console.log('Trying public theme endpoint instead...');
+            themeResponse = await fetch('/api/public/theme', {
+              cache: 'no-cache', // Prevent browser caching
+              headers: {
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache'
+              }
+            }).catch((error) => {
+              console.log('Public theme fetch error:', error);
+              return null;
+            });
           }
           
           // If we got a successful response from either endpoint
@@ -123,8 +141,11 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache'
           },
           credentials: 'include', // Include cookies for authentication if available
+          cache: 'no-cache', // Prevent browser caching
           body: JSON.stringify({
             primary: theme,
             appearance: isDarkMode ? 'dark' : 'light',
@@ -142,7 +163,14 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
         // For any errors, try to fetch default theme from the public endpoint
         try {
           console.log('Fetching from public theme endpoint');
-          const publicResponse = await fetch('/api/public/theme');
+          const publicResponse = await fetch('/api/public/theme', {
+            cache: 'no-cache', // Prevent browser caching
+            headers: {
+              'Cache-Control': 'no-cache, no-store, must-revalidate',
+              'Pragma': 'no-cache'
+            }
+          });
+          
           if (publicResponse.ok) {
             const publicTheme = await publicResponse.json();
             console.log('Loaded public theme:', publicTheme);
