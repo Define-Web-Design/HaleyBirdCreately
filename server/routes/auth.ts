@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { config } from '../config';
@@ -8,8 +8,9 @@ import { AuthService } from '../services/auth';
 import { authenticate, AuthenticatedRequest } from '../middleware/auth';
 
 const router = Router();
-const storage = ServiceRegistry.getInstance().getService<StorageInterface>('storage');
-const authService = ServiceRegistry.getInstance().getService<AuthService>('auth');
+
+// Don't initialize services at the module level
+// We'll get them when needed in each route handler
 
 /**
  * @route POST /api/auth/register
@@ -30,18 +31,32 @@ router.post('/register', async (req, res) => {
       });
     }
 
+    // Get fresh reference to storage service
+    let currentStorage;
+    try {
+      currentStorage = ServiceRegistry.getInstance().getService<StorageInterface>('storage');
+    } catch (error) {
+      console.error('Error getting storage service:', error);
+      return res.status(500).json({ error: 'Service unavailable, please try again later' });
+    }
+
+    if (!currentStorage) {
+      return res.status(500).json({ error: 'Storage service unavailable' });
+    }
+
     // Check if user already exists
-    const existingUser = await storage?.getUserByEmail(email);
+    const existingUser = await currentStorage.getUserByEmail(email);
     if (existingUser) {
       return res.status(409).json({ error: 'User already exists with this email' });
     }
 
     // Create new user
     const hashedPassword = await bcrypt.hash(password, config.password.saltRounds);
-    const userId = await storage?.createUser({
+    const userId = await currentStorage.createUser({
       email,
-      password: hashedPassword,
-      name: name || '',
+      passwordHash: hashedPassword, // Use the correct property name based on your schema
+      username: name || email.split('@')[0], // Fallback to email username part
+      displayName: name || null,
       role: 'user'
     });
 
@@ -63,7 +78,7 @@ router.post('/register', async (req, res) => {
     );
 
     // Store refresh token in database
-    await storage?.storeRefreshToken(userId, refreshToken);
+    await currentStorage.storeRefreshToken(String(userId), refreshToken);
 
     res.status(201).json({
       message: 'User registered successfully',
@@ -90,14 +105,27 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
+    // Get fresh reference to storage service
+    let currentStorage;
+    try {
+      currentStorage = ServiceRegistry.getInstance().getService<StorageInterface>('storage');
+    } catch (error) {
+      console.error('Error getting storage service:', error);
+      return res.status(500).json({ error: 'Service unavailable, please try again later' });
+    }
+
+    if (!currentStorage) {
+      return res.status(500).json({ error: 'Storage service unavailable' });
+    }
+
     // Check if user exists
-    const user = await storage?.getUserByEmail(email);
+    const user = await currentStorage.getUserByEmail(email);
     if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     // Verify password
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
     if (!isPasswordValid) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
@@ -116,11 +144,16 @@ router.post('/login', async (req, res) => {
     );
 
     // Store refresh token in database
-    await storage?.storeRefreshToken(user.id, refreshToken);
+    await currentStorage.storeRefreshToken(String(user.id), refreshToken);
 
     res.status(200).json({
       message: 'Login successful',
-      user: { id: user.id, email: user.email, name: user.name, role: user.role },
+      user: { 
+        id: user.id, 
+        email: user.email, 
+        name: user.displayName || user.username, 
+        role: user.role 
+      },
       accessToken,
       refreshToken
     });
@@ -143,17 +176,30 @@ router.post('/refresh', async (req, res) => {
       return res.status(400).json({ error: 'Refresh token is required' });
     }
 
+    // Get fresh reference to storage service
+    let currentStorage;
+    try {
+      currentStorage = ServiceRegistry.getInstance().getService<StorageInterface>('storage');
+    } catch (error) {
+      console.error('Error getting storage service:', error);
+      return res.status(500).json({ error: 'Service unavailable, please try again later' });
+    }
+
+    if (!currentStorage) {
+      return res.status(500).json({ error: 'Storage service unavailable' });
+    }
+
     // Verify refresh token
     const decoded = jwt.verify(refreshToken, config.jwt.secret) as { id: string; email: string };
 
     // Check if refresh token exists in the database
-    const storedToken = await storage?.getRefreshToken(decoded.id, refreshToken);
+    const storedToken = await currentStorage.getRefreshToken(decoded.id, refreshToken);
     if (!storedToken) {
       return res.status(401).json({ error: 'Invalid refresh token' });
     }
 
     // Get user data to include in the new token
-    const user = await storage?.getUserById(decoded.id);
+    const user = await currentStorage.getUserById(decoded.id);
     if (!user) {
       return res.status(401).json({ error: 'User not found' });
     }
@@ -179,7 +225,7 @@ router.post('/refresh', async (req, res) => {
  * @desc Logout user and invalidate refresh token
  * @access Protected
  */
-router.post('/logout', authenticate, async (req: AuthenticatedRequest, res) => {
+router.post('/logout', authenticate(), async (req: AuthenticatedRequest, res) => {
   try {
     const { refreshToken } = req.body;
     const userId = req.user?.id;
@@ -188,8 +234,21 @@ router.post('/logout', authenticate, async (req: AuthenticatedRequest, res) => {
       return res.status(400).json({ error: 'User ID and refresh token are required' });
     }
 
+    // Get fresh reference to storage service
+    let currentStorage;
+    try {
+      currentStorage = ServiceRegistry.getInstance().getService<StorageInterface>('storage');
+    } catch (error) {
+      console.error('Error getting storage service:', error);
+      return res.status(500).json({ error: 'Service unavailable, please try again later' });
+    }
+
+    if (!currentStorage) {
+      return res.status(500).json({ error: 'Storage service unavailable' });
+    }
+
     // Remove refresh token from database
-    await storage?.removeRefreshToken(userId, refreshToken);
+    await currentStorage.removeRefreshToken(String(userId), refreshToken);
 
     res.json({ message: 'Logout successful' });
   } catch (error) {
@@ -203,7 +262,7 @@ router.post('/logout', authenticate, async (req: AuthenticatedRequest, res) => {
  * @desc Get current user info
  * @access Protected
  */
-router.get('/me', authenticate, async (req: AuthenticatedRequest, res) => {
+router.get('/me', authenticate(), async (req: AuthenticatedRequest, res) => {
   try {
     const userId = req.user?.id;
 
@@ -211,13 +270,26 @@ router.get('/me', authenticate, async (req: AuthenticatedRequest, res) => {
       return res.status(401).json({ error: 'Authentication required' });
     }
 
-    const user = await storage?.getUserById(userId);
+    // Get fresh reference to storage service
+    let currentStorage;
+    try {
+      currentStorage = ServiceRegistry.getInstance().getService<StorageInterface>('storage');
+    } catch (error) {
+      console.error('Error getting storage service:', error);
+      return res.status(500).json({ error: 'Service unavailable, please try again later' });
+    }
+
+    if (!currentStorage) {
+      return res.status(500).json({ error: 'Storage service unavailable' });
+    }
+
+    const user = await currentStorage.getUserById(String(userId));
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
     // Don't send the password hash
-    const { password, ...userInfo } = user;
+    const { passwordHash, ...userInfo } = user;
 
     res.json(userInfo);
   } catch (error) {

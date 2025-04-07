@@ -22,11 +22,21 @@ const httpServer = createServer(app);
 
 // Register services
 const serviceRegistry = ServiceRegistry.getInstance();
-// Register storage service
-serviceRegistry.registerService('storage', storage);
+
+// IMPORTANT: Ensure storage registration happens first and only once
+if (!serviceRegistry.hasService('storage')) {
+  console.log('Registering storage service...');
+  serviceRegistry.registerService('storage', storage);
+}
+
 // Create and register auth service
-const authService = new AuthService(storage);
-serviceRegistry.registerService('auth', authService);
+try {
+  const authService = new AuthService(storage);
+  serviceRegistry.registerService('auth', authService);
+  console.log('Auth service registered successfully');
+} catch (error) {
+  console.error('Failed to register auth service:', error);
+}
 
 // Setup middleware
 app.use(cors()); // Enable CORS for all routes

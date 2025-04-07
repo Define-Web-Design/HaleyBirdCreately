@@ -68,8 +68,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (publicRoutes.some(route => req.path.startsWith(route))) {
       return next();
     }
-    // Apply authentication for all other routes
-    authenticate()(req, res, next);
+    // Apply authentication for all other routes using our factory function
+    const authMiddleware = authenticate();
+    authMiddleware(req, res, next);
   });
 
   // Platform integration routes
