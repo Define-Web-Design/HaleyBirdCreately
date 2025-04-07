@@ -15,10 +15,9 @@ async function runStatusCheck() {
     // Use ts-node to directly execute the TypeScript file
     try {
       console.log('Attempting to run app status check using ts-node...');
-      const output = execSync('npx ts-node client/src/utils/app-status-cli.ts', { 
+      execSync('npx ts-node client/src/utils/app-status-cli.ts', { 
         stdio: 'inherit'
       });
-      return output;
     } catch (tsNodeError) {
       // If ts-node execution fails with an exit code indicating app issues,
       // this is expected behavior - it's just reporting app problems
@@ -59,5 +58,9 @@ async function runStatusCheck() {
   }
 }
 
-// Run the check
-runStatusCheck();
+// Run the status check when the script is executed directly
+if (require.main === module) {
+  runStatusCheck();
+}
+
+module.exports = { runStatusCheck };

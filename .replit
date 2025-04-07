@@ -3036,5 +3036,42 @@ args = "# Run the app status check with TypeScript support"
 task = "shell.exec"
 args = "npx ts-node client/src/utils/app-status-cli.ts"
 
+[[workflows.workflow]]
+name = "App Status Check and Report"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Kill any running processes first"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pkill -f node || true"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Create logs directory if it doesn't exist"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "mkdir -p logs/app-status"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run the comprehensive app status check"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node scripts/run-app-status-check.js"
+
 [objectStorage]
 defaultBucketID = "replit-objstore-0f505a20-ca44-41fd-a1d9-978b798832cc"

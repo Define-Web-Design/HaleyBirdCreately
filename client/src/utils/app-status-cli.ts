@@ -5,7 +5,7 @@
  */
 
 // Import directly for better compatibility in Node environment
-import { generateAppStatusReport, displayAppStatusReport, createStatusSummary } from './app-status-monitor';
+const { generateAppStatusReport, displayAppStatusReport, createStatusSummary } = require('./app-status-monitor.js');
 
 /**
  * Run the app status check and display results
