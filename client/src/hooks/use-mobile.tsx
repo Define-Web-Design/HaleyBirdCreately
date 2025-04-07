@@ -1,33 +1,64 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
 /**
- * Hook to detect if the device is a mobile device based on screen width
- * @returns {boolean} True if the device is a mobile device
+ * Hook to detect if the current device is a mobile device
+ * @returns boolean indicating if the device is mobile
  */
 export function useIsMobile(): boolean {
   const [isMobile, setIsMobile] = useState<boolean>(false);
 
   useEffect(() => {
-    // Initial check
-    const checkIfMobile = () => {
-      const mobileWidth = 768; // Common breakpoint for mobile devices
-      setIsMobile(window.innerWidth < mobileWidth);
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 768 || 
+                    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      setIsMobile(mobile);
     };
 
-    // Check on mount
-    checkIfMobile();
+    // Check immediately
+    checkMobile();
 
     // Add resize listener
-    window.addEventListener('resize', checkIfMobile);
+    window.addEventListener('resize', checkMobile);
 
     // Clean up
-    return () => window.removeEventListener('resize', checkIfMobile);
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   return isMobile;
 }
 
-export default useIsMobile;
+/**
+ * Haptic feedback function for mobile devices
+ * @param intensity - 'light', 'medium', or 'heavy'
+ */
+export function hapticFeedback(intensity: 'light' | 'medium' | 'heavy' = 'medium'): void {
+  if (!navigator.vibrate) return;
+
+  const duration = {
+    'light': 10,
+    'medium': 15,
+    'heavy': 25
+  }[intensity];
+
+  navigator.vibrate(duration);
+}
+
+/**
+ * Set whether tactile feedback is enabled
+ * @param enabled - Whether tactile feedback is enabled
+ */
+export function setTactileFeedback(enabled: boolean): void {
+  localStorage.setItem('tactileFeedbackEnabled', enabled ? 'true' : 'false');
+}
+
+/**
+ * Get whether tactile feedback is enabled
+ * @returns boolean indicating if tactile feedback is enabled
+ */
+export function getTactileFeedback(): boolean {
+  return localStorage.getItem('tactileFeedbackEnabled') !== 'false';
+}
+
 
 export interface DeviceInfo {
   isMobile: boolean;

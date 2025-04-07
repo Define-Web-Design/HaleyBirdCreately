@@ -1,126 +1,169 @@
-import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
-import useIsMobile from '@/hooks/use-mobile';
-import { apiRequest } from '@/lib/queryClient';
+
+import React, { useState } from 'react';
+import { Button } from '../ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import { Alert, AlertTitle, AlertDescription } from '../ui/alert';
+import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
+import { Progress } from '../ui/progress';
 
 interface PageSpeedResult {
   score: number;
-  loadingSpeed: number;
-  recommendations: string[];
-  timestamp: string;
+  metrics: {
+    [key: string]: {
+      value: number;
+      unit?: string;
+      category?: string;
+    };
+  };
+  suggestions: string[];
+  success: boolean;
 }
 
-interface PageSpeedIntegrationProps {
-  pageUrl?: string;
-}
-
-export function PageSpeedIntegration({ pageUrl }: PageSpeedIntegrationProps) {
-  const isMobile = useIsMobile();
-  const [isLoading, setIsLoading] = useState(false);
-  const [results, setResults] = useState<PageSpeedResult | null>(null);
+const PageSpeedIntegration: React.FC = () => {
+  const [url, setUrl] = useState<string>('');
+  const [device, setDevice] = useState<'mobile' | 'desktop'>('mobile');
+  const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [results, setResults] = useState<PageSpeedResult | null>(null);
 
-  const url = pageUrl || window.location.href;
+  const handleAnalyze = async () => {
+    if (!url) {
+      setError('Please enter a URL to analyze');
+      return;
+    }
 
-  const runPageSpeedTest = async () => {
-    setIsLoading(true);
+    setLoading(true);
     setError(null);
-
+    
     try {
-      const response = await apiRequest<PageSpeedResult>(`/api/pagespeed?url=${encodeURIComponent(url)}&mobile=${isMobile}`, {
-        method: 'GET',
+      const response = await fetch('/api/pagespeed/analyze', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url, device }),
       });
 
-      setResults(response);
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to analyze URL');
+      }
+
+      setResults(data.results);
     } catch (err) {
-      console.error('PageSpeed API error:', err);
-      setError('Failed to run PageSpeed test. Please try again later.');
+      setError(err instanceof Error ? err.message : 'An error occurred during analysis');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
-  // Calculate color based on score
-  const getScoreColor = (score: number) => {
+  const getScoreColor = (score: number): string => {
     if (score >= 90) return 'text-green-500';
-    if (score >= 70) return 'text-yellow-500';
+    if (score >= 50) return 'text-yellow-500';
     return 'text-red-500';
   };
 
   return (
-    <Card className="w-full max-w-lg">
+    <Card className="w-full max-w-3xl mx-auto">
       <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <span>PageSpeed Insights</span>
-          <span className="text-sm text-muted-foreground">
-            {isMobile ? 'Mobile' : 'Desktop'} Analysis
-          </span>
-        </CardTitle>
+        <CardTitle>PageSpeed Insights</CardTitle>
+        <CardDescription>
+          Analyze your website's performance using Google PageSpeed Insights
+        </CardDescription>
       </CardHeader>
+      
       <CardContent>
         <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="url">Website URL</Label>
+            <Input
+              id="url"
+              placeholder="https://example.com"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label>Device</Label>
+            <RadioGroup
+              value={device}
+              onValueChange={(value) => setDevice(value as 'mobile' | 'desktop')}
+              className="flex space-x-4"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="mobile" id="mobile" />
+                <Label htmlFor="mobile">Mobile</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="desktop" id="desktop" />
+                <Label htmlFor="desktop">Desktop</Label>
+              </div>
+            </RadioGroup>
+          </div>
+          
+          <Button 
+            onClick={handleAnalyze} 
+            disabled={loading}
+            className="w-full"
+          >
+            {loading ? 'Analyzing...' : 'Analyze'}
+          </Button>
+          
           {error && (
-            <div className="bg-red-100 p-3 rounded text-red-700 text-sm">
-              {error}
-            </div>
+            <Alert variant="destructive">
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
-
-          {isLoading && (
+          
+          {loading && (
             <div className="space-y-2">
-              <div className="text-sm text-center">Running PageSpeed analysis...</div>
-              <Progress value={45} className="h-2" />
+              <div className="text-center">Analyzing website performance...</div>
+              <Progress value={45} className="w-full" />
             </div>
           )}
-
-          {results && !isLoading && (
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">Performance Score:</span>
-                <span className={`text-xl font-bold ${getScoreColor(results.score)}`}>
-                  {results.score}
-                </span>
+          
+          {results && (
+            <div className="mt-6 space-y-4">
+              <div className="text-center">
+                <div className="text-xl font-bold">Performance Score</div>
+                <div className={`text-4xl font-bold ${getScoreColor(results.score)}`}>
+                  {Math.round(results.score * 100)}
+                </div>
               </div>
-
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">Loading Speed:</span>
-                <span className="text-sm">{results.loadingSpeed}s</span>
+              
+              <div className="space-y-4">
+                <div className="font-medium text-lg">Key Metrics</div>
+                {Object.entries(results.metrics).map(([key, metric]) => (
+                  <div key={key} className="flex justify-between items-center">
+                    <div>{key.replace(/([A-Z])/g, ' $1').trim()}</div>
+                    <div className="font-medium">
+                      {metric.value} {metric.unit || ''}
+                    </div>
+                  </div>
+                ))}
               </div>
-
-              {results.recommendations && results.recommendations.length > 0 && (
+              
+              {results.suggestions && results.suggestions.length > 0 && (
                 <div className="space-y-2">
-                  <h4 className="text-sm font-medium">Recommendations:</h4>
-                  <ul className="text-xs space-y-1 list-disc pl-5">
-                    {results.recommendations.slice(0, 3).map((rec, i) => (
-                      <li key={i}>{rec}</li>
+                  <div className="font-medium text-lg">Suggestions</div>
+                  <ul className="list-disc pl-5 space-y-1">
+                    {results.suggestions.map((suggestion, index) => (
+                      <li key={index}>{suggestion}</li>
                     ))}
-                    {results.recommendations.length > 3 && (
-                      <li className="text-muted-foreground">
-                        +{results.recommendations.length - 3} more recommendations
-                      </li>
-                    )}
                   </ul>
                 </div>
               )}
-
-              <div className="text-xs text-muted-foreground text-right">
-                Last tested: {new Date(results.timestamp).toLocaleString()}
-              </div>
             </div>
           )}
-
-          <Button 
-            onClick={runPageSpeedTest} 
-            disabled={isLoading}
-            className="w-full"
-          >
-            {isLoading ? 'Analyzing...' : 'Run PageSpeed Test'}
-          </Button>
         </div>
       </CardContent>
     </Card>
   );
-}
+};
 
 export default PageSpeedIntegration;
