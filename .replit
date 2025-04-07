@@ -1023,7 +1023,7 @@ args = "npx ts-node client/src/utils/run-verification.ts"
 [[workflows.workflow]]
 name = "Verify Before Checkpoint"
 author = 40896524
-mode = ""sequential"
+mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
