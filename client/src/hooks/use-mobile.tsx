@@ -1,69 +1,80 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
-export interface MobileState {
+export interface DeviceInfo {
   isMobile: boolean;
   isTablet: boolean;
   isDesktop: boolean;
-  orientation: 'portrait' | 'landscape';
-  touchEnabled: boolean;
+  isLandscape: boolean;
+  isPortrait: boolean;
+  isTouchDevice: boolean;
+  screenWidth: number;
+  screenHeight: number;
 }
 
-/**
- * Custom hook to detect device type and capabilities for responsive design
- */
-export function useMobile(): MobileState {
-  const [state, setState] = useState<MobileState>({
+export function useMobile(): DeviceInfo {
+  const [deviceInfo, setDeviceInfo] = useState<DeviceInfo>({
     isMobile: false,
     isTablet: false,
     isDesktop: true,
-    orientation: 'landscape',
-    touchEnabled: false
+    isLandscape: false,
+    isPortrait: true,
+    isTouchDevice: false,
+    screenWidth: typeof window !== 'undefined' ? window.innerWidth : 0,
+    screenHeight: typeof window !== 'undefined' ? window.innerHeight : 0,
   });
 
-  useEffect(() => {
-    // Function to determine current device and orientation
-    const updateDeviceState = () => {
-      const width = window.innerWidth;
-      const height = window.innerHeight;
-      const isPortrait = height > width;
+  const checkDevice = useCallback(() => {
+    if (typeof window === 'undefined') return;
 
-      // Define breakpoints for device types
-      // These values should match your application's responsive breakpoints
-      const isMobile = width < 768;
-      const isTablet = width >= 768 && width < 1024;
-      const isDesktop = width >= 1024;
+    const width = window.innerWidth;
+    const height = window.innerHeight;
 
-      // Check if touch is available
-      const touchEnabled = 'ontouchstart' in window || 
-                          navigator.maxTouchPoints > 0 ||
-                          (navigator as any).msMaxTouchPoints > 0;
+    // Check if device is mobile (smaller than 768px)
+    const isMobile = width < 768;
 
-      setState({
-        isMobile,
-        isTablet,
-        isDesktop,
-        orientation: isPortrait ? 'portrait' : 'landscape',
-        touchEnabled
-      });
-    };
+    // Check if device is tablet (between 768px and 1023px)
+    const isTablet = width >= 768 && width <= 1023;
 
-    // Initialize on mount
-    updateDeviceState();
+    // Check if device is desktop (larger than 1024px)
+    const isDesktop = width > 1023;
 
-    // Update when window is resized
-    window.addEventListener('resize', updateDeviceState);
+    // Check orientation
+    const isLandscape = width > height;
+    const isPortrait = !isLandscape;
 
-    // Update on orientation change (mainly for mobile)
-    window.addEventListener('orientationchange', updateDeviceState);
+    // Check if device supports touch
+    const isTouchDevice = 'ontouchstart' in window || 
+                        navigator.maxTouchPoints > 0 || 
+                        (navigator as any).msMaxTouchPoints > 0;
 
-    // Cleanup listeners on unmount
-    return () => {
-      window.removeEventListener('resize', updateDeviceState);
-      window.removeEventListener('orientationchange', updateDeviceState);
-    };
+    setDeviceInfo({
+      isMobile,
+      isTablet,
+      isDesktop,
+      isLandscape,
+      isPortrait,
+      isTouchDevice,
+      screenWidth: width,
+      screenHeight: height,
+    });
   }, []);
 
-  return state;
+  useEffect(() => {
+    // Initial check
+    checkDevice();
+
+    // Set up event listeners for changes
+    window.addEventListener('resize', checkDevice);
+    window.addEventListener('orientationchange', checkDevice);
+
+    // Cleanup event listeners
+    return () => {
+      window.removeEventListener('resize', checkDevice);
+      window.removeEventListener('orientationchange', checkDevice);
+    };
+  }, [checkDevice]);
+
+  return deviceInfo;
 }
 
 /**

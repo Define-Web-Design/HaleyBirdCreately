@@ -59,7 +59,7 @@ localPort = 8425
 externalPort = 3002
 
 [workflows]
-runButton = "Mobile Optimization Suite"
+runButton = "Debug and Optimize"
 
 [[workflows.workflow]]
 name = "Project"
@@ -1984,3 +1984,84 @@ args = "  });"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "\""
+
+[[workflows.workflow]]
+name = "Debug and Optimize"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Kill any running processes first"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pkill -f node || true"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run linting and type checking"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"Running code quality checks...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run lint"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npx tsc --noEmit"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run comprehensive mobile tests"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"Testing mobile responsiveness...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = '''node -e "const { testAppResponsiveness } = require('./client/src/utils/responsive-tester.js'); testAppResponsiveness().then(result => { console.log(JSON.stringify(result.summary, null, 2)); if (!result.success) { console.log('\nRecommendations:'); result.recommendations.slice(0, 5).forEach(rec => console.log('- ' + rec)); } })"'''
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run accessibility audit"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"Running accessibility audit...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node -e \"const { runAccessibilityAudit } = require('./client/src/utils/navigation-tester.js'); runAccessibilityAudit().then(results => console.log('Accessibility Score:', results.score, '/ 100'))\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Start the optimized application"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"Starting application with all optimizations...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "NODE_ENV=development MOBILE_OPTIMIZED=true npm run dev"
