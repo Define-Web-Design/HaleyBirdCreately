@@ -1,18 +1,19 @@
 import { defineConfig } from 'eslint-define-config';
 
 export default defineConfig({
-  root: true,
-  env: {
-    browser: true,
-    es2021: true,
-    node: true,
-  },
+  // Removed "root: true" from here since it's not supported in flat config
   extends: [
     'eslint:recommended',
     'plugin:react/recommended',
     'plugin:react-hooks/recommended',
     'plugin:@typescript-eslint/recommended',
   ],
+  env: {
+    browser: true,
+    node: true,
+    es6: true, // Added es6 for compatibility
+    es2021: true, // Kept from original for broader compatibility
+  },
   parser: '@typescript-eslint/parser',
   parserOptions: {
     ecmaFeatures: {
@@ -32,25 +33,25 @@ export default defineConfig({
     'react/react-in-jsx-scope': 'off', // Not needed with new JSX transform
     'react/prop-types': 'off', // We use TypeScript for prop validation
     'react/jsx-uses-react': 'off',
-    
+
     // TypeScript rules
     '@typescript-eslint/no-explicit-any': 'warn',
-    '@typescript-eslint/no-unused-vars': ['warn', { 
+    '@typescript-eslint/no-unused-vars': ['warn', {
       argsIgnorePattern: '^_',
       varsIgnorePattern: '^_',
     }],
     '@typescript-eslint/explicit-module-boundary-types': 'off',
-    
+
     // General rules
     'no-console': ['warn', { allow: ['warn', 'error'] }],
     'prefer-const': 'warn',
     'no-var': 'error',
     'eqeqeq': ['error', 'always'],
-    
+
     // React Hooks rules
     'react-hooks/rules-of-hooks': 'error',
     'react-hooks/exhaustive-deps': 'warn',
-    
+
     // State update rules (to prevent infinite loops)
     'react/no-direct-mutation-state': 'error',
     'react/no-access-state-in-setstate': 'error',
