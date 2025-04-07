@@ -4,6 +4,7 @@
 @import url('./styles/apple-animations.css');
 @import url('./styles/transitions.css');
 @import url('./styles/touchFeedback.css');
+@import url('./styles/scroll-fix.css');
 
 @tailwind base;
 @tailwind components;

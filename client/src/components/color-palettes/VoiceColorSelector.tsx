@@ -1,277 +1,436 @@
-import React, { useState, useEffect } from 'react';
-import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Mic, Square } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Badge } from '@/components/ui/badge';
+import { Mic, MicOff, Volume2, RefreshCw, Lightbulb } from 'lucide-react';
+import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
+import { useMutation } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 
-// Define a color mapping object for common color names to hex
-const COLOR_MAPPING: Record<string, string> = {
-  red: '#FF0000',
-  orange: '#FFA500',
-  yellow: '#FFFF00',
-  green: '#008000',
-  blue: '#0000FF',
-  purple: '#800080',
-  pink: '#FFC0CB',
-  black: '#000000',
-  white: '#FFFFFF',
-  gray: '#808080',
-  grey: '#808080',
-  brown: '#A52A2A',
-  teal: '#008080',
-  navy: '#000080',
-  lavender: '#E6E6FA',
-  mint: '#98FB98',
-  coral: '#FF7F50',
-  magenta: '#FF00FF',
-  cyan: '#00FFFF',
-  gold: '#FFD700',
-  silver: '#C0C0C0',
-  maroon: '#800000',
-  olive: '#808000',
-  turquoise: '#40E0D0',
-  violet: '#EE82EE',
-  indigo: '#4B0082',
-  crimson: '#DC143C',
-  beige: '#F5F5DC',
-  // Add more color mappings as needed
-};
-
-// Function to extract colors from transcript
-const extractColorsFromText = (text: string): string[] => {
-  // Normalize the text
-  const normalizedText = text.toLowerCase().trim();
-  
-  // Split into words and check for color names
-  const words = normalizedText.split(/\s+/);
-  const foundColors: string[] = [];
-  
-  words.forEach(word => {
-    // Remove any punctuation
-    const cleanWord = word.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "");
-    if (COLOR_MAPPING[cleanWord]) {
-      foundColors.push(COLOR_MAPPING[cleanWord]);
-    }
-  });
-  
-  return foundColors;
-};
-
-interface VoiceColorSelectorProps {
-  onColorSelected: (color: string) => void;
+interface Color {
+  hex: string;
+  name: string;
+  role: string;
 }
 
-const VoiceColorSelector: React.FC<VoiceColorSelectorProps> = ({ onColorSelected }) => {
+interface Palette {
+  colors: Color[];
+  moodName: string;
+  description?: string;
+}
+
+interface VoiceColorSelectorProps {
+  onPaletteGenerated?: (palette: string[]) => void;
+  disabled?: boolean;
+}
+
+const VoiceColorSelector: React.FC<VoiceColorSelectorProps> = ({ 
+  onPaletteGenerated,
+  disabled = false 
+}) => {
   const [isListening, setIsListening] = useState(false);
-  const [detectedColors, setDetectedColors] = useState<string[]>([]);
-  const [listeningProgress, setListeningProgress] = useState(0);
+  const [transcript, setTranscript] = useState('');
+  const [guidance, setGuidance] = useState<string | null>(null);
+  const [accessDenied, setAccessDenied] = useState(false);
+  const [audioLevel, setAudioLevel] = useState(0);
+  const [showTips, setShowTips] = useState(false);
+  const recognitionRef = useRef<any>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
   const { toast } = useToast();
-  
-  const { transcript, resetTranscript, browserSupportsSpeechRecognition } = useSpeechRecognition();
-  
-  // Effect to handle color detection and progress when listening
-  useEffect(() => {
-    let progressInterval: NodeJS.Timeout | undefined;
-    
-    if (isListening) {
-      // Reset progress when starting to listen
-      setListeningProgress(0);
-      
-      // Set up interval to update progress bar
-      progressInterval = setInterval(() => {
-        setListeningProgress(prev => {
-          // Cap at 100
-          const newValue = prev + 2;
-          return newValue > 100 ? 100 : newValue;
+
+  // Mutation for generating AI palette
+  const generatePaletteMutation = useMutation({
+    mutationFn: (data: { mood: string, description?: string }) => 
+      apiRequest({
+        url: '/api/color-palettes/generate', 
+        method: 'POST',
+        data,
+      }),
+    onSuccess: (data: any) => {
+      if (data.palette && data.palette.colors) {
+        const newPalette = data.palette.colors.map((color: Color) => color.hex);
+        
+        // Notify parent component of new palette
+        if (onPaletteGenerated) {
+          onPaletteGenerated(newPalette);
+        }
+        
+        // Display success toast with description
+        toast({
+          title: 'Voice Palette Generated',
+          description: data.palette.description || 'Your voice-inspired palette is ready.',
         });
-      }, 100);
-    } else if (progressInterval) {
-      clearInterval(progressInterval);
-    }
-    
-    return () => {
-      if (progressInterval) clearInterval(progressInterval);
-    };
-  }, [isListening]);
-  
-  // Separate effect to continuously process the transcript for colors
-  useEffect(() => {
-    if (isListening && transcript) {
-      // Process transcript to find colors
-      const colors = extractColorsFromText(transcript);
-      
-      // Only update if we have colors to avoid unnecessary re-renders
-      if (colors.length > 0) {
-        setDetectedColors(colors);
+        
+        // Provide guidance feedback
+        setGuidance(`Created a ${data.palette.moodName} palette based on your description.`);
       }
-    }
-  }, [transcript, isListening]);
-  
-  // Stop listening automatically after 10 seconds
-  useEffect(() => {
-    let timeoutId: NodeJS.Timeout | undefined;
-    
-    if (isListening) {
-      timeoutId = setTimeout(() => {
-        stopListening();
-      }, 10000);
-    }
-    
-    return () => {
-      if (timeoutId) clearTimeout(timeoutId);
-    };
-  }, [isListening]);
-  
-  // Function to start listening
-  const startListening = () => {
-    if (!browserSupportsSpeechRecognition) {
+    },
+    onError: (error) => {
       toast({
-        title: "Speech Recognition Not Supported",
-        description: "Your browser does not support speech recognition.",
-        variant: "destructive"
+        title: 'Generation Failed',
+        description: 'Failed to generate a palette from your voice. Please try again.',
+        variant: 'destructive',
       });
+      setGuidance('Something went wrong. Please try again or be more specific with your description.');
+    }
+  });
+
+  // Set up speech recognition
+  const setupRecognition = useCallback(() => {
+    try {
+      // @ts-ignore - SpeechRecognition is not in the TypeScript types yet
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      
+      if (!SpeechRecognition) {
+        toast({
+          title: 'Browser not supported',
+          description: 'Speech recognition is not supported in your browser.',
+          variant: 'destructive',
+        });
+        return false;
+      }
+      
+      const recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.lang = 'en-US';
+      
+      recognition.onresult = (event: any) => {
+        const current = event.resultIndex;
+        const result = event.results[current];
+        const transcriptValue = result[0].transcript;
+        setTranscript(transcriptValue);
+        
+        // If we're confident and it's final, use this for generating
+        if (result.isFinal && result[0].confidence > 0.7) {
+          stopListening();
+          generatePaletteFromVoice(transcriptValue);
+        }
+      };
+      
+      recognition.onerror = (event: any) => {
+        if (event.error === 'not-allowed') {
+          setAccessDenied(true);
+          toast({
+            title: 'Microphone Access Denied',
+            description: 'Please allow microphone access to use voice features.',
+            variant: 'destructive',
+          });
+        } else {
+          toast({
+            title: 'Recognition Error',
+            description: `Error: ${event.error}`,
+            variant: 'destructive',
+          });
+        }
+        stopListening();
+      };
+      
+      recognition.onend = () => {
+        if (isListening) {
+          // If we're still supposed to be listening but the recognition stopped,
+          // restart it (handles temporary breaks in speech)
+          recognition.start();
+        }
+      };
+      
+      recognitionRef.current = recognition;
+      return true;
+    } catch (error) {
+      console.error('Error setting up speech recognition:', error);
+      toast({
+        title: 'Setup Failed',
+        description: 'Could not initialize speech recognition.',
+        variant: 'destructive',
+      });
+      return false;
+    }
+  }, [isListening, toast]);
+
+  // Start listening for voice input
+  const startListening = useCallback(async () => {
+    if (disabled) return;
+    
+    // Clear previous transcript
+    setTranscript('');
+    setGuidance('I\'m listening... Describe the colors or mood you want.');
+    
+    // Set up recognition if not already done
+    if (!recognitionRef.current && !setupRecognition()) {
       return;
     }
     
-    resetTranscript();
-    setDetectedColors([]);
-    setIsListening(true);
-    SpeechRecognition.startListening({ continuous: true });
-    
-    toast({
-      title: "Listening for colors...",
-      description: "Say color names like 'red', 'blue', or 'purple'.",
-    });
-  };
-  
-  // Function to stop listening
-  const stopListening = () => {
-    SpeechRecognition.stopListening();
-    setIsListening(false);
-    setListeningProgress(100);
-    
-    // If colors were detected, notify the user
-    if (detectedColors.length > 0) {
+    try {
+      // Request microphone access
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaStreamRef.current = stream;
+      
+      // Set up audio visualization
+      if (!audioContextRef.current) {
+        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+      
+      const audioContext = audioContextRef.current;
+      const analyser = audioContext.createAnalyser();
+      analyser.fftSize = 256;
+      analyserRef.current = analyser;
+      
+      const source = audioContext.createMediaStreamSource(stream);
+      source.connect(analyser);
+      
+      // Start visualization
+      visualizeAudio();
+      
+      // Start recognition
+      recognitionRef.current.start();
+      setIsListening(true);
+      
       toast({
-        title: `Detected ${detectedColors.length} color${detectedColors.length === 1 ? '' : 's'}`,
-        description: "Click on a color to select it."
+        title: 'Listening',
+        description: 'Speak clearly to describe the colors or mood you want.',
       });
-    } else {
+    } catch (error) {
+      console.error('Error starting voice recognition:', error);
+      setAccessDenied(true);
       toast({
-        title: "No colors detected",
-        description: "Try again and say color names clearly.",
-        variant: "destructive"
+        title: 'Microphone Access Failed',
+        description: 'Please allow microphone access in your browser settings.',
+        variant: 'destructive',
       });
     }
+  }, [disabled, setupRecognition, toast]);
+
+  // Stop listening for voice input
+  const stopListening = useCallback(() => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+    }
+    
+    // Stop audio visualization
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+    
+    // Clean up media stream
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getTracks().forEach(track => track.stop());
+      mediaStreamRef.current = null;
+    }
+    
+    setIsListening(false);
+    
+    if (!transcript) {
+      setGuidance('Click the microphone button to start describing colors with your voice.');
+    }
+  }, [transcript]);
+
+  // Generate a palette from voice transcript
+  const generatePaletteFromVoice = useCallback((voiceInput: string) => {
+    if (!voiceInput.trim()) {
+      setGuidance('I couldn\'t hear anything. Please try again.');
+      return;
+    }
+    
+    // Provide feedback during processing
+    setGuidance('Creating your palette from voice input...');
+    
+    // Send the voice transcript to the API
+    generatePaletteMutation.mutate({
+      mood: 'CUSTOM', // Default mood
+      description: voiceInput.trim()
+    });
+  }, [generatePaletteMutation]);
+
+  // Visualize audio input levels
+  const visualizeAudio = useCallback(() => {
+    if (!analyserRef.current) return;
+    
+    const analyser = analyserRef.current;
+    const dataArray = new Uint8Array(analyser.frequencyBinCount);
+    
+    const updateAudioLevel = () => {
+      analyser.getByteFrequencyData(dataArray);
+      
+      // Calculate average frequency amplitude
+      let sum = 0;
+      for (let i = 0; i < dataArray.length; i++) {
+        sum += dataArray[i];
+      }
+      const avg = sum / dataArray.length;
+      
+      // Normalize to 0-100 for the progress bar, with some scaling for better visual feedback
+      const scaledLevel = Math.min(100, Math.max(0, avg * 1.5));
+      setAudioLevel(scaledLevel);
+      
+      animationFrameRef.current = requestAnimationFrame(updateAudioLevel);
+    };
+    
+    updateAudioLevel();
+  }, []);
+
+  // Reset when done or on error
+  const handleReset = () => {
+    setTranscript('');
+    setGuidance('Click the microphone button to start describing colors with your voice.');
+    stopListening();
   };
-  
-  // Handler for when a user selects a detected color
-  const handleColorSelect = (color: string) => {
-    onColorSelected(color);
+
+  // Play voice guidance
+  const speakGuidance = () => {
+    if (!guidance) return;
+    
+    // Use browser's speech synthesis
+    const speech = new SpeechSynthesisUtterance(guidance);
+    speech.rate = 1.0;
+    speech.pitch = 1.0;
+    speech.volume = 1.0;
+    
+    window.speechSynthesis.speak(speech);
+    
     toast({
-      title: "Color Selected",
-      description: `Selected color: ${color}`,
+      title: 'Voice Guidance',
+      description: 'Speaking instructions aloud.',
     });
   };
-  
-  // If the browser doesn't support speech recognition
-  if (!browserSupportsSpeechRecognition) {
-    return (
-      <Card>
-        <CardContent className="p-4">
-          <p className="text-destructive">Your browser does not support speech recognition.</p>
-          <p className="text-sm text-muted-foreground mt-2">
-            Try using Chrome, Edge, or Safari for the best experience.
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
-  
+
+  // Toggle tips visibility
+  const toggleTips = () => {
+    setShowTips(!showTips);
+  };
+
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      stopListening();
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+      }
+    };
+  }, [stopListening]);
+
   return (
-    <Card className="mb-4">
-      <CardContent className="p-4">
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-medium">Voice Color Selection</h3>
-            <Button
-              variant={isListening ? "destructive" : "default"}
-              size="sm"
-              onClick={isListening ? stopListening : startListening}
-              className="flex items-center gap-2"
-            >
-              {isListening ? <Square className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-              {isListening ? "Stop" : "Start"}
-            </Button>
+    <Card className="voice-selector-card overflow-hidden">
+      <CardHeader className="bg-primary/5 pb-2">
+        <CardTitle className="flex items-center text-xl">
+          <span>Voice Color Explorer</span>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="ml-auto" 
+            onClick={toggleTips}
+          >
+            <Lightbulb className="h-5 w-5" />
+          </Button>
+        </CardTitle>
+      </CardHeader>
+      
+      <CardContent className="pt-4 space-y-4">
+        {/* Tips section */}
+        {showTips && (
+          <div className="bg-muted p-3 rounded-md text-sm mb-4 animate-fadeIn">
+            <h4 className="font-medium mb-1">Voice Command Tips:</h4>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>Describe the mood: "Create a calming ocean palette"</li>
+              <li>Specify colors: "I want deep purples with gold accents"</li>
+              <li>Reference scenes: "Like a sunset over mountains"</li>
+              <li>Use emotions: "Colors that feel energetic and bold"</li>
+            </ul>
+          </div>
+        )}
+        
+        {/* Voice input visualization */}
+        <div className="relative h-20 bg-muted rounded-lg overflow-hidden border border-border/50">
+          <div 
+            className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ${
+              isListening ? 'opacity-100' : 'opacity-70'
+            }`}
+          >
+            {transcript ? (
+              <p className="text-center p-2 text-sm font-medium">{transcript}</p>
+            ) : (
+              <p className="text-center p-2 text-sm text-muted-foreground">
+                {guidance || 'Click the microphone button to start describing colors with your voice.'}
+              </p>
+            )}
           </div>
           
+          {/* Audio level visualization */}
           {isListening && (
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground animate-pulse">
-                Listening... Say color names like "red" or "blue"
-              </p>
-              <Progress value={listeningProgress} className="h-2" />
-            </div>
-          )}
-          
-          {transcript && (
-            <div className="p-3 bg-secondary/30 rounded-md">
-              <p className="text-sm font-medium">Transcript:</p>
-              <p className="text-sm text-muted-foreground">{transcript}</p>
-            </div>
-          )}
-          
-          {detectedColors.length > 0 && (
-            <div>
-              <p className="text-sm font-medium mb-2">Detected Colors:</p>
-              <div className="flex flex-wrap gap-2">
-                {detectedColors.map((color, index) => (
-                  <Badge
-                    key={`${color}-${index}`}
-                    style={{ backgroundColor: color, color: isLightColor(color) ? '#000' : '#fff' }}
-                    className="cursor-pointer hover:scale-110 transition-transform py-1.5 px-2"
-                    onClick={() => handleColorSelect(color)}
-                  >
-                    {getColorName(color)}
-                  </Badge>
-                ))}
-              </div>
+            <div className="absolute bottom-2 left-2 right-2">
+              <Progress value={audioLevel} max={100} className="h-1.5 w-full" />
             </div>
           )}
         </div>
+        
+        {/* Controls */}
+        <div className="flex justify-center space-x-2">
+          <Button
+            onClick={isListening ? stopListening : startListening}
+            variant={isListening ? "destructive" : "default"}
+            className={`relative flex-1 ${isListening ? 'animate-pulse-slow' : ''}`}
+            disabled={disabled || accessDenied || generatePaletteMutation.isPending}
+          >
+            {isListening ? (
+              <>
+                <MicOff className="mr-2 h-5 w-5" />
+                Stop Listening
+              </>
+            ) : (
+              <>
+                <Mic className="mr-2 h-5 w-5" />
+                Start Voice Input
+              </>
+            )}
+            
+            {/* Visualize recording state */}
+            {isListening && (
+              <span className="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full m-1 animate-pulse-slow" />
+            )}
+          </Button>
+          
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={speakGuidance}
+            disabled={!guidance || isListening}
+            title="Speak guidance aloud"
+          >
+            <Volume2 className="h-5 w-5" />
+          </Button>
+          
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={handleReset}
+            disabled={isListening || (!transcript && !guidance)}
+            title="Reset"
+          >
+            <RefreshCw className="h-5 w-5" />
+          </Button>
+        </div>
+
+        {/* Loading state */}
+        {generatePaletteMutation.isPending && (
+          <div className="text-center py-2">
+            <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-primary border-r-transparent" />
+            <p className="text-sm text-muted-foreground mt-1">Creating your palette...</p>
+          </div>
+        )}
       </CardContent>
+      
+      <CardFooter className="border-t bg-muted/30 justify-between pt-2 pb-2 text-xs text-muted-foreground">
+        <div>Use your voice to create unique color palettes</div>
+        {accessDenied && (
+          <div className="text-destructive">Microphone access required</div>
+        )}
+      </CardFooter>
     </Card>
   );
-};
-
-// Helper function to determine if a color is light (for text contrast)
-const isLightColor = (color: string): boolean => {
-  // Convert hex to RGB
-  const r = parseInt(color.slice(1, 3), 16);
-  const g = parseInt(color.slice(3, 5), 16);
-  const b = parseInt(color.slice(5, 7), 16);
-  
-  // Calculate the perceived brightness
-  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-  
-  // Return true if the color is light
-  return brightness > 125;
-};
-
-// Helper function to get a color name for a hex value
-const getColorName = (hexColor: string): string => {
-  // Find the color name by hex value
-  for (const [name, hex] of Object.entries(COLOR_MAPPING)) {
-    if (hex.toLowerCase() === hexColor.toLowerCase()) {
-      return name.charAt(0).toUpperCase() + name.slice(1);
-    }
-  }
-  
-  // If no match is found, return the hex value
-  return hexColor;
 };
 
 export default VoiceColorSelector;

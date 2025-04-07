@@ -77,21 +77,28 @@ const ColorPaletteGenerator: React.FC = () => {
   // Query preset palettes by mood
   const presetPalettesQuery = useQuery({
     queryKey: ['/api/color-palettes/by-mood', selectedMood],
-    queryFn: () => apiRequest(`/api/color-palettes/by-mood/${selectedMood}`),
+    queryFn: () => apiRequest({
+      url: `/api/color-palettes/by-mood/${selectedMood}`,
+      method: 'GET'
+    }),
     enabled: activeTab === 'preset',
   });
 
   // Query saved palettes
   const savedPalettesQuery = useQuery({
     queryKey: ['/api/color-palettes'],
-    queryFn: () => apiRequest('/api/color-palettes'),
+    queryFn: () => apiRequest({
+      url: '/api/color-palettes',
+      method: 'GET'
+    }),
     enabled: activeTab === 'saved',
   });
 
   // Mutation for generating AI palette
   const generatePaletteMutation = useMutation({
     mutationFn: (data: { mood: string, description?: string }) => 
-      apiRequest('/api/color-palettes/generate', {
+      apiRequest({
+        url: '/api/color-palettes/generate',
         method: 'POST',
         data
       }),
@@ -116,7 +123,8 @@ const ColorPaletteGenerator: React.FC = () => {
   // Mutation for saving palette
   const savePaletteMutation = useMutation({
     mutationFn: (data: { name: string, mood: string, colors: string[], tags: string[] }) => 
-      apiRequest('/api/color-palettes', {
+      apiRequest({
+        url: '/api/color-palettes',
         method: 'POST',
         data
       }),

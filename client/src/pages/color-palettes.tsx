@@ -1,707 +1,246 @@
-import React, { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
-import { useTheme } from '@/lib/hooks/use-theme';
-import { useLocation } from 'wouter';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { Heart, Edit, Download, Plus, Sparkles, PanelLeftOpen, Palette, Sliders } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Progress } from '@/components/ui/progress';
-import PaletteGenerator from '@/components/color-palettes/PaletteGenerator';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import ColorPaletteGenerator from '@/components/color/ColorPaletteGenerator';
 import VoiceColorSelector from '@/components/color-palettes/VoiceColorSelector';
-import ColorTheoryTutorial from '@/components/color-palettes/ColorTheoryTutorial';
 import AdaptiveThemeGenerator from '@/components/color-palettes/AdaptiveThemeGenerator';
-import SocialMediaSharing from '@/components/color-palettes/SocialMediaSharing';
-import { MoodLoadingGroup } from '@/components/ui/mood-loading';
+import { Info, HelpCircle, Palette, Mic, Zap } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
+import { useTheme } from '@/lib/ThemeContext';
+import { useSwipe } from '@/lib/useGestures';
 
-// Define the ColorPalette type
-interface ColorPalette {
-  id: number;
-  userId: number;
-  name: string;
-  mood: string;
-  colors: string[];
-  tags: string[];
-  isFavorite: boolean;
-  usageCount: number;
-  createdAt: string;
-  updatedAt: string;
-}
+const ColorPalettesPage: React.FC = () => {
+  const [selectedTab, setSelectedTab] = useState<string>('standard');
+  const [voiceGeneratedPalette, setVoiceGeneratedPalette] = useState<string[]>([]);
+  const { updateThemeColor } = useTheme();
 
-// Define interface for new palette creation
-interface NewPalette {
-  name: string;
-  mood: string;
-  colors: string[];
-  tags: string[];
-  isFavorite: boolean;
-}
-
-// Mock moods for the mood selector
-const MOODS = [
-  { value: 'happy', label: 'Happy', color: '#FFD166' },
-  { value: 'calm', label: 'Calm', color: '#457B9D' },
-  { value: 'energetic', label: 'Energetic', color: '#EF476F' },
-  { value: 'melancholic', label: 'Melancholic', color: '#2B2D42' },
-  { value: 'professional', label: 'Professional', color: '#194B7E' },
-  { value: 'playful', label: 'Playful', color: '#06D6A0' },
-  { value: 'romantic', label: 'Romantic', color: '#D90429' },
-  { value: 'serious', label: 'Serious', color: '#1D3557' },
-];
-
-const ColorPalettesPage = (props: { params?: { section?: string } }) => {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [location] = useLocation();
-
-  // Set activeTab based on URL path
-  const determineActiveTab = () => {
-    if (location.includes('/recent')) return 'recent';
-    if (location.includes('/categories')) return 'categories';
-    if (location.includes('/favorites')) return 'favorites';
-    return 'all';
-  };
-
-  const [activeTab, setActiveTab] = useState(determineActiveTab());
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [selectedColor, setSelectedColor] = useState<string>('#FFD166');
-  const [showAdvancedTools, setShowAdvancedTools] = useState(false);
-  const [newPalette, setNewPalette] = useState<NewPalette>({
-    name: '',
-    mood: 'happy',
-    colors: ['#FFD166', '#06D6A0', '#118AB2', '#EF476F', '#073B4C'],
-    tags: [],
-    isFavorite: false
-  });
-  const [currentTag, setCurrentTag] = useState('');
-
-  // Update active tab when location changes
-  useEffect(() => {
-    setActiveTab(determineActiveTab());
-  }, [location]);
-
-  // Get theme management functions
-  const { setActivePalette, resetPalette, activePalette } = useTheme();
-
-  // Query to fetch color palettes
-  const { data: colorPalettes, isLoading } = useQuery({
-    queryKey: ['/api/color-palettes'],
-    // The default getQueryFn will be used automatically
-  });
-
-  // Mutation to create a new color palette
-  const createPaletteMutation = useMutation({
-    mutationFn: (palette: Omit<ColorPalette, 'id' | 'userId' | 'usageCount' | 'createdAt' | 'updatedAt'>) =>
-      apiRequest({
-        method: 'POST',
-        url: '/api/color-palettes',
-        data: palette
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/color-palettes'] });
-      setIsCreateDialogOpen(false);
-      toast({
-        title: 'Success',
-        description: 'Color palette created successfully',
-      });
-      resetNewPaletteForm();
+  const { swipeHandlers } = useSwipe({
+    onSwipeLeft: () => {
+      if (selectedTab === 'standard') setSelectedTab('voice');
+      else if (selectedTab === 'voice') setSelectedTab('adaptive');
     },
-    onError: (error) => {
-      toast({
-        title: 'Error',
-        description: 'Failed to create color palette',
-        variant: 'destructive',
-      });
+    onSwipeRight: () => {
+      if (selectedTab === 'adaptive') setSelectedTab('voice');
+      else if (selectedTab === 'voice') setSelectedTab('standard');
     }
   });
 
-  // Mutation to toggle favorite status
-  const toggleFavoriteMutation = useMutation({
-    mutationFn: ({ id, isFavorite }: { id: number, isFavorite: boolean }) =>
-      apiRequest({
-        method: 'PUT',
-        url: `/api/color-palettes/${id}`,
-        data: { isFavorite }
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/color-palettes'] });
-    }
-  });
-
-  // Mutation to increment usage count
-  const incrementUsageMutation = useMutation({
-    mutationFn: (id: number) =>
-      apiRequest({
-        method: 'POST',
-        url: `/api/color-palettes/${id}/increment-usage`
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/color-palettes'] });
-    }
-  });
-
-  // Helper function to reset the new palette form
-  const resetNewPaletteForm = () => {
-    setNewPalette({
-      name: '',
-      mood: 'happy',
-      colors: ['#FFD166', '#06D6A0', '#118AB2', '#EF476F', '#073B4C'],
-      tags: [],
-      isFavorite: false
-    });
-  };
-
-  // Helper function to add a tag to the new palette
-  const addTag = () => {
-    if (currentTag && !newPalette.tags.includes(currentTag)) {
-      setNewPalette({
-        ...newPalette,
-        tags: [...newPalette.tags, currentTag]
-      });
-      setCurrentTag('');
-    }
-  };
-
-  // Helper function to remove a tag from the new palette
-  const removeTag = (tagToRemove: string) => {
-    setNewPalette({
-      ...newPalette,
-      tags: newPalette.tags.filter(tag => tag !== tagToRemove)
-    });
-  };
-
-  // Helper function to handle color input change
-  const handleColorChange = (index: number, color: string) => {
-    const newColors = [...newPalette.colors];
-    newColors[index] = color;
-    setNewPalette({
-      ...newPalette,
-      colors: newColors
-    });
-  };
-
-  // Helper function to copy a color to clipboard
-  const copyColorToClipboard = (color: string) => {
-    navigator.clipboard.writeText(color);
-    toast({
-      title: 'Color Copied',
-      description: `${color} copied to clipboard`,
-    });
-  };
-
-  // Helper function to apply a palette to the application theme
-  const applyPaletteToTheme = (palette: ColorPalette) => {
-    if (palette.colors.length > 0) {
-      setActivePalette({
-        primary: palette.colors[0],
-        accent: palette.colors.length > 1 ? palette.colors[1] : undefined,
-        background: palette.colors.length > 2 ? palette.colors[2] : undefined,
-      });
-
+  // Handle palette from voice
+  const handleVoicePaletteGenerated = (palette: string[]) => {
+    if (palette && palette.length > 0) {
+      setVoiceGeneratedPalette(palette);
       toast({
-        title: 'Palette Applied',
-        description: `${palette.name} applied to application theme`,
+        title: "New Voice Palette",
+        description: "Your voice-generated palette is ready to use.",
       });
-
-      // Increment usage count
-      incrementUsageMutation.mutate(palette.id);
     }
   };
 
-  // Helper function to reset the application theme
-  const resetApplicationTheme = () => {
-    resetPalette();
-    toast({
-      title: 'Theme Reset',
-      description: 'Application theme has been reset to default',
-    });
-  };
-
-  // Helper function to filter palettes based on active tab
-  const getFilteredPalettes = () => {
-    if (!colorPalettes || !Array.isArray(colorPalettes)) return [];
-
-    switch (activeTab) {
-      case 'favorites':
-        return colorPalettes.filter((palette: ColorPalette) => palette.isFavorite);
-      case 'recent':
-        // Sort by date and get the most recent palettes
-        return [...colorPalettes].sort((a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        ).slice(0, 12);
-      case 'categories':
-        // Get URL parameters for potential mood filter
-        const urlParams = new URLSearchParams(window.location.search);
-        const moodFilter = urlParams.get('mood');
-
-        if (moodFilter && MOODS.some(m => m.value === moodFilter)) {
-          return colorPalettes.filter((palette: ColorPalette) => palette.mood === moodFilter);
-        }
-
-        // If no specific mood filter, group by mood for the categories page
-        // We'll just return all here but in a real app you might want to organize differently
-        return colorPalettes;
-      case 'happy':
-      case 'calm':
-      case 'energetic':
-      case 'melancholic':
-      case 'professional':
-      case 'playful':
-      case 'romantic':
-      case 'serious':
-        return colorPalettes.filter((palette: ColorPalette) => palette.mood === activeTab);
-      default:
-        return colorPalettes;
-    }
-  };
-
-  // Helper function to download palette as JSON
-  const downloadPalette = (palette: ColorPalette) => {
-    const dataStr = `data:text/json;charset=utf-8,${encodeURIComponent(
-      JSON.stringify(palette, null, 2)
-    )}`;
-    const downloadAnchorNode = document.createElement('a');
-    downloadAnchorNode.setAttribute('href', dataStr);
-    downloadAnchorNode.setAttribute('download', `${palette.name.replace(/\s+/g, '-').toLowerCase()}.json`);
-    document.body.appendChild(downloadAnchorNode);
-    downloadAnchorNode.click();
-    downloadAnchorNode.remove();
-
-    // Increment usage count
-    incrementUsageMutation.mutate(palette.id);
-  };
-
-  // Handle form submission for creating a new palette
-  const handleCreatePalette = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newPalette.name || !newPalette.mood || newPalette.colors.length === 0) {
+  // Apply voice-generated palette to theme
+  const applyVoicePaletteToTheme = () => {
+    if (voiceGeneratedPalette && voiceGeneratedPalette.length > 0) {
+      updateThemeColor(voiceGeneratedPalette[0]); // Use primary color
       toast({
-        title: 'Error',
-        description: 'Please fill out all required fields',
-        variant: 'destructive',
+        title: "Theme Updated",
+        description: "Voice palette applied to app theme.",
       });
-      return;
     }
-
-    createPaletteMutation.mutate(newPalette);
   };
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Color Palettes</h1>
-          <p className="text-muted-foreground">
-            Create and manage mood-based color palettes for your creative projects
-          </p>
-        </div>
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              New Palette
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
-            <form onSubmit={handleCreatePalette}>
-              <DialogHeader>
-                <DialogTitle>Create New Color Palette</DialogTitle>
-                <DialogDescription>
-                  Design a new color palette based on your mood or project needs
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="name" className="text-right">
-                    Name
-                  </Label>
-                  <Input
-                    id="name"
-                    placeholder="My Awesome Palette"
-                    className="col-span-3"
-                    value={newPalette.name}
-                    onChange={(e) => setNewPalette({ ...newPalette, name: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="mood" className="text-right">
-                    Mood
-                  </Label>
-                  <Select
-                    value={newPalette.mood}
-                    onValueChange={(value) => setNewPalette({ ...newPalette, mood: value })}
-                  >
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Select a mood" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {MOODS.map((mood) => (
-                        <SelectItem key={mood.value} value={mood.value}>
-                          <div className="flex items-center">
-                            <div
-                              className="w-3 h-3 rounded-full mr-2"
-                              style={{ backgroundColor: mood.color }}
-                            />
-                            {mood.label}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label className="text-right">Colors</Label>
-                  <div className="col-span-3">
-                    <div className="flex flex-wrap gap-2 mb-2">
-                      {newPalette.colors.map((color, index) => (
-                        <div key={index} className="relative">
-                          <input
-                            type="color"
-                            value={color}
-                            onChange={(e) => handleColorChange(index, e.target.value)}
-                            className="h-10 w-10 cursor-pointer rounded-md border p-0"
-                          />
-                        </div>
-                      ))}
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      Use voice color selection to add colors from speech, or pick them manually.
-                    </div>
-                  </div>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="tags" className="text-right">
-                    Tags
-                  </Label>
-                  <div className="col-span-3">
-                    <div className="flex space-x-2">
-                      <Input
-                        id="tags"
-                        placeholder="Add a tag"
-                        value={currentTag}
-                        onChange={(e) => setCurrentTag(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
-                      />
-                      <Button type="button" onClick={addTag} variant="outline">
-                        Add
-                      </Button>
-                    </div>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {newPalette.tags.map((tag: string) => (
-                        <Badge key={tag} variant="secondary" className="px-2 py-1">
-                          {tag}
-                          <button
-                            type="button"
-                            className="ml-1"
-                            onClick={() => removeTag(tag)}
-                          >
-                            ×
-                          </button>
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="favorite" className="text-right">
-                    Favorite
-                  </Label>
-                  <div className="col-span-3 flex items-center">
-                    <input
-                      type="checkbox"
-                      id="favorite"
-                      checked={newPalette.isFavorite}
-                      onChange={(e) => setNewPalette({ ...newPalette, isFavorite: e.target.checked })}
-                      className="h-4 w-4 rounded border-gray-300"
-                    />
-                    <Label htmlFor="favorite" className="ml-2">
-                      Add to favorites
-                    </Label>
-                  </div>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={createPaletteMutation.isPending}>
-                  {createPaletteMutation.isPending ? 'Creating...' : 'Create Palette'}
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
+    <div className="container mx-auto px-4 py-6 max-w-6xl space-y-6" {...swipeHandlers}>
+      <header className="mb-6">
+        <h1 className="text-3xl font-bold mb-2">Color Palette Tools</h1>
+        <p className="text-muted-foreground">
+          Create, explore, and apply color palettes to enhance your creative projects
+        </p>
+      </header>
 
-      {/* Active Palette Indicator */}
-      {activePalette.isPaletteActive && (
-        <div className="bg-secondary/40 rounded-lg p-4 flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <div
-              className="w-6 h-6 rounded-full border shadow-sm"
-              style={{ backgroundColor: activePalette.primary }}
-            />
-            <div>
-              <h3 className="text-sm font-medium">Active Theme Palette</h3>
-              <p className="text-xs text-muted-foreground">Colors from your palette are being applied to the app theme</p>
-            </div>
-          </div>
-          <Button variant="outline" size="sm" onClick={resetApplicationTheme}>
-            Reset Theme
-          </Button>
-        </div>
-      )}
-
-      {/* Advanced Color Tools Toggle */}
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Color Palettes</h2>
-        <Button
-          variant="outline"
-          onClick={() => setShowAdvancedTools(!showAdvancedTools)}
-          className="flex items-center gap-2"
-        >
-          <Sliders className="h-4 w-4" />
-          {showAdvancedTools ? "Hide Tools" : "Show Advanced Tools"}
-        </Button>
-      </div>
-
-      {/* Advanced Color Tools */}
-      {showAdvancedTools && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <div className="space-y-4">
-            <VoiceColorSelector
-              onColorSelected={(color) => {
-                setSelectedColor(color);
-
-                // Add the color to the new palette if creating one
-                if (isCreateDialogOpen && newPalette.colors.length < 8) {
-                  // Replace the last color with the new one or add it if there's room
-                  const newColors = [...newPalette.colors];
-                  if (newColors.length < 8) {
-                    newColors.push(color);
-                  } else {
-                    newColors[newColors.length - 1] = color;
-                  }
-
-                  setNewPalette({
-                    ...newPalette,
-                    colors: newColors
-                  });
-                }
-
-                toast({
-                  title: "Color Selected",
-                  description: `Selected ${color} using voice recognition!`,
-                });
-
-                // If dialog isn't open, let's apply it to the theme directly
-                if (!isCreateDialogOpen) {
-                  setActivePalette({
-                    primary: color,
-                    accent: undefined,
-                    background: undefined,
-                  });
-                }
-              }}
-            />
-
-            <ColorTheoryTutorial />
-
-            {/* Mood Animations preview */}
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg">Mood Animations</CardTitle>
-                <CardDescription>Visualize your moods with playful animations</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <MoodLoadingGroup moods={['happy', 'calm', 'energetic', 'melancholic']} className="flex justify-center gap-4 py-4" />
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="space-y-4">
-            <AdaptiveThemeGenerator
-              onThemeGenerated={(theme) => {
-                setActivePalette({
-                  primary: theme.primary,
-                  accent: theme.secondary,
-                  background: theme.background,
-                });
-                toast({
-                  title: "Theme Applied",
-                  description: "Generated theme has been applied to the application",
-                });
-              }}
-            />
-
-            <SocialMediaSharing
-              paletteName="My Creative Palette"
-              paletteColors={newPalette.colors}
-            />
-          </div>
-        </div>
-      )}
-
-      <Tabs
-        value={activeTab}
-        onValueChange={(value) => {
-          setActiveTab(value);
-          // Update URL based on selected tab
-          let newPath = '/color-palettes';
-          if (value === 'all') {
-            newPath = '/color-palettes';
-          } else if (['recent', 'categories', 'favorites'].includes(value)) {
-            newPath = `/color-palettes/${value}`;
-          } else {
-            newPath = `/color-palettes/categories?mood=${value}`;
-          }
-
-          // Navigate to the new path using wouter
-          window.history.pushState(null, '', newPath);
-        }}
-        className="w-full"
-      >
-        <TabsList className="w-full justify-start">
-          <TabsTrigger value="all">All Palettes</TabsTrigger>
-          <TabsTrigger value="recent">Recent</TabsTrigger>
-          <TabsTrigger value="categories">Categories</TabsTrigger>
-          <TabsTrigger value="favorites">Favorites</TabsTrigger>
-          <Separator orientation="vertical" className="mx-2 h-5" />
-          {MOODS.slice(0, 5).map((mood) => (
-            <TabsTrigger key={mood.value} value={mood.value}>
-              {mood.label}
-            </TabsTrigger>
-          ))}
+      <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
+        {/* Tab Buttons */}
+        <TabsList className="grid grid-cols-3 mb-4">
+          <TabsTrigger value="standard" className="flex items-center gap-2">
+            <Palette className="h-4 w-4" />
+            <span className="hidden sm:inline">Standard</span>
+          </TabsTrigger>
+          <TabsTrigger value="voice" className="flex items-center gap-2">
+            <Mic className="h-4 w-4" />
+            <span className="hidden sm:inline">Voice</span>
+          </TabsTrigger>
+          <TabsTrigger value="adaptive" className="flex items-center gap-2">
+            <Zap className="h-4 w-4" />
+            <span className="hidden sm:inline">Adaptive</span>
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value={activeTab} className="mt-6">
-          {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[1, 2, 3, 4, 5, 6].map((i) => (
-                <Card key={i} className="w-full opacity-60 animate-pulse">
-                  <CardHeader className="h-24 bg-muted rounded-t-lg" />
-                  <CardContent className="p-4">
-                    <div className="h-4 w-3/4 bg-muted rounded mb-2" />
-                    <div className="h-3 w-1/2 bg-muted rounded" />
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 sm:gap-6"> {/* Added responsiveness */}
-              {getFilteredPalettes().length > 0 ? (
-                getFilteredPalettes().map((palette) => (
-                  <Card key={palette.id} className="w-full overflow-hidden transition-all hover:shadow-md">
-                    <div className="flex h-16">
-                      {palette.colors.map((color: string, index: number) => (
+        {/* Standard Color Palette Generator Tab */}
+        <TabsContent value="standard" className="space-y-6 animate-fadeIn">
+          <ColorPaletteGenerator />
+        </TabsContent>
+
+        {/* Voice Color Explorer Tab */}
+        <TabsContent value="voice" className="space-y-6 animate-fadeIn">
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+            <div className="lg:col-span-2">
+              <VoiceColorSelector onPaletteGenerated={handleVoicePaletteGenerated} />
+              
+              {/* Voice-generated palette display */}
+              {voiceGeneratedPalette.length > 0 && (
+                <Card className="mt-4">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg">Your Voice Palette</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex rounded-md overflow-hidden mb-3">
+                      {voiceGeneratedPalette.map((color, index) => (
                         <div
                           key={index}
-                          className="h-full flex-1 cursor-pointer hover:scale-105 transition-transform"
+                          className="h-16 w-full cursor-pointer relative group"
                           style={{ backgroundColor: color }}
-                          onClick={() => copyColorToClipboard(color)}
-                          title={`Copy ${color}`}
-                        />
+                          onClick={() => {
+                            navigator.clipboard.writeText(color);
+                            toast({
+                              title: "Color Copied",
+                              description: `${color} copied to clipboard`,
+                            });
+                          }}
+                        >
+                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/20">
+                            <span className="text-white text-xs font-mono">{color}</span>
+                          </div>
+                        </div>
                       ))}
                     </div>
-                    <CardHeader className="pb-2">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <CardTitle>{palette.name}</CardTitle>
-                          <CardDescription>
-                            {new Date(palette.createdAt).toLocaleDateString()}
-                          </CardDescription>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => toggleFavoriteMutation.mutate({
-                            id: palette.id,
-                            isFavorite: !palette.isFavorite
-                          })}
-                        >
-                          <Heart
-                            className={cn(
-                              "h-5 w-5",
-                              palette.isFavorite ? "fill-red-500 text-red-500" : "text-gray-400"
-                            )}
-                          />
-                        </Button>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      <div className="flex flex-wrap gap-1 mb-3">
-                        <Badge variant="outline">{palette.mood}</Badge>
-                        {palette.tags.slice(0, 3).map((tag: string) => (
-                          <Badge key={tag} variant="secondary" className="text-xs">
-                            {tag}
-                          </Badge>
-                        ))}
-                        {palette.tags.length > 3 && (
-                          <Badge variant="secondary" className="text-xs">
-                            +{palette.tags.length - 3}
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="flex justify-between items-center mt-2">
-                        <Badge variant="outline" className="text-xs apple-press">
-                          Used {palette.usageCount} {palette.usageCount === 1 ? 'time' : 'times'}
-                        </Badge>
-                        <div className="flex space-x-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => applyPaletteToTheme(palette)}
-                            title="Apply to theme"
-                            className="apple-press apple-focus-ring"
-                          >
-                            <Palette className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => downloadPalette(palette)}
-                            title="Download palette"
-                            className="apple-press apple-focus-ring"
-                          >
-                            <Download className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            title="Edit palette"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
-              ) : (
-                <div className="col-span-full text-center py-12">
-                  <p className="text-gray-500 dark:text-gray-400 mb-4">
-                    No color palettes found. Create your first palette to get started.
-                  </p>
-                  <Button onClick={() => setIsCreateDialogOpen(true)}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Create New Palette
-                  </Button>
-                </div>
+                    <Button 
+                      onClick={applyVoicePaletteToTheme}
+                      className="w-full"
+                    >
+                      Apply to Theme
+                    </Button>
+                  </CardContent>
+                </Card>
               )}
             </div>
-          )}
+            
+            <div className="lg:col-span-3">
+              <Card>
+                <CardHeader>
+                  <CardTitle>How Voice Color Works</CardTitle>
+                  <CardDescription>
+                    Create unique color palettes by simply describing what you want
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <Accordion type="single" collapsible className="w-full">
+                    <AccordionItem value="usage">
+                      <AccordionTrigger>How to use voice commands</AccordionTrigger>
+                      <AccordionContent className="space-y-2">
+                        <p>Click "Start Voice Input" and speak clearly to describe the colors or mood you want.</p>
+                        <p>You can:</p>
+                        <ul className="list-disc pl-6 space-y-1">
+                          <li>Describe emotional states: "I want a calming palette"</li>
+                          <li>Reference natural elements: "Colors like a tropical sunset"</li>
+                          <li>Specify color combinations: "Deep blues with gold accents"</li>
+                          <li>Describe feelings: "Something that feels energetic and bold"</li>
+                        </ul>
+                        <p className="text-sm text-muted-foreground mt-2">The AI will interpret your description and generate a suitable color palette.</p>
+                      </AccordionContent>
+                    </AccordionItem>
+                    
+                    <AccordionItem value="tips">
+                      <AccordionTrigger>Tips for better results</AccordionTrigger>
+                      <AccordionContent>
+                        <ul className="list-disc pl-6 space-y-1">
+                          <li>Speak clearly and at a moderate pace</li>
+                          <li>Be specific about color relationships (contrast, harmony)</li>
+                          <li>Try referencing familiar scenes or objects</li>
+                          <li>Describe the feeling you want the colors to evoke</li>
+                          <li>Mention color temperature (warm/cool)</li>
+                          <li>Specify if you need light or dark shades</li>
+                        </ul>
+                      </AccordionContent>
+                    </AccordionItem>
+                    
+                    <AccordionItem value="examples">
+                      <AccordionTrigger>Example voice commands</AccordionTrigger>
+                      <AccordionContent>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div className="border rounded-md p-2 bg-muted/30">
+                            "Create a palette inspired by a forest at dusk"
+                          </div>
+                          <div className="border rounded-md p-2 bg-muted/30">
+                            "I need vibrant, energetic colors for a sports app"
+                          </div>
+                          <div className="border rounded-md p-2 bg-muted/30">
+                            "Make a soothing palette with pastel blues and greens"
+                          </div>
+                          <div className="border rounded-md p-2 bg-muted/30">
+                            "Generate colors that feel luxurious and elegant"
+                          </div>
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                    
+                    <AccordionItem value="troubleshooting">
+                      <AccordionTrigger>Troubleshooting</AccordionTrigger>
+                      <AccordionContent>
+                        <div className="space-y-2">
+                          <h4 className="font-medium">If the microphone doesn't work:</h4>
+                          <ul className="list-disc pl-6 space-y-1">
+                            <li>Ensure you've granted microphone permissions in your browser</li>
+                            <li>Try refreshing the page</li>
+                            <li>Check if your microphone is working in other applications</li>
+                            <li>Try using Chrome or Edge for best compatibility</li>
+                          </ul>
+                          
+                          <h4 className="font-medium mt-3">If results aren't what you expected:</h4>
+                          <ul className="list-disc pl-6 space-y-1">
+                            <li>Try being more specific in your description</li>
+                            <li>Mention specific colors you want included</li>
+                            <li>Specify the purpose of the palette</li>
+                          </ul>
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </TabsContent>
+
+        {/* Adaptive Theme Generator Tab */}
+        <TabsContent value="adaptive" className="space-y-6 animate-fadeIn">
+          <AdaptiveThemeGenerator />
         </TabsContent>
       </Tabs>
+
+      {/* Info Card */}
+      <Card className="border-dashed border-primary/30 bg-muted/30">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center text-lg">
+            <Info className="h-5 w-5 mr-2 text-primary" />
+            Did you know?
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p>
+            Colors evoke emotions and can significantly impact how users perceive and interact with your content.
+            Our AI-powered tools help you create palettes that align with your intended emotional tone.
+          </p>
+        </CardContent>
+        <CardFooter className="text-sm text-muted-foreground pt-0">
+          <HelpCircle className="h-4 w-4 mr-1" />
+          Swipe left/right on mobile to navigate between tools
+        </CardFooter>
+      </Card>
     </div>
   );
 };
