@@ -42,18 +42,39 @@ declare global {
  */
 export const authenticate = (options?: { bypassAuth?: boolean }) => {
   return async (req: Request, res: Response, next: NextFunction) => {
-    // Only bypass auth if explicitly configured (removed automatic development mode bypass)
-    const bypassAuth = options?.bypassAuth || process.env.BYPASS_AUTH === 'true';
+    // Only bypass auth if explicitly configured or development mode is active
+    const bypassAuth = options?.bypassAuth || process.env.BYPASS_AUTH === 'true' || process.env.NODE_ENV !== 'production';
     
     if (bypassAuth) {
       console.log('Authentication bypassed due to explicit configuration');
+      
+      // Check if the request has a dev-mock-token in the authorization header
+      const authHeader = req.headers.authorization;
+      const isDevelopmentToken = authHeader && authHeader.includes('dev-mock-token');
+      
       // Set mock user for testing
       req.user = {
         id: 1,
         email: 'dev@example.com',
         username: 'devuser',
+        displayName: 'Development User',
         role: 'admin'
       };
+      
+      // For the /api/auth/me endpoint specifically, return more detailed user object
+      if (req.path === '/me' && isDevelopmentToken) {
+        res.json({
+          id: 1,
+          email: 'dev@example.com',
+          username: 'devuser',
+          displayName: 'Development User', 
+          role: 'admin',
+          avatar: null,
+          createdAt: new Date().toISOString()
+        });
+        return; // Stop execution here
+      }
+      
       return next();
     }
     

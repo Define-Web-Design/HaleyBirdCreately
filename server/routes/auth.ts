@@ -270,6 +270,16 @@ router.get('/me', authenticate(), async (req: AuthenticatedRequest, res) => {
       return res.status(401).json({ error: 'Authentication required' });
     }
 
+    // Check if request has a development token (this is already handled in the auth middleware)
+    const authHeader = req.headers.authorization;
+    const isDevelopmentToken = authHeader && authHeader.includes('dev-mock-token');
+    
+    // For development tokens, we've already responded in the middleware
+    if (isDevelopmentToken) {
+      // The response was already sent in the middleware
+      return;
+    }
+
     // Get fresh reference to storage service
     let currentStorage;
     try {
