@@ -1,49 +1,78 @@
+
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useLocation } from 'wouter';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface PageTransitionProps {
   children: React.ReactNode;
+  location?: string;
+  transitionKey?: string;
   className?: string;
+  duration?: number;
+  disabled?: boolean;
 }
 
-export function PageTransition({ children, className = '' }: PageTransitionProps) {
-  const [location] = useLocation();
-  const [key, setKey] = useState(location);
-  const isMobile = useIsMobile();
-
-  // Update key when location changes to trigger animation
+export function PageTransition({
+  children,
+  location,
+  transitionKey,
+  className = '',
+  duration = 0.3,
+  disabled = false
+}: PageTransitionProps) {
+  const [isFirstRender, setIsFirstRender] = useState(true);
+  const { isMobile } = useIsMobile();
+  
+  // Skip animation on first render for better initial load performance
   useEffect(() => {
-    // Short delay to ensure any in-progress state changes are completed
-    const timer = setTimeout(() => {
-      setKey(location);
-    }, 10);
-    return () => clearTimeout(timer);
-  }, [location]);
-
-  // Mobile-optimized slide transition
-  const variants = isMobile ? {
-    initial: { opacity: 0, x: 10 },
-    animate: { opacity: 1, x: 0 },
-    exit: { opacity: 0, x: -10 }
-  } : {
-    // Desktop fade transition
-    initial: { opacity: 0 },
-    animate: { opacity: 1 },
-    exit: { opacity: 0 }
+    if (isFirstRender) {
+      const timer = setTimeout(() => {
+        setIsFirstRender(false);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [isFirstRender]);
+  
+  // Choose appropriate animation based on device type
+  const getAnimationVariants = () => {
+    // Skip animations if disabled or on first render
+    if (disabled || isFirstRender) {
+      return {
+        initial: { opacity: 1 },
+        animate: { opacity: 1 },
+        exit: { opacity: 1 }
+      };
+    }
+    
+    // Mobile-specific slide animations
+    if (isMobile) {
+      return {
+        initial: { opacity: 0, x: 20 },
+        animate: { opacity: 1, x: 0 },
+        exit: { opacity: 0, x: -20 }
+      };
+    }
+    
+    // Desktop fade animations
+    return {
+      initial: { opacity: 0 },
+      animate: { opacity: 1 },
+      exit: { opacity: 0 }
+    };
   };
+  
+  const variants = getAnimationVariants();
 
   return (
     <AnimatePresence mode="wait">
       <motion.div
-        key={key}
+        key={transitionKey || location}
         initial="initial"
         animate="animate"
         exit="exit"
         variants={variants}
-        transition={{ duration: 0.2 }}
-        className={className}
+        transition={{ duration, ease: "easeInOut" }}
+        className={`page-transition ${className}`}
       >
         {children}
       </motion.div>

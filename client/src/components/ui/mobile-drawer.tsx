@@ -1,108 +1,110 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useTouchSwipe } from '@/hooks/use-touch-swipe';
+
+import React, { useState, useEffect } from 'react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Button } from '@/components/ui/button';
+import { X, Menu } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { cn } from '@/lib/utils';
+import { useTouchSwipe } from '@/hooks/use-touch-swipe';
+import { hapticFeedback } from '@/lib/touchFeedback';
 
 interface MobileDrawerProps {
+  title?: string;
   children: React.ReactNode;
-  position?: 'left' | 'right';
+  position?: 'left' | 'right' | 'top' | 'bottom';
+  showCloseButton?: boolean;
+  isDismissible?: boolean;
+  isOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
   className?: string;
-  isOpen: boolean;
-  onClose: () => void;
-  overlayClassName?: string;
 }
 
 export function MobileDrawer({
+  title = 'Menu',
   children,
   position = 'left',
-  className,
+  showCloseButton = true,
+  isDismissible = true,
   isOpen,
-  onClose,
-  overlayClassName,
+  onOpenChange,
+  className = '',
 }: MobileDrawerProps) {
-  const drawerRef = useRef<HTMLDivElement>(null);
-  const isMobile = useIsMobile();
-  const [isAnimating, setIsAnimating] = useState(false);
-
-  // Get swipe direction based on drawer position
-  const swipeHandler = position === 'left' 
-    ? { onSwipeLeft: onClose } 
-    : { onSwipeRight: onClose };
-
-  // Use our touch swipe hook
-  const { swiping } = useTouchSwipe({
-    element: drawerRef,
-    ...swipeHandler,
-    threshold: 40,
-    preventDefaultTouchmove: false // Don't prevent default to allow scrolling inside the drawer
-  });
-
-  // Handle escape key
+  const [open, setOpen] = useState(isOpen || false);
+  const { isMobile } = useIsMobile();
+  
+  // Update internal state when external state changes
   useEffect(() => {
-    const handleEscapeKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
-        onClose();
-      }
-    };
-
-    document.addEventListener('keydown', handleEscapeKey);
-    return () => {
-      document.removeEventListener('keydown', handleEscapeKey);
-    };
-  }, [isOpen, onClose]);
-
-  // Handle animation timing
-  useEffect(() => {
-    if (isOpen) {
-      setIsAnimating(true);
-      // Allow body to be fixed when drawer is open to prevent background scrolling
-      document.body.style.overflow = 'hidden';
-    } else {
-      const timer = setTimeout(() => {
-        setIsAnimating(false);
-      }, 300); // Match transition duration
-      document.body.style.overflow = '';
-      return () => clearTimeout(timer);
+    if (isOpen !== undefined && isOpen !== open) {
+      setOpen(isOpen);
     }
   }, [isOpen]);
+  
+  // Handle drawer state changes
+  const handleOpenChange = (newOpen: boolean) => {
+    setOpen(newOpen);
+    
+    if (onOpenChange) {
+      onOpenChange(newOpen);
+    }
+    
+    // Provide haptic feedback on open/close
+    if (isMobile) {
+      if (newOpen) {
+        hapticFeedback.light();
+      } else {
+        hapticFeedback.medium();
+      }
+    }
+  };
+  
+  // Configure swipe to close for mobile
+  const swipeProps = useTouchSwipe({
+    onSwipeLeft: position === 'left' ? () => handleOpenChange(false) : undefined,
+    onSwipeRight: position === 'right' ? () => handleOpenChange(false) : undefined,
+    onSwipeUp: position === 'bottom' ? () => handleOpenChange(false) : undefined,
+    onSwipeDown: position === 'top' ? () => handleOpenChange(false) : undefined,
+    threshold: 50
+  });
 
-  // Don't render if not mobile and not animating
-  if (!isMobile && !isAnimating && !isOpen) {
+  // Only show drawer on mobile devices
+  if (!isMobile) {
     return null;
   }
 
   return (
-    <div 
-      className={cn(
-        'fixed inset-0 z-50 bg-background/80 backdrop-blur-sm transition-opacity',
-        isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none',
-        overlayClassName
-      )}
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-      aria-hidden={!isOpen}
-    >
-      <div
-        ref={drawerRef}
-        className={cn(
-          'fixed inset-y-0 bg-background p-4 shadow-lg transition-transform duration-300 ease-in-out w-[75%] max-w-xs',
-          position === 'left' ? 'left-0' : 'right-0',
-          isOpen 
-            ? 'translate-x-0' 
-            : position === 'left' 
-              ? '-translate-x-full' 
-              : 'translate-x-full',
-          className
-        )}
-        aria-modal="true"
-        role="dialog"
+    <Sheet open={open} onOpenChange={handleOpenChange}>
+      <SheetTrigger asChild>
+        <Button variant="ghost" size="icon" className="md:hidden" aria-label="Open menu">
+          <Menu />
+        </Button>
+      </SheetTrigger>
+      <SheetContent 
+        side={position} 
+        className={`p-0 ${className}`}
+        {...swipeProps}
       >
-        <div className={cn('h-full flex flex-col overflow-auto', swiping ? 'touch-none' : '')}>
-          {children}
+        <div className="mobile-drawer h-full flex flex-col">
+          <SheetHeader className="border-b p-4">
+            <div className="flex justify-between items-center">
+              <SheetTitle>{title}</SheetTitle>
+              {showCloseButton && (
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => handleOpenChange(false)}
+                  className="touch-feedback"
+                  aria-label="Close menu"
+                >
+                  <X />
+                </Button>
+              )}
+            </div>
+          </SheetHeader>
+          <div className="flex-1 overflow-y-auto p-4">
+            {children}
+          </div>
         </div>
-      </div>
-    </div>
+      </SheetContent>
+    </Sheet>
   );
 }
 

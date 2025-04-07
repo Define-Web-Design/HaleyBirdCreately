@@ -5,6 +5,8 @@
  */
 
 import { useTouchPosition } from '@/hooks/use-mobile';
+import { hasVibrationSupport, triggerHapticFeedback, hapticFeedback, addTouchFeedback as addHapticFeedback } from './hapticFeedback';
+
 
 /**
  * Utility for providing haptic-like feedback on touch devices
@@ -22,28 +24,33 @@ class TouchFeedbackManager {
 
   constructor() {
     // Check for vibration support
-    this.supportsVibration = 'vibrate' in navigator;
+    this.supportsVibration = hasVibrationSupport();
   }
 
   /**
    * Trigger haptic-like feedback on a touch device
    */
-  public provideFeedback({ 
-    element, 
-    intensity = 'medium', 
+  public provideFeedback({
+    element,
+    intensity = 'medium',
     duration = 20,
-    visualFeedback = true 
+    visualFeedback = true
   }: TouchFeedbackOptions): void {
     // Apply vibration if supported
     try {
       if (this.supportsVibration) {
-        // Different durations based on intensity
-        const vibrationDuration = 
-          intensity === 'light' ? duration / 2 : 
-          intensity === 'strong' ? duration * 2 : 
-          duration;
-
-        navigator.vibrate(vibrationDuration);
+        // Use the new haptic feedback functions
+        switch (intensity) {
+          case 'light':
+            hapticFeedback.light();
+            break;
+          case 'medium':
+            hapticFeedback.medium();
+            break;
+          case 'strong':
+            hapticFeedback.heavy();
+            break;
+        }
       }
 
       // Apply visual feedback if enabled
@@ -90,7 +97,7 @@ export const touchFeedback = new TouchFeedbackManager();
 
 // Function to add touch feedback to an element
 export function addTouchFeedback(
-  element: HTMLElement, 
+  element: HTMLElement,
   options: Omit<TouchFeedbackOptions, 'element'> = {}
 ): () => void {
   if (!element) return () => {}; // Exit if no element
@@ -122,38 +129,39 @@ export enum HapticIntensity {
   ERROR = 'error'
 }
 
-/**
- * Trigger haptic feedback on supported devices
- * @param intensity The intensity/type of haptic feedback
- * @returns Promise that resolves when feedback is complete
- */
-export function triggerHapticFeedback(intensity: HapticIntensity = HapticIntensity.MEDIUM): Promise<void> {
-  // Check if the device supports vibration
-  if (!window.navigator.vibrate) {
-    return Promise.resolve();
-  }
+//This function is largely replaced by the edited code.  Keeping it for backward compatibility but it's redundant.
+// /**
+//  * Trigger haptic feedback on supported devices
+//  * @param intensity The intensity/type of haptic feedback
+//  * @returns Promise that resolves when feedback is complete
+//  */
+// export function triggerHapticFeedback(intensity: HapticIntensity = HapticIntensity.MEDIUM): Promise<void> {
+//   // Check if the device supports vibration
+//   if (!window.navigator.vibrate) {
+//     return Promise.resolve();
+//   }
 
-  // Map intensity to vibration pattern in milliseconds
-  const patterns = {
-    [HapticIntensity.LIGHT]: [10],
-    [HapticIntensity.MEDIUM]: [35],
-    [HapticIntensity.HEAVY]: [75],
-    [HapticIntensity.SUCCESS]: [10, 30, 30],
-    [HapticIntensity.WARNING]: [30, 50, 30],
-    [HapticIntensity.ERROR]: [50, 100, 50, 100, 50]
-  };
+//   // Map intensity to vibration pattern in milliseconds
+//   const patterns = {
+//     [HapticIntensity.LIGHT]: [10],
+//     [HapticIntensity.MEDIUM]: [35],
+//     [HapticIntensity.HEAVY]: [75],
+//     [HapticIntensity.SUCCESS]: [10, 30, 30],
+//     [HapticIntensity.WARNING]: [30, 50, 30],
+//     [HapticIntensity.ERROR]: [50, 100, 50, 100, 50]
+//   };
 
-  // Trigger vibration with the selected pattern
-  return new Promise(resolve => {
-    window.navigator.vibrate(patterns[intensity]);
+//   // Trigger vibration with the selected pattern
+//   return new Promise(resolve => {
+//     window.navigator.vibrate(patterns[intensity]);
 
-    // Calculate total duration of the pattern
-    const totalDuration = patterns[intensity].reduce((sum, duration) => sum + duration, 0);
+//     // Calculate total duration of the pattern
+//     const totalDuration = patterns[intensity].reduce((sum, duration) => sum + duration, 0);
 
-    // Resolve promise after the vibration completes
-    setTimeout(resolve, totalDuration);
-  });
-}
+//     // Resolve promise after the vibration completes
+//     setTimeout(resolve, totalDuration);
+//   });
+// }
 
 /**
  * Enable haptic feedback system-wide
@@ -193,7 +201,7 @@ export function applyTouchFeedbackToInteractiveElements(
       return;
     }
 
-    const cleanup = addTouchFeedback(element, {
+    const cleanup = addHapticFeedback(element, {
       haptic: isHapticFeedbackEnabled(),
       visualFeedback: true
     });
@@ -456,7 +464,7 @@ export function useTouchTrail() {
 
 export default {
   triggerHapticFeedback,
-  addTouchFeedback,
+  addHapticFeedback,
   setHapticFeedbackEnabled,
   isHapticFeedbackEnabled,
   applyTouchFeedbackToInteractiveElements,
@@ -467,5 +475,7 @@ export default {
   loadTouchFeedbackOptions,
   saveTouchFeedbackOptions,
   useTouchTrail,
-  touchFeedback
+  touchFeedback,
+  hasVibrationSupport,
+  hapticFeedback
 };

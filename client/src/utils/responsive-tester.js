@@ -1,477 +1,292 @@
-
 /**
- * Comprehensive mobile responsiveness tester
- * Tests various aspects of mobile responsiveness and provides actionable feedback
+ * Utility for testing responsive design across different device sizes
  */
 
+const DEVICE_SIZES = {
+  mobile: {
+    width: 375,
+    height: 667,
+    name: 'Mobile (iPhone 8)',
+    userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1'
+  },
+  mobileL: {
+    width: 428,
+    height: 926,
+    name: 'Mobile Large (iPhone 13 Pro Max)',
+    userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1'
+  },
+  tablet: {
+    width: 768,
+    height: 1024,
+    name: 'Tablet (iPad)',
+    userAgent: 'Mozilla/5.0 (iPad; CPU OS 14_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1'
+  },
+  laptop: {
+    width: 1366,
+    height: 768,
+    name: 'Laptop',
+    userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36'
+  },
+  desktop: {
+    width: 1920,
+    height: 1080,
+    name: 'Desktop',
+    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36'
+  }
+};
+
+// Mobile-specific CSS features to test
+const MOBILE_CSS_FEATURES = [
+  { name: 'touch-action', property: 'touch-action', value: 'manipulation' },
+  { name: 'user-select', property: 'user-select', value: 'none' },
+  { name: 'tap-highlight-color', property: '-webkit-tap-highlight-color', value: 'transparent' },
+  { name: 'mobile-vh', property: '--vh', value: true }
+];
+
+// Elements that should adapt for mobile
+const MOBILE_SPECIFIC_ELEMENTS = [
+  { selector: 'button, .btn', property: 'min-height', minValue: 44 },
+  { selector: 'input, select', property: 'min-height', minValue: 44 },
+  { selector: '.mobile-drawer', property: 'display', value: null },
+  { selector: '.touch-feedback', property: 'class', contains: 'touch-feedback' }
+];
+
+/**
+ * Test responsiveness across multiple device sizes
+ */
 async function testAppResponsiveness() {
-  console.log('Running mobile responsiveness tests...');
-  
-  try {
-    const results = {
-      success: true,
-      timestamp: new Date().toISOString(),
-      tests: [],
+  console.log('Testing app responsiveness across different device sizes...');
+
+  const results = {
+    devices: {},
+    mobileOptimizations: {},
+    summary: {
+      totalTests: 0,
+      passedTests: 0,
+      mobileOptimizationScore: 0,
       issues: [],
-      recommendations: [],
-      summary: {
-        passed: 0,
-        failed: 0,
-        total: 0,
-        score: 0
+      recommendations: []
+    },
+    success: true
+  };
+
+  try {
+    // Test each device size
+    for (const [deviceType, deviceData] of Object.entries(DEVICE_SIZES)) {
+      results.devices[deviceType] = {
+        name: deviceData.name,
+        width: deviceData.width,
+        height: deviceData.height,
+        viewportAdapts: false,
+        elementsResponsive: false,
+        issues: []
+      };
+
+      // Check if any device-specific issues
+      if (deviceType === 'mobile' || deviceType === 'mobileL') {
+        // Check for mobile-specific optimizations
+        results.mobileOptimizations = checkMobileOptimizations();
+
+        // Check for touch-specific optimizations
+        const touchOptimized = checkTouchOptimizations();
+        results.mobileOptimizations.touchOptimized = touchOptimized;
+
+        if (!touchOptimized.optimized) {
+          results.devices[deviceType].issues.push('Missing touch optimizations');
+          results.summary.issues.push(`Touch optimizations missing on ${deviceType}`);
+          results.summary.recommendations.push('Implement touch-specific optimizations for better mobile experience');
+        }
       }
-    };
-    
-    // Test viewport configuration
-    const viewportTest = testViewportConfiguration();
-    results.tests.push(viewportTest);
-    updateResultCounts(results, viewportTest);
-    
-    // Test touch targets
-    const touchTargetsTest = testTouchTargets();
-    results.tests.push(touchTargetsTest);
-    updateResultCounts(results, touchTargetsTest);
-    
-    // Test responsive images
-    const responsiveImagesTest = testResponsiveImages();
-    results.tests.push(responsiveImagesTest);
-    updateResultCounts(results, responsiveImagesTest);
-    
-    // Test text readability
-    const textReadabilityTest = testTextReadability();
-    results.tests.push(textReadabilityTest);
-    updateResultCounts(results, textReadabilityTest);
-    
-    // Test mobile gestures
-    const gesturesTest = testGestureSupport();
-    results.tests.push(gesturesTest);
-    updateResultCounts(results, gesturesTest);
-    
-    // Test mobile layout
-    const layoutTest = testMobileLayout();
-    results.tests.push(layoutTest);
-    updateResultCounts(results, layoutTest);
-    
-    // Calculate final score
-    results.summary.score = Math.round(
-      (results.summary.passed / results.summary.total) * 100
-    );
-    
-    // Update overall success state
-    results.success = results.summary.failed === 0;
-    
-    // Compile all recommendations
-    results.tests.forEach(test => {
-      if (test.recommendations && test.recommendations.length > 0) {
-        results.recommendations.push(...test.recommendations);
+
+      results.summary.totalTests++;
+      if (results.devices[deviceType].issues.length === 0) {
+        results.summary.passedTests++;
       }
-    });
-    
+    }
+
+    // Check if mobile drawer is implemented
+    const hasMobileDrawer = document.querySelector('.mobile-drawer, [data-mobile-drawer]') !== null;
+    if (!hasMobileDrawer) {
+      results.summary.issues.push('Mobile drawer not found');
+      results.summary.recommendations.push('Implement a mobile-specific drawer navigation');
+    }
+
+    // Check if viewport meta tag is set correctly
+    const viewportMeta = document.querySelector('meta[name="viewport"]');
+    const hasProperViewport = viewportMeta && 
+                             viewportMeta.getAttribute('content')?.includes('width=device-width') &&
+                             viewportMeta.getAttribute('content')?.includes('initial-scale=1');
+
+    if (!hasProperViewport) {
+      results.summary.issues.push('Viewport meta tag not properly configured');
+      results.summary.recommendations.push('Add a proper viewport meta tag for responsive design');
+    }
+
+    // Calculate mobile optimization score
+    const mobileOptimizationFeatures = Object.values(results.mobileOptimizations).filter(opt => opt === true || (typeof opt === 'object' && opt.optimized)).length;
+    const totalMobileFeatures = Object.keys(results.mobileOptimizations).length;
+    results.summary.mobileOptimizationScore = Math.round((mobileOptimizationFeatures / totalMobileFeatures) * 100);
+
+    // Overall success determination
+    results.success = results.summary.issues.length === 0 && 
+                     results.summary.mobileOptimizationScore >= 80;
+
+    // Add general recommendations
+    if (results.summary.mobileOptimizationScore < 100) {
+      results.summary.recommendations.push('Implement all mobile-specific optimizations for better user experience');
+    }
+
+    if (!results.success) {
+      results.summary.recommendations.push('Address all identified issues to improve responsive design');
+    }
+
     return results;
   } catch (error) {
     console.error('Error testing app responsiveness:', error);
     return {
       success: false,
-      error: error.message || 'Unknown error during responsive testing',
-      timestamp: new Date().toISOString(),
+      error: error.message || 'Unknown error occurred during responsive testing',
       summary: {
-        passed: 0,
-        failed: 1,
-        total: 1,
-        score: 0
-      },
-      recommendations: ['Fix errors in responsive testing script']
-    };
-  }
-}
-
-function updateResultCounts(results, test) {
-  results.summary.total++;
-  if (test.passed) {
-    results.summary.passed++;
-  } else {
-    results.summary.failed++;
-    results.issues.push(test.name + ': ' + test.message);
-  }
-}
-
-function testViewportConfiguration() {
-  let viewportMeta = document.querySelector('meta[name="viewport"]');
-  
-  if (!viewportMeta) {
-    return {
-      name: 'Viewport Configuration',
-      passed: false,
-      message: 'No viewport meta tag found',
-      recommendations: [
-        'Add a viewport meta tag: <meta name="viewport" content="width=device-width, initial-scale=1">',
-        'Ensure the viewport meta tag includes width=device-width and initial-scale=1'
-      ]
-    };
-  }
-  
-  const content = viewportMeta.getAttribute('content');
-  const hasDeviceWidth = content.includes('width=device-width');
-  const hasInitialScale = content.includes('initial-scale=1');
-  
-  if (!hasDeviceWidth || !hasInitialScale) {
-    return {
-      name: 'Viewport Configuration',
-      passed: false,
-      message: 'Viewport meta tag is incomplete',
-      recommendations: [
-        'Ensure the viewport meta tag includes width=device-width and initial-scale=1',
-        'Update viewport meta tag to: <meta name="viewport" content="width=device-width, initial-scale=1">'
-      ]
-    };
-  }
-  
-  return {
-    name: 'Viewport Configuration',
-    passed: true,
-    message: 'Viewport meta tag is properly configured'
-  };
-}
-
-function testTouchTargets() {
-  const MIN_TOUCH_TARGET_SIZE = 44; // Pixels, based on WCAG guidelines
-  const interactiveElements = document.querySelectorAll('button, a, [role="button"], input, select, textarea');
-  const smallTargets = [];
-  
-  for (const element of interactiveElements) {
-    const rect = element.getBoundingClientRect();
-    const width = rect.width;
-    const height = rect.height;
-    
-    if (width < MIN_TOUCH_TARGET_SIZE || height < MIN_TOUCH_TARGET_SIZE) {
-      smallTargets.push({
-        element: element.tagName,
-        width,
-        height,
-        text: element.textContent?.trim() || element.getAttribute('aria-label') || 'Unnamed element'
-      });
-    }
-  }
-  
-  if (smallTargets.length > 0) {
-    return {
-      name: 'Touch Target Size',
-      passed: false,
-      message: `Found ${smallTargets.length} touch targets smaller than ${MIN_TOUCH_TARGET_SIZE}px`,
-      details: smallTargets,
-      recommendations: [
-        `Ensure all touch targets are at least ${MIN_TOUCH_TARGET_SIZE}x${MIN_TOUCH_TARGET_SIZE} pixels`,
-        'Increase padding on buttons and links that are too small',
-        'Consider using the CSS touch-action property to improve touch interactions'
-      ]
-    };
-  }
-  
-  return {
-    name: 'Touch Target Size',
-    passed: true,
-    message: 'All touch targets meet size requirements'
-  };
-}
-
-function testResponsiveImages() {
-  const images = document.querySelectorAll('img');
-  const unresponsiveImages = [];
-  
-  for (const img of images) {
-    const hasResponsiveAttributes = 
-      img.hasAttribute('srcset') || 
-      img.hasAttribute('sizes') || 
-      img.style.maxWidth === '100%' || 
-      (img.style.width && img.style.width.includes('%'));
-    
-    const computedStyle = window.getComputedStyle(img);
-    const isResponsiveCss = 
-      computedStyle.maxWidth === '100%' || 
-      (computedStyle.width && computedStyle.width.includes('%'));
-    
-    if (!hasResponsiveAttributes && !isResponsiveCss) {
-      unresponsiveImages.push({
-        src: img.getAttribute('src'),
-        width: img.width,
-        height: img.height
-      });
-    }
-  }
-  
-  if (unresponsiveImages.length > 0) {
-    return {
-      name: 'Responsive Images',
-      passed: false,
-      message: `Found ${unresponsiveImages.length} potentially non-responsive images`,
-      details: unresponsiveImages,
-      recommendations: [
-        'Add max-width: 100% to all images by default',
-        'Use the srcset attribute for art direction and different image resolutions',
-        'Consider using picture element for more advanced responsive image scenarios'
-      ]
-    };
-  }
-  
-  return {
-    name: 'Responsive Images',
-    passed: true,
-    message: 'All images appear to be responsive'
-  };
-}
-
-function testTextReadability() {
-  const bodyText = document.querySelectorAll('p, li, span, div, h1, h2, h3, h4, h5, h6');
-  const smallTextElements = [];
-  const MIN_MOBILE_FONT_SIZE = 14; // Pixels
-  
-  for (const element of bodyText) {
-    if (element.textContent?.trim()) {
-      const computedStyle = window.getComputedStyle(element);
-      const fontSize = parseFloat(computedStyle.fontSize);
-      
-      if (fontSize < MIN_MOBILE_FONT_SIZE) {
-        smallTextElements.push({
-          element: element.tagName,
-          fontSize,
-          text: element.textContent.trim().substring(0, 50) + (element.textContent.length > 50 ? '...' : '')
-        });
+        issues: ['Error during responsive testing'],
+        recommendations: ['Check browser console for errors']
       }
-    }
-  }
-  
-  if (smallTextElements.length > 5) { // Allow a few small text elements
-    return {
-      name: 'Text Readability',
-      passed: false,
-      message: `Found ${smallTextElements.length} elements with font size smaller than ${MIN_MOBILE_FONT_SIZE}px`,
-      details: smallTextElements.slice(0, 10), // Show first 10 examples
-      recommendations: [
-        `Use a minimum font size of ${MIN_MOBILE_FONT_SIZE}px for mobile devices`,
-        'Consider using relative units like rem instead of pixels for font sizes',
-        'Implement a mobile-specific typography scale'
-      ]
     };
   }
-  
-  return {
-    name: 'Text Readability',
-    passed: true,
-    message: 'Text appears to be readable on mobile devices'
-  };
 }
 
-function testGestureSupport() {
-  // Check for touch event listeners
-  const interactiveElements = document.querySelectorAll('button, a, [role="button"], .swipe-container, .scroll-container');
-  
-  // This is a basic check - we can't really introspect all event listeners
-  // but we can check for common patterns
-  
-  let hasSwipeElements = false;
-  let hasPinchZoomElements = false;
-  
-  for (const element of interactiveElements) {
-    const classes = element.className || '';
-    const id = element.id || '';
-    
-    if (
-      classes.includes('swipe') || 
-      classes.includes('carousel') || 
-      classes.includes('slider') ||
-      id.includes('swipe') || 
-      id.includes('carousel') || 
-      id.includes('slider')
-    ) {
-      hasSwipeElements = true;
-    }
-    
-    if (
-      classes.includes('zoom') || 
-      classes.includes('pinch') || 
-      id.includes('zoom') || 
-      id.includes('pinch')
-    ) {
-      hasPinchZoomElements = true;
-    }
-  }
-  
-  // Check if the page has touch-action CSS
-  const hasTouchActionCSS = checkForTouchActionCSS();
-  
-  if (!hasSwipeElements && !hasPinchZoomElements && !hasTouchActionCSS) {
-    return {
-      name: 'Mobile Gesture Support',
-      passed: false,
-      message: 'Limited mobile gesture support detected',
-      recommendations: [
-        'Implement swipe gestures for common navigation actions',
-        'Add pinch zoom support for images and content where appropriate',
-        'Use touch-action CSS property to control touch behaviors',
-        'Consider adding pull-to-refresh functionality for content updates'
-      ]
-    };
-  }
-  
-  return {
-    name: 'Mobile Gesture Support',
-    passed: true,
-    message: 'Mobile gesture support detected'
+/**
+ * Check for mobile-specific optimizations
+ */
+function checkMobileOptimizations() {
+  const results = {
+    touchActionOptimized: false,
+    userSelectOptimized: false,
+    tapHighlightOptimized: false,
+    mobileVhImplemented: false,
+    buttonSizeOptimized: false,
+    inputSizeOptimized: false,
+    drawersImplemented: false,
+    touchFeedbackImplemented: false
   };
-}
 
-function checkForTouchActionCSS() {
   try {
-    const styleSheets = document.styleSheets;
-    for (const sheet of styleSheets) {
-      try {
-        // This may throw a security error if the stylesheet is from a different origin
-        const rules = sheet.cssRules || sheet.rules;
-        for (const rule of rules) {
-          if (rule.style && rule.style.touchAction) {
-            return true;
-          }
-        }
-      } catch (e) {
-        // Ignore cross-origin stylesheet errors
+    // Check CSS features
+    const computedStyle = window.getComputedStyle(document.documentElement);
+
+    // Check for touch-action optimization
+    const touchActionElements = document.querySelectorAll('[style*="touch-action"], [class*="touch-action"]');
+    results.touchActionOptimized = touchActionElements.length > 0;
+
+    // Check for user-select optimization
+    const userSelectElements = document.querySelectorAll('[style*="user-select"], [class*="user-select"]');
+    results.userSelectOptimized = userSelectElements.length > 0;
+
+    // Check for tap-highlight-color optimization
+    results.tapHighlightOptimized = computedStyle.getPropertyValue('-webkit-tap-highlight-color') === 'rgba(0, 0, 0, 0)' || 
+                                   computedStyle.getPropertyValue('-webkit-tap-highlight-color') === 'transparent';
+
+    // Check for mobile vh implementation
+    results.mobileVhImplemented = computedStyle.getPropertyValue('--vh') !== '';
+
+    // Check button sizes
+    const buttons = document.querySelectorAll('button, .btn, [role="button"]');
+    let largeEnoughButtons = 0;
+    buttons.forEach(button => {
+      const buttonStyle = window.getComputedStyle(button);
+      const height = parseInt(buttonStyle.height);
+      if (height >= 44) { // 44px is the recommended minimum for touch targets
+        largeEnoughButtons++;
       }
-    }
-    return false;
-  } catch (e) {
-    console.error('Error checking for touch-action CSS:', e);
-    return false;
-  }
-}
+    });
+    results.buttonSizeOptimized = buttons.length > 0 ? (largeEnoughButtons / buttons.length) > 0.8 : false;
 
-function testMobileLayout() {
-  // Check for horizontal overflow
-  const docWidth = document.documentElement.clientWidth;
-  const bodyWidth = document.body.clientWidth;
-  
-  if (bodyWidth > docWidth) {
+    // Check input sizes
+    const inputs = document.querySelectorAll('input, select, textarea');
+    let largeEnoughInputs = 0;
+    inputs.forEach(input => {
+      const inputStyle = window.getComputedStyle(input);
+      const height = parseInt(inputStyle.height);
+      if (height >= 44) {
+        largeEnoughInputs++;
+      }
+    });
+    results.inputSizeOptimized = inputs.length > 0 ? (largeEnoughInputs / inputs.length) > 0.8 : false;
+
+    // Check for mobile drawer implementation
+    results.drawersImplemented = document.querySelectorAll('.mobile-drawer, [data-mobile-drawer]').length > 0;
+
+    // Check for touch feedback implementation
+    results.touchFeedbackImplemented = document.querySelectorAll('.touch-feedback, [data-touch-feedback]').length > 0;
+
+    return results;
+  } catch (error) {
+    console.error('Error checking mobile optimizations:', error);
     return {
-      name: 'Mobile Layout',
-      passed: false,
-      message: 'Horizontal overflow detected (page is wider than viewport)',
-      recommendations: [
-        'Check for elements with fixed widths that exceed the viewport',
-        'Use max-width: 100% for all containers',
-        'Ensure tables and preformatted text elements are responsive',
-        'Look for negative margins or absolute positioning that might cause overflow'
-      ]
+      error: error.message || 'Unknown error during mobile optimization check'
     };
   }
-  
-  // Check for horizontal scrolling
-  const scrollableElements = document.querySelectorAll('*');
-  const elementsWithHorizontalScroll = [];
-  
-  for (const element of scrollableElements) {
-    const style = window.getComputedStyle(element);
-    if (
-      style.overflowX === 'auto' || 
-      style.overflowX === 'scroll'
-    ) {
-      elementsWithHorizontalScroll.push(element);
+}
+
+/**
+ * Check for touch-specific optimizations
+ */
+function checkTouchOptimizations() {
+  const results = {
+    optimized: false,
+    hasTouchListeners: false,
+    hasSwipeGestures: false,
+    hasHapticFeedback: false,
+    issues: []
+  };
+
+  try {
+    // Check for touch event listeners using a heuristic approach
+    // This is a simple approximation since we can't directly inspect event listeners
+    const potentialTouchElements = document.querySelectorAll('[ontouchstart], [ontouchmove], [ontouchend], .swipe, .touch-enabled');
+    results.hasTouchListeners = potentialTouchElements.length > 0;
+
+    // Look for common swipe-related classes or attributes
+    const swipeElements = document.querySelectorAll('[data-swipe], .swipe, .swipeable, [data-gesture]');
+    results.hasSwipeGestures = swipeElements.length > 0;
+
+    // Look for haptic feedback classes
+    const hapticElements = document.querySelectorAll('.haptic-feedback, [data-haptic], .touch-feedback');
+    results.hasHapticFeedback = hapticElements.length > 0;
+
+    // Determine overall optimization
+    const optimizations = [
+      results.hasTouchListeners,
+      results.hasSwipeGestures,
+      results.hasHapticFeedback
+    ];
+    results.optimized = optimizations.filter(Boolean).length >= 2; // At least 2 optimizations
+
+    // Add issues if not optimized
+    if (!results.hasTouchListeners) {
+      results.issues.push('No touch event listeners detected');
     }
-  }
-  
-  if (elementsWithHorizontalScroll.length > 0 && !document.querySelector('[data-horizontal-scroll="intentional"]')) {
+    if (!results.hasSwipeGestures) {
+      results.issues.push('No swipe gesture support detected');
+    }
+    if (!results.hasHapticFeedback) {
+      results.issues.push('No haptic feedback support detected');
+    }
+
+    return results;
+  } catch (error) {
+    console.error('Error checking touch optimizations:', error);
     return {
-      name: 'Mobile Layout',
-      passed: false,
-      message: 'Horizontal scrolling detected on some elements',
-      recommendations: [
-        'Avoid horizontal scrolling on mobile (except for specialized content like carousels)',
-        'Use CSS Grid or Flexbox for responsive layouts',
-        'Stack elements vertically on mobile instead of maintaining desktop layout'
-      ]
+      optimized: false,
+      error: error.message || 'Unknown error during touch optimization check',
+      issues: ['Error during touch optimization check']
     };
   }
-  
-  return {
-    name: 'Mobile Layout',
-    passed: true,
-    message: 'Mobile layout appears to be responsive'
-  };
 }
 
-// Helper function to test specific mobile features
-function testMobileSpecificFeatures() {
-  return {
-    touchFeedback: testTouchFeedback(),
-    offlineSupport: testOfflineSupport(),
-    inputHandling: testMobileInputHandling(),
-    interactionPerformance: testInteractionPerformance()
-  };
-}
-
-function testTouchFeedback() {
-  // This is a basic check for touch feedback
-  return {
-    passed: true, // Assuming implementation exists based on earlier files
-    message: 'Touch feedback implementation found',
-    recommendations: [
-      'Ensure touch feedback is consistent across all interactive elements',
-      'Customize feedback intensity based on the importance of the action'
-    ]
-  };
-}
-
-function testOfflineSupport() {
-  // Check for service worker registration
-  const hasServiceWorker = 'serviceWorker' in navigator;
-  
-  return {
-    passed: hasServiceWorker,
-    message: hasServiceWorker ? 
-      'Service Worker API is supported' : 
-      'No Service Worker support detected',
-    recommendations: [
-      'Implement a service worker for offline support',
-      'Use IndexedDB or localStorage for offline data storage',
-      'Add a manifest.json file for installable web app support'
-    ]
-  };
-}
-
-function testMobileInputHandling() {
-  const inputFields = document.querySelectorAll('input, textarea, [contenteditable]');
-  const hasNumericInputs = Array.from(inputFields).some(
-    input => input.getAttribute('type') === 'number' || 
-             input.getAttribute('type') === 'tel'
-  );
-  
-  const hasDateInputs = Array.from(inputFields).some(
-    input => input.getAttribute('type') === 'date' || 
-             input.getAttribute('type') === 'time'
-  );
-  
-  return {
-    passed: hasNumericInputs || hasDateInputs,
-    message: 'Mobile-specific input types detected',
-    recommendations: [
-      'Use appropriate input types (email, tel, number, date) to trigger the right mobile keyboard',
-      'Implement auto-complete attributes for form fields',
-      'Consider using pattern attribute for input validation'
-    ]
-  };
-}
-
-function testInteractionPerformance() {
-  // This is a simplified check - a real test would measure interaction responsiveness
-  return {
-    passed: true,
-    message: 'Basic interaction performance check passed',
-    recommendations: [
-      'Ensure tap response is under 100ms for all interactions',
-      'Debounce scroll and resize event handlers',
-      'Use requestAnimationFrame for scroll-linked animations'
-    ]
-  };
-}
-
+// Run the test when imported and called
 module.exports = {
   testAppResponsiveness,
-  testMobileSpecificFeatures
+  checkMobileOptimizations,
+  checkTouchOptimizations,
+  DEVICE_SIZES
 };

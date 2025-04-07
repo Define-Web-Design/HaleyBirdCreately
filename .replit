@@ -59,7 +59,7 @@ localPort = 8425
 externalPort = 3002
 
 [workflows]
-runButton = "Debug and Test Suite"
+runButton = "Comprehensive Debug"
 
 [[workflows.workflow]]
 name = "Project"
@@ -2303,3 +2303,116 @@ args = "echo \"Starting application with mobile-first focus...\""
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "NODE_ENV=development MOBILE_FIRST=true npm run dev"
+
+[[workflows.workflow]]
+name = "Comprehensive Debug"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Kill any running processes first"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pkill -f node || true"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run code quality checks"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"Running code quality checks...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run lint"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npx tsc --noEmit"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Test mobile responsiveness"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"Testing mobile responsiveness...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node -e \""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "  try {"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "    const { testAppResponsiveness } = require('./client/src/utils/responsive-tester.js');"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "    testAppResponsiveness().then(result => {"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "      console.log(JSON.stringify(result.summary, null, 2));"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "      console.log(result.success ? '✅ Mobile responsiveness tests passed' : '⚠️ Some mobile tests need attention');"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "    }).catch(err => {"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "      console.error('Error during responsive testing:', err);"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "    });"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "  } catch (err) {"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "    console.error('Error loading responsive tester:', err);"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "  }"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Start the development server with mobile optimizations"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"Starting debugged application with mobile optimizations...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "NODE_ENV=development MOBILE_OPTIMIZED=true npm run dev"

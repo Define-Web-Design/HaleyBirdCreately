@@ -632,3 +632,93 @@ a.touch-feedback:active {
     cursor: pointer;
   }
 }
+
+/* Touch feedback styles for mobile devices */
+
+/* Base touch feedback class */
+.touch-feedback {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Ripple effect */
+.touch-feedback::after {
+  content: '';
+  display: block;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  background-image: radial-gradient(circle, #fff 10%, transparent 10.01%);
+  background-repeat: no-repeat;
+  background-position: 50%;
+  transform: scale(10, 10);
+  opacity: 0;
+  transition: transform 0.5s, opacity 1s;
+}
+
+.touch-feedback:active::after {
+  transform: scale(0, 0);
+  opacity: 0.3;
+  transition: 0s;
+}
+
+/* Active state feedback for buttons */
+button.touch-feedback:active,
+.button.touch-feedback:active,
+[role="button"].touch-feedback:active {
+  transform: scale(0.98);
+}
+
+/* Disable selection on interactive elements */
+.touch-feedback {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Touch target size standards */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Apply touch target size to common interactive elements */
+@media (max-width: 768px) {
+  button,
+  .btn,
+  [role="button"],
+  a.link,
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Ensure proper spacing between touch targets */
+  button + button,
+  .btn + .btn,
+  [role="button"] + [role="button"] {
+    margin-left: 8px;
+  }
+}
+
+/* Haptic feedback animations */
+@keyframes haptic-pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.98); }
+  100% { transform: scale(1); }
+}
+
+.haptic-feedback {
+  animation: haptic-pulse 0.2s ease-in-out;
+}
+
+/* Prevent native scrolling behavior when custom scroll handlers are used */
+.disable-overscroll {
+  overscroll-behavior: none;
+}

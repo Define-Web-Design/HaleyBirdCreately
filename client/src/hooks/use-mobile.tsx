@@ -1,43 +1,66 @@
 import { useState, useEffect } from 'react';
 
+// Define mobile device detection thresholds
+const MOBILE_WIDTH_THRESHOLD = 768;
+const TABLET_WIDTH_THRESHOLD = 1024;
+
 /**
- * Custom hook to detect if the current device is a mobile device
- * This uses both user agent detection and screen size for better accuracy
+ * Custom hook for detecting mobile devices and responsive design
+ * @returns Object containing device type information and methods
  */
-export function useIsMobile(): boolean {
+export function useIsMobile() {
   const [isMobile, setIsMobile] = useState<boolean>(false);
+  const [isTablet, setIsTablet] = useState<boolean>(false);
+  const [viewportWidth, setViewportWidth] = useState<number>(
+    typeof window !== 'undefined' ? window.innerWidth : 0
+  );
 
   useEffect(() => {
-    // Check if userAgent exists (we're in browser environment)
-    const checkMobile = () => {
-      if (typeof navigator !== 'undefined' && navigator.userAgent) {
-        const userAgent = navigator.userAgent.toLowerCase();
-        const mobileRegex = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i;
-        const isMobileDevice = mobileRegex.test(userAgent);
+    const handleResize = () => {
+      const width = window.innerWidth;
+      setViewportWidth(width);
+      setIsMobile(width < MOBILE_WIDTH_THRESHOLD);
+      setIsTablet(width >= MOBILE_WIDTH_THRESHOLD && width < TABLET_WIDTH_THRESHOLD);
 
-        // Also check screen size for tablets or responsive views
-        const isSmallScreen = window.innerWidth <= 768;
-
-        setIsMobile(isMobileDevice || isSmallScreen);
-      } else {
-        setIsMobile(false);
-      }
+      // Set the --vh CSS variable for more accurate mobile viewport heights
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
     };
 
-    checkMobile();
+    // Initial check
+    handleResize();
 
-    // Add resize listener for responsive behavior
-    window.addEventListener('resize', checkMobile);
+    // Add event listener for window resize
+    window.addEventListener('resize', handleResize);
 
+    // Clean up
     return () => {
-      window.removeEventListener('resize', checkMobile);
+      window.removeEventListener('resize', handleResize);
     };
   }, []);
 
-  return isMobile;
+  // Provide methods to check different device types
+  const isDesktop = !isMobile && !isTablet;
+  const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+  // Helper method to get appropriate styles based on device
+  const getResponsiveStyles = (mobileStyles: any, tabletStyles: any, desktopStyles: any) => {
+    if (isMobile) return mobileStyles;
+    if (isTablet) return tabletStyles;
+    return desktopStyles;
+  };
+
+  return {
+    isMobile,
+    isTablet,
+    isDesktop,
+    isTouchDevice,
+    viewportWidth,
+    getResponsiveStyles
+  };
 }
 
-// Named export for useIsMobile
+// Default export for backward compatibility
 export default useIsMobile;
 
 import { useState, useEffect, useCallback } from 'react';
@@ -85,9 +108,9 @@ export function useMobile(): DeviceInfo {
     const isPortrait = !isLandscape;
 
     // Check if device supports touch
-    const isTouchDevice = 'ontouchstart' in window || 
-                          navigator.maxTouchPoints > 0 || 
-                          (navigator as any).msMaxTouchPoints > 0;
+    const isTouchDevice = 'ontouchstart' in window ||
+      navigator.maxTouchPoints > 0 ||
+      (navigator as any).msMaxTouchPoints > 0;
 
     setDeviceInfo({
       isMobile,
