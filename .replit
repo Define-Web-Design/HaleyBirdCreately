@@ -2469,3 +2469,6 @@ args = "# Start the development server in optimized mode"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "NODE_ENV=development npm run dev"
+
+[objectStorage]
+defaultBucketID = "replit-objstore-0f505a20-ca44-41fd-a1d9-978b798832cc"
