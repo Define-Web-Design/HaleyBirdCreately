@@ -212,9 +212,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           {/* Main content with responsive padding and swipe gestures for mobile */}
           <main 
             ref={mainContentRef}
-            onTouchStart={mobile.isMobile ? undefined : swipeHandlers.onTouchStart}
-            onTouchMove={mobile.isMobile ? undefined : swipeHandlers.onTouchMove}
-            onTouchEnd={mobile.isMobile ? undefined : swipeHandlers.onTouchEnd}
             id="main-content"
             role="main"
             className={`flex-1 overflow-y-auto p-2 sm:p-4 md:p-6 transition-all duration-300 ${
@@ -224,10 +221,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               scrollbarWidth: 'thin', 
               scrollbarGutter: 'stable', 
               WebkitOverflowScrolling: 'touch',
-              touchAction: 'auto', // Allow all touch actions for better mobile scrolling
+              touchAction: 'pan-y', // Explicitly allow vertical panning/scrolling
               overscrollBehavior: 'auto', // Allow normal overscroll behavior for better UX
-              height: mobile.isMobile ? 'calc(100vh - 4rem)' : 'auto', // Fixed height for mobile to ensure scrolling works
-              position: 'relative'
+              height: 'auto', // Allow natural content height for better scrolling
+              position: 'relative',
+              willChange: 'scroll-position', // Performance optimization hint
+              contain: 'content', // Help with performance optimization
             }}
             aria-live="polite"
             data-mobile-view={mobile.isMobile ? 'true' : 'false'}

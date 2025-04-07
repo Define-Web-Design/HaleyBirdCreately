@@ -37,34 +37,51 @@ export const SwipeableContainer: React.FC<SwipeableContainerProps> = ({
     setOffset(0);
   }, [leftAction, rightAction]);
 
+  // Track initial touch position for both X and Y coordinates
+  const initialTouchRef = useRef<{ x: number; y: number } | null>(null);
+  const initialScrollRef = useRef<number>(0);
+  
   // Create custom swipe handlers for this component
   const handleTouchStart = (e: React.TouchEvent) => {
     if (disabled) return;
-    initialX.current = e.touches[0].clientX;
+    const touch = e.touches[0];
+    initialX.current = touch.clientX;
+    initialTouchRef.current = {
+      x: touch.clientX,
+      y: touch.clientY
+    };
+    // Store initial scroll position to detect if user is trying to scroll
+    if (e.currentTarget.parentElement) {
+      initialScrollRef.current = e.currentTarget.parentElement.scrollTop || 0;
+    }
     setIsDragging(true);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (disabled || initialX.current === null) return;
+    if (disabled || initialX.current === null || !initialTouchRef.current) return;
     
-    const currentX = e.touches[0].clientX;
-    const currentY = e.touches[0].clientY;
-    const diffX = currentX - initialX.current;
+    const touch = e.touches[0];
+    const currentX = touch.clientX;
+    const currentY = touch.clientY;
+    const diffX = currentX - initialTouchRef.current.x;
+    const diffY = currentY - initialTouchRef.current.y;
     
-    // Get the initial touch Y position if available
-    const initialTouchY = e.touches[0].clientY;
-    
-    // Detect vertical scrolling - if the user is primarily scrolling vertically, don't interfere
-    if (Math.abs(diffX) < 15) {
-      // Small horizontal movement, likely a vertical scroll - abort swiping
+    // If vertical movement is significant compared to horizontal, abort swiping
+    // This prevents interference with vertical scrolling
+    if (Math.abs(diffY) > Math.abs(diffX) * 1.2) {
       return;
     }
     
-    // Only prevent default for clear horizontal swipes with significant movement
-    // This helps ensure normal page scrolling works properly
-    if (Math.abs(diffX) > 50) {
-      // Carefully prevent default only for obviously horizontal swipes
-      // This helps ensure we don't block vertical scrolling
+    // Check if parent element has scrolled
+    const parentElement = e.currentTarget.parentElement;
+    if (parentElement && Math.abs(parentElement.scrollTop - initialScrollRef.current) > 5) {
+      // User is trying to scroll vertically, abort swiping
+      return;
+    }
+    
+    // Only prevent default for clear horizontal swipes
+    // This is critical to not interfere with normal scrolling
+    if (Math.abs(diffX) > 30 && Math.abs(diffY) < Math.abs(diffX) * 0.8) {
       e.preventDefault();
     }
     
@@ -116,40 +133,69 @@ export const SwipeableContainer: React.FC<SwipeableContainerProps> = ({
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
+      style={{
+        // Add containment for performance optimization
+        contain: 'content',
+        // Hint to the browser about upcoming animations for performance
+        willChange: disabled ? 'auto' : 'transform',
+        // Only capture touch events when not disabled
+        touchAction: disabled ? 'auto' : 'pan-y pinch-zoom',
+      }}
+      aria-disabled={disabled}
     >
-      {/* Left action indicator */}
+      {/* Accessibility indicator for swipeable state */}
+      <span className="sr-only">
+        {leftAction && 'Swipe left for action'}
+        {rightAction && 'Swipe right for action'}
+      </span>
+
+      {/* Left action indicator with improved animations */}
       {leftAction && (
         <div
-          className="absolute inset-y-0 right-0 flex items-center justify-center bg-red-500 text-white px-4"
+          className="absolute inset-y-0 right-0 flex items-center justify-center bg-red-500 text-white px-4 shadow-lg rounded-l-md"
           style={{
             transform: `translateX(100%) ${offset < 0 ? `translateX(${offset}px)` : ''}`,
             opacity: offset < 0 ? Math.min(Math.abs(offset) / effectiveThreshold, 1) : 0,
             width: effectiveThreshold,
+            // Performance optimizations
+            willChange: 'transform, opacity',
+            backfaceVisibility: 'hidden',
+            transition: isDragging ? 'none' : 'opacity 0.2s ease',
           }}
+          aria-hidden={offset >= 0}
         >
           {leftAction}
         </div>
       )}
 
-      {/* Right action indicator */}
+      {/* Right action indicator with improved animations */}
       {rightAction && (
         <div
-          className="absolute inset-y-0 left-0 flex items-center justify-center bg-green-500 text-white px-4"
+          className="absolute inset-y-0 left-0 flex items-center justify-center bg-green-500 text-white px-4 shadow-lg rounded-r-md"
           style={{
             transform: `translateX(-100%) ${offset > 0 ? `translateX(${offset}px)` : ''}`,
             opacity: offset > 0 ? Math.min(offset / effectiveThreshold, 1) : 0,
             width: effectiveThreshold,
+            // Performance optimizations
+            willChange: 'transform, opacity',
+            backfaceVisibility: 'hidden',
+            transition: isDragging ? 'none' : 'opacity 0.2s ease',
           }}
+          aria-hidden={offset <= 0}
         >
           {rightAction}
         </div>
       )}
 
-      {/* Main content */}
+      {/* Main content with hardware acceleration and optimized animation */}
       <div 
         style={{ 
-          transform: `translateX(${offset}px)`,
-          transition: isDragging ? 'none' : 'transform 0.3s ease-out'
+          transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.2, 0, 0.2, 1)', // Spring-like easing
+          // Performance optimizations
+          willChange: offset !== 0 ? 'transform' : 'auto',
+          backfaceVisibility: 'hidden',
+          // Use transform3d to activate hardware acceleration for smoother animations
+          transform: `translate3d(${offset}px, 0, 0)`,
         }}
       >
         {children}
