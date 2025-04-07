@@ -26,6 +26,8 @@ interface ContentCardProps {
   className?: string;
   children?: React.ReactNode;
   interactive?: boolean;
+  loading?: boolean;
+  elevation?: 'flat' | 'low' | 'medium' | 'high';
 }
 
 export function ContentCard({
@@ -41,11 +43,21 @@ export function ContentCard({
   className = "",
   children,
   interactive = true,
+  loading = false,
+  elevation = 'low',
 }: ContentCardProps) {
-  const { isMobile, touchEnabled } = useMobile();
+  const { isMobile, isTouchDevice } = useMobile();
   const [isExpanded, setIsExpanded] = useState(false);
   const [showActions, setShowActions] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
+  
+  // Classes for different elevation levels
+  const elevationClasses = {
+    flat: "",
+    low: "shadow-sm hover:shadow",
+    medium: "shadow hover:shadow-md",
+    high: "shadow-md hover:shadow-lg"
+  };
   
   // Setup swipe handlers for mobile
   const { ref: swipeRef, state: swipeState } = useTouchSwipe({
@@ -70,7 +82,7 @@ export function ContentCard({
   
   // Add touch feedback to the card
   useEffect(() => {
-    if (!cardRef.current || !touchEnabled || !interactive) return;
+    if (!cardRef.current || !isTouchDevice || !interactive) return;
     
     const cleanup = addTouchFeedback(cardRef.current, {
       haptic: true,
@@ -80,7 +92,7 @@ export function ContentCard({
     });
     
     return cleanup;
-  }, [touchEnabled, interactive]);
+  }, [isTouchDevice, interactive]);
   
   const toggleExpand = () => {
     setIsExpanded(!isExpanded);
@@ -96,8 +108,10 @@ export function ContentCard({
     <Card 
       ref={cardRef}
       className={`relative overflow-hidden transition-all duration-200 ${
-        interactive ? "cursor-pointer hover:shadow-md" : ""
-      } ${isExpanded ? "scale-[1.02]" : ""} ${className}`}
+        interactive ? "cursor-pointer" : ""
+      } ${isExpanded ? "scale-[1.02]" : ""} ${elevationClasses[elevation]} ${
+        loading ? "animate-pulse" : ""
+      } ${className}`}
       data-swipe-handler
       aria-expanded={isExpanded}
       role={interactive ? "button" : undefined}
@@ -105,7 +119,9 @@ export function ContentCard({
       onClick={interactive ? handleCardClick : undefined}
       onKeyDown={interactive ? (e) => e.key === "Enter" && handleCardClick() : undefined}
     >
-      {image && (
+      {loading ? (
+        <div className="relative w-full h-40 bg-muted/30 animate-pulse"></div>
+      ) : image && (
         <div className="relative w-full h-40 overflow-hidden">
           <img
             src={image}

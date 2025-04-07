@@ -41,12 +41,11 @@ const DEVICE_PROFILES: DeviceProfile[] = [
 /**
  * Test if the app is responsive across different device sizes
  */
-export async function testAppResponsiveness(): Promise<{
-  results: TestResult[];
-  summary: TestSummary;
-  success: boolean;
-  recommendations: string[];
-}> {
+/**
+ * Test if the app is responsive across different device sizes
+ * @returns Promise with test results, summary, success status, and recommendations
+ */
+export async function testAppResponsiveness() {
   const results: TestResult[] = [];
   const recommendations: string[] = [];
   let passedTests = 0;

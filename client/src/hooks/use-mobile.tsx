@@ -88,4 +88,59 @@ export function checkIsMobile(): boolean {
   return width < 768 || ('ontouchstart' in window && width < 1024);
 }
 
+/**
+ * Hook specifically for checking if the device is mobile
+ * Simplified version of useMobile for components that only need this information
+ */
+export function useIsMobile(): boolean {
+  const deviceInfo = useMobile();
+  return deviceInfo.isMobile;
+}
+
+/**
+ * Hook for tracking touch position
+ * Useful for creating touch-based interactions
+ */
+export function useTouchPosition() {
+  const [touchPosition, setTouchPosition] = useState({ x: 0, y: 0 });
+  const [isActive, setIsActive] = useState(false);
+
+  useEffect(() => {
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches && e.touches.length > 0) {
+        setTouchPosition({
+          x: e.touches[0].clientX,
+          y: e.touches[0].clientY
+        });
+        setIsActive(true);
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches && e.touches.length > 0) {
+        setTouchPosition({
+          x: e.touches[0].clientX,
+          y: e.touches[0].clientY
+        });
+      }
+    };
+
+    const handleTouchEnd = () => {
+      setIsActive(false);
+    };
+
+    document.addEventListener('touchstart', handleTouchStart, { passive: true });
+    document.addEventListener('touchmove', handleTouchMove, { passive: true });
+    document.addEventListener('touchend', handleTouchEnd, { passive: true });
+
+    return () => {
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, []);
+
+  return { touchPosition, isActive };
+}
+
 export default useMobile;

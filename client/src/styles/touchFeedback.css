@@ -301,7 +301,7 @@ input[type="radio"].touch-active {
     transition: opacity 0.1s linear !important;
   }
 }
-/* Touch Feedback Styles */
+/* Touch Feedback Styles - Optimized for performance */
 .haptic-feedback-ripple {
   position: absolute;
   background: rgba(255, 255, 255, 0.5);
@@ -310,7 +310,8 @@ input[type="radio"].touch-active {
   pointer-events: none;
   z-index: 9999;
   will-change: transform, opacity;
-  animation: haptic-ripple-out 600ms ease-out forwards;
+  animation: haptic-ripple-out 400ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  contain: layout style paint;
 }
 
 @keyframes haptic-ripple-out {

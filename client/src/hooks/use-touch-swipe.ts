@@ -72,7 +72,9 @@ export const useTouchSwipe = (
       try {
         if (!touchStartRef.current || e.touches.length !== 1) return;
         
-        if (preventDefaultTouchmove) {
+        // Only call preventDefault if absolutely necessary and allowed
+        // This avoids issues with passive event listeners
+        if (preventDefaultTouchmove && typeof e.cancelable === 'boolean' && e.cancelable) {
           e.preventDefault();
         }
         
@@ -166,10 +168,10 @@ export const useTouchSwipe = (
     };
 
     // Add event listeners
-    element.addEventListener('touchstart', handleTouchStart, { passive: !preventDefaultTouchmove });
+    element.addEventListener('touchstart', handleTouchStart, { passive: true });
     element.addEventListener('touchmove', handleTouchMove, { passive: !preventDefaultTouchmove });
-    element.addEventListener('touchend', handleTouchEnd);
-    element.addEventListener('touchcancel', handleTouchCancel);
+    element.addEventListener('touchend', handleTouchEnd, { passive: true });
+    element.addEventListener('touchcancel', handleTouchCancel, { passive: true });
     
     if (disableContextMenu) {
       element.addEventListener('contextmenu', handleContextMenu);

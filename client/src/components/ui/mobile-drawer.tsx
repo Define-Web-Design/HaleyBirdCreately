@@ -61,21 +61,36 @@ export function MobileDrawer({
   });
 
   useEffect(() => {
-    // Attach swipe ref to body or main content area
+    // Use a more reliable method to attach swipe ref to the main content area
     const mainElement = document.querySelector("main") || document.body;
     if (mainElement && swipeRef.current !== mainElement) {
       swipeRef.current = mainElement;
     }
     
-    // Handle body scroll locking when drawer is open
+    // Handle body scroll locking when drawer is open with better iOS compatibility
     if (open) {
-      document.body.style.overflow = "hidden";
+      // Save current scroll position
+      const scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.overflow = 'hidden';
     } else {
-      document.body.style.overflow = "";
+      // Restore scroll position
+      const scrollY = document.body.style.top ? parseInt(document.body.style.top || '0', 10) * -1 : 0;
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.top = '';
+      document.body.style.overflow = '';
+      window.scrollTo(0, scrollY);
     }
     
     return () => {
-      document.body.style.overflow = "";
+      // Ensure we clean up properly if component unmounts while drawer is open
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.top = '';
+      document.body.style.overflow = '';
     };
   }, [open, swipeRef]);
 
@@ -89,7 +104,7 @@ export function MobileDrawer({
     
     window.addEventListener("keydown", handleKeyDown);
     return () => {
-      window.addEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keydown", handleKeyDown);
     };
   }, [open]);
 

@@ -47,7 +47,9 @@ export const PageTransition: React.FC<PageTransitionProps> = ({
     if (isMobile) {
       // On mobile, use simpler transitions and shorter duration
       setCurrentStyle(transitionStyle === 'none' ? 'none' : 'fade');
-      setCurrentDuration(duration > 0.2 ? 0.2 : duration);
+      // Even shorter for iOS devices to avoid jank
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+      setCurrentDuration(isIOS ? 0.15 : (duration > 0.2 ? 0.2 : duration));
     } else {
       setCurrentStyle(transitionStyle);
       setCurrentDuration(duration);

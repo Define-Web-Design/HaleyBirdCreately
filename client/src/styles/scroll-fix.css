@@ -30,6 +30,9 @@ body {
 [style*="position: fixed"] {
   -webkit-transform: translateZ(0);
   transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  will-change: transform;
 }
 
 /* Handle bottom safe area for iOS devices with notches */
