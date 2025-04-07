@@ -1,4 +1,4 @@
-import type { Express, Request, Response } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { 
@@ -954,14 +954,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let generatedPalette;
       
       // Optimize response time by using cached or predefined palettes when possible
-      if (mood.toUpperCase() in MoodTone && !description) {
+      // Safely check if mood is in MoodTone enum
+      const isValidMoodTone = Object.values(MoodTone).includes(mood.toUpperCase() as MoodTone);
+      
+      if (isValidMoodTone && !description) {
         // For standard moods without description, use predefined palettes
-        generatedPalette = await generateMoodPalette(mood.toUpperCase() as MoodTone);
-        console.log("Using predefined palette for mood:", mood);
+        try {
+          generatedPalette = await generateMoodPalette(mood.toUpperCase() as MoodTone);
+          console.log("Using predefined palette for mood:", mood);
+        } catch (moodError) {
+          console.error("Error with predefined mood palette:", moodError);
+          // Fallback to AI generation if predefined palette fails
+          generatedPalette = await generateAIPalette(mood);
+          console.log("Fallback to AI generation after predefined palette error");
+        }
       } else {
         // For custom descriptions or non-standard moods, use AI generation
         generatedPalette = await generateAIPalette(description || mood);
         console.log("Using AI generation for palette");
+      }
+      
+      // Ensure the palette has the correct format
+      if (!generatedPalette || !generatedPalette.colors || !Array.isArray(generatedPalette.colors) || generatedPalette.colors.length === 0) {
+        throw new Error("Generated palette has invalid format");
       }
 
       res.json({
