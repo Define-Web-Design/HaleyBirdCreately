@@ -12,10 +12,13 @@ dotenv.config();
 
 // Create Express application
 const app = express();
-const PORT = Number(process.env.PORT) || 3000;
+const PORT = Number(process.env.PORT) || 5000;
 
 // Register services
 const serviceRegistry = ServiceRegistry.getInstance();
+// Register storage service
+serviceRegistry.registerService('storage', storage);
+// Create and register auth service
 const authService = new AuthService(storage);
 serviceRegistry.registerService('auth', authService);
 
@@ -37,11 +40,12 @@ app.use(
   })
 );
 
-// Register routes
-const httpServer = registerRoutes(app);
-
-// Start server
-httpServer.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server listening on http://localhost:${PORT}`);
-  console.log(`Using ${process.env.USE_IN_MEMORY_DB === 'true' ? 'in-memory' : 'PostgreSQL'} storage`);
+// Register routes and start server
+registerRoutes(app).then(httpServer => {
+  httpServer.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server listening on http://localhost:${PORT}`);
+    console.log(`Using ${process.env.USE_IN_MEMORY_DB === 'true' ? 'in-memory' : 'PostgreSQL'} storage`);
+  });
+}).catch(error => {
+  console.error('Failed to start server:', error);
 });

@@ -8,8 +8,10 @@ import { authenticate } from '../middleware/auth';
 // Create a new router for auth-related routes
 const router = Router();
 
-// Get the auth service
-const authService = ServiceRegistry.getInstance().getService<AuthService>('auth');
+// Helper to get auth service when needed
+const getAuthService = () => {
+  return ServiceRegistry.getInstance().getService<AuthService>('auth');
+};
 
 // Login validation schema
 const loginSchema = z.object({
@@ -32,7 +34,7 @@ router.post('/register', async (req: Request, res: Response) => {
 
     // Register the user using auth service
     const user = validationResult.data;
-    const result = await authService.register(user);
+    const result = await getAuthService().register(user);
 
     if (!result.success) {
       return res.status(400).json(result);
@@ -74,7 +76,7 @@ router.post('/login', async (req: Request, res: Response) => {
 
     // Authenticate the user
     const { username, password } = validationResult.data;
-    const result = await authService.login(username, password, ipAddress, userAgent);
+    const result = await getAuthService().login(username, password, ipAddress, userAgent);
 
     if (!result.success) {
       return res.status(401).json(result);
@@ -105,7 +107,7 @@ router.post('/logout', authenticate(false), async (req: Request, res: Response) 
     
     // Revoke the refresh token if it exists
     if (refreshToken) {
-      await authService.logout(refreshToken);
+      await getAuthService().logout(refreshToken);
     }
     
     // Clear session if it exists
@@ -140,7 +142,7 @@ router.post('/refresh-token', async (req: Request, res: Response) => {
     }
     
     // Try to refresh the token
-    const result = await authService.refreshToken(refreshToken);
+    const result = await getAuthService().refreshToken(refreshToken);
     
     if (!result.success) {
       return res.status(401).json(result);
@@ -175,8 +177,8 @@ router.get('/me', authenticate(), async (req: Request, res: Response) => {
     }
     
     // Get user from storage by ID
-    const storage = ServiceRegistry.getInstance().getService<any>('storage');
-    const user = await storage.getUserById(req.user.userId);
+    const getStorage = () => ServiceRegistry.getInstance().getService<any>('storage');
+    const user = await getStorage().getUserById(req.user.userId);
     
     if (!user) {
       return res.status(404).json({

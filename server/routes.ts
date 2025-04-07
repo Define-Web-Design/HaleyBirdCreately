@@ -47,11 +47,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Apply rate limiting to all API routes
   app.use("/api", apiLimiter);
   
-  // Add authentication middleware (except for public routes)
-  app.use(authenticate);
-  
-  // Register auth routes
+  // Register auth routes - these need to be registered before authentication middleware
   app.use("/api/auth", authRoutes);
+  
+  // Create a list of public routes that don't require authentication
+  const publicRoutes = [
+    '/api/auth/login',
+    '/api/auth/register',
+    '/api/auth/refresh-token',
+    '/api/public',
+    '/api/public/legal/terms',
+    '/api/public/legal/privacy',
+    '/api/public/legal/accept',
+    '/api/public/theme'
+  ];
+  
+  // Add authentication middleware (except for public routes)
+  app.use((req, res, next) => {
+    // Skip authentication for public routes
+    if (publicRoutes.some(route => req.path.startsWith(route))) {
+      return next();
+    }
+    // Apply authentication for all other routes
+    authenticate()(req, res, next);
+  });
 
   // Platform integration routes
   app.get('/api/user/integrations', async (req, res) => {
