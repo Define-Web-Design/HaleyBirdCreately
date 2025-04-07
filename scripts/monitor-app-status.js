@@ -7,24 +7,41 @@
 
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
 
-// Note: We need to require the ESM module using dynamic import when running directly
+// Note: We need to ensure TypeScript support when running directly
 async function loadMonitor() {
   try {
-    // Try to import the compiled JS version first
-    return await import('../client/src/utils/app-status-monitor.js');
-  } catch (error) {
-    console.error('Error loading app-status-monitor.js:', error.message);
-    
-    // Fallback to .ts version with ts-node if available
+    // First try running the app-status-cli directly through ts-node
     try {
-      // This requires ts-node to be installed
+      // Register ts-node for TypeScript support
+      console.log('Attempting to load ts-node for TypeScript support...');
       require('ts-node/register');
       return require('../client/src/utils/app-status-monitor.ts');
-    } catch (innerError) {
-      console.error('Could not load app-status-monitor module:', innerError.message);
-      throw new Error('Unable to load status monitor module');
+    } catch (tsError) {
+      console.log('Could not load TypeScript directly, looking for compiled JS version...');
+      
+      // Try to find compiled JS version
+      const compiledPath = path.join(__dirname, '../dist/client/src/utils/app-status-monitor.js');
+      if (fs.existsSync(compiledPath)) {
+        console.log('Found compiled JS version, loading...');
+        return require(compiledPath);
+      }
+      
+      // If no compiled version exists, compile it on-the-fly
+      console.log('No compiled version found, compiling TypeScript on-the-fly...');
+      execSync('npx tsc --project tsconfig.json', { stdio: 'inherit' });
+      
+      // Now try loading the compiled version
+      if (fs.existsSync(compiledPath)) {
+        return require(compiledPath);
+      }
+      
+      throw new Error('Failed to load or compile app-status-monitor module');
     }
+  } catch (error) {
+    console.error('Error loading app-status-monitor module:', error.message);
+    throw new Error('Unable to load status monitor module');
   }
 }
 

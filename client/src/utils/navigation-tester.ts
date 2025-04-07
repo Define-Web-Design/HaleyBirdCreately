@@ -63,16 +63,16 @@ export async function runAccessibilityAudit(url: string): Promise<AccessibilityR
   try {
     // In a real implementation, this would use axe-core or similar
     // For now, we're simulating the functionality
-    
+
     console.log(`Running accessibility audit for ${url}`);
-    
+
     // Call an API endpoint or simulate checking accessibility issues
     const simulatedViolations: AccessibilityViolation[] = [];
-    
+
     // Check document structure (headings)
     const headings = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
     const headingLevels = Array.from(headings).map(h => parseInt(h.tagName.substring(1)));
-    
+
     if (headingLevels.length > 0) {
       if (!headingLevels.includes(1)) {
         simulatedViolations.push({
@@ -87,7 +87,7 @@ export async function runAccessibilityAudit(url: string): Promise<AccessibilityR
           }]
         });
       }
-      
+
       // Check for skipped heading levels
       for (let i = 1; i < headingLevels.length; i++) {
         if (headingLevels[i] > headingLevels[i-1] + 1) {
@@ -105,7 +105,7 @@ export async function runAccessibilityAudit(url: string): Promise<AccessibilityR
         }
       }
     }
-    
+
     // Check images for alt text
     const images = document.querySelectorAll('img');
     for (const img of Array.from(images)) {
@@ -123,7 +123,7 @@ export async function runAccessibilityAudit(url: string): Promise<AccessibilityR
         });
       }
     }
-    
+
     // Check color contrast (simplified simulation)
     const elementsWithPossibleContrastIssues = document.querySelectorAll('.text-gray-300, .text-gray-400, .text-slate-300, .text-slate-400');
     if (elementsWithPossibleContrastIssues.length > 0) {
@@ -139,9 +139,9 @@ export async function runAccessibilityAudit(url: string): Promise<AccessibilityR
         }]
       });
     }
-    
+
     const success = simulatedViolations.length === 0;
-    
+
     return {
       success,
       message: success 
@@ -165,9 +165,12 @@ export async function runAccessibilityAudit(url: string): Promise<AccessibilityR
  * Verify all links on the page are working and don't lead to 404 errors
  */
 export async function verifyPageLinks(url: string): Promise<PageTestResult> {
+  // Add initial logging
+  console.log('Starting page link verification...');
+
   try {
     console.log(`Verifying links for ${url}`);
-    
+
     const links = Array.from(document.querySelectorAll('a'));
     const linkData: ElementData[] = links.map(link => ({
       selector: 'a',
@@ -175,28 +178,28 @@ export async function verifyPageLinks(url: string): Promise<PageTestResult> {
       href: link.getAttribute('href') || '',
       ariaLabel: link.getAttribute('aria-label') || undefined
     }));
-    
+
     const internalLinks = linkData.filter(link => 
       link.href && 
       !link.href.startsWith('http') && 
       !link.href.startsWith('mailto:') && 
       link.href !== '#'
     );
-    
+
     const brokenLinks: string[] = [];
     const workingLinks: string[] = [];
-    
+
     // Test each internal link
     for (const link of internalLinks) {
       if (!link.href) continue;
-      
+
       try {
         // For internal links, we can check if the route exists in the application
         // In a real implementation, you might query the router or make a HEAD request
-        
+
         // Simulating the verification for now
         const isValidRoute = !link.href.includes('invalid') && !link.href.includes('broken');
-        
+
         if (isValidRoute) {
           workingLinks.push(link.href);
         } else {
@@ -206,9 +209,11 @@ export async function verifyPageLinks(url: string): Promise<PageTestResult> {
         brokenLinks.push(link.href);
       }
     }
-    
+
+    const success = brokenLinks.length === 0;
+
     return {
-      success: brokenLinks.length === 0,
+      success,
       message: brokenLinks.length === 0
         ? 'All links verified successfully'
         : `Found ${brokenLinks.length} broken links`,
@@ -238,16 +243,16 @@ export async function verifyPageLinks(url: string): Promise<PageTestResult> {
 export async function testKeyboardNavigation(url: string): Promise<TestResult> {
   try {
     console.log(`Testing keyboard navigation for ${url}`);
-    
+
     // In a real implementation, this would simulate keyboard navigation
     // and check if interactive elements can be reached
-    
+
     const interactiveElements = document.querySelectorAll('button, a, input, select, textarea, [role="button"]');
-    
+
     // Check if any interactive elements have tabindex="-1" without proper handling
     const inaccessibleElements = Array.from(interactiveElements)
       .filter(el => el.getAttribute('tabindex') === '-1' && !el.hasAttribute('aria-hidden'));
-    
+
     // Check if there are any visible buttons without accessible names
     const buttonsWithoutNames = Array.from(document.querySelectorAll('button:not([aria-hidden="true"])'))
       .filter(button => 
@@ -255,17 +260,17 @@ export async function testKeyboardNavigation(url: string): Promise<TestResult> {
         !button.hasAttribute('aria-label') && 
         !button.hasAttribute('aria-labelledby')
       );
-    
+
     // Check for proper focus indicators
     const potentiallyProblematicSelectors = [
       'button:focus { outline: none; }',
       'a:focus { outline: none; }',
       '*:focus { outline: none; }'
     ];
-    
+
     let focusStylesRemoved = false;
     const styleSheets = Array.from(document.styleSheets);
-    
+
     try {
       for (const sheet of styleSheets) {
         if (sheet.cssRules) {
@@ -285,15 +290,15 @@ export async function testKeyboardNavigation(url: string): Promise<TestResult> {
       // CORS may prevent reading some stylesheets
       console.warn('Could not check all stylesheets for focus styles');
     }
-    
+
     const issues = [
       ...(inaccessibleElements.length > 0 ? [`${inaccessibleElements.length} interactive elements with tabindex="-1"`] : []),
       ...(buttonsWithoutNames.length > 0 ? [`${buttonsWithoutNames.length} buttons without accessible names`] : []),
       ...(focusStylesRemoved ? ['Focus styles have been removed'] : [])
     ];
-    
+
     const success = issues.length === 0;
-    
+
     return {
       success,
       message: success
@@ -321,40 +326,40 @@ export async function testKeyboardNavigation(url: string): Promise<TestResult> {
 export async function verifyPageInteractiveElements(url: string): Promise<PageTestResult> {
   try {
     console.log(`Verifying interactive elements for ${url}`);
-    
+
     const buttons = Array.from(document.querySelectorAll('button, [role="button"]'));
     const inputs = Array.from(document.querySelectorAll('input, textarea, select'));
-    
+
     const buttonData: ElementData[] = buttons.map(button => ({
       selector: button.tagName.toLowerCase(),
       role: button.getAttribute('role') || undefined,
       text: button.textContent?.trim() || '',
       ariaLabel: button.getAttribute('aria-label') || undefined
     }));
-    
+
     const inputData: ElementData[] = inputs.map(input => ({
       selector: input.tagName.toLowerCase(),
       role: input.getAttribute('role') || undefined,
       ariaLabel: input.getAttribute('aria-label') || undefined
     }));
-    
+
     const elementsFound = [...buttonData, ...inputData];
-    
+
     // Check for buttons without accessible names
     const buttonsWithoutLabels = buttonData.filter(btn => 
       !btn.text && !btn.ariaLabel
     );
-    
+
     // Check for inputs without labels
     const inputsWithoutLabels = inputs.filter(input => {
       const id = input.getAttribute('id');
       if (!id) return true;
-      
+
       // Check if there's an associated label
       const hasLabel = document.querySelector(`label[for="${id}"]`) !== null;
       return !hasLabel && !input.getAttribute('aria-label') && !input.getAttribute('aria-labelledby');
     });
-    
+
     const issuesFound = [
       ...(buttonsWithoutLabels.length > 0 ? 
           [`${buttonsWithoutLabels.length} buttons without accessible names`] : 
@@ -363,7 +368,7 @@ export async function verifyPageInteractiveElements(url: string): Promise<PageTe
           [`${inputsWithoutLabels.length} inputs without labels`] : 
           [])
     ];
-    
+
     return {
       success: issuesFound.length === 0,
       message: issuesFound.length === 0 
@@ -395,7 +400,7 @@ export async function verifyPageInteractiveElements(url: string): Promise<PageTe
 export async function testPage(url: string): Promise<TestResult[]> {
   try {
     console.log(`Testing page: ${url}`);
-    
+
     // Run all tests in parallel
     const [accessibilityResults, linkResults, keyboardResults, interactiveElementsResults] = await Promise.all([
       runAccessibilityAudit(url),
@@ -403,7 +408,7 @@ export async function testPage(url: string): Promise<TestResult[]> {
       testKeyboardNavigation(url),
       verifyPageInteractiveElements(url)
     ]);
-    
+
     // Return all test results
     return [accessibilityResults, linkResults, keyboardResults, interactiveElementsResults];
   } catch (error) {
@@ -428,10 +433,10 @@ export interface SiteMapItem {
 export async function generateSitemap(): Promise<SiteMapItem[]> {
   try {
     console.log('Generating sitemap');
-    
+
     // In a real implementation, this would be generated from the router configuration
     // For now, we'll simulate it
-    
+
     const sitemap: SiteMapItem[] = [
       {
         path: '/',
@@ -482,7 +487,7 @@ export async function generateSitemap(): Promise<SiteMapItem[]> {
         component: 'NavigationTest'
       }
     ];
-    
+
     return sitemap;
   } catch (error) {
     console.error('Error generating sitemap:', error);
@@ -496,10 +501,10 @@ export async function generateSitemap(): Promise<SiteMapItem[]> {
 export async function navigateAndTest(path: string): Promise<{ path: string; results: TestResult[] }> {
   try {
     console.log(`Navigating to and testing: ${path}`);
-    
+
     // In a real implementation, this would use a headless browser like Puppeteer
     // For our prototype, we'll simulate navigation by updating the window location
-    
+
     // Simulate navigation
     const currentPath = window.location.pathname;
     if (currentPath !== path) {
@@ -507,9 +512,9 @@ export async function navigateAndTest(path: string): Promise<{ path: string; res
       // For our implementation, we'll only test the current page
       console.log(`Cannot actually navigate from ${currentPath} to ${path} in this simulation`);
     }
-    
+
     const results = await testPage(path);
-    
+
     return {
       path,
       results
@@ -533,21 +538,21 @@ export async function navigateAndTest(path: string): Promise<{ path: string; res
 export async function validateMenuRoutes(routes: any[]): Promise<TestResult> {
   try {
     console.log('Validating menu routes');
-    
+
     const validRoutes: string[] = [];
     const invalidRoutes: string[] = [];
-    
+
     for (const route of routes) {
       // Check if the route exists in ALL_ROUTES
       const routeExists = ALL_ROUTES.some(r => r.path === route.path);
-      
+
       if (routeExists) {
         validRoutes.push(route.path);
       } else {
         invalidRoutes.push(route.path);
       }
     }
-    
+
     return {
       success: invalidRoutes.length === 0,
       message: invalidRoutes.length === 0
@@ -572,36 +577,36 @@ export async function validateMenuRoutes(routes: any[]): Promise<TestResult> {
 export async function verifyNavigationLinks(): Promise<TestResult> {
   try {
     console.log('Verifying navigation links');
-    
+
     // Get all navigation links (typically in header, sidebar, footer)
     const navLinks = Array.from(document.querySelectorAll('nav a, .sidebar a, .footer a, header a'));
-    
+
     const validLinks: string[] = [];
     const invalidLinks: string[] = [];
-    
+
     for (const link of navLinks) {
       const href = link.getAttribute('href');
       if (!href) {
         invalidLinks.push(`Link without href: ${link.textContent}`);
         continue;
       }
-      
+
       // Skip external links and anchors
       if (href.startsWith('http') || href.startsWith('#')) {
         validLinks.push(href);
         continue;
       }
-      
+
       // Check if the route exists in ALL_ROUTES
       const routeExists = ALL_ROUTES.some(r => r.path === href);
-      
+
       if (routeExists) {
         validLinks.push(href);
       } else {
         invalidLinks.push(href);
       }
     }
-    
+
     return {
       success: invalidLinks.length === 0,
       message: invalidLinks.length === 0
@@ -629,22 +634,22 @@ export const checkPageInteractiveElements = verifyPageInteractiveElements;
 export async function verifyToastBehavior(): Promise<TestResult> {
   try {
     console.log('Verifying toast behavior');
-    
+
     // In a real implementation, this would trigger toasts and verify they appear
     // For our prototype, we'll simulate the verification
-    
+
     // Show a test toast
     toast({
       title: 'Test Toast',
       description: 'This is a test toast for verification'
     });
-    
+
     // Wait a short time to simulate checking if the toast appeared
     await new Promise(resolve => setTimeout(resolve, 500));
-    
+
     // For this simulation, we'll just assume the toast worked
     const toastWorked = true;
-    
+
     return {
       success: toastWorked,
       message: toastWorked
@@ -669,10 +674,10 @@ export async function verifyToastBehavior(): Promise<TestResult> {
 export async function testAllRoutes(): Promise<{ summary: TestResult; details: { path: string; results: TestResult[] }[] }> {
   try {
     console.log('Testing all routes');
-    
+
     // Get the sitemap
     const sitemap = await generateSitemap();
-    
+
     // Flatten the sitemap to get all paths
     const paths: string[] = [];
     const flattenSitemap = (items: SiteMapItem[]) => {
@@ -683,24 +688,24 @@ export async function testAllRoutes(): Promise<{ summary: TestResult; details: {
         }
       }
     };
-    
+
     flattenSitemap(sitemap);
-    
+
     // Test each path
     const results: { path: string; results: TestResult[] }[] = [];
-    
+
     for (const path of paths) {
       const pathResults = await navigateAndTest(path);
       results.push(pathResults);
     }
-    
+
     // Summarize results
     const allTestsCount = results.reduce((total, { results: pathResults }) => total + pathResults.length, 0);
     const passedTestsCount = results.reduce((total, { results: pathResults }) => 
       total + pathResults.filter(result => result.success).length, 0);
-    
+
     const success = passedTestsCount === allTestsCount;
-    
+
     return {
       summary: {
         success,

@@ -4,16 +4,17 @@
  * This provides a comprehensive overview of app performance, health, and user experience
  */
 
-import { generateAppStatusReport, displayAppStatusReport, createStatusSummary } from './app-status-monitor';
-
-/**
- * Run a comprehensive status check and display the results
- */
-export async function runAppStatusCheck() {
+// Using dynamic import for TypeScript compatibility in Node environment
+async function runAppStatusCheck() {
   console.log('Starting comprehensive app status check...');
   
   try {
     console.log('Gathering metrics and running tests...');
+    
+    // Dynamically import the module
+    const { generateAppStatusReport, displayAppStatusReport, createStatusSummary } = 
+      await import('./app-status-monitor.js');
+    
     const report = await generateAppStatusReport();
     
     // Display the full report
@@ -40,7 +41,9 @@ export async function runAppStatusCheck() {
   }
 }
 
-// Allow for direct execution or import
+// Allow for direct execution
 if (typeof require !== 'undefined' && require.main === module) {
   runAppStatusCheck();
 }
+
+export { runAppStatusCheck };

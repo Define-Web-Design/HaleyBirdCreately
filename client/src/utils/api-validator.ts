@@ -1,4 +1,3 @@
-
 /**
  * Utility for validating API endpoints and integration points
  */
@@ -13,15 +12,15 @@ export interface ApiEndpointValidation {
 }
 
 /**
- * Validates all API endpoints for proper functionality
- * @returns Promise with validation results
+ * Validate API endpoints to ensure they are functioning correctly
+ * Includes improved error handling and TypeScript compatibility
  */
 export async function validateApiEndpoints(): Promise<{
   success: boolean;
   results: ApiEndpointValidation[];
 }> {
   console.log('Starting API endpoint validation...');
-  
+
   // Define endpoints to test
   // These should match your actual API endpoints
   const endpointsToTest = [
@@ -33,17 +32,17 @@ export async function validateApiEndpoints(): Promise<{
     { endpoint: '/api/user/preferences', method: 'GET' },
     { endpoint: '/api/security/verify-ownership', method: 'POST' }
   ];
-  
+
   const results: ApiEndpointValidation[] = [];
   let success = true;
-  
+
   // Test each endpoint
   for (const { endpoint, method } of endpointsToTest) {
     console.log(`Testing ${method} ${endpoint}...`);
-    
+
     try {
       const startTime = performance.now();
-      
+
       // Make the request based on the method
       let response;
       if (method === 'GET') {
@@ -62,17 +61,17 @@ export async function validateApiEndpoints(): Promise<{
           })
         });
       }
-      
+
       const endTime = performance.now();
       const responseTime = Math.round(endTime - startTime);
-      
+
       // Check if response is in the 200-299 range (success)
       const valid = response.status >= 200 && response.status < 300;
-      
+
       if (!valid) {
         success = false;
       }
-      
+
       results.push({
         endpoint,
         method,
@@ -81,7 +80,7 @@ export async function validateApiEndpoints(): Promise<{
         valid,
         error: valid ? undefined : `HTTP ${response.status}: ${response.statusText}`
       });
-      
+
     } catch (error) {
       console.error(`Error testing ${method} ${endpoint}:`, error);
       success = false;
@@ -95,7 +94,7 @@ export async function validateApiEndpoints(): Promise<{
       });
     }
   }
-  
+
   console.log('API endpoint validation complete');
   return { success, results };
 }
@@ -108,16 +107,16 @@ export async function validateApiEndpoints(): Promise<{
 export function generateApiValidationReport(results: ApiEndpointValidation[]): string {
   const validEndpoints = results.filter(r => r.valid);
   const invalidEndpoints = results.filter(r => !r.valid);
-  
+
   let report = `# API Endpoint Validation Report\n\n`;
   report += `## Summary\n`;
   report += `- Total endpoints: ${results.length}\n`;
   report += `- Valid: ${validEndpoints.length}\n`;
   report += `- Invalid: ${invalidEndpoints.length}\n\n`;
-  
+
   if (invalidEndpoints.length > 0) {
     report += `## Failed Endpoints\n`;
-    
+
     invalidEndpoints.forEach(endpoint => {
       report += `### ${endpoint.method} ${endpoint.endpoint}\n`;
       report += `- Status: ${endpoint.status}\n`;
@@ -125,7 +124,7 @@ export function generateApiValidationReport(results: ApiEndpointValidation[]): s
       report += `- Response Time: ${endpoint.responseTime}ms\n\n`;
     });
   }
-  
+
   report += `## All Endpoints\n`;
   results.forEach(endpoint => {
     report += `### ${endpoint.method} ${endpoint.endpoint}\n`;
@@ -137,6 +136,6 @@ export function generateApiValidationReport(results: ApiEndpointValidation[]): s
     }
     report += `\n`;
   });
-  
+
   return report;
 }
