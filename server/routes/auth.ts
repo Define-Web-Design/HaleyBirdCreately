@@ -1,108 +1,137 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import { ServiceRegistry } from '../services/registry';
 import { AuthService } from '../services/auth';
+import { z } from 'zod';
+import { insertUserSchema } from '../../shared/schema';
+import { authenticate } from '../middleware/auth';
 
+// Create a new router for auth-related routes
 const router = Router();
-const services = ServiceRegistry.getInstance();
-const authService = services.getService<AuthService>('auth');
 
-// Login endpoint
-router.post('/login', async (req, res) => {
-  try {
-    const { username, password } = req.body;
-    
-    if (!username || !password) {
-      return res.status(400).json({
-        success: false,
-        message: 'Username and password are required'
-      });
-    }
-    
-    const result = await authService.login(username, password, req.ip, req.headers['user-agent']);
-    
-    if (result.success) {
-      // Set authentication in session
-      if (req.session) {
-        req.session.userId = result.user!.id;
-        req.session.username = result.user!.username;
-        req.session.role = result.user!.role;
-      }
-      
-      res.json({
-        success: true,
-        user: result.user,
-        token: result.token,
-        refreshToken: result.refreshToken
-      });
-    } else {
-      res.status(401).json({
-        success: false,
-        message: result.message || 'Invalid credentials'
-      });
-    }
-  } catch (error: any) {
-    console.error('Login error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Authentication error'
-    });
-  }
+// Get the auth service
+const authService = ServiceRegistry.getInstance().getService<AuthService>('auth');
+
+// Login validation schema
+const loginSchema = z.object({
+  username: z.string().min(1, 'Username is required'),
+  password: z.string().min(1, 'Password is required')
 });
 
-// Register endpoint
-router.post('/register', async (req, res) => {
+// Register route
+router.post('/register', async (req: Request, res: Response) => {
   try {
-    const { username, email, password, displayName } = req.body;
-    
-    if (!username || !email || !password) {
+    // Validate request body
+    const validationResult = insertUserSchema.safeParse(req.body);
+    if (!validationResult.success) {
       return res.status(400).json({
         success: false,
-        message: 'Username, email and password are required'
+        message: 'Validation failed',
+        errors: validationResult.error.errors
       });
     }
-    
-    const result = await authService.register({
-      username,
-      email,
-      password,
-      displayName,
-      role: 'user'
-    });
-    
-    if (result.success) {
-      // Set authentication in session
-      if (req.session) {
-        req.session.userId = result.user!.id;
-        req.session.username = result.user!.username;
-        req.session.role = result.user!.role;
-      }
-      
-      res.status(201).json({
-        success: true,
-        user: result.user,
-        token: result.token,
-        refreshToken: result.refreshToken
-      });
-    } else {
-      res.status(400).json({
-        success: false,
-        message: result.message || 'Registration failed'
-      });
+
+    // Register the user using auth service
+    const user = validationResult.data;
+    const result = await authService.register(user);
+
+    if (!result.success) {
+      return res.status(400).json(result);
     }
-  } catch (error: any) {
+
+    // Store user info in session if using session-based auth
+    if (req.session) {
+      req.session.userId = result.user!.id;
+      req.session.username = result.user!.username;
+      req.session.role = result.user!.role;
+    }
+
+    return res.status(201).json(result);
+  } catch (error) {
     console.error('Registration error:', error);
     res.status(500).json({
       success: false,
-      message: 'Registration error'
+      message: 'An error occurred during registration'
     });
   }
 });
 
-// Refresh token endpoint
-router.post('/refresh', async (req, res) => {
+// Login route
+router.post('/login', async (req: Request, res: Response) => {
   try {
-    const { refreshToken } = req.body;
+    // Validate request body
+    const validationResult = loginSchema.safeParse(req.body);
+    if (!validationResult.success) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors: validationResult.error.errors
+      });
+    }
+
+    // Get client info for security logging
+    const ipAddress = req.ip;
+    const userAgent = req.get('User-Agent');
+
+    // Authenticate the user
+    const { username, password } = validationResult.data;
+    const result = await authService.login(username, password, ipAddress, userAgent);
+
+    if (!result.success) {
+      return res.status(401).json(result);
+    }
+
+    // Store user info in session if using session-based auth
+    if (req.session) {
+      req.session.userId = result.user!.id;
+      req.session.username = result.user!.username;
+      req.session.role = result.user!.role;
+    }
+
+    return res.json(result);
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'An error occurred during login'
+    });
+  }
+});
+
+// Logout route
+router.post('/logout', authenticate(false), async (req: Request, res: Response) => {
+  try {
+    // Get refresh token from request
+    const refreshToken = req.body.refreshToken;
     
+    // Revoke the refresh token if it exists
+    if (refreshToken) {
+      await authService.logout(refreshToken);
+    }
+    
+    // Clear session if it exists
+    if (req.session) {
+      req.session.destroy((err) => {
+        if (err) {
+          console.error('Error destroying session:', err);
+        }
+      });
+    }
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Logout error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'An error occurred during logout'
+    });
+  }
+});
+
+// Refresh token route
+router.post('/refresh-token', async (req: Request, res: Response) => {
+  try {
+    // Check if refresh token exists in the request
+    const { refreshToken } = req.body;
     if (!refreshToken) {
       return res.status(400).json({
         success: false,
@@ -110,65 +139,34 @@ router.post('/refresh', async (req, res) => {
       });
     }
     
+    // Try to refresh the token
     const result = await authService.refreshToken(refreshToken);
     
-    if (result.success) {
-      res.json({
-        success: true,
-        token: result.token,
-        refreshToken: result.refreshToken
-      });
-    } else {
-      res.status(401).json({
-        success: false,
-        message: result.message || 'Invalid refresh token'
-      });
+    if (!result.success) {
+      return res.status(401).json(result);
     }
-  } catch (error: any) {
+    
+    // Update session if it exists
+    if (req.session && result.user) {
+      req.session.userId = result.user.id;
+      req.session.username = result.user.username;
+      req.session.role = result.user.role;
+    }
+    
+    return res.json(result);
+  } catch (error) {
     console.error('Token refresh error:', error);
     res.status(500).json({
       success: false,
-      message: 'Token refresh error'
+      message: 'An error occurred during token refresh'
     });
   }
 });
 
-// Logout endpoint
-router.post('/logout', async (req, res) => {
+// Get current user info route
+router.get('/me', authenticate(), async (req: Request, res: Response) => {
   try {
-    const token = req.headers.authorization?.substring(7);
-    const refreshToken = req.body.refreshToken;
-    
-    // Clear session
-    if (req.session) {
-      req.session.destroy((err) => {
-        if (err) {
-          console.error('Session destroy error:', err);
-        }
-      });
-    }
-    
-    // Invalidate tokens
-    if (token) {
-      await authService.logout(token, refreshToken);
-    }
-    
-    res.json({
-      success: true,
-      message: 'Logged out successfully'
-    });
-  } catch (error: any) {
-    console.error('Logout error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Logout error'
-    });
-  }
-});
-
-// Get current authenticated user
-router.get('/me', async (req, res) => {
-  try {
+    // User should be attached to request by auth middleware
     if (!req.user) {
       return res.status(401).json({
         success: false,
@@ -176,15 +174,35 @@ router.get('/me', async (req, res) => {
       });
     }
     
-    res.json({
+    // Get user from storage by ID
+    const storage = ServiceRegistry.getInstance().getService<any>('storage');
+    const user = await storage.getUserById(req.user.userId);
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+    
+    // Return user data without sensitive fields
+    return res.json({
       success: true,
-      user: req.user
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        displayName: user.displayName,
+        avatar: user.avatar,
+        role: user.role,
+        lastLogin: user.lastLogin
+      }
     });
-  } catch (error: any) {
-    console.error('Get user error:', error);
+  } catch (error) {
+    console.error('Get user info error:', error);
     res.status(500).json({
       success: false,
-      message: 'Could not retrieve user data'
+      message: 'An error occurred while retrieving user info'
     });
   }
 });

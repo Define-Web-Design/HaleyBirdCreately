@@ -1,77 +1,113 @@
 import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
-import storage from '../storage';
+import { ServiceRegistry } from '../services/registry';
+import { AuthService } from '../services/auth';
 
-// Authentication middleware
-export const authenticate = async (req: Request, res: Response, next: NextFunction) => {
-  // Skip authentication for public routes
-  if (req.path.startsWith('/api/public/') || 
-      req.path === '/api/theme' || 
-      req.path === '/api/auth/login' || 
-      req.path === '/api/auth/register' ||
-      req.path === '/api/auth/refresh') {
-    return next();
+// Extend Express Request type to include user information
+declare global {
+  namespace Express {
+    interface Request {
+      user?: {
+        userId: number;
+        username: string;
+        role: string;
+      };
+      token?: string;
+    }
   }
+}
 
-  try {
-    // Check for JWT in Authorization header
-    const authHeader = req.headers.authorization;
-    
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      const token = authHeader.substring(7);
-      const secret = process.env.JWT_SECRET || 'default-jwt-secret';
+/**
+ * Authentication middleware to verify JWT tokens and session-based authentication
+ */
+export const authenticate = (required: boolean = true) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    try {
+      // Get the AuthService from the ServiceRegistry
+      const authService = ServiceRegistry.getInstance().getService<AuthService>('auth');
       
-      try {
-        const decoded = jwt.verify(token, secret) as any;
-        
-        // Get the user from the database
-        const user = await storage.getUserById(decoded.id);
-        
-        if (user) {
-          // Attach user to the request
+      // Check Authorization header for JWT token
+      const authHeader = req.headers.authorization;
+      const token = authHeader && authHeader.startsWith('Bearer ') 
+        ? authHeader.substring(7) 
+        : null;
+      
+      // If token exists, verify it
+      if (token) {
+        const payload = authService.verifyToken(token);
+        if (payload) {
           req.user = {
-            id: user.id,
-            username: user.username,
-            email: user.email,
-            displayName: user.displayName,
-            role: user.role || 'user'
+            userId: payload.userId,
+            username: payload.username,
+            role: payload.role
           };
+          req.token = token;
           return next();
         }
-      } catch (tokenError) {
-        // Token verification failed, fall back to session check
-        console.error('Token verification failed:', tokenError);
       }
-    }
-    
-    // Fall back to session-based authentication
-    if (req.session && req.session.userId) {
-      const userId = req.session.userId;
-      const user = await storage.getUserById(userId);
       
-      if (user) {
-        // Attach user to the request
+      // If no token or invalid token, check for session-based authentication
+      if (req.session && req.session.userId) {
         req.user = {
-          id: user.id,
-          username: user.username,
-          email: user.email,
-          displayName: user.displayName,
-          role: user.role || 'user'
+          userId: req.session.userId,
+          username: req.session.username,
+          role: req.session.role
         };
         return next();
       }
+      
+      // If authentication is required and no valid auth method was found
+      if (required) {
+        return res.status(401).json({ 
+          success: false, 
+          message: 'Authentication required' 
+        });
+      }
+      
+      // If authentication is optional, continue
+      next();
+    } catch (error) {
+      console.error('Authentication error:', error);
+      if (required) {
+        return res.status(401).json({ 
+          success: false, 
+          message: 'Authentication failed' 
+        });
+      }
+      next();
     }
-    
-    // If no authentication was successful and route requires auth
-    return res.status(401).json({
-      success: false,
-      message: 'Authentication required'
-    });
-  } catch (error) {
-    console.error('Authentication error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Authentication service error'
-    });
-  }
+  };
+};
+
+/**
+ * Role-based authorization middleware
+ */
+export const authorize = (allowedRoles: string[]) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    try {
+      // Check if user exists and has a role
+      if (!req.user || !req.user.role) {
+        return res.status(403).json({ 
+          success: false, 
+          message: 'Unauthorized: User role not found' 
+        });
+      }
+      
+      // Check if user's role is in the allowed roles
+      if (!allowedRoles.includes(req.user.role)) {
+        return res.status(403).json({ 
+          success: false, 
+          message: 'Unauthorized: Insufficient permissions' 
+        });
+      }
+      
+      // Role check passed, continue
+      next();
+    } catch (error) {
+      console.error('Authorization error:', error);
+      res.status(403).json({ 
+        success: false, 
+        message: 'Authorization failed' 
+      });
+    }
+  };
 };

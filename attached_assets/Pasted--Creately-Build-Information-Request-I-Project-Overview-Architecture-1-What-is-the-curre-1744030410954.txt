@@ -1,0 +1,52 @@
+# Creately Build Information Request
+
+**I. Project Overview & Architecture:**
+
+1.  What is the current state of Creately's core features? (e.g., drawing tools, collaboration, saving, sharing)
+2.  Can you provide a high-level overview of Creately's architecture? (e.g., front-end frameworks, back-end technologies, database used)
+3.  What specific Replit features are you utilizing? (e.g., Replit Database, Deployments, specific libraries)
+4.  Is there a specific branch or version you are currently working on within Replit?
+5.  Are there any known limitations or challenges you've encountered within the Replit environment?
+
+**II. Front-End Details:**
+
+6.  What front-end framework are you using? (e.g., React, Vue, Angular)
+7.  How is the drawing canvas implemented? (e.g., HTML5 Canvas, SVG)
+8.  How is the front-end managing state? (e.g., Redux, Context API)
+9.  Are there any specific UI/UX patterns or libraries you're using?
+10. Are there any performance issues with the front-end rendering or interactions?
+
+**III. Back-End & API Details:**
+
+11. What back-end technology are you using? (e.g., Node.js with Express, Python with Flask)
+12. How are you handling API endpoints? (e.g., RESTful, GraphQL)
+13. What database are you using, and how are you interacting with it? (e.g., Replit Database, MongoDB, PostgreSQL)
+14. How are you handling user authentication and authorization?
+15. What are the key API endpoints related to collaboration and drawing data?
+
+**IV. Real-Time Collaboration:**
+
+16. What technology are you using for real-time collaboration? (e.g., WebSockets, Socket.IO)
+17. How are you managing shared state and handling concurrent user actions?
+18. Are there any issues with data synchronization or latency?
+19. How is the data persisted between collaboration sessions?
+
+**V. Testing & Debugging:**
+
+20. What testing strategies are you using? (e.g., unit tests, integration tests, manual testing)
+21. Are there any specific bugs or errors you're encountering? (Provide error messages if possible)
+22. What debugging tools or techniques are you using within Replit?
+23. Are there any specific areas where you need debugging assistance?
+
+**VI. Deployment & Environment:**
+
+24. What are your deployment plans for Creately? (e.g., Replit Deployments, external hosting)
+25. What are the environment variables and configurations required for running Creately?
+26. Are there any security considerations you're aware of?
+
+**VII. Agent & Assistant Interaction:**
+
+27. What specific tasks have you assigned to the Replit Agent?
+28. What types of questions have you asked the Replit Assistant?
+29. What are the results you've gotten from each?
+30. What are your general impressions of the agent and assistant's performance?

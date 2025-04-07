@@ -1,76 +1,67 @@
-import { ReactNode } from 'react';
-import { Redirect } from 'wouter';
+import { ReactNode, useEffect } from 'react';
+import { useLocation, useRoute } from 'wouter';
 import { useAuth } from '../../contexts/AuthContext';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Spinner } from '@/components/ui/spinner';
 
 interface ProtectedRouteProps {
   children: ReactNode;
-  requireAuth?: boolean;
-  requiredRoles?: string[];
-  redirectTo?: string;
+  roles?: string[]; // Optional roles for role-based access control
+  redirectPath?: string; // Optional redirect path, defaults to /login
 }
 
 /**
- * ProtectedRoute component
- * Protects routes that require authentication or specific roles
+ * A route wrapper that protects routes requiring authentication
+ * If the user is not authenticated, they are redirected to the login page
+ * Optionally supports role-based access control
  */
-export function ProtectedRoute({
+export const ProtectedRoute = ({
   children,
-  requireAuth = true,
-  requiredRoles = [],
-  redirectTo = '/login'
-}: ProtectedRouteProps) {
+  roles = [],
+  redirectPath = '/login'
+}: ProtectedRouteProps) => {
   const { isAuthenticated, isLoading, user } = useAuth();
+  const [, setLocation] = useLocation();
+  const [match] = useRoute(redirectPath);
+
+  useEffect(() => {
+    // If authentication check is complete and user is not authenticated
+    if (!isLoading && !isAuthenticated && !match) {
+      // Redirect to login
+      setLocation(redirectPath);
+    }
+    
+    // If roles are specified and user doesn't have required role
+    if (!isLoading && isAuthenticated && roles.length > 0 && user) {
+      const hasRequiredRole = roles.includes(user.role);
+      if (!hasRequiredRole) {
+        // Redirect to unauthorized page or dashboard
+        setLocation('/unauthorized');
+      }
+    }
+  }, [isAuthenticated, isLoading, match, redirectPath, roles, setLocation, user]);
 
   // Show loading state while checking authentication
   if (isLoading) {
     return (
-      <div className="w-full p-8 flex flex-col items-center gap-4">
-        <Skeleton className="h-12 w-3/4 rounded-lg" />
-        <Skeleton className="h-32 w-full rounded-lg" />
-        <Skeleton className="h-24 w-5/6 rounded-lg" />
+      <div className="flex items-center justify-center h-screen">
+        <Spinner size="lg" />
+        <span className="ml-2">Authenticating...</span>
       </div>
     );
   }
 
-  // If authentication is required but user is not authenticated, redirect to login
-  if (requireAuth && !isAuthenticated) {
-    return <Redirect to={redirectTo} />;
+  // If not authenticated, render nothing (will redirect in useEffect)
+  if (!isAuthenticated) {
+    return null;
   }
 
-  // If specific roles are required, check if user has the required role
-  if (requiredRoles.length > 0 && (!user || !requiredRoles.includes(user.role))) {
-    return <Redirect to="/unauthorized" />;
+  // If roles are specified and user doesn't have required role
+  if (roles.length > 0 && user && !roles.includes(user.role)) {
+    return null;
   }
 
-  // Render the protected content
+  // If authenticated and has required role, render children
   return <>{children}</>;
-}
+};
 
-/**
- * AdminRoute component
- * Protects routes that require admin privileges
- */
-export function AdminRoute({ children, redirectTo = '/unauthorized' }: Omit<ProtectedRouteProps, 'requireAuth' | 'requiredRoles'>) {
-  return (
-    <ProtectedRoute requireAuth={true} requiredRoles={['admin']} redirectTo={redirectTo}>
-      {children}
-    </ProtectedRoute>
-  );
-}
-
-/**
- * WithRole component
- * Protects routes that require specific roles
- */
-export function WithRole({ 
-  children, 
-  roles, 
-  redirectTo = '/unauthorized' 
-}: Omit<ProtectedRouteProps, 'requireAuth' | 'requiredRoles'> & { roles: string[] }) {
-  return (
-    <ProtectedRoute requireAuth={true} requiredRoles={roles} redirectTo={redirectTo}>
-      {children}
-    </ProtectedRoute>
-  );
-}
+export default ProtectedRoute;

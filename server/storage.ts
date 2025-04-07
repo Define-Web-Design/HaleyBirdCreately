@@ -24,7 +24,7 @@ export interface IStorage {
   
   // Refresh token operations
   createRefreshToken(refreshToken: { userId: number, token: string, expiresAt: Date, ipAddress?: string, userAgent?: string }): Promise<RefreshToken>;
-  getRefreshTokenByToken(token: string): Promise<RefreshToken | null>;
+  getRefreshToken(token: string): Promise<RefreshToken | null>;
   getRefreshTokensByUserId(userId: number): Promise<RefreshToken[]>;
   deleteRefreshToken(token: string): Promise<boolean>;
   revokeRefreshToken(token: string): Promise<boolean>;
@@ -151,9 +151,14 @@ export class PostgresStorage implements IStorage {
     return newRefreshToken;
   }
 
-  async getRefreshTokenByToken(token: string): Promise<RefreshToken | null> {
+  async getRefreshToken(token: string): Promise<RefreshToken | null> {
     const tokens = await this.db.select().from(schema.refreshTokens).where(eq(schema.refreshTokens.token, token)).limit(1);
     return tokens.length ? tokens[0] : null;
+  }
+  
+  // Keep old method for backwards compatibility
+  async getRefreshTokenByToken(token: string): Promise<RefreshToken | null> {
+    return this.getRefreshToken(token);
   }
 
   async getRefreshTokensByUserId(userId: number): Promise<RefreshToken[]> {
@@ -313,8 +318,13 @@ export class MemStorage implements IStorage {
     return newRefreshToken;
   }
 
-  async getRefreshTokenByToken(token: string): Promise<RefreshToken | null> {
+  async getRefreshToken(token: string): Promise<RefreshToken | null> {
     return this.refreshTokens.find(rt => rt.token === token) || null;
+  }
+  
+  // Keep old method for backwards compatibility
+  async getRefreshTokenByToken(token: string): Promise<RefreshToken | null> {
+    return this.getRefreshToken(token);
   }
 
   async getRefreshTokensByUserId(userId: number): Promise<RefreshToken[]> {
