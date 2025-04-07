@@ -162,8 +162,8 @@ const Sidebar = ({
     <div
       ref={sidebarRef}
       {...swipeHandlers}
-      className={`flex flex-col ${expanded ? (isMobile ? 'w-full max-w-[250px]' : 'w-64') : (isMobile ? 'w-0' : 'w-20')} bg-background border-r border-border
-      h-full transition-all duration-300 ease-in-out overflow-hidden overscroll-none`}
+      className={`flex flex-col pt-safe ${expanded ? (isMobile ? 'w-full max-w-[250px]' : 'w-64') : (isMobile ? 'w-0' : 'w-20')} bg-background border-r border-border
+      h-full transition-all duration-300 ease-in-out overflow-hidden overscroll-none shadow-sm`}
       style={{
         willChange: 'width, transform',
         overscrollBehavior: 'none',
@@ -173,27 +173,31 @@ const Sidebar = ({
       role="navigation"
       aria-label="Main Navigation"
     >
-      {/* Compact Logo Section */}
-      <Link
-        href="/"
-        className="py-2 px-3 flex items-center cursor-pointer hover:opacity-90 transition-all duration-300 ease-in-out group"
-      >
-        <div className="bg-gradient-to-r from-[#F2994A] to-[#FF9DAE] h-8 w-8 rounded-lg flex items-center justify-center text-white font-bold text-lg mr-3 shrink-0
-        shadow-sm transition-transform duration-300 ease-out hover:scale-110 group-hover:shadow-md">
-          C
-        </div>
-        <h1 className={`text-lg font-medium transition-all duration-300 ease-in-out
-        ${expanded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 w-0 overflow-hidden md:opacity-0 md:w-0 md:hidden'}`}>
-          Creately
-        </h1>
-      </Link>
+      {/* Logo Section */}
+      <div className="pt-4 pb-2 px-3 flex items-center">
+        <Link
+          href="/"
+          className="flex items-center cursor-pointer hover:opacity-90 transition-all duration-300 ease-in-out group"
+        >
+          <div className="bg-gradient-to-r from-[#F2994A] to-[#FF9DAE] h-8 w-8 rounded-lg flex items-center justify-center text-white font-bold text-lg mr-3 shrink-0
+          shadow-sm transition-transform duration-300 ease-out hover:scale-110 group-hover:shadow-md">
+            C
+          </div>
+          <h1 className={`text-lg font-medium transition-all duration-300 ease-in-out
+          ${expanded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 w-0 overflow-hidden'}`}>
+            Creately
+          </h1>
+        </Link>
+      </div>
 
       {/* Main Navigation - Expanded to be the majority of the sidebar */}
-      <nav className="flex-1 overflow-y-auto py-4 flex flex-col">
+      <nav className="flex-1 overflow-y-auto py-2 flex flex-col">
         {/* Workspace Section */}
-        <div className={`px-3 mb-2 transition-all duration-300 ease-in-out
-        ${expanded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 h-0 mb-0 overflow-hidden md:opacity-100 md:h-auto md:mb-2 md:translate-x-0'}`}>
-          <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Workspace</h2>
+        <div className="px-3 mb-2">
+          <h2 className={`text-xs font-medium uppercase tracking-wider text-muted-foreground transition-all duration-300 ease-in-out
+          ${expanded ? 'opacity-100' : 'opacity-50 text-center'}`}>
+            Workspace
+          </h2>
         </div>
 
         <ul className="mb-6 space-y-0.5">
@@ -225,9 +229,10 @@ const Sidebar = ({
                         }`}
                     >
                       <div className="flex items-center">
-                        <i className={`${item.icon} w-4 mr-2.5 text-base shrink-0`}></i>
+                        <i className={`${item.icon} w-4 text-base shrink-0 transition-all duration-300 ease-in-out
+                        ${expanded ? 'mr-2.5' : 'mx-auto'}`}></i>
                         <span className={`transition-all duration-300 ease-in-out
-                        ${expanded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 w-0 overflow-hidden md:opacity-100 md:w-auto md:transform-none md:overflow-visible'}`}>
+                        ${expanded ? 'opacity-100 translate-x-0' : 'opacity-0 absolute left-[-9999px] overflow-hidden'}`}>
                           {item.name}
                         </span>
                         {item.isNew && expanded && (
@@ -255,10 +260,10 @@ const Sidebar = ({
                           : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/50'
                         }`}
                     >
-                      <i className={`${item.icon} w-4 mr-2.5 text-base shrink-0 transition-transform duration-300 ease-in-out
-                      ${location === item.path ? 'scale-110' : ''}`}></i>
+                      <i className={`${item.icon} w-4 text-base shrink-0 transition-all duration-300 ease-in-out
+                      ${expanded ? 'mr-2.5' : 'mx-auto'} ${location === item.path ? 'scale-110' : ''}`}></i>
                       <span className={`transition-all duration-300 ease-in-out
-                      ${expanded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 w-0 overflow-hidden md:opacity-100 md:w-auto md:transform-none md:overflow-visible'}`}>
+                      ${expanded ? 'opacity-100 translate-x-0' : 'opacity-0 absolute left-[-9999px] overflow-hidden'}`}>
                         {item.name}
                       </span>
                       {item.isNew && expanded && (
@@ -305,9 +310,11 @@ const Sidebar = ({
         </ul>
 
         {/* Smart Tools Section */}
-        <div className={`px-3 mb-2 transition-all duration-300 ease-in-out
-        ${expanded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 h-0 mb-0 overflow-hidden md:opacity-100 md:h-auto md:mb-2 md:translate-x-0'}`}>
-          <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Smart Tools</h2>
+        <div className="px-3 mb-2">
+          <h2 className={`text-xs font-medium uppercase tracking-wider text-muted-foreground transition-all duration-300 ease-in-out
+          ${expanded ? 'opacity-100' : 'opacity-50 text-center'}`}>
+            Smart Tools
+          </h2>
         </div>
 
         <ul className="space-y-0.5">
@@ -327,10 +334,10 @@ const Sidebar = ({
                       : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/50'
                     }`}
                 >
-                  <i className={`${tool.icon} w-4 mr-2.5 text-base shrink-0 transition-transform duration-300 ease-in-out
-                  ${location === tool.path ? 'scale-110' : ''}`}></i>
+                  <i className={`${tool.icon} w-4 text-base shrink-0 transition-all duration-300 ease-in-out
+                  ${expanded ? 'mr-2.5' : 'mx-auto'} ${location === tool.path ? 'scale-110' : ''}`}></i>
                   <span className={`transition-all duration-300 ease-in-out
-                  ${expanded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 w-0 overflow-hidden md:opacity-100 md:w-auto md:transform-none md:overflow-visible'}`}>
+                  ${expanded ? 'opacity-100 translate-x-0' : 'opacity-0 absolute left-[-9999px] overflow-hidden'}`}>
                     {tool.name}
                   </span>
                 </Link>
@@ -345,17 +352,19 @@ const Sidebar = ({
         {/* Compact User Profile with Settings Dropdown */}
         <div className="p-2 flex items-center justify-between">
           <DropdownMenu>
-            <DropdownMenuTrigger className="flex items-center space-x-2 rounded-md p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800/30 transition-colors duration-200 w-full">
+            <DropdownMenuTrigger className={`flex items-center rounded-md p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800/30 transition-colors duration-200 w-full
+              ${expanded ? 'justify-start space-x-2' : 'justify-center'}`}>
               <img
                 src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=120&h=120&q=80"
                 alt="User avatar"
                 className="h-7 w-7 rounded-full object-cover shrink-0 border-2 border-primary/20 shadow-sm"
               />
-              <div className={`flex flex-row items-center gap-2 transition-all duration-300 ease-in-out
-              ${expanded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 w-0 overflow-hidden'}`}>
-                <span className="text-sm font-medium truncate">Sophia</span>
-                <Settings className="h-3.5 w-3.5 text-muted-foreground" />
-              </div>
+              {expanded && (
+                <div className="flex flex-row items-center gap-2 transition-all duration-300 ease-in-out">
+                  <span className="text-sm font-medium truncate">Sophia</span>
+                  <Settings className="h-3.5 w-3.5 text-muted-foreground" />
+                </div>
+              )}
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel className="flex items-center gap-2">
@@ -377,9 +386,8 @@ const Sidebar = ({
           </DropdownMenu>
         </div>
 
-        {/* Compact Settings Controls */}
-        <div className={`px-2 pb-2 transition-all duration-300 ease-out
-        ${expanded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 h-0 overflow-hidden md:opacity-100 md:h-auto md:translate-y-0'}`}>
+        {/* Settings Controls */}
+        <div className={`px-2 pb-2 transition-all duration-300 ease-out ${!expanded ? 'hidden' : ''}`}>
           {/* Theme Toggle */}
           <div className="flex items-center justify-between p-1.5 mb-1 rounded-md bg-gray-50 dark:bg-gray-800/50">
             <div className="flex items-center gap-1.5">
@@ -421,6 +429,21 @@ const Sidebar = ({
             </div>
           </div>
         </div>
+        
+        {/* Simple Theme Toggle Button for Collapsed Mode */}
+        {!expanded && (
+          <div className="px-2 pb-2">
+            <button
+              onClick={toggleDarkMode}
+              className="w-full flex items-center justify-center p-1.5 rounded-md bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700/70 transition-colors"
+              aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+            >
+              {isDarkMode
+                ? <Moon className="h-4 w-4 text-indigo-400" />
+                : <Sun className="h-4 w-4 text-amber-500 animate-pulse" />}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

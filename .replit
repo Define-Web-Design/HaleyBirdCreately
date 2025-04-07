@@ -59,7 +59,7 @@ localPort = 8425
 externalPort = 3002
 
 [workflows]
-runButton = "Comprehensive Debug and Validation"
+runButton = "Simultaneous Task Execution"
 
 [[workflows.workflow]]
 name = "Project"
@@ -1442,7 +1442,7 @@ args = "node -e \""
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "  const { verifyResponsiveDesign } = require('./client/src/utils/responsive-tester.js');"
+args = "  const { verifyResponsiveDesign } = require('./client/src/utils/navigation-tester.js');"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
