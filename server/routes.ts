@@ -247,14 +247,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      console.log(`Running PageSpeed analysis for ${url} on ${device}`);
+      // Validate API key before proceeding
+      const { validateApiKey } = await import('./services/pageSpeedService.js');
+      const apiKeyValidation = validateApiKey();
       
-      if (!process.env.PAGESPEED_INSIGHTS_API_KEY) {
+      if (!apiKeyValidation.valid) {
+        console.error(`PageSpeed API key validation failed: ${apiKeyValidation.message}`);
         return res.status(500).json({
           success: false,
-          message: 'PageSpeed API key not configured'
+          message: `API Error: API key not valid. ${apiKeyValidation.message}`
         });
       }
+      
+      console.log(`Running PageSpeed analysis for ${url} on ${device}`);
       
       // Run the analysis
       const results = await runPageSpeedAnalysis(url, device as 'mobile' | 'desktop');
@@ -274,7 +279,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } : null
       });
     } catch (error: any) {
-      console.error('Error running PageSpeed analysis:', error);
+      console.error(`PageSpeed analysis error: ${error.message}`);
       res.status(500).json({ 
         success: false, 
         message: error.message || 'Failed to run PageSpeed analysis'

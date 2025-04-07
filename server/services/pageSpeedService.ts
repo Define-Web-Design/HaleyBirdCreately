@@ -3,12 +3,12 @@ import fs from 'fs';
 import path from 'path';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
+import logger from '../utils/logger';
 
 // Load environment variables
 dotenv.config();
 
 // Constants
-const API_KEY = process.env.PAGESPEED_INSIGHTS_API_KEY;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const LOGS_DIR = path.join(__dirname, '..', '..', 'logs', 'pagespeed');
 
@@ -18,18 +18,45 @@ if (!fs.existsSync(LOGS_DIR)) {
 }
 
 /**
+ * Validate that the PageSpeed Insights API key is available and valid
+ */
+export function validateApiKey() {
+  const apiKey = process.env.PAGESPEED_INSIGHTS_API_KEY;
+  
+  if (!apiKey) {
+    logger.warn('PageSpeed Insights API key is missing. Please set the PAGESPEED_INSIGHTS_API_KEY environment variable.');
+    return { valid: false, message: 'API key not found in environment variables' };
+  }
+  
+  if (apiKey.length < 10) {
+    logger.warn('PageSpeed Insights API key appears to be invalid (too short).');
+    return { valid: false, message: 'API key is invalid (too short)' };
+  }
+  
+  return { valid: true };
+}
+
+/**
  * Run PageSpeed Insights analysis
  */
 export async function runPageSpeedAnalysis(url: string, device: 'mobile' | 'desktop' = 'mobile') {
   return new Promise((resolve, reject) => {
-    if (!API_KEY) {
-      reject(new Error('PageSpeed Insights API key is missing. Please set the PAGESPEED_INSIGHTS_API_KEY environment variable.'));
+    // Get API key from environment with validation
+    const apiKey = process.env.PAGESPEED_INSIGHTS_API_KEY;
+    const keyValidation = validateApiKey();
+    
+    if (!keyValidation.valid) {
+      reject(new Error(`API key not valid. ${keyValidation.message}`));
       return;
     }
 
-    const apiUrl = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(url)}&strategy=${device}&key=${API_KEY}`;
+    logger.info(`Running PageSpeed analysis for ${url} on ${device}`);
     
-    https.get(apiUrl, (res) => {
+    // Build API request URL
+    const apiUrl = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(url)}&strategy=${device}&key=${apiKey}`;
+    
+    // Add timeout to prevent hanging requests
+    const req = https.get(apiUrl, { timeout: 30000 }, (res) => {
       let data = '';
       
       res.on('data', (chunk) => {
@@ -40,8 +67,11 @@ export async function runPageSpeedAnalysis(url: string, device: 'mobile' | 'desk
         if (res.statusCode !== 200) {
           try {
             const error = JSON.parse(data);
-            reject(new Error(`API Error: ${error.error.message}`));
+            const errorMessage = error.error?.message || `HTTP Error: ${res.statusCode}`;
+            logger.error(`PageSpeed API error: ${errorMessage}`);
+            reject(new Error(`API Error: ${errorMessage}`));
           } catch (e) {
+            logger.error(`PageSpeed API HTTP error: ${res.statusCode}`);
             reject(new Error(`HTTP Error: ${res.statusCode}`));
           }
           return;
@@ -49,13 +79,26 @@ export async function runPageSpeedAnalysis(url: string, device: 'mobile' | 'desk
         
         try {
           const results = JSON.parse(data);
+          logger.info(`PageSpeed analysis completed successfully for ${url}`);
           resolve(results);
         } catch (e) {
-          reject(new Error(`Failed to parse API response: ${e instanceof Error ? e.message : String(e)}`));
+          const errorMsg = `Failed to parse API response: ${e instanceof Error ? e.message : String(e)}`;
+          logger.error(errorMsg);
+          reject(new Error(errorMsg));
         }
       });
-    }).on('error', (e) => {
-      reject(new Error(`Request failed: ${e.message}`));
+    });
+    
+    req.on('error', (e) => {
+      const errorMsg = `Request failed: ${e.message}`;
+      logger.error(errorMsg);
+      reject(new Error(errorMsg));
+    });
+    
+    req.on('timeout', () => {
+      logger.error(`PageSpeed API request timed out for ${url}`);
+      req.destroy();
+      reject(new Error('Request timed out after 30 seconds'));
     });
   });
 }
