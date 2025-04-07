@@ -1,5 +1,5 @@
 
-import { generateAppStatusReport, displayAppStatusReport } from './app-status-monitor';
+const { generateAppStatusReport, displayAppStatusReport } = require('./app-status-monitor');
 
 /**
  * Command-line utility to generate and display app status

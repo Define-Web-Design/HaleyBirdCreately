@@ -1,5 +1,5 @@
 
-const { generateAppStatusReport, displayAppStatusReport } = require('../client/src/utils/app-status-monitor');
+const { generateAppStatusReport, displayAppStatusReport } = require('../client/src/utils/app-status-monitor.js');
 const fs = require('fs');
 const path = require('path');
 
