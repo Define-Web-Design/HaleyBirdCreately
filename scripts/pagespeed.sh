@@ -1,17 +1,22 @@
+
 #!/bin/bash
 
-# Get the directory where the script is located
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+# Script to run PageSpeed Insights for the application
+# Usage: ./scripts/pagespeed.sh [URL]
 
-# Load environment variables
-if [ -f "$PROJECT_ROOT/.env" ]; then
-    export $(grep -v '^#' "$PROJECT_ROOT/.env" | xargs)
+# Set default URL if not provided
+URL=${1:-"https://replit.app"}
+
+# Check if API key is set
+if [ -z "$PAGESPEED_INSIGHTS_API_KEY" ]; then
+  echo "Error: PAGESPEED_INSIGHTS_API_KEY environment variable is not set"
+  echo "Please set it in your .env file or export it in your shell"
+  exit 1
 fi
 
-# Default values
-URL=${1:-${APP_URL:-"https://creately.repl.co"}}
-STRATEGY=${2:-"mobile"}
+# Create logs directory if it doesn't exist
+mkdir -p logs/pagespeed
 
-# Run the PageSpeed Insights script
-node "$SCRIPT_DIR/pagespeed-insights.js" "$URL" "$STRATEGY"
+# Run the pagespeed script
+echo "Running PageSpeed Insights for $URL"
+node scripts/pagespeed-insights.js "$URL"

@@ -1,169 +1,140 @@
-/**
- * PageSpeed Insights Integration Script
- * 
- * This script helps analyze the application's performance using Google PageSpeed Insights
- * and provides recommendations for optimization.
- * 
- * Usage: 
- * 1. Run with URL: node pagespeed-insights.js https://your-app-url.com
- * 2. Optionally specify device: node pagespeed-insights.js https://your-app-url.com mobile
- * 
- * Requirements:
- * - Node.js
- * - node-fetch (npm install node-fetch)
- * - An internet connection to access PageSpeed Insights API
- */
+// PageSpeed Insights API integration script
+const https = require('https');
+const fs = require('fs');
+const path = require('path');
 
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import fetch from 'node-fetch';
-import dotenv from 'dotenv';
-
-// Load environment variables
-dotenv.config();
-
-// Constants
+// Configuration
 const API_KEY = process.env.PAGESPEED_INSIGHTS_API_KEY;
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const LOGS_DIR = path.join(__dirname, '..', 'logs', 'pagespeed');
+const DEFAULT_URL = 'https://replitapp.example.com'; // Replace with your actual deployed URL
+const LOG_DIR = path.join(__dirname, '..', 'logs', 'pagespeed');
 
-// Ensure logs directory exists
-if (!fs.existsSync(LOGS_DIR)) {
-  fs.mkdirSync(LOGS_DIR, { recursive: true });
+// Ensure log directory exists
+try {
+  if (!fs.existsSync(LOG_DIR)) {
+    fs.mkdirSync(LOG_DIR, { recursive: true });
+  }
+} catch (error) {
+  console.error('Failed to create logs directory:', error);
+  process.exit(1);
 }
 
-// Color codes for terminal output
-const colors = {
-  red: '\x1b[31m',
-  green: '\x1b[32m',
-  yellow: '\x1b[33m',
-  blue: '\x1b[34m',
-  magenta: '\x1b[35m',
-  cyan: '\x1b[36m',
-  reset: '\x1b[0m',
-  bold: '\x1b[1m'
-};
-
 /**
- * Parse command line arguments
+ * Run PageSpeed Insights for URL
+ * @param {string} url - The URL to analyze
+ * @param {boolean} isMobile - Whether to use mobile or desktop strategy
+ * @returns {Promise<Object>} - PageSpeed result
  */
-function parseArgs() {
-  const args = process.argv.slice(2);
-  
-  if (args.length === 0) {
-    console.error(`${colors.red}Error: URL is required${colors.reset}`);
-    console.log(`Usage: node pagespeed-insights.js <URL> [device]`);
+async function runPageSpeedInsights(url = DEFAULT_URL, isMobile = false) {
+  if (!API_KEY) {
+    console.error('Error: PAGESPEED_INSIGHTS_API_KEY environment variable is not set');
     process.exit(1);
   }
-  
-  const url = args[0];
-  const device = args[1] || 'mobile';
-  
-  if (!['mobile', 'desktop'].includes(device.toLowerCase())) {
-    console.warn(`${colors.yellow}Warning: Invalid device type "${device}". Using "mobile" instead.${colors.reset}`);
-    return { url, device: 'mobile' };
-  }
-  
-  return { url, device: device.toLowerCase() };
-}
 
-/**
- * Run PageSpeed Insights analysis
- */
-async function runPageSpeedInsights(url, strategy = 'mobile') {
-  try {
-    if (!API_KEY) {
-      console.error('Error: PAGESPEED_INSIGHTS_API_KEY is not set in environment variables');
-      process.exit(1);
-    }
+  const strategy = isMobile ? 'mobile' : 'desktop';
+  const apiUrl = `https://pagespeedonline.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(url)}&strategy=${strategy}&key=${API_KEY}`;
 
-    console.log(`Running PageSpeed Insights for ${url} (${strategy})...`);
+  console.log(`Running PageSpeed Insights for ${url} (${strategy} strategy)...`);
 
-    const apiUrl = `https://pagespeedonline.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(url)}&strategy=${strategy}&key=${API_KEY}`;
+  return new Promise((resolve, reject) => {
+    https.get(apiUrl, (res) => {
+      let data = '';
 
-    const response = await fetch(apiUrl);
-
-    if (!response.ok) {
-      throw new Error(`API request failed with status ${response.status}: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-
-    // Extract core metrics
-    const lcp = data.lighthouseResult?.audits['largest-contentful-paint']?.displayValue || 'N/A';
-    const cls = data.lighthouseResult?.audits['cumulative-layout-shift']?.displayValue || 'N/A';
-    const tbt = data.lighthouseResult?.audits['total-blocking-time']?.displayValue || 'N/A';
-    const fcp = data.lighthouseResult?.audits['first-contentful-paint']?.displayValue || 'N/A';
-    const performance = Math.round(data.lighthouseResult?.categories?.performance?.score * 100) || 'N/A';
-
-    console.log('\n===== Core Web Vitals Results =====');
-    console.log(`Performance Score: ${performance}%`);
-    console.log(`Largest Contentful Paint (LCP): ${lcp}`);
-    console.log(`Cumulative Layout Shift (CLS): ${cls}`);
-    console.log(`Total Blocking Time (TBT): ${tbt}`);
-    console.log(`First Contentful Paint (FCP): ${fcp}`);
-
-
-    // Save full results to log file
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const fileName = `pagespeed-${strategy}-${timestamp}.json`;
-    const filePath = path.join(LOGS_DIR, fileName);
-
-    fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
-    console.log(`\nFull results saved to: ${filePath}`);
-
-    // Check for performance opportunities
-    const opportunities = data.lighthouseResult?.audits['performance-budget']?.details?.items || 
-                         data.lighthouseResult?.audits['network-requests']?.details?.items || [];
-
-    if (opportunities.length > 0) {
-      console.log('\n===== Optimization Opportunities =====');
-      opportunities.slice(0, 5).forEach((opp, index) => {
-        console.log(`${index + 1}. ${opp.url || opp.name}: ${opp.totalBytes ? formatBytes(opp.totalBytes) : ''}`);
+      res.on('data', (chunk) => {
+        data += chunk;
       });
-    }
 
-    return data;
-  } catch (error) {
-    console.error('Error running PageSpeed Insights:', error.message);
-    return null;
-  }
+      res.on('end', () => {
+        try {
+          const result = JSON.parse(data);
+          resolve(result);
+        } catch (error) {
+          reject(new Error(`Failed to parse PageSpeed API response: ${error}`));
+        }
+      });
+    }).on('error', (error) => {
+      reject(new Error(`PageSpeed API request failed: ${error.message}`));
+    });
+  });
 }
-
-function formatBytes(bytes, decimals = 2) {
-  if (bytes === 0) return '0 Bytes';
-
-  const k = 1024;
-  const dm = decimals < 0 ? 0 : decimals;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
-}
-
 
 /**
- * Main function to run the script
+ * Parse and display PageSpeed results
+ * @param {Object} result - PageSpeed API result
+ * @param {boolean} isMobile - Whether this is for mobile
+ */
+function displayPageSpeedResults(result, isMobile) {
+  if (!result.lighthouseResult) {
+    console.error('Error: Invalid PageSpeed result format');
+    console.error(result);
+    return;
+  }
+
+  const { categories, audits } = result.lighthouseResult;
+
+  // Extract overall performance score
+  const performanceScore = Math.round(categories.performance.score * 100);
+
+  console.log('\n=== PERFORMANCE SUMMARY ===');
+  console.log(`Strategy: ${isMobile ? 'Mobile' : 'Desktop'}`);
+  console.log(`Performance Score: ${performanceScore}/100`);
+
+  // Extract Core Web Vitals metrics
+  const lcpAudit = audits['largest-contentful-paint'];
+  const fidAudit = audits['max-potential-fid'] || audits['total-blocking-time'];
+  const clsAudit = audits['cumulative-layout-shift'];
+
+  console.log('\n=== CORE WEB VITALS ===');
+  console.log(`Largest Contentful Paint (LCP): ${lcpAudit.displayValue}`);
+  console.log(`  Score: ${Math.round(lcpAudit.score * 100)}/100`);
+
+  if (fidAudit) {
+    console.log(`First Input Delay (FID) proxy: ${fidAudit.displayValue}`);
+    console.log(`  Score: ${Math.round(fidAudit.score * 100)}/100`);
+  }
+
+  console.log(`Cumulative Layout Shift (CLS): ${clsAudit.displayValue}`);
+  console.log(`  Score: ${Math.round(clsAudit.score * 100)}/100`);
+
+  // Extract top opportunities for improvement
+  const opportunities = Object.values(audits)
+    .filter(audit => audit.details && audit.details.type === 'opportunity')
+    .sort((a, b) => b.score - a.score);
+
+  if (opportunities.length > 0) {
+    console.log('\n=== TOP IMPROVEMENT OPPORTUNITIES ===');
+    opportunities.slice(0, 5).forEach((opportunity, index) => {
+      console.log(`${index + 1}. ${opportunity.title}`);
+      console.log(`   ${opportunity.description}`);
+    });
+  }
+
+  // Log full result to file
+  const timestamp = new Date().toISOString().replace(/:/g, '-');
+  const fileName = `${timestamp}_${isMobile ? 'mobile' : 'desktop'}_report.json`;
+  const filePath = path.join(LOG_DIR, fileName);
+
+  fs.writeFileSync(filePath, JSON.stringify(result, null, 2));
+  console.log(`\nFull report saved to: ${filePath}`);
+}
+
+/**
+ * Main execution function
  */
 async function main() {
   try {
-    const { url, device } = parseArgs();
-    
-    console.log(`${colors.blue}Analyzing ${colors.yellow}${url}${colors.blue} for ${colors.yellow}${device}${colors.blue} devices...${colors.reset}`);
-    console.log(`${colors.cyan}This may take a minute or two. Please wait...${colors.reset}`);
-    
-    const results = await runPageSpeedInsights(url, device);
-    
-    // Display results (simplified from original for brevity and clarity)
-    if (results) {
-        console.log(`\n${colors.bold}${colors.blue}=== PageSpeed Insights Results ===${colors.reset}\n`);
-        console.log(`Performance Score: ${Math.round(results.lighthouseResult.categories.performance.score * 100)}%`);
-    }
+    // Get URL from command line arguments or use default
+    const url = process.argv[2] || DEFAULT_URL;
 
+    // Run for both mobile and desktop
+    const mobileResult = await runPageSpeedInsights(url, true);
+    displayPageSpeedResults(mobileResult, true);
+
+    const desktopResult = await runPageSpeedInsights(url, false);
+    displayPageSpeedResults(desktopResult, false);
+
+    console.log('\nPageSpeed analysis complete!');
   } catch (error) {
-    console.error(`${colors.red}${colors.bold}Error:${colors.reset} ${error.message}`);
+    console.error('Error running PageSpeed analysis:', error);
     process.exit(1);
   }
 }

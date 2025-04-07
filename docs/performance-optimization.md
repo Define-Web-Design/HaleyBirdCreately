@@ -1,92 +1,87 @@
-# Performance Optimization Guide for Creately
 
-This guide outlines best practices for optimizing Creately's performance based on Core Web Vitals and web.dev guidelines.
+# Performance Optimization Guide
+
+This document outlines best practices for optimizing the performance of our application based on Core Web Vitals and Web.Dev guidelines.
 
 ## Core Web Vitals
 
+Core Web Vitals are a set of metrics that measure real-world user experience for loading performance, interactivity, and visual stability.
+
 ### Largest Contentful Paint (LCP)
-- **Target**: < 2.5 seconds
-- **Definition**: Measures loading performance - how quickly the largest content element becomes visible
-- **Optimization Tips**:
-  - Optimize and compress images
-  - Implement critical CSS
-  - Use responsive images with srcset
-  - Consider lazy loading for below-the-fold content
+
+LCP measures loading performance. To provide a good user experience, aim for LCP to occur within 2.5 seconds of when the page first starts loading.
+
+**Optimization strategies:**
+- Optimize and compress images
+- Preload critical resources
+- Remove render-blocking JavaScript and CSS
+- Implement server-side rendering or static generation
+- Use CDN for asset delivery
 
 ### Interaction to Next Paint (INP)
-- **Target**: < 200 milliseconds
-- **Definition**: Measures responsiveness - how quickly your site responds to user interactions
-- **Optimization Tips**:
-  - Optimize event handlers
-  - Use debounce for resource-intensive functions
-  - Move heavy computations to Web Workers
-  - Break up long tasks into smaller chunks
+
+INP measures responsiveness. For a good user experience, pages should have an INP of 200 milliseconds or less.
+
+**Optimization strategies:**
+- Optimize JavaScript execution
+- Reduce long tasks
+- Break up long tasks into smaller ones
+- Debounce or throttle event handlers
+- Use web workers for CPU-intensive tasks
+- Implement code-splitting
 
 ### Cumulative Layout Shift (CLS)
-- **Target**: < 0.1
-- **Definition**: Measures visual stability - preventing unexpected layout shifts
-- **Optimization Tips**:
-  - Always specify image dimensions
-  - Reserve space for dynamic content
-  - Avoid inserting content above existing content
-  - Use CSS transform for animations instead of properties that trigger layout
 
-## Implementation Checklist
+CLS measures visual stability. Pages should maintain a CLS of 0.1 or less.
 
-### Image Optimization
-- [ ] Compress all images using WebP format where possible
-- [ ] Implement responsive images using srcset
-- [ ] Add width and height attributes to all image elements
-- [ ] Consider lazy loading for images below the fold
+**Optimization strategies:**
+- Set explicit width and height for images and videos
+- Reserve space for dynamic content
+- Avoid inserting content above existing content
+- Use CSS `transform` for animations
+- Ensure fonts don't cause layout shifts
 
-### JavaScript Optimization
-- [ ] Defer non-critical JavaScript
-- [ ] Use code splitting to reduce initial bundle size
-- [ ] Implement tree-shaking to remove unused code
-- [ ] Consider Web Workers for heavy computational tasks
+## Mobile Optimization
 
-### CSS Optimization
-- [ ] Extract and inline critical CSS
-- [ ] Remove unused CSS rules
-- [ ] Minify CSS files
-- [ ] Use CSS containment where appropriate
+Mobile optimization is critical for user satisfaction and search engine rankings.
 
-### Font Optimization
-- [ ] Preload critical fonts
-- [ ] Use font-display: swap to prevent invisible text
-- [ ] Consider variable fonts to reduce file size
-- [ ] Limit the number of font variations
+**Key strategies:**
+- Implement responsive design patterns
+- Use mobile-first approach
+- Optimize touch targets (min 44px × 44px)
+- Implement efficient navigation for small screens
+- Reduce payload size for mobile networks
+- Test on actual mobile devices
 
-### Server and Caching
-- [ ] Implement server-side caching
-- [ ] Use appropriate cache headers
-- [ ] Consider a CDN for static assets
-- [ ] Enable HTTP/2 or HTTP/3 if possible
+## Integration with PageSpeed Insights
 
-## Monitoring Performance
+Our application integrates with Google PageSpeed Insights API to monitor performance metrics:
 
-### Tools
-- **PageSpeed Insights**: Measure Core Web Vitals
-- **Lighthouse**: Comprehensive site audit
-- **Chrome DevTools**: Runtime performance analysis
-- **web.dev Measure**: Track performance over time
+1. Use the PageSpeedIntegration component to test pages
+2. Analyze recommendations and implement suggested improvements
+3. Monitor performance trends over time in logs/pagespeed directory
+4. Set performance budgets and alert thresholds
 
-### Implementation in Creately
-- Use the built-in PageSpeed Integration component to periodically check Core Web Vitals
-- Review performance metrics before major releases
-- Set up automated performance testing workflow
+## API Security
 
-## Mobile-Specific Optimizations
+When using the PageSpeed Insights API:
 
-- Ensure tap targets are appropriately sized (at least 48x48px)
-- Optimize for touch interactions with appropriate padding
-- Consider reduced motion for animations on mobile
-- Test on actual mobile devices, not just emulators
+1. Store API key securely in environment variables
+2. Implement rate limiting to prevent abuse
+3. Set restrictions on the API key in Google Cloud Console
+4. Log access attempts for auditing
 
-## Resources
+## Development Best Practices
 
-- [Web Vitals](https://web.dev/articles/vitals)
-- [Optimize LCP](https://web.dev/articles/optimize-lcp)
-- [Optimize INP](https://web.dev/articles/optimize-inp)
-- [Optimize CLS](https://web.dev/articles/optimize-cls)
-- [Modern responsive layouts](https://web.dev/articles/responsive-web-design-basics)
+1. Measure performance impact before/after changes
+2. Use lighthouse CLI for automated testing in CI/CD
+3. Review Core Web Vitals in Chrome DevTools
+4. Apply only targeted optimizations that address specific issues
+5. Document performance improvements
+
+## Additional Resources
+
+- [Web.Dev Performance Guide](https://web.dev/performance)
+- [Core Web Vitals](https://web.dev/articles/vitals)
+- [PageSpeed Insights API Documentation](https://developers.google.com/speed/docs/insights/v5/get-started)
+- [Web Performance Optimization MDN Guide](https://developer.mozilla.org/en-US/docs/Web/Performance)

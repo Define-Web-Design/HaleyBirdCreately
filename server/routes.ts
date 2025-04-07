@@ -9,7 +9,7 @@ import {
   suggestPostingTimes
 } from "./ai/content";
 import { generateMoodPalette, generateAIPalette } from "./services/paletteGenerator";
-import pageSpeedService from "./services/pageSpeedService";
+import { runPageSpeedAnalysis, saveResults, formatAnalysisForResponse, validateApiKey, analyzeUrl } from "./services/pageSpeedService";
 import { MoodTone } from "../shared/schema";
 import { 
   apiLimiter, 
@@ -248,7 +248,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Validate API key before proceeding
-      const apiKeyValidation = await pageSpeedService.validateApiKey();
+      const apiKeyValidation = await validateApiKey();
 
       if (!apiKeyValidation.valid) {
         console.error(`PageSpeed API key validation failed: ${apiKeyValidation.message}`);
@@ -261,13 +261,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`Running PageSpeed analysis for ${url} on ${device}`);
 
       // Run the analysis
-      const results = await pageSpeedService.runPageSpeedAnalysis(url, device as 'mobile' | 'desktop');
+      const results = await runPageSpeedAnalysis(url, device as 'mobile' | 'desktop');
 
       // Save the results to files
-      const fileInfo = pageSpeedService.saveResults(results as any, url, device);
+      const fileInfo = saveResults(results as any, url, device);
 
       // Format the results for API response
-      const formattedResults = pageSpeedService.formatAnalysisForResponse(results as any);
+      const formattedResults = formatAnalysisForResponse(results as any);
 
       res.json({
         success: true,
@@ -290,6 +290,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api", validateAccess);
   // API routes prefix
   const apiPrefix = "/api";
+
+  //NEW ROUTE ADDED HERE
+  app.get('/api/pagespeed', async (req, res) => {
+    try {
+      const url = req.query.url as string;
+      const isMobile = req.query.mobile === 'true';
+
+      if (!url) {
+        return res.status(400).json({ error: 'URL parameter is required' });
+      }
+
+      const result = await analyzeUrl(url, isMobile);
+      res.json(result);
+    } catch (error) {
+      console.error('PageSpeed API error:', error);
+      res.status(500).json({ error: 'Failed to run PageSpeed analysis' });
+    }
+  });
 
   // User routes
   app.get(`${apiPrefix}/user`, async (req: Request, res: Response) => {

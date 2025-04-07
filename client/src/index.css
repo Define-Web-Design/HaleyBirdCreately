@@ -238,6 +238,98 @@ html, body {
   transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  /* Add CSS variables for responsive design */
+  --header-height: 60px;
+  --sidebar-width: 240px;
+  --footer-height: 50px;
+  --mobile-breakpoint: 640px;
+  --tablet-breakpoint: 1024px;
+
+  /* Spacing variables */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+
+  /* Z-index scale */
+  --z-index-dropdown: 1000;
+  --z-index-sticky: 1020;
+  --z-index-fixed: 1030;
+  --z-index-modal-backdrop: 1040;
+  --z-index-modal: 1050;
+  --z-index-popover: 1060;
+  --z-index-tooltip: 1070;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden; /* Prevent horizontal scrolling */
+
+  /* Set text size adjustment to prevent inconsistent text sizes on mobile */
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+
+  /* Improve touch behavior */
+  touch-action: manipulation;
+}
+
+/* Disable pull-to-refresh on mobile */
+html {
+  overscroll-behavior-y: contain;
+}
+
+/* Improve scrolling experience */
+@media (pointer: fine) {
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+}
+
+/* Prevent text selection on interactive elements */
+button, a, [role="button"] {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Improve accessibility with outline */
+:focus {
+  outline: 2px solid rgba(0, 120, 255, 0.5);
+  outline-offset: 2px;
+}
+
+/* Prevent image overflow */
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
 :root {
   /* 8px grid system - base scale */
   --space-1: 0.5rem; /* 8px */

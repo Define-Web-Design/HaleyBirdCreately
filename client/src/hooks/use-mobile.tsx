@@ -1,36 +1,33 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 
-export function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(false);
+/**
+ * Hook to detect if the device is a mobile device based on screen width
+ * @returns {boolean} True if the device is a mobile device
+ */
+export function useIsMobile(): boolean {
+  const [isMobile, setIsMobile] = useState<boolean>(false);
 
   useEffect(() => {
-    // Check if user agent is mobile
-    const checkMobile = () => {
-      const userAgent = 
-        typeof window.navigator === 'undefined' ? '' : navigator.userAgent;
-      const mobile = Boolean(
-        userAgent.match(
-          /Android|BlackBerry|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i
-        )
-      );
-      setIsMobile(mobile);
+    // Initial check
+    const checkIfMobile = () => {
+      const mobileWidth = 768; // Common breakpoint for mobile devices
+      setIsMobile(window.innerWidth < mobileWidth);
     };
 
-    // Check on initial load
-    checkMobile();
+    // Check on mount
+    checkIfMobile();
 
-    // Also check on resize for responsive layouts
-    const handleResize = () => {
-      const width = window.innerWidth;
-      setIsMobile(width < 768);
-    };
+    // Add resize listener
+    window.addEventListener('resize', checkIfMobile);
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    // Clean up
+    return () => window.removeEventListener('resize', checkIfMobile);
   }, []);
 
   return isMobile;
 }
+
+export default useIsMobile;
 
 export interface DeviceInfo {
   isMobile: boolean;
@@ -166,10 +163,4 @@ export function useTouchPosition() {
   return { touchPosition, isActive };
 }
 
-// Export a default object with all hooks for easier imports
-export default {
-  useIsMobile,
-  useMobile,
-  useTouchPosition,
-  checkIsMobile
-};
+export default useMobile;
