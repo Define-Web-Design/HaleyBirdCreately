@@ -1,126 +1,92 @@
-# Performance Optimization Guide
+# Performance Optimization Guide for Creately
 
-This guide outlines the performance optimization workflow for the Creately application, using Google PageSpeed Insights and other best practices.
+This guide outlines best practices for optimizing Creately's performance based on Core Web Vitals and web.dev guidelines.
 
-## Table of Contents
-1. [PageSpeed Insights Integration](#pagespeed-insights-integration)
-2. [Key Performance Metrics](#key-performance-metrics)
-3. [Common Optimization Techniques](#common-optimization-techniques)
-4. [Periodic Performance Testing](#periodic-performance-testing)
-5. [Mobile-Specific Optimizations](#mobile-specific-optimizations)
+## Core Web Vitals
 
-## PageSpeed Insights Integration
+### Largest Contentful Paint (LCP)
+- **Target**: < 2.5 seconds
+- **Definition**: Measures loading performance - how quickly the largest content element becomes visible
+- **Optimization Tips**:
+  - Optimize and compress images
+  - Implement critical CSS
+  - Use responsive images with srcset
+  - Consider lazy loading for below-the-fold content
 
-We've integrated Google PageSpeed Insights into our development workflow to continuously monitor and improve application performance.
+### Interaction to Next Paint (INP)
+- **Target**: < 200 milliseconds
+- **Definition**: Measures responsiveness - how quickly your site responds to user interactions
+- **Optimization Tips**:
+  - Optimize event handlers
+  - Use debounce for resource-intensive functions
+  - Move heavy computations to Web Workers
+  - Break up long tasks into smaller chunks
 
-### Using the PageSpeed Script
+### Cumulative Layout Shift (CLS)
+- **Target**: < 0.1
+- **Definition**: Measures visual stability - preventing unexpected layout shifts
+- **Optimization Tips**:
+  - Always specify image dimensions
+  - Reserve space for dynamic content
+  - Avoid inserting content above existing content
+  - Use CSS transform for animations instead of properties that trigger layout
 
-The `pagespeed-insights.js` script in the `scripts` folder automates performance analysis and provides actionable recommendations.
-
-```bash
-# Analyze the deployed application (default: mobile device)
-node scripts/pagespeed-insights.js https://your-app-url.replit.app
-
-# Analyze for desktop devices
-node scripts/pagespeed-insights.js https://your-app-url.replit.app desktop
-```
-
-### Understanding the Results
-
-The script generates two files in the `logs/pagespeed` directory:
-- `pagespeed-{device}-{timestamp}.json` - Complete analysis data
-- `pagespeed-summary-{device}-{timestamp}.txt` - Human-readable summary
-
-Additionally, it displays a summary of the analysis in the console with:
-- Overall performance scores
-- Core Web Vitals measurements
-- Top optimization opportunities
-- Key diagnostics
-
-## Key Performance Metrics
-
-The following metrics are crucial for a good user experience:
-
-### Core Web Vitals
-- **Largest Contentful Paint (LCP)**: Measures loading performance. Target: < 2.5 seconds
-- **First Input Delay (FID)**: Measures interactivity. Target: < 100 milliseconds
-- **Cumulative Layout Shift (CLS)**: Measures visual stability. Target: < 0.1
-
-### Additional Important Metrics
-- **First Contentful Paint (FCP)**: First content rendering. Target: < 1.8 seconds
-- **Time to Interactive (TTI)**: When the page becomes fully interactive. Target: < 3.8 seconds
-- **Total Blocking Time (TBT)**: Sum of time when main thread is blocked. Target: < 200 milliseconds
-
-## Common Optimization Techniques
-
-Based on PageSpeed Insights recommendations, implement these strategies:
+## Implementation Checklist
 
 ### Image Optimization
-- Properly size images for their display dimensions
-- Use modern formats (WebP, AVIF)
-- Implement lazy loading for off-screen images
-- Use responsive images with the `srcset` attribute
-
-```jsx
-// Example of responsive and lazy-loaded image
-<img 
-  src="small.jpg"
-  srcSet="small.jpg 500w, medium.jpg 1000w, large.jpg 1500w"
-  sizes="(max-width: 600px) 500px, (max-width: 1200px) 1000px, 1500px"
-  loading="lazy"
-  alt="Description"
-/>
-```
+- [ ] Compress all images using WebP format where possible
+- [ ] Implement responsive images using srcset
+- [ ] Add width and height attributes to all image elements
+- [ ] Consider lazy loading for images below the fold
 
 ### JavaScript Optimization
-- Code-split large bundles
-- Defer non-critical JavaScript
-- Remove unused code
-- Minify and compress resources
+- [ ] Defer non-critical JavaScript
+- [ ] Use code splitting to reduce initial bundle size
+- [ ] Implement tree-shaking to remove unused code
+- [ ] Consider Web Workers for heavy computational tasks
 
 ### CSS Optimization
-- Extract critical CSS for above-the-fold content
-- Remove unused CSS
-- Minify CSS files
+- [ ] Extract and inline critical CSS
+- [ ] Remove unused CSS rules
+- [ ] Minify CSS files
+- [ ] Use CSS containment where appropriate
 
 ### Font Optimization
-- Use `font-display: swap` to prevent font-blocking
-- Preload important fonts
-- Use variable fonts where appropriate
+- [ ] Preload critical fonts
+- [ ] Use font-display: swap to prevent invisible text
+- [ ] Consider variable fonts to reduce file size
+- [ ] Limit the number of font variations
 
-### Caching Strategy
-- Implement appropriate caching headers
-- Use service workers for assets caching
-- Consider using a CDN for static assets
+### Server and Caching
+- [ ] Implement server-side caching
+- [ ] Use appropriate cache headers
+- [ ] Consider a CDN for static assets
+- [ ] Enable HTTP/2 or HTTP/3 if possible
 
-## Periodic Performance Testing
+## Monitoring Performance
 
-Make performance testing a regular part of your development workflow:
+### Tools
+- **PageSpeed Insights**: Measure Core Web Vitals
+- **Lighthouse**: Comprehensive site audit
+- **Chrome DevTools**: Runtime performance analysis
+- **web.dev Measure**: Track performance over time
 
-1. Run PageSpeed analysis after significant changes
-2. Maintain a performance budget for key metrics
-3. Compare results over time to track improvements
-4. Address regressions immediately
+### Implementation in Creately
+- Use the built-in PageSpeed Integration component to periodically check Core Web Vitals
+- Review performance metrics before major releases
+- Set up automated performance testing workflow
 
 ## Mobile-Specific Optimizations
 
-Mobile performance is especially important for our application:
+- Ensure tap targets are appropriately sized (at least 48x48px)
+- Optimize for touch interactions with appropriate padding
+- Consider reduced motion for animations on mobile
+- Test on actual mobile devices, not just emulators
 
-### Touch Interactions
-- Optimize swipe gestures to not interfere with scrolling
-- Ensure buttons and interactive elements have sufficient size (min 44×44px)
-- Implement proper touch feedback with minimal delay
+## Resources
 
-### Network Considerations
-- Reduce payload size for mobile networks
-- Implement progressive loading patterns
-- Consider offline capabilities for key features
-
-### Rendering Performance
-- Reduce DOM complexity for mobile views
-- Optimize animations to use compositor-only properties
-- Implement view recycling for long lists
-
----
-
-By following this performance optimization workflow, we can ensure that Creately provides an excellent user experience on all devices and network conditions.
+- [Web Vitals](https://web.dev/articles/vitals)
+- [Optimize LCP](https://web.dev/articles/optimize-lcp)
+- [Optimize INP](https://web.dev/articles/optimize-inp)
+- [Optimize CLS](https://web.dev/articles/optimize-cls)
+- [Modern responsive layouts](https://web.dev/articles/responsive-web-design-basics)

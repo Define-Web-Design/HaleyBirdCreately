@@ -1,0 +1,217 @@
+
+/* Base responsive styles */
+:root {
+  --mobile-breakpoint: 768px;
+  --tablet-breakpoint: 1024px;
+}
+
+/* Mobile-first approach */
+body {
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+/* Container widths */
+.container {
+  width: 100%;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Typography scaling */
+h1 {
+  font-size: 1.75rem;
+}
+
+h2 {
+  font-size: 1.5rem;
+}
+
+h3 {
+  font-size: 1.25rem;
+}
+
+/* Button sizing for touch */
+button, 
+.button,
+[role="button"],
+.interactive-element {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0.75rem 1rem;
+}
+
+/* Card layouts */
+.card {
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+/* Form elements */
+input, 
+select, 
+textarea {
+  font-size: 16px; /* Prevents zoom on iOS */
+  padding: 0.75rem;
+  width: 100%;
+}
+
+/* Navigation adjustments */
+.mobile-only {
+  display: block;
+}
+
+.desktop-only {
+  display: none;
+}
+
+/* Spacing adjustments for mobile */
+.section {
+  padding: 2rem 0;
+}
+
+/* Tablet breakpoint */
+@media (min-width: 768px) {
+  body {
+    font-size: 16px;
+  }
+  
+  .container {
+    max-width: 720px;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+  
+  h1 {
+    font-size: 2rem;
+  }
+  
+  h2 {
+    font-size: 1.75rem;
+  }
+  
+  h3 {
+    font-size: 1.5rem;
+  }
+  
+  .card {
+    width: calc(50% - 1rem);
+    margin-right: 1rem;
+    float: left;
+  }
+  
+  .card:nth-child(2n) {
+    margin-right: 0;
+  }
+  
+  .mobile-only {
+    display: none;
+  }
+  
+  .desktop-only {
+    display: block;
+  }
+  
+  .section {
+    padding: 3rem 0;
+  }
+}
+
+/* Desktop breakpoint */
+@media (min-width: 1024px) {
+  .container {
+    max-width: 960px;
+  }
+  
+  h1 {
+    font-size: 2.5rem;
+  }
+  
+  h2 {
+    font-size: 2rem;
+  }
+  
+  h3 {
+    font-size: 1.75rem;
+  }
+  
+  .card {
+    width: calc(33.333% - 1.333rem);
+  }
+  
+  .card:nth-child(2n) {
+    margin-right: 1rem;
+  }
+  
+  .card:nth-child(3n) {
+    margin-right: 0;
+  }
+  
+  .section {
+    padding: 4rem 0;
+  }
+}
+
+/* Large desktop breakpoint */
+@media (min-width: 1280px) {
+  .container {
+    max-width: 1200px;
+  }
+}
+
+/* Utilities for responsive layouts */
+.flex-column-mobile {
+  display: flex;
+  flex-direction: column;
+}
+
+@media (min-width: 768px) {
+  .flex-column-mobile {
+    flex-direction: row;
+  }
+}
+
+/* Touch-friendly adjustments */
+@media (hover: none) {
+  button:hover,
+  .button:hover,
+  [role="button"]:hover {
+    /* Remove hover styles that might cause flickering on touch */
+    background-image: none;
+    transform: none;
+  }
+  
+  /* Increase spacing between interactive elements */
+  .touch-friendly-spacing > * {
+    margin-bottom: 1rem;
+  }
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  body {
+    font-size: 12pt;
+    color: #000;
+    background: #fff;
+  }
+  
+  a {
+    text-decoration: underline;
+  }
+}

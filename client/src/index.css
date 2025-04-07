@@ -1,10 +1,10 @@
-
 @import url('./styles/haptic-animations.css');
 @import url('./styles/accessibility.css');
 @import url('./styles/apple-animations.css');
 @import url('./styles/transitions.css');
 @import url('./styles/touchFeedback.css');
 @import url('./styles/scroll-fix.css');
+@import "./styles/responsive.css";
 
 @tailwind base;
 @tailwind components;
@@ -26,7 +26,7 @@
   .grid {
     grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
   }
-  
+
   /* Increase touch targets for mobile */
   button, 
   .button, 
@@ -44,7 +44,7 @@
     margin-bottom: 0.5rem;
     touch-action: manipulation;
   }
-  
+
   /* Improve form elements on mobile */
   input, 
   select, 
@@ -53,7 +53,7 @@
     padding: 0.75rem !important;
     border-radius: 0.375rem !important;
   }
-  
+
   /* Improve card layouts on mobile */
   .card {
     margin-bottom: 1rem;
@@ -62,7 +62,7 @@
     width: 100% !important;
     overflow: hidden;
   }
-  
+
   /* Fix container widths on mobile */
   .container, 
   .content-container,
@@ -72,25 +72,25 @@
     padding-right: 1rem !important;
     max-width: 100% !important;
   }
-  
+
   /* Improve typography for mobile */
   h1 { font-size: 1.75rem !important; line-height: 2rem !important; }
   h2 { font-size: 1.5rem !important; line-height: 1.75rem !important; }
   h3 { font-size: 1.25rem !important; line-height: 1.5rem !important; }
   p, li { font-size: 1rem !important; line-height: 1.5rem !important; }
-  
+
   /* Fix spacing issues */
   .p-4 { padding: 0.75rem !important; }
   .p-6 { padding: 1rem !important; }
   .p-8 { padding: 1.25rem !important; }
-  
+
   /* Prevent horizontal overflow */
   body, #root {
     overflow-x: hidden;
     width: 100%;
     position: relative;
   }
-  
+
   /* Improve scrolling */
   * {
     -webkit-overflow-scrolling: touch;
@@ -115,13 +115,13 @@ html, body {
     transform: scale(0.97);
     transition: transform 0.1s ease-in-out;
   }
-  
+
   /* Add visual feedback for taps */
   .touch-feedback {
     position: relative;
     overflow: hidden;
   }
-  
+
   .touch-feedback::after {
     content: '';
     display: block;
@@ -137,7 +137,7 @@ html, body {
     transition: opacity 0.3s, transform 0.3s;
     pointer-events: none;
   }
-  
+
   .touch-feedback:active::after {
     transform: scale(2);
     opacity: 1;
@@ -267,7 +267,7 @@ html, body {
   /* Focus ring for accessibility */
   --focus-ring: 0 0 0 2px rgba(99, 102, 241, 0.6);
   --focus-ring-high-contrast: 0 0 0 3px rgba(255, 255, 255, 0.8);
-  
+
   /* Animation speeds for reduced motion preferences */
   --transition-fast: 150ms;
   --transition-base: 250ms;
@@ -321,23 +321,23 @@ html, body {
   * {
     @apply border-border;
   }
-  
+
   /* Apply smoother, less distracting transitions to interactive elements only */
   a, button, input, select, textarea, .interactive-element {
     @apply transition-all duration-300 ease-in-out;
   }
-  
+
   /* Touch-specific optimizations */
   .touch-device button, .touch-device a, [data-mobile-view="true"] button, [data-mobile-view="true"] a {
     @apply p-3 min-h-[44px] min-w-[44px] text-base;
   }
-  
+
   /* Increase tap targets for better mobile UX */
   .touch-device input[type="checkbox"],
   .touch-device input[type="radio"] {
     @apply min-h-[24px] min-w-[24px];
   }
-  
+
   /* Remove hover effects on touch devices to prevent hover state sticking */
   .touch-device *:hover {
     @apply transition-none;
@@ -352,7 +352,7 @@ html, body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
-  
+
   /* High contrast mode */
   .high-contrast {
     --contrast-factor: 1.3;
@@ -375,7 +375,7 @@ html, body {
   .high-contrast a:focus {
     @apply outline-2 outline outline-primary;
   }
-  
+
   /* Reduced motion preferences */
   @media (prefers-reduced-motion: reduce) {
     *, ::before, ::after {
@@ -388,7 +388,7 @@ html, body {
       transition-delay: 0s !important;
     }
   }
-  
+
   /* Manually enabled reduced motion */
   .reduce-motion * {
     transition-duration: 0.05s !important;
@@ -396,7 +396,7 @@ html, body {
     animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
   }
-  
+
   /* Color deficiency adjustments */
   /* These will work with the filter attributes set in Profile.tsx */
   body[data-color-blindness="protanopia"] .text-red-500,
@@ -427,7 +427,7 @@ html, body {
     background-image: radial-gradient(circle, rgba(0,0,0,0.1) 1px, transparent 1px);
     background-size: 7px 7px;
   }
-  
+
   /* Apply reduced motion class */
   .motion-reduce *, 
   .motion-reduce ::before, 
@@ -457,7 +457,7 @@ html, body {
     @apply outline-none;
     box-shadow: var(--focus-ring);
   }
-  
+
   /* High contrast focus states */
   .contrast-high a:focus-visible,
   .contrast-high button:focus-visible,
@@ -472,7 +472,7 @@ html, body {
   button, a {
     @apply rounded-lg hover:opacity-90 focus:ring-2 focus:ring-primary/20 focus:outline-none;
   }
-  
+
   button:active, a:active {
     transform: scale(0.97);
   }
@@ -481,69 +481,69 @@ html, body {
   input, textarea, select {
     @apply rounded-lg border border-border/50 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none bg-white/50 backdrop-blur-sm;
   }
-  
+
   /* Skip links for keyboard users */
   .skip-link {
     @apply sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:p-4 focus:bg-background focus:text-foreground focus:outline-none focus:ring-2 focus:ring-primary;
   }
-  
+
   /* Focus within styles for form groups */
   .form-group:focus-within label {
     @apply text-primary;
   }
-  
+
   /* Heading styles with 8px grid alignment */
   h1, h2, h3, h4, h5, h6 {
     @apply font-bold;
     margin-top: var(--space-4);
     margin-bottom: var(--space-2);
   }
-  
+
   h1 {
     font-size: var(--font-size-3xl);
     line-height: var(--line-height-tight);
   }
-  
+
   h2 {
     font-size: var(--font-size-2xl);
     line-height: var(--line-height-tight);
   }
-  
+
   h3 {
     font-size: var(--font-size-xl);
     line-height: var(--line-height-tight);
   }
-  
+
   h4 {
     font-size: var(--font-size-lg);
     line-height: var(--line-height-tight);
   }
-  
+
   /* Paragraph alignment to 8px grid */
   p {
     margin-bottom: var(--space-2);
   }
-  
+
   /* List spacing */
   ul, ol {
     padding-left: var(--space-4);
     margin-bottom: var(--space-2);
   }
-  
+
   li {
     margin-bottom: var(--space-1);
   }
-  
+
   /* Tables */
   table {
     @apply w-full border-collapse;
     margin-bottom: var(--space-3);
   }
-  
+
   th, td {
     @apply border border-border/20 p-2;
   }
-  
+
   th {
     @apply bg-muted font-semibold text-left;
   }
@@ -554,64 +554,64 @@ html, body {
   .glass-panel {
     @apply bg-white/60 dark:bg-black/60 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-lg;
   }
-  
+
   /* Typography utilities aligned to 8px grid */
   .leading-tight {
     line-height: var(--line-height-tight);
   }
-  
+
   .leading-base {
     line-height: var(--line-height-base);
   }
-  
+
   .leading-loose {
     line-height: var(--line-height-loose);
   }
-  
+
   /* Spacing utilities based on 8px grid */
   .space-1 {
     margin: var(--space-1);
     padding: var(--space-1);
   }
-  
+
   .space-2 {
     margin: var(--space-2);
     padding: var(--space-2);
   }
-  
+
   .space-3 {
     margin: var(--space-3);
     padding: var(--space-3);
   }
-  
+
   .space-4 {
     margin: var(--space-4);
     padding: var(--space-4);
   }
-  
+
   /* Shadow utilities */
   .shadow-low {
     box-shadow: var(--shadow-elevation-low);
   }
-  
+
   .shadow-medium {
     box-shadow: var(--shadow-elevation-medium);
   }
-  
+
   .shadow-high {
     box-shadow: var(--shadow-elevation-high);
   }
-  
+
   /* Visual indication for offline elements */
   .offline-indicator {
     @apply relative;
   }
-  
+
   .offline-indicator::after {
     content: "Offline";
     @apply absolute top-0 right-0 bg-yellow-500 text-yellow-950 text-xs px-2 py-0.5 rounded-bl-lg rounded-tr-lg font-medium;
   }
-  
+
   /* Accessible hiding */
   .visually-hidden {
     border: 0;
@@ -624,175 +624,175 @@ html, body {
     width: 1px;
     white-space: nowrap;
   }
-  
+
   /* Focus groups - entire card becomes focusable */
   .focus-group {
     @apply relative;
   }
-  
+
   .focus-group:focus-within {
     @apply ring-2 ring-primary/20 rounded-lg;
   }
-  
+
   /* Animated skeleton loading */
   .skeleton {
     @apply bg-gray-200 dark:bg-gray-700 animate-pulse rounded;
   }
-  
+
   /* Custom checkboxes and radios */
   .custom-checkbox,
   .custom-radio {
     @apply relative flex items-center;
   }
-  
+
   .custom-checkbox input,
   .custom-radio input {
     @apply sr-only;
   }
-  
+
   .custom-checkbox label,
   .custom-radio label {
     @apply pl-7 cursor-pointer select-none;
   }
-  
+
   .custom-checkbox label::before,
   .custom-radio label::before {
     content: "";
     @apply absolute left-0 w-5 h-5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800;
   }
-  
+
   .custom-checkbox label::before {
     @apply rounded;
   }
-  
+
   .custom-radio label::before {
     @apply rounded-full;
   }
-  
+
   .custom-checkbox input:checked + label::before,
   .custom-radio input:checked + label::before {
     @apply bg-primary border-primary dark:bg-primary dark:border-primary;
   }
-  
+
   .custom-checkbox input:checked + label::after {
     content: "";
     @apply absolute left-[0.3rem] top-[0.3rem] w-3 h-2 border-l-0 border-t-0 border-r-2 border-b-2 border-white transform rotate-45;
   }
-  
+
   .custom-radio input:checked + label::after {
     content: "";
     @apply absolute left-[0.45rem] top-[0.45rem] w-3 h-3 rounded-full bg-white;
   }
-  
+
   /* Interactive button states */
   .btn {
     @apply flex items-center justify-center px-4 py-2 rounded-lg font-medium transition-all;
   }
-  
+
   .btn-primary {
     @apply bg-primary text-primary-foreground hover:bg-primary/90 active:bg-primary/80;
   }
-  
+
   .btn-secondary {
     @apply bg-secondary text-secondary-foreground hover:bg-secondary/90 active:bg-secondary/80;
   }
-  
+
   .btn-outline {
     @apply border border-input bg-background hover:bg-accent hover:text-accent-foreground;
   }
-  
+
   .btn-ghost {
     @apply bg-transparent hover:bg-accent/50 text-foreground;
   }
 }
 
 @layer utilities {
-  
+
   /* Animation delay utilities */
   .delay-1 {
     animation-delay: 0.1s;
   }
-  
+
   .delay-2 {
     animation-delay: 0.2s;
   }
-  
+
   .delay-3 {
     animation-delay: 0.3s;
   }
-  
+
   /* Gradient text */
   .gradient-text {
     @apply bg-clip-text text-transparent bg-gradient-to-r;
   }
-  
+
   .gradient-purple {
     @apply from-purple-600 to-pink-500;
   }
-  
+
   .gradient-blue {
     @apply from-blue-600 to-cyan-500;
   }
-  
+
   .gradient-green {
     @apply from-green-500 to-emerald-400;
   }
-  
+
   /* Keyboard key appearance */
   .kbd {
     @apply px-2 py-1 text-xs font-semibold text-gray-800 bg-gray-100 border border-gray-200 rounded-md dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600;
   }
-  
+
   /* Grid system alignment utilities */
   .grid-8 {
     display: grid;
     grid-gap: var(--space-1);
   }
-  
+
   .grid-16 {
     display: grid;
     grid-gap: var(--space-2);
   }
-  
+
   .grid-24 {
     display: grid;
     grid-gap: var(--space-3);
   }
-  
+
   .grid-32 {
     display: grid;
     grid-gap: var(--space-4);
   }
-  
+
   /* Font size utilities that align with the design system */
   .text-xs {
     font-size: var(--font-size-xs);
   }
-  
+
   .text-sm {
     font-size: var(--font-size-sm);
   }
-  
+
   .text-base {
     font-size: var(--font-size-base);
   }
-  
+
   .text-lg {
     font-size: var(--font-size-lg);
   }
-  
+
   .text-xl {
     font-size: var(--font-size-xl);
   }
-  
+
   .text-2xl {
     font-size: var(--font-size-2xl);
   }
-  
+
   .text-3xl {
     font-size: var(--font-size-3xl);
   }
-  
+
   .text-4xl {
     font-size: var(--font-size-4xl);
   }
@@ -858,8 +858,7 @@ html, body {
     transform: translateY(10px);
     opacity: 0;
   }
-  to {
-    transform: translateY(0);
+  to {    transform: translateY(0);
     opacity: 1;
   }
 }
@@ -898,7 +897,7 @@ html, body {
   button, a, [role="button"] {
     @apply min-h-11 min-w-11 px-4 py-2;
   }
-  
+
   input, select {
     @apply min-h-11 px-3;
   }
@@ -909,11 +908,11 @@ html, body {
   body {
     @apply text-black bg-white;
   }
-  
+
   .no-print {
     display: none !important;
   }
-  
+
   a::after {
     content: " (" attr(href) ")";
     @apply text-gray-600 text-sm;

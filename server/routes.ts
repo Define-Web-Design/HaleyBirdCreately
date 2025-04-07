@@ -9,7 +9,7 @@ import {
   suggestPostingTimes
 } from "./ai/content";
 import { generateMoodPalette, generateAIPalette } from "./services/paletteGenerator";
-import { runPageSpeedAnalysis, saveResults, formatAnalysisForResponse } from "./services/pageSpeedService";
+import { runPageSpeedAnalysis, saveResults, formatAnalysisForResponse, validateApiKey } from "./services/pageSpeedService";
 import { MoodTone } from "../shared/schema";
 import { 
   apiLimiter, 
@@ -46,14 +46,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.session?.userId || 1; // Mock user ID for demo
       const { platform, accessToken, refreshToken, meta } = req.body;
-      
+
       if (!platform || !accessToken) {
         return res.status(400).json({
           success: false,
           message: 'Platform and access token are required'
         });
       }
-      
+
       // Create the new integration
       const integration = await storage.createPlatformIntegration({
         userId,
@@ -63,7 +63,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         meta: meta || {},
         isActive: true
       });
-      
+
       res.status(201).json({
         success: true,
         integration
@@ -76,39 +76,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-  
+
   app.delete('/api/user/integrations/:id', async (req, res) => {
     try {
       const userId = req.session?.userId || 1; // Mock user ID for demo
       const integrationId = parseInt(req.params.id);
-      
+
       if (isNaN(integrationId)) {
         return res.status(400).json({
           success: false,
           message: 'Invalid integration ID'
         });
       }
-      
+
       // Verify the integration belongs to the user
       const integration = await storage.getPlatformIntegrationById(integrationId);
-      
+
       if (!integration) {
         return res.status(404).json({
           success: false,
           message: 'Integration not found'
         });
       }
-      
+
       if (integration.userId !== userId) {
         return res.status(403).json({
           success: false,
           message: 'Unauthorized to disconnect this integration'
         });
       }
-      
+
       // Deactivate the integration
       await storage.deactivatePlatformIntegration(integrationId);
-      
+
       res.json({
         success: true,
         message: 'Platform disconnected successfully'
@@ -170,15 +170,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/theme', async (req, res) => {
     try {
       const { primary, appearance, variant, radius } = req.body;
-      
+
       if (!primary) {
         return res.status(400).json({ 
           message: "Primary color is required" 
         });
       }
-      
+
       console.log('Theme update received:', { primary, appearance, variant, radius });
-      
+
       // In a real implementation, this would update theme.json
       // For now, we'll just return success
       res.json({ 
@@ -207,11 +207,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       variant: 'vibrant', // Use vibrant variant for more appealing UI
       radius: 0.5 // Moderate border radius
     };
-    
+
     console.log('Serving default theme:', defaultTheme);
     res.json(defaultTheme);
   });
-  
+
   // Allow OPTIONS requests for CORS preflight
   app.options('/api/theme', (req, res) => {
     res.header('Access-Control-Allow-Origin', '*');
@@ -219,7 +219,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     res.sendStatus(204);
   });
-  
+
   // Allow OPTIONS requests for public theme endpoint
   app.options('/api/public/theme', (req, res) => {
     res.header('Access-Control-Allow-Origin', '*');
@@ -227,30 +227,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.header('Access-Control-Allow-Headers', 'Content-Type');
     res.sendStatus(204);
   });
-  
+
   // PageSpeed Insights API route
   app.post('/api/pagespeed/analyze', async (req, res) => {
     try {
       const { url, device = 'mobile' } = req.body;
-      
+
       if (!url) {
         return res.status(400).json({ 
           success: false, 
           message: 'URL is required for PageSpeed analysis' 
         });
       }
-      
+
       if (!['mobile', 'desktop'].includes(device)) {
         return res.status(400).json({
           success: false,
           message: 'Device must be either "mobile" or "desktop"'
         });
       }
-      
+
       // Validate API key before proceeding
-      const { validateApiKey } = await import('./services/pageSpeedService.js');
-      const apiKeyValidation = validateApiKey();
-      
+      const apiKeyValidation = await validateApiKey();
+
       if (!apiKeyValidation.valid) {
         console.error(`PageSpeed API key validation failed: ${apiKeyValidation.message}`);
         return res.status(500).json({
@@ -258,18 +257,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
           message: `API Error: API key not valid. ${apiKeyValidation.message}`
         });
       }
-      
+
       console.log(`Running PageSpeed analysis for ${url} on ${device}`);
-      
+
       // Run the analysis
       const results = await runPageSpeedAnalysis(url, device as 'mobile' | 'desktop');
-      
+
       // Save the results to files
       const fileInfo = saveResults(results as any, url, device);
-      
+
       // Format the results for API response
       const formattedResults = formatAnalysisForResponse(results as any);
-      
+
       res.json({
         success: true,
         results: formattedResults,
@@ -286,7 +285,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-  
+
   // Apply access validation to all other API routes
   app.use("/api", validateAccess);
   // API routes prefix
@@ -521,34 +520,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-  
+
   // Verify a specific task
   app.post(`${apiPrefix}/task-verification/verify/:taskId`, async (req: Request, res: Response) => {
     try {
       const { taskId } = req.params;
       const userId = req.session?.userId || 1; // Mock user ID for demo
-      
+
       if (!taskId) {
         return res.status(400).json({
           success: false,
           message: 'Task ID is required'
         });
       }
-      
+
       // Update task status to verified
       const task = await storage.verifyTask(taskId, userId);
-      
+
       if (!task) {
         return res.status(404).json({
           success: false,
           message: 'Task not found or already verified'
         });
       }
-      
+
       // Add evolution points for verifying the task
       const pointsAwarded = task.points || 10;
       await storage.addEvolutionPoints(userId, pointsAwarded);
-      
+
       // Track this activity in user engagement
       await storage.trackUserEngagement({
         userId,
@@ -559,7 +558,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           timestamp: new Date().toISOString()
         })
       });
-      
+
       res.json({
         success: true,
         task,
@@ -573,13 +572,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-  
+
   // Create a new task
   app.post(`${apiPrefix}/task-verification/tasks`, async (req: Request, res: Response) => {
     try {
       const userId = req.session?.userId || 1; // Mock user ID for demo
       const taskData = req.body;
-      
+
       // Validate required fields
       if (!taskData.title || !taskData.category) {
         return res.status(400).json({
@@ -587,7 +586,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           message: 'Task title and category are required'
         });
       }
-      
+
       // Create the task
       const task = await storage.createTask({
         userId,
@@ -601,7 +600,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         completedAt: null,
         progressPercentage: taskData.progressPercentage || 0
       });
-      
+
       res.json({
         success: true,
         task
@@ -614,31 +613,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-  
+
   // Update task status
   app.patch(`${apiPrefix}/task-verification/status/:taskId`, async (req: Request, res: Response) => {
     try {
       const { taskId } = req.params;
       const { status } = req.body;
       const userId = req.session?.userId || 1; // Mock user ID for demo
-      
+
       if (!taskId || !status) {
         return res.status(400).json({
           success: false,
           message: 'Task ID and status are required'
         });
       }
-      
+
       // Update the task status
       const task = await storage.updateTaskStatus(taskId, userId, status);
-      
+
       if (!task) {
         return res.status(404).json({
           success: false,
           message: 'Task not found'
         });
       }
-      
+
       res.json({
         success: true,
         task
@@ -651,38 +650,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-  
+
   // Update task progress
   app.patch(`${apiPrefix}/task-verification/progress/:taskId`, async (req: Request, res: Response) => {
     try {
       const { taskId } = req.params;
       const { progressPercentage } = req.body;
       const userId = req.session?.userId || 1; // Mock user ID for demo
-      
+
       if (!taskId || progressPercentage === undefined) {
         return res.status(400).json({
           success: false,
           message: 'Task ID and progress percentage are required'
         });
       }
-      
+
       // Update the task progress
       const task = await storage.updateTaskProgress(taskId, userId, progressPercentage);
-      
+
       if (!task) {
         return res.status(404).json({
           success: false,
           message: 'Task not found'
         });
       }
-      
+
       // If task is automatically marked as completed, award points
       let pointsAwarded = 0;
       if (task.status === 'completed' && progressPercentage === 100) {
         pointsAwarded = task.points || 0;
         if (pointsAwarded > 0) {
           await storage.addEvolutionPoints(userId, pointsAwarded);
-          
+
           // Track this activity in user engagement
           await storage.trackUserEngagement({
             userId,
@@ -695,7 +694,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
       }
-      
+
       res.json({
         success: true,
         task,
@@ -1008,15 +1007,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           message: "Mood is required" 
         });
       }
-      
+
       console.log("Generating palette with mood:", mood, "description:", description || "N/A");
-      
+
       let generatedPalette;
-      
+
       // Optimize response time by using cached or predefined palettes when possible
       // Safely check if mood is in MoodTone enum
       const isValidMoodTone = Object.values(MoodTone).includes(mood.toUpperCase() as MoodTone);
-      
+
       if (isValidMoodTone && !description) {
         // For standard moods without description, use predefined palettes
         try {
@@ -1033,7 +1032,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         generatedPalette = await generateAIPalette(description || mood);
         console.log("Using AI generation for palette");
       }
-      
+
       // Ensure the palette has the correct format
       if (!generatedPalette || !generatedPalette.colors || !Array.isArray(generatedPalette.colors) || generatedPalette.colors.length === 0) {
         throw new Error("Generated palette has invalid format");
@@ -1265,7 +1264,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Global error handler middleware
   app.use((err: any, req: Request, res: Response, next: NextFunction) => {
     console.error('Global error handler caught:', err);
-    
+
     // Check for specific error types
     if (err.name === 'ValidationError') {
       return res.status(400).json({
@@ -1274,18 +1273,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         errors: err.errors
       });
     }
-    
+
     if (err.name === 'UnauthorizedError') {
       return res.status(401).json({
         success: false,
         message: 'Authentication required'
       });
     }
-    
+
     // Default error response
     const statusCode = err.statusCode || 500;
     const message = err.message || 'An unexpected error occurred';
-    
+
     return res.status(statusCode).json({
       success: false,
       message,
@@ -1580,18 +1579,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // AI Enhancement routes
   app.post('/api/ai/enhance/caption', async (req, res) => {
     const { contentId, style, length } = req.body;
-    
+
     if (!contentId) {
       return res.status(400).json({ 
         success: false, 
         message: 'Content ID is required' 
       });
     }
-    
+
     try {
       // Validate the request for security and ownership
       const validation = await securityMonitor.validateAIEnhancedContent(contentId, 'caption');
-      
+
       if (!validation.valid && validation.issues.length > 0) {
         return res.status(403).json({
           success: false,
@@ -1600,20 +1599,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
           recommendations: validation.recommendations
         });
       }
-      
+
       // Get the content
       const content = await storage.getContentById(contentId);
-      
+
       if (!content) {
         return res.status(404).json({ 
           success: false, 
           message: 'Content not found' 
         });
       }
-      
+
       // Generate caption using AI
       const caption = await generateCaption(content, style || 'balanced', length || 'medium');
-      
+
       // Add watermarking and ownership information
       const response = {
         success: true,
@@ -1626,7 +1625,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           notice: "© 2023 All Rights Reserved. This content is proprietary."
         }
       };
-      
+
       res.json(response);
     } catch (error) {
       console.error('AI enhancement error:', error);
@@ -1637,21 +1636,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-  
+
   app.post('/api/ai/enhance/mood-board', async (req, res) => {
     const { contentId, theme, colorCount = 5 } = req.body;
-    
+
     if (!contentId) {
       return res.status(400).json({ 
         success: false, 
         message: 'Content ID is required' 
       });
     }
-    
+
     try {
       // Validate the request for security and ownership
       const validation = await securityMonitor.validateAIEnhancedContent(contentId, 'mood-board');
-      
+
       if (!validation.valid && validation.issues.length > 0) {
         return res.status(403).json({
           success: false,
@@ -1660,20 +1659,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
           recommendations: validation.recommendations
         });
       }
-      
+
       // Get the content
       const content = await storage.getContentById(contentId);
-      
+
       if (!content) {
         return res.status(404).json({ 
           success: false, 
           message: 'Content not found' 
         });
       }
-      
+
       // Generate mood palette
       const palette = await generateMoodPalette(content.tags?.join(' ') || theme || 'neutral', colorCount);
-      
+
       // Create a mood board - in a real implementation, this would use AI to select images
       const moodBoard = {
         theme: theme || content.tags?.[0] || 'creative',
@@ -1686,7 +1685,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ],
         keywords: content.tags || [theme || 'creative', 'design', 'inspiration']
       };
-      
+
       // Add watermarking and ownership information
       const response = {
         success: true,
@@ -1698,7 +1697,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           notice: "© 2023 All Rights Reserved. This content is proprietary."
         }
       };
-      
+
       res.json(response);
     } catch (error) {
       console.error('AI mood board generation error:', error);
@@ -1709,29 +1708,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-  
+
   app.post('/api/ai/enhance/cross-platform', async (req, res) => {
     const { contentId, platforms } = req.body;
-    
+
     if (!contentId) {
       return res.status(400).json({ 
         success: false, 
         message: 'Content ID is required' 
       });
     }
-    
+
     if (!platforms || !Array.isArray(platforms) || platforms.length === 0) {
       return res.status(400).json({ 
         success: false, 
         message: 'At least one platform must be specified' 
       });
     }
-    
+
     try {
       // Check if user has accepted legal terms
       const userId = 1; // In a real app, get from authenticated session
       const legalStatus = await storage.getLegalAcceptanceByUser(userId, 'terms');
-      
+
       if (!legalStatus) {
         return res.status(403).json({
           success: false,
@@ -1739,10 +1738,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           requiresLegalAcceptance: true
         });
       }
-      
+
       // Validate the request for security and ownership
       const validation = await securityMonitor.validateAIEnhancedContent(contentId, 'cross-platform');
-      
+
       if (!validation.valid && validation.issues.length > 0) {
         return res.status(403).json({
           success: false,
@@ -1751,17 +1750,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           recommendations: validation.recommendations
         });
       }
-      
+
       // Get the content
       const content = await storage.getContentById(contentId);
-      
+
       if (!content) {
         return res.status(404).json({ 
           success: false, 
           message: 'Content not found' 
         });
       }
-      
+
       // Record this usage for security monitoring
       await securityMonitor.logSecurityActivity({
         activityType: 'ai-enhancement-usage',
@@ -1771,10 +1770,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         platforms,
         timestamp: new Date().toISOString()
       });
-      
+
       // Generate platform-specific versions
       const platformVersions = {};
-      
+
       for (const platform of platforms) {
         // In a real implementation, this would use AI to tailor content
         platformVersions[platform] = {
@@ -1791,10 +1790,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         };
       }
-      
+
       // Generate a unique asset ID for verification
       const assetId = `ai-${Date.now()}-${contentId}`;
-      
+
       // Register this asset in ownership database for future verification
       await storage.registerAssetOwnership({
         assetId,
@@ -1805,7 +1804,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         verificationToken: `verify-${Math.random().toString(36).substring(2, 15)}`,
         verificationStatus: true
       });
-      
+
       // Add comprehensive watermarking and ownership information
       const response = {
         success: true,
@@ -1820,11 +1819,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           termsOfUse: "Unauthorized reproduction, distribution, or modification is prohibited."
         }
       };
-      
+
       res.json(response);
     } catch (error) {
       console.error('Cross-platform adaptation error:', error);
-      
+
       // Log the error for security monitoring
       await securityMonitor.logSecurityActivity({
         activityType: 'ai-enhancement-error',
@@ -1832,7 +1831,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         errorMessage: error.message,
         timestamp: new Date().toISOString()
       });
-      
+
       res.status(500).json({ 
         success: false, 
         message: 'Failed to generate cross-platform adaptations',
@@ -1840,20 +1839,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-  
+
   // New routes for security and ownership verification
-  
+
   // Verify content ownership
   app.get('/api/security/verify-content-ownership', async (req, res) => {
     const { contentId, verificationToken } = req.query;
-    
+
     if (!contentId) {
       return res.status(400).json({
         success: false,
         message: 'Content ID is required'
       });
     }
-    
+
     try {
       // In a real implementation, this would check the ownership database
       const isVerified = true;
@@ -1862,7 +1861,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ownershipTimestamp: new Date().toISOString(),
         verificationLevel: 'certified'
       };
-      
+
       return res.json({
         success: true,
         verified: isVerified,
@@ -1871,25 +1870,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error('Ownership verification error:', error);
-      
+
       return res.status(500).json({
         success: false,
         message: 'Error verifying content ownership'
       });
     }
   });
-  
+
   // Report unauthorized usage
   app.post('/api/security/report-unauthorized-usage', async (req, res) => {
     const { contentId, reportType, reportDetails, reporterContact } = req.body;
-    
+
     if (!contentId || !reportType) {
       return res.status(400).json({
         success: false,
         message: 'Content ID and report type are required'
       });
     }
-    
+
     try {
       // Log the security incident
       await securityMonitor.logSecurityActivity({
@@ -1900,7 +1899,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         reporterContact,
         timestamp: new Date().toISOString()
       });
-      
+
       // Trigger high-priority security alert
       await securityMonitor.triggerSecurityAlert({
         alertType: 'ownership-violation',
@@ -1908,7 +1907,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         contentId,
         details: reportDetails
       });
-      
+
       return res.json({
         success: true,
         reportId: `report-${Date.now()}`,
@@ -1917,14 +1916,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error('Error reporting unauthorized usage:', error);
-      
+
       return res.status(500).json({
         success: false,
         message: 'Error submitting report'
       });
     }
   });
-  
+
   // Helper functions for platform-specific details
   function getPlatformImageSize(platform: string): string {
     const sizes = {
@@ -1937,19 +1936,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     };
     return sizes[platform.toLowerCase()] || '1200x630 (standard)';
   }
-  
+
   function getPlatformCharLimit(platform: string): number {
     const limits = {
       instagram: 2200,
-      twitter: 280,
-      facebook: 63206,
+      twitter: 280,facebook: 63206,
       linkedin: 3000,
       tiktok: 2200,
       pinterest: 500
     };
     return limits[platform.toLowerCase()] || 2000;
   }
-  
+
   function getPlatformBestTime(platform: string): string {
     const times = {
       instagram: 'Wednesday at 11 AM and Friday at 10–11 AM',

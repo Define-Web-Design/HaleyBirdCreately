@@ -2416,3 +2416,56 @@ args = "echo \"Starting debugged application with mobile optimizations...\""
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "NODE_ENV=development MOBILE_OPTIMIZED=true npm run dev"
+
+[[workflows.workflow]]
+name = "Performance Optimization"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Kill any running processes first"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pkill -f node || true"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run code quality checks"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run lint"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npx tsc --noEmit"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run PageSpeed Insights audit"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node scripts/pagespeed-insights.js"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Start the development server in optimized mode"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "NODE_ENV=development npm run dev"
