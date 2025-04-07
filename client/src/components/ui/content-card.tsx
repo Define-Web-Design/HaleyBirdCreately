@@ -189,3 +189,47 @@ const ContentCard = ({ content, onEdit, onShare, onEnhance }: ContentCardProps) 
 };
 
 export default ContentCard;
+/**
+ * Content Card Component
+ * Optimized for mobile viewing with responsive design
+ */
+import React from 'react';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from './card';
+import { useMobile } from '@/hooks/use-mobile';
+
+interface ContentCardProps {
+  title: string;
+  children: React.ReactNode;
+  footer?: React.ReactNode;
+  className?: string;
+  onClick?: () => void;
+}
+
+export function ContentCard({ 
+  title, 
+  children, 
+  footer, 
+  className = '',
+  onClick
+}: ContentCardProps) {
+  const { isMobile } = useMobile();
+  
+  return (
+    <Card 
+      className={`content-card ${isMobile ? 'mobile-content-card' : ''} ${className}`}
+      onClick={onClick}
+    >
+      <CardHeader className={isMobile ? 'p-3' : 'p-4'}>
+        <CardTitle className={isMobile ? 'text-lg' : 'text-xl'}>{title}</CardTitle>
+      </CardHeader>
+      <CardContent className={isMobile ? 'p-3 pt-0' : 'p-4 pt-0'}>
+        {children}
+      </CardContent>
+      {footer && (
+        <CardFooter className={isMobile ? 'p-3 pt-1' : 'p-4 pt-2'}>
+          {footer}
+        </CardFooter>
+      )}
+    </Card>
+  );
+}

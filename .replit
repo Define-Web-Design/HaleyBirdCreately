@@ -1671,3 +1671,20 @@ args = "echo \"Starting optimized server for mobile development...\" "
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npm run dev"
+
+[[workflows.workflow]]
+name = "Test Mobile Responsiveness"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pkill -f node || true"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev & "
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "sleep 5 && node -e \"const { testAppResponsiveness } = require('./client/src/utils/responsive-tester.js'); testAppResponsiveness().then(result => console.log(JSON.stringify(result.summary, null, 2)));\""
