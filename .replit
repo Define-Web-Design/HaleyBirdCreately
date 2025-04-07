@@ -239,7 +239,19 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
+args = "# Build the application"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
 args = "npm run build"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run tests"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
@@ -3747,87 +3759,6 @@ args = "# Run responsive design testing"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "node -e \"const { testAppResponsiveness } = require('./client/src/utils/responsive-tester.js'); testAppResponsiveness().then(result => { console.log(JSON.stringify(result.summary, null, 2)); console.log(result.success ? '✅ Mobile tests passed' : '⚠️ Some mobile tests failed'); });\""
-
-[[workflows.workflow]]
-name = "Full Validation Suite"
-author = 40896524
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "# Kill any running processes"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "pkill -f node || true"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = ""
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "# Start with code quality checks"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npm run lint"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npx tsc --noEmit"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = ""
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "# Run security validation"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "node -e \"const { securityMonitor } = require('./server/services/securityMonitor.js'); securityMonitor.validateAssetIntegrity().then(results => console.log(JSON.stringify(results, null, 2)))\""
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = ""
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "# Run the accessibility audit"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npm run build"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "node -e \"const { runAccessibilityAudit } = require('./client/src/utils/navigation-tester.js'); runAccessibilityAudit().then(results => console.log(JSON.stringify(results, null, 2)))\""
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = ""
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "# Run API endpoint validation"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "node -e \"const { validateApiEndpoints, generateApiValidationReport } = require('./client/src/utils/api-validator.js'); validateApiEndpoints().then(results => { console.log(generateApiValidationReport(results.results)); })\""
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = ""
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "# Run comprehensive validation"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "node -e \"require('./client/src/utils/consolidated-validation.js').runFullSystemValidation().then(report => { require('./client/src/utils/consolidated-validation.js').displayFullValidationResults(report); process.exit(report.overallSuccess ? 0 : 1); })\""
 
 [objectStorage]
 defaultBucketID = "replit-objstore-0f505a20-ca44-41fd-a1d9-978b798832cc"
