@@ -1,8 +1,8 @@
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import { neon } from '@neondatabase/serverless';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 import * as schema from '../shared/schema';
-import { User, Session } from '../shared/schema';
+import { User, Session, RefreshToken } from '../shared/schema';
 
 // Interface for storage operations
 export interface IStorage {
@@ -21,6 +21,15 @@ export interface IStorage {
   deleteSession(token: string): Promise<boolean>;
   deleteSessionsByUserId(userId: number): Promise<boolean>;
   cleanExpiredSessions(): Promise<number>; // Returns number of deleted sessions
+  
+  // Refresh token operations
+  createRefreshToken(refreshToken: { userId: number, token: string, expiresAt: Date, ipAddress?: string, userAgent?: string }): Promise<RefreshToken>;
+  getRefreshTokenByToken(token: string): Promise<RefreshToken | null>;
+  getRefreshTokensByUserId(userId: number): Promise<RefreshToken[]>;
+  deleteRefreshToken(token: string): Promise<boolean>;
+  revokeRefreshToken(token: string): Promise<boolean>;
+  deleteRefreshTokensByUserId(userId: number): Promise<boolean>;
+  cleanExpiredRefreshTokens(): Promise<number>; // Returns number of deleted refresh tokens
 }
 
 // Implementation for PostgreSQL database
@@ -121,7 +130,59 @@ export class PostgresStorage implements IStorage {
 
   async cleanExpiredSessions(): Promise<number> {
     const now = new Date();
-    const result = await this.db.delete(schema.sessions).where(schema.sessions.expiresAt < now);
+    const result = await this.db.delete(schema.sessions)
+      .where(
+        sql`${schema.sessions.expiresAt} < ${now}`
+      );
+    return result ? (result as any).rowCount || 0 : 0;
+  }
+
+  // Refresh token operations
+  async createRefreshToken(refreshToken: { userId: number, token: string, expiresAt: Date, ipAddress?: string, userAgent?: string }): Promise<RefreshToken> {
+    const [newRefreshToken] = await this.db.insert(schema.refreshTokens).values({
+      userId: refreshToken.userId,
+      token: refreshToken.token,
+      expiresAt: refreshToken.expiresAt,
+      ipAddress: refreshToken.ipAddress || null,
+      userAgent: refreshToken.userAgent || null,
+      isRevoked: false
+    }).returning();
+    
+    return newRefreshToken;
+  }
+
+  async getRefreshTokenByToken(token: string): Promise<RefreshToken | null> {
+    const tokens = await this.db.select().from(schema.refreshTokens).where(eq(schema.refreshTokens.token, token)).limit(1);
+    return tokens.length ? tokens[0] : null;
+  }
+
+  async getRefreshTokensByUserId(userId: number): Promise<RefreshToken[]> {
+    return await this.db.select().from(schema.refreshTokens).where(eq(schema.refreshTokens.userId, userId));
+  }
+
+  async deleteRefreshToken(token: string): Promise<boolean> {
+    await this.db.delete(schema.refreshTokens).where(eq(schema.refreshTokens.token, token));
+    return true;
+  }
+
+  async revokeRefreshToken(token: string): Promise<boolean> {
+    await this.db.update(schema.refreshTokens)
+      .set({ isRevoked: true })
+      .where(eq(schema.refreshTokens.token, token));
+    return true;
+  }
+
+  async deleteRefreshTokensByUserId(userId: number): Promise<boolean> {
+    await this.db.delete(schema.refreshTokens).where(eq(schema.refreshTokens.userId, userId));
+    return true;
+  }
+
+  async cleanExpiredRefreshTokens(): Promise<number> {
+    const now = new Date();
+    const result = await this.db.delete(schema.refreshTokens)
+      .where(
+        sql`${schema.refreshTokens.expiresAt} < ${now}`
+      );
     return result ? (result as any).rowCount || 0 : 0;
   }
 }
@@ -130,8 +191,10 @@ export class PostgresStorage implements IStorage {
 export class MemStorage implements IStorage {
   private users: User[] = [];
   private sessions: Session[] = [];
+  private refreshTokens: RefreshToken[] = [];
   private userId = 1;
   private sessionId = 1;
+  private refreshTokenId = 1;
 
   // User operations
   async getUserById(id: number): Promise<User | null> {
@@ -153,8 +216,8 @@ export class MemStorage implements IStorage {
       username: user.username,
       email: user.email,
       passwordHash: user.passwordHash,
-      displayName: user.displayName,
-      avatar: user.avatar,
+      displayName: user.displayName || null,
+      avatar: user.avatar || null,
       role: user.role || 'user',
       createdAt: now,
       updatedAt: now,
@@ -200,8 +263,8 @@ export class MemStorage implements IStorage {
       token: session.token,
       createdAt: new Date(),
       expiresAt: session.expiresAt,
-      ipAddress: session.ipAddress,
-      userAgent: session.userAgent
+      ipAddress: session.ipAddress || null,
+      userAgent: session.userAgent || null
     };
     
     this.sessions.push(newSession);
@@ -230,6 +293,60 @@ export class MemStorage implements IStorage {
     const now = new Date();
     const expiredCount = this.sessions.filter(session => session.expiresAt < now).length;
     this.sessions = this.sessions.filter(session => session.expiresAt >= now);
+    return expiredCount;
+  }
+  
+  // Refresh token operations
+  async createRefreshToken(refreshToken: { userId: number, token: string, expiresAt: Date, ipAddress?: string, userAgent?: string }): Promise<RefreshToken> {
+    const newRefreshToken: RefreshToken = {
+      id: this.refreshTokenId++,
+      userId: refreshToken.userId,
+      token: refreshToken.token,
+      createdAt: new Date(),
+      expiresAt: refreshToken.expiresAt,
+      isRevoked: false,
+      ipAddress: refreshToken.ipAddress || null,
+      userAgent: refreshToken.userAgent || null
+    };
+    
+    this.refreshTokens.push(newRefreshToken);
+    return newRefreshToken;
+  }
+
+  async getRefreshTokenByToken(token: string): Promise<RefreshToken | null> {
+    return this.refreshTokens.find(rt => rt.token === token) || null;
+  }
+
+  async getRefreshTokensByUserId(userId: number): Promise<RefreshToken[]> {
+    return this.refreshTokens.filter(rt => rt.userId === userId);
+  }
+
+  async deleteRefreshToken(token: string): Promise<boolean> {
+    this.refreshTokens = this.refreshTokens.filter(rt => rt.token !== token);
+    return true;
+  }
+
+  async revokeRefreshToken(token: string): Promise<boolean> {
+    const tokenIndex = this.refreshTokens.findIndex(rt => rt.token === token);
+    if (tokenIndex === -1) return false;
+    
+    this.refreshTokens[tokenIndex] = {
+      ...this.refreshTokens[tokenIndex],
+      isRevoked: true
+    };
+    
+    return true;
+  }
+
+  async deleteRefreshTokensByUserId(userId: number): Promise<boolean> {
+    this.refreshTokens = this.refreshTokens.filter(rt => rt.userId !== userId);
+    return true;
+  }
+
+  async cleanExpiredRefreshTokens(): Promise<number> {
+    const now = new Date();
+    const expiredCount = this.refreshTokens.filter(rt => rt.expiresAt < now).length;
+    this.refreshTokens = this.refreshTokens.filter(rt => rt.expiresAt >= now);
     return expiredCount;
   }
 }

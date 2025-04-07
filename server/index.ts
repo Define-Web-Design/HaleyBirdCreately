@@ -1,160 +1,47 @@
-import express, { Request, Response, NextFunction } from 'express';
-import { createServer } from 'node:http';
-import { registerRoutes } from './routes';
-import { setupVite } from './vite';
+import express from 'express';
 import session from 'express-session';
-import MemoryStore from 'memorystore';
-import { rateLimit } from 'express-rate-limit';
-import { Pool } from '@neondatabase/serverless';
-import { serviceRegistry } from './services/serviceRegistry';
-import { initializeWebSocketServer } from './websocket';
-import { storage } from './storage';
+import path from 'path';
+import { registerRoutes } from './routes';
+import storage from './storage';
+import { ServiceRegistry } from './services/registry';
+import { AuthService } from './services/auth';
 import dotenv from 'dotenv';
-import ws from 'ws';
-import logger, { httpLogger, requestIdMiddleware } from './utils/logger'; //Import the logger
-
-// Extend the request type to include database connection
-declare global {
-  namespace Express {
-    interface Request {
-      db?: Pool;
-    }
-  }
-}
 
 // Load environment variables
 dotenv.config();
 
-// Initialize database connection with WebSocket for Replit environment
-// @ts-ignore - WebSocket is needed by Neon in serverless environments
-globalThis.WebSocket = ws;
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? true : false, // Only use SSL in production
-});
-
-// Initialize service registry with database connection
-serviceRegistry.registerServices(pool);
-
-// Rate limiter to prevent abuse - increased limits for local development
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 1000, // Increased limit to 1000 requests per window for development
-  standardHeaders: true,
-  legacyHeaders: false,
-  skipSuccessfulRequests: true, // Only count failed requests
-});
-
+// Create Express application
 const app = express();
-const server = createServer(app);
-// Always use port 5000 for consistency with Replit workflows
-const port = 5000; 
-const isProduction = process.env.NODE_ENV === 'production';
+const PORT = Number(process.env.PORT) || 3000;
 
-// Set trust proxy to handle X-Forwarded-For header correctly in Replit environment
-app.set('trust proxy', 1);
+// Register services
+const serviceRegistry = ServiceRegistry.getInstance();
+const authService = new AuthService(storage);
+serviceRegistry.registerService('auth', authService);
 
-// Enhanced session store
-const SessionStore = MemoryStore(session);
-
-// Session middleware
-app.use(session({
-  cookie: { maxAge: 86400000 }, // 24 hours
-  store: new SessionStore({
-    checkPeriod: 86400000 // prune expired entries every 24h
-  }),
-  resave: false,
-  saveUninitialized: false,
-  secret: process.env.SESSION_SECRET || 'creately-secret-key'
-}));
-
-// Body parsing middleware
+// Setup middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(requestIdMiddleware); // Add request ID to each request
-app.use(httpLogger); // Add request logging
 
-// Apply rate limiter to all requests
-app.use(limiter);
+// Session configuration
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || 'default-session-secret',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === 'production',
+      httpOnly: true,
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    }
+  })
+);
 
-// Add database connection to request object
-app.use((req: Request, res: Response, next: NextFunction) => {
-  req.db = pool;
-  next();
-});
+// Register routes
+const httpServer = registerRoutes(app);
 
-// Register API routes
-registerRoutes(app).then(httpServer => {
-  logger.info('API routes registered successfully'); //Use the structured logger
-}).catch(error => {
-  logger.error('Error registering API routes:', error); //Use the structured logger
-});
-
-// Serve static files in production
-if (isProduction) {
-  app.use(express.static('dist'));
-} else {
-  // In development, use Vite's dev server
-  setupVite(app, server).catch(error => {
-    logger.error('Error setting up Vite:', error); //Use the structured logger
-  });
-}
-
-// Fallback for client-side routing in production
-if (isProduction) {
-  app.get('*', (req, res) => {
-    res.sendFile('dist/index.html', { root: '.' });
-  });
-}
-
-// Check database connection
-pool.query('SELECT NOW()', (err, result) => {
-  if (err) {
-    logger.error('Database connection error:', err); //Use the structured logger
-  } else {
-    logger.info('Database connected successfully at:', result.rows[0].now); //Use the structured logger
-  }
-});
-
-// Initialize WebSocket server with the HTTP server
-// Note: We need to pass the HTTP server to the WebSocket server
-initializeWebSocketServer(server);
-
-server.listen(port, () => {
-  logger.info(`Server running on http://localhost:${port}`, {port}); //Use the structured logger
-});
-
-// Global error handler
-process.on('uncaughtException', (error) => {
-  // Use the logger directly
-  logger.error(`Uncaught Exception: ${error.message}`, {
-    type: 'uncaughtException',
-    fatal: true,
-    stack: error.stack
-  });
-
-  // Give logger time to write to files before exiting
-  setTimeout(() => {
-    process.exit(1);
-  }, 1000);
-});
-
-process.on('unhandledRejection', (reason, promise) => {
-  // Use the logger directly
-  logger.warn('Unhandled Promise Rejection', {
-    type: 'unhandledRejection',
-    reason: reason instanceof Error ? reason.message : String(reason),
-    stack: reason instanceof Error ? reason.stack : undefined
-  });
-});
-
-// Graceful shutdown
-process.on('SIGTERM', async () => {
-  logger.info('SIGTERM signal received: closing HTTP server'); //Use the structured logger
-  await pool.end();
-  server.close(() => {
-    logger.info('HTTP server closed'); //Use the structured logger
-    process.exit(0);
-  });
+// Start server
+httpServer.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server listening on http://localhost:${PORT}`);
+  console.log(`Using ${process.env.USE_IN_MEMORY_DB === 'true' ? 'in-memory' : 'PostgreSQL'} storage`);
 });

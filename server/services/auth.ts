@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { IStorage } from '../storage';
 import { config } from '../config';
 import { InsertUser } from '../../shared/schema';
+import crypto from 'crypto';
 
 // Define types for the service
 interface AuthResult {
@@ -16,6 +17,7 @@ interface AuthResult {
     role: string;
   };
   token?: string;
+  refreshToken?: string;
 }
 
 // Auth service class
@@ -51,12 +53,19 @@ export class AuthService {
       
       // Create user with hashed password
       const newUser = await this.storage.createUser({
-        ...userData,
-        password: hashedPassword
+        username: userData.username,
+        email: userData.email,
+        passwordHash: hashedPassword,
+        displayName: userData.displayName || undefined,
+        avatar: userData.avatar || undefined,
+        role: userData.role
       });
       
-      // Create JWT token
-      const token = this.generateToken(newUser);
+      // Create JWT access token
+      const token = this.generateAccessToken(newUser);
+      
+      // Create refresh token
+      const refreshToken = await this.generateRefreshToken(newUser.id);
       
       // Create session
       await this.storage.createSession({
@@ -75,7 +84,8 @@ export class AuthService {
           displayName: newUser.displayName || undefined,
           role: newUser.role || 'user'
         },
-        token
+        token,
+        refreshToken
       };
     } catch (error) {
       console.error('Registration error:', error);
@@ -105,22 +115,32 @@ export class AuthService {
       }
       
       // Compare passwords
-      const isMatch = await bcrypt.compare(password, user.password);
+      const isMatch = await bcrypt.compare(password, user.passwordHash);
       if (!isMatch) {
         return { success: false, message: 'Invalid username or password' };
       }
       
-      // Create JWT token
-      const token = this.generateToken(user);
+      // Create JWT access token
+      const token = this.generateAccessToken(user);
       
-      // Create session
+      // Create refresh token
+      const refreshToken = await this.generateRefreshToken(
+        user.id, 
+        ipAddress || undefined, 
+        userAgent || undefined
+      );
+      
+      // Create session (still maintain sessions for backward compatibility)
       await this.storage.createSession({
         userId: user.id,
         token,
-        ipAddress: ipAddress || null,
-        userAgent: userAgent || null,
+        ipAddress: ipAddress === null ? undefined : ipAddress,
+        userAgent: userAgent === null ? undefined : userAgent,
         expiresAt: new Date(Date.now() + config.sessionMaxAge)
       });
+      
+      // Update last login time
+      await this.storage.updateUserLastLogin(user.id);
       
       return { 
         success: true, 
@@ -132,7 +152,8 @@ export class AuthService {
           displayName: user.displayName || undefined,
           role: user.role || 'user'
         },
-        token
+        token,
+        refreshToken
       };
     } catch (error) {
       console.error('Login error:', error);
@@ -143,12 +164,19 @@ export class AuthService {
   /**
    * Logout a user (invalidate token)
    * @param token JWT token to invalidate
+   * @param refreshToken Refresh token to invalidate (optional)
    * @returns Boolean indicating success
    */
-  async logout(token: string): Promise<boolean> {
+  async logout(token: string, refreshToken?: string): Promise<boolean> {
     try {
       // Delete session by token
-      await this.storage.deleteSessionByToken(token);
+      await this.storage.deleteSession(token);
+      
+      // If refresh token is provided, revoke it
+      if (refreshToken) {
+        await this.storage.revokeRefreshToken(refreshToken);
+      }
+      
       return true;
     } catch (error) {
       console.error('Logout error:', error);
@@ -163,8 +191,8 @@ export class AuthService {
    */
   async verifyToken(token: string): Promise<any> {
     try {
-      // Verify JWT token
-      const decoded = jwt.verify(token, config.jwtSecret) as any;
+      // Verify JWT token (cast secret to string to satisfy TypeScript)
+      const decoded = jwt.verify(token, String(config.jwtSecret)) as any;
       
       // Check if token is in valid sessions
       const session = await this.storage.getSessionByToken(token);
@@ -193,13 +221,13 @@ export class AuthService {
   
   /**
    * Check if a session is valid
-   * @param sessionId Session ID
+   * @param sessionToken Session token
    * @returns Boolean indicating if session is valid
    */
-  async isSessionValid(sessionId: string): Promise<boolean> {
+  async isSessionValid(sessionToken: string): Promise<boolean> {
     try {
-      // Get session by ID
-      const session = await this.storage.getSessionById(sessionId);
+      // Get session by token
+      const session = await this.storage.getSessionByToken(sessionToken);
       
       // Check if session exists and is not expired
       if (!session) {
@@ -220,11 +248,111 @@ export class AuthService {
   }
   
   /**
-   * Generate a JWT token for a user
+   * Generate a refresh token
+   * @param userId User ID to generate refresh token for
+   * @param ipAddress IP address (optional)
+   * @param userAgent User agent (optional)
+   */
+  async generateRefreshToken(userId: number, ipAddress?: string, userAgent?: string): Promise<string> {
+    // Generate a random token
+    const refreshToken = crypto.randomBytes(40).toString('hex');
+    
+    // Calculate expiration date
+    const expiresAt = new Date();
+    // Parse the expiration time: "7d" -> 7 days, "1h" -> 1 hour
+    const expiresInMatch = config.refreshTokenExpiresIn.match(/^(\d+)([hdm])$/);
+    if (expiresInMatch) {
+      const value = parseInt(expiresInMatch[1]);
+      const unit = expiresInMatch[2];
+      
+      if (unit === 'd') {
+        expiresAt.setDate(expiresAt.getDate() + value);
+      } else if (unit === 'h') {
+        expiresAt.setHours(expiresAt.getHours() + value);
+      } else if (unit === 'm') {
+        expiresAt.setMinutes(expiresAt.getMinutes() + value);
+      }
+    } else {
+      // Default to 7 days if format is incorrect
+      expiresAt.setDate(expiresAt.getDate() + 7);
+    }
+    
+    // Store the refresh token
+    await this.storage.createRefreshToken({
+      userId,
+      token: refreshToken,
+      expiresAt,
+      ipAddress,
+      userAgent
+    });
+    
+    return refreshToken;
+  }
+  
+  /**
+   * Refresh an access token using a refresh token
+   * @param refreshToken Refresh token
+   * @returns New auth result with a fresh access token
+   */
+  async refreshToken(refreshToken: string): Promise<AuthResult> {
+    try {
+      // Get the refresh token from storage
+      const storedToken = await this.storage.getRefreshTokenByToken(refreshToken);
+      
+      // Check if token exists and is valid
+      if (!storedToken) {
+        return { success: false, message: 'Invalid refresh token' };
+      }
+      
+      // Check if token is expired
+      const now = new Date();
+      if (storedToken.expiresAt < now) {
+        await this.storage.deleteRefreshToken(refreshToken);
+        return { success: false, message: 'Refresh token expired' };
+      }
+      
+      // Check if token is revoked
+      if (storedToken.isRevoked) {
+        // If a token is revoked, we should delete all tokens for this user as a security measure
+        await this.storage.deleteRefreshTokensByUserId(storedToken.userId);
+        return { success: false, message: 'Refresh token revoked' };
+      }
+      
+      // Get the user
+      const user = await this.storage.getUserById(storedToken.userId);
+      if (!user) {
+        return { success: false, message: 'User not found' };
+      }
+      
+      // Generate a new access token
+      const token = this.generateAccessToken(user);
+      
+      // Return the auth result
+      return {
+        success: true,
+        message: 'Token refreshed successfully',
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          displayName: user.displayName || undefined,
+          role: user.role || 'user'
+        },
+        token,
+        refreshToken // Return the same refresh token
+      };
+    } catch (error) {
+      console.error('Refresh token error:', error);
+      return { success: false, message: 'Failed to refresh token' };
+    }
+  }
+
+  /**
+   * Generate an access token for a user
    * @param user User to generate token for
    * @returns JWT token
    */
-  private generateToken(user: any): string {
+  private generateAccessToken(user: any): string {
     const payload = {
       id: user.id,
       username: user.username,
@@ -233,10 +361,12 @@ export class AuthService {
       role: user.role || 'user'
     };
     
-    return jwt.sign(
-      payload, 
-      config.jwtSecret, 
-      { expiresIn: config.jwtExpiresIn }
-    );
+    // Cast the secret to string to satisfy TypeScript
+    const secret = String(config.jwtSecret);
+    
+    // Cast the options to any to work around typing issues
+    const options: any = { expiresIn: config.jwtExpiresIn };
+    
+    return jwt.sign(payload, secret, options);
   }
 }

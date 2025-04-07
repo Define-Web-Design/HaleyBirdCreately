@@ -1,6 +1,30 @@
-import { pgTable, serial, text, varchar, timestamp, boolean, integer } from 'drizzle-orm/pg-core';
+import { pgTable, serial, text, varchar, timestamp, boolean, integer, json } from 'drizzle-orm/pg-core';
 import { createInsertSchema } from 'drizzle-zod';
 import { z } from 'zod';
+
+// Mood and sentiment-related enums
+export enum ContentSentiment {
+  POSITIVE = 'POSITIVE',
+  NEGATIVE = 'NEGATIVE',
+  NEUTRAL = 'NEUTRAL',
+  MIXED = 'MIXED'
+}
+
+// MoodCapsule interface
+export interface MoodCapsule {
+  id: number;
+  userId: number;
+  name: string;
+  description?: string;
+  emotionalTone: string;
+  captionTone: string;
+  aiGeneratedCaption?: string;
+  contentIds: number[];
+  thumbnailUrl?: string;
+  isArchived: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
 
 // User Table
 export const users = pgTable('users', {
@@ -28,6 +52,18 @@ export const sessions = pgTable('sessions', {
   userAgent: text('user_agent')
 });
 
+// Refresh Token Table
+export const refreshTokens = pgTable('refresh_tokens', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull().references(() => users.id),
+  token: text('token').notNull().unique(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  expiresAt: timestamp('expires_at').notNull(),
+  isRevoked: boolean('is_revoked').default(false).notNull(),
+  ipAddress: varchar('ip_address', { length: 50 }),
+  userAgent: text('user_agent')
+});
+
 // Define insert schemas with zod
 export const insertUserSchema = createInsertSchema(users)
   .omit({ id: true, passwordHash: true, createdAt: true, updatedAt: true, lastLogin: true })
@@ -38,8 +74,13 @@ export const insertUserSchema = createInsertSchema(users)
 export const insertSessionSchema = createInsertSchema(sessions)
   .omit({ id: true, createdAt: true });
 
+export const insertRefreshTokenSchema = createInsertSchema(refreshTokens)
+  .omit({ id: true, createdAt: true, isRevoked: true });
+
 // Define types based on the schemas
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertSession = z.infer<typeof insertSessionSchema>;
+export type InsertRefreshToken = z.infer<typeof insertRefreshTokenSchema>;
 export type User = typeof users.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
+export type RefreshToken = typeof refreshTokens.$inferSelect;

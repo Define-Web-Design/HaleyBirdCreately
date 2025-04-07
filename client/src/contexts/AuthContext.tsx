@@ -17,11 +17,13 @@ export interface User {
 interface AuthContextType {
   user: User | null;
   token: string | null;
+  refreshToken: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (username: string, password: string) => Promise<boolean>;
   register: (userData: RegisterData) => Promise<boolean>;
   logout: () => Promise<void>;
+  refreshAccessToken: () => Promise<boolean>;
   error: string | null;
 }
 
@@ -45,16 +47,89 @@ interface AuthProviderProps {
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(localStorage.getItem('auth_token'));
+  const [refreshToken, setRefreshToken] = useState<string | null>(localStorage.getItem('refresh_token'));
   const [error, setError] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   // Initialize auth state from token in localStorage
   useEffect(() => {
-    // If we have a token, try to get user data
-    if (token) {
-      fetchCurrentUser();
-    }
-  }, [token]);
+    const initializeAuth = async () => {
+      // Check if we have a refresh token but no valid access token
+      if (refreshToken && !token) {
+        // Try to refresh the token first
+        const refreshed = await refreshAccessToken();
+        if (refreshed) {
+          // Token refresh successful, fetchCurrentUser will be triggered by token change
+          return;
+        }
+      }
+      
+      // If we have a token, try to get user data
+      if (token) {
+        fetchCurrentUser();
+      }
+    };
+    
+    initializeAuth();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, refreshToken, refreshAccessToken]);
+
+  // Setup API request interceptor for token refresh
+  useEffect(() => {
+    // Create a function to handle token expiration
+    const handleApiRequest = async (url: string, options: RequestInit) => {
+      try {
+        // Check if the token exists and we should attempt to use it
+        if (!options.headers) {
+          options.headers = {};
+        }
+
+        // If we have a token and this is not the refresh token endpoint, 
+        // add the Authorization header
+        if (token && !url.includes('/api/auth/refresh-token')) {
+          (options.headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
+        }
+
+        // Make the original request
+        const response = await fetch(url, options);
+        
+        // If the response indicates an expired token (401 Unauthorized)
+        // and we have a refresh token, try to refresh the token and retry the request
+        if (response.status === 401 && refreshToken && !url.includes('/api/auth/refresh-token')) {
+          // Try to refresh the token
+          const refreshed = await refreshAccessToken();
+          
+          // If token refresh was successful, retry the original request with the new token
+          if (refreshed && token) {
+            // Update the Authorization header with the new token
+            (options.headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
+            
+            // Retry the original request
+            return fetch(url, options);
+          }
+        }
+        
+        return response;
+      } catch (error) {
+        console.error('API request interceptor error:', error);
+        throw error;
+      }
+    };
+
+    // Monkey patch the global fetch to use our interceptor
+    const originalFetch = window.fetch;
+    window.fetch = async (url: RequestInfo | URL, options: RequestInit = {}) => {
+      if (typeof url === 'string' && url.includes('/api/')) {
+        return handleApiRequest(url, options);
+      }
+      return originalFetch(url, options);
+    };
+
+    // Clean up by restoring the original fetch when the component unmounts
+    return () => {
+      window.fetch = originalFetch;
+    };
+  }, [token, refreshToken, refreshAccessToken]);
 
   // Authentication status
   const isAuthenticated = !!user;
@@ -122,8 +197,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     },
     onSuccess: (data) => {
       if (data.success && data.token && data.user) {
-        // Save token to localStorage
+        // Save tokens to localStorage
         localStorage.setItem('auth_token', data.token);
+        if (data.refreshToken) {
+          localStorage.setItem('refresh_token', data.refreshToken);
+          setRefreshToken(data.refreshToken);
+        }
         setToken(data.token);
         setUser(data.user);
         
@@ -178,8 +257,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     },
     onSuccess: (data) => {
       if (data.success && data.token && data.user) {
-        // Save token to localStorage
+        // Save tokens to localStorage
         localStorage.setItem('auth_token', data.token);
+        if (data.refreshToken) {
+          localStorage.setItem('refresh_token', data.refreshToken);
+          setRefreshToken(data.refreshToken);
+        }
         setToken(data.token);
         setUser(data.user);
         
@@ -231,7 +314,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       } finally {
         // Always clear local storage and state, even if the API call fails
         localStorage.removeItem('auth_token');
+        localStorage.removeItem('refresh_token');
         setToken(null);
+        setRefreshToken(null);
         setUser(null);
       }
     },
@@ -280,15 +365,103 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     await logoutMutation.mutateAsync();
   }
 
+  // Token refresh mutation
+  const refreshTokenMutation = useMutation({
+    mutationFn: async () => {
+      try {
+        // Only proceed if we have a refresh token
+        if (!refreshToken) {
+          throw new Error('No refresh token available');
+        }
+
+        const response = await apiRequest('/api/auth/refresh-token', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ refreshToken })
+        });
+        
+        return response;
+      } catch (error) {
+        console.error('Token refresh error:', error);
+        throw error;
+      }
+    },
+    onSuccess: (data) => {
+      if (data.success && data.token) {
+        // Update tokens in localStorage and state
+        localStorage.setItem('auth_token', data.token);
+        if (data.refreshToken) {
+          localStorage.setItem('refresh_token', data.refreshToken);
+          setRefreshToken(data.refreshToken);
+        }
+        setToken(data.token);
+        
+        // If user data is included, update it
+        if (data.user) {
+          setUser(data.user);
+        }
+        
+        // Invalidate auth queries
+        queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+      } else {
+        // If token refresh failed, log out
+        setError('Session expired. Please log in again.');
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('refresh_token');
+        setToken(null);
+        setRefreshToken(null);
+        setUser(null);
+        
+        toast({
+          title: 'Session expired',
+          description: 'Your session has expired. Please log in again.',
+          variant: 'destructive'
+        });
+      }
+    },
+    onError: () => {
+      // If token refresh failed, log out
+      setError('Session expired. Please log in again.');
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('refresh_token');
+      setToken(null);
+      setRefreshToken(null);
+      setUser(null);
+      
+      toast({
+        title: 'Session expired',
+        description: 'Your session has expired. Please log in again.',
+        variant: 'destructive'
+      });
+    }
+  });
+
+  // Refresh access token function
+  async function refreshAccessToken(): Promise<boolean> {
+    try {
+      if (!refreshToken) return false;
+      
+      const result = await refreshTokenMutation.mutateAsync();
+      return result.success === true;
+    } catch (error) {
+      return false;
+    }
+  }
+
   // Auth context value
   const value = {
     user,
     token,
+    refreshToken,
     isAuthenticated,
-    isLoading: isLoading || loginMutation.isPending || registerMutation.isPending || logoutMutation.isPending,
+    isLoading: isLoading || loginMutation.isPending || registerMutation.isPending || 
+              logoutMutation.isPending || refreshTokenMutation.isPending,
     login,
     register,
     logout,
+    refreshAccessToken,
     error
   };
 

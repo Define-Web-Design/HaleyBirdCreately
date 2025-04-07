@@ -221,7 +221,7 @@ class SecurityMonitorService {
     
     try {
       // Stub implementation - in real app would check access attempts
-      const recentAttempts: any[] = []; // Get recent access attempts for this IP
+      const recentAttempts = [] // Get recent access attempts for this IP
       
       // If there are too many attempts (e.g., more than 100 in 5 minutes)
       if (recentAttempts.length > 100) {
@@ -337,7 +337,6 @@ class SecurityMonitorService {
       };
     } catch (error) {
       console.error('Failed to trigger security alert:', error);
-      return null;
     }
   }
 }

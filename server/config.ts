@@ -9,6 +9,8 @@ interface Config {
   nodeEnv: string;
   jwtSecret: string;
   jwtExpiresIn: string;
+  refreshTokenSecret: string;
+  refreshTokenExpiresIn: string;
   cookieSecret: string;
   sessionMaxAge: number;
   dbUrl: string;
@@ -27,7 +29,9 @@ const defaultConfig: Config = {
   port: 3000,
   nodeEnv: 'development',
   jwtSecret: 'default_jwt_secret_change_in_production',
-  jwtExpiresIn: '1d',
+  jwtExpiresIn: '15m', // Set to 15 minutes for short-lived access tokens
+  refreshTokenSecret: 'default_refresh_token_secret_change_in_production',
+  refreshTokenExpiresIn: '7d', // 7 days for refresh tokens
   cookieSecret: 'default_cookie_secret_change_in_production',
   sessionMaxAge: 24 * 60 * 60 * 1000, // 24 hours
   dbUrl: 'postgres://localhost:5432/creately',
@@ -47,6 +51,8 @@ export const config: Config = {
   nodeEnv: process.env.NODE_ENV || defaultConfig.nodeEnv,
   jwtSecret: process.env.JWT_SECRET || defaultConfig.jwtSecret,
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || defaultConfig.jwtExpiresIn,
+  refreshTokenExpiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN || defaultConfig.refreshTokenExpiresIn,
+  refreshTokenSecret: process.env.REFRESH_TOKEN_SECRET || defaultConfig.refreshTokenSecret,
   cookieSecret: process.env.COOKIE_SECRET || defaultConfig.cookieSecret,
   sessionMaxAge: parseInt(process.env.SESSION_MAX_AGE || defaultConfig.sessionMaxAge.toString(), 10),
   dbUrl: process.env.DATABASE_URL || defaultConfig.dbUrl,
@@ -68,6 +74,11 @@ if (config.nodeEnv === 'production' && config.jwtSecret === defaultConfig.jwtSec
 // Warn if COOKIE_SECRET is using the default value in production
 if (config.nodeEnv === 'production' && config.cookieSecret === defaultConfig.cookieSecret) {
   console.warn('WARNING: Using default COOKIE_SECRET in production environment. This is a security risk!');
+}
+
+// Warn if REFRESH_TOKEN_SECRET is using the default value in production
+if (config.nodeEnv === 'production' && config.refreshTokenSecret === defaultConfig.refreshTokenSecret) {
+  console.warn('WARNING: Using default REFRESH_TOKEN_SECRET in production environment. This is a security risk!');
 }
 
 export default config;

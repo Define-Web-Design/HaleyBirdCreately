@@ -1,4 +1,4 @@
-import { storage } from '../storage';
+import storage from '../storage';
 import { ContentSentiment, MoodCapsule } from '../../shared/schema';
 import { generateJsonResponse, generateText } from '../ai/openai';
 

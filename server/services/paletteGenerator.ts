@@ -1,7 +1,18 @@
 
 import { z } from 'zod';
 import OpenAI from 'openai';
-import { MoodTone } from '../../shared/schema';
+
+// Define MoodTone enum since it's not in the schema
+export enum MoodTone {
+  ENERGETIC = 'ENERGETIC',
+  CALM = 'CALM',
+  PROFESSIONAL = 'PROFESSIONAL',
+  PLAYFUL = 'PLAYFUL',
+  ELEGANT = 'ELEGANT',
+  NOSTALGIC = 'NOSTALGIC',
+  MYSTERIOUS = 'MYSTERIOUS',
+  BOLD = 'BOLD'
+}
 
 // Define the schema for color palette
 const ColorSchema = z.object({

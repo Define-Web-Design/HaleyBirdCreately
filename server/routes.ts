@@ -1,6 +1,25 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
+import storage from "./storage";
+
+// Helper function to get active integrations
+async function getActiveIntegrations(userId: number) {
+  // In a real implementation, this would fetch from the database
+  return [
+    {
+      id: 1,
+      platform: 'instagram',
+      isActive: true,
+      connectedAt: new Date().toISOString()
+    },
+    {
+      id: 2,
+      platform: 'twitter',
+      isActive: true,
+      connectedAt: new Date().toISOString()
+    }
+  ];
+}
 import { 
   analyzeContent, 
   generateCaption, 
@@ -8,9 +27,8 @@ import {
   generateContentIdeas, 
   suggestPostingTimes
 } from "./ai/content";
-import { generateMoodPalette, generateAIPalette } from "./services/paletteGenerator";
+import { generateMoodPalette, generateAIPalette, MoodTone } from "./services/paletteGenerator";
 import { pageSpeedService } from "./services/pageSpeedService";
-import { MoodTone } from "../shared/schema";
 import { 
   apiLimiter, 
   addOwnershipHeaders, 
