@@ -1,69 +1,67 @@
 #!/bin/bash
 
-# Display diagnostic info
-echo "======================================"
-echo "Creately - Color Palette Generator"
-echo "======================================"
-echo "Server boot attempt initiated at $(date)"
-echo "Environment: $(uname -a)"
-echo ""
+# Start application with auto-restart capability
+# This script ensures that the application stays running in Replit
 
-# Load environment variables from .env if present
-if [ -f ".env" ]; then
-  echo "Loading environment variables from .env file..."
-  export $(grep -v '^#' .env | xargs)
-  echo "Environment variables loaded."
-fi
+# Configuration
+MAX_RESTARTS=10
+RESTART_DELAY=5
+LOG_FILE="./logs/restart.log"
+RESTART_WINDOW=300 # 5 minutes in seconds
 
-# Check if we have an OpenAI API key 
-if [ -n "$OPENAI_API_KEY" ]; then
-  echo "OpenAI API key found in environment variables."
-else 
-  echo "WARNING: OpenAI API key not found. Only static features will be available."
-fi
+# Create logs directory if it doesn't exist
+mkdir -p ./logs
 
-# Check for Node.js
-if command -v node &> /dev/null; then
-  echo "Node.js found: $(node --version)"
-  echo "Starting Node.js server..."
+# Function to log messages
+log_message() {
+  local timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+  echo "[$timestamp] $1"
+  echo "[$timestamp] $1" >> "$LOG_FILE"
+}
+
+# Initialize restart tracking
+restart_attempts=0
+restart_start_time=$(date +%s)
+
+log_message "Starting application with auto-restart capability"
+
+# Main loop to restart the application when it exits
+while true; do
+  # Start the application
+  log_message "Starting the application..."
+  npm run dev
   
-  # In case package.json exists, we'll try to run the dev script
-  if [ -f "package.json" ]; then
-    NODE_ENV=production node server.js
-  else
-    echo "No package.json found. Falling back to direct server.js execution."
-    node server.js
+  # Get the exit code
+  exit_code=$?
+  
+  # Check if we should restart
+  current_time=$(date +%s)
+  elapsed_time=$((current_time - restart_start_time))
+  
+  # Reset counter if window has passed
+  if [ $elapsed_time -gt $RESTART_WINDOW ]; then
+    restart_attempts=0
+    restart_start_time=$current_time
+    log_message "Restart window elapsed, resetting counter"
   fi
-  exit $?
-fi
+  
+  # Increment restart attempts
+  restart_attempts=$((restart_attempts + 1))
+  
+  if [ $exit_code -eq 0 ]; then
+    log_message "Application exited cleanly with code 0"
+    break
+  else
+    log_message "Application crashed with exit code $exit_code"
+    
+    if [ $restart_attempts -le $MAX_RESTARTS ]; then
+      log_message "Restarting application in $RESTART_DELAY seconds (attempt $restart_attempts of $MAX_RESTARTS)"
+      sleep $RESTART_DELAY
+    else
+      log_message "Maximum restart attempts ($MAX_RESTARTS) reached. Exiting."
+      break
+    fi
+  fi
+done
 
-# Check for Python
-if command -v python3 &> /dev/null; then
-  echo "Python found: $(python3 --version)"
-  echo "Starting Python server..."
-  python3 simple_server.py
-  exit $?
-fi
-
-if command -v python &> /dev/null; then
-  echo "Python found: $(python --version)"
-  echo "Starting Python server..."
-  python simple_server.py
-  exit $?
-fi
-
-# If we get here, we couldn't find a suitable runtime
-echo "ERROR: No suitable runtime found. Serving static file instead."
-echo "Available in static_version.html"
-echo ""
-echo "You can access the static version by:"
-echo "1. Downloading the static_version.html file"
-echo "2. Opening it in any web browser"
-echo ""
-echo "To fix this issue:"
-echo "1. Fix the .replit file (line 1026 has an extra quote)"
-echo "2. Install Node.js or Python"
-echo "3. Add your OpenAI API key"
-echo "4. Restart the application"
-
-exit 1
+log_message "Application auto-restart script terminated"

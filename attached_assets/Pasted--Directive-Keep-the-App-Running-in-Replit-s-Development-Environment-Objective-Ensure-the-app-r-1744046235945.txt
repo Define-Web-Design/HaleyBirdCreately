@@ -1,0 +1,51 @@
+# Directive: Keep the App Running in Replit's Development Environment
+
+## Objective
+Ensure the app remains active and accessible within the Replit development environment without requiring deployment or session interruptions. Maintain smooth workflows and structural integrity for testing while allowing auto-login functionality for streamlined access.
+
+---
+
+## Implementation Steps
+
+### 1. **Ensure Continuous App Running**
+- Utilize Replit's built-in settings to keep the app running:
+  - Enable the **"Always On"** feature to prevent the app from timing out or shutting down due to inactivity.
+  - If "Always On" is not available, use Replit's `console` or keep the environment active with regular pings from an internal function or external service (e.g., UptimeRobot).
+
+### 2. **Enable Auto-Login for Development**
+- Use a `devMode=true` flag in the app configuration to bypass login for testing purposes:
+  - Skip authentication checks when `devMode=true` is active.
+  - Allow access to protected routes and features in the development environment.
+
+### 3. **Session Persistence**
+- Implement session persistence during development:
+  - Store session tokens temporarily in **localStorage** or **cookies**.
+  - Automatically renew session tokens during testing without requiring re-login.
+
+### 4. **Debug the "App Not Running" Issue**
+- Check if the app's initialization or routing logic is causing the "App not running" message.
+- Ensure all required dependencies are installed and properly initialized in the Replit environment.
+- Test the app's startup process in the Replit console to confirm proper execution.
+
+---
+
+## Testing Guidelines
+1. **Continuous Access Verification**:
+   - Confirm the app remains running and accessible in Replit's development environment.
+   - Test auto-login functionality across all features without requiring manual login.
+
+2. **Session Stability**:
+   - Verify that session tokens persist across updates during testing.
+   - Test session renewal to ensure uninterrupted access during extended testing sessions.
+
+3. **Integration with Previous Changes**:
+   - Ensure the auto-login mechanism and session persistence do not interfere with other app features or workflows.
+   - Validate compatibility with Phase 1 security features, such as CSRF protection and token expiry.
+
+---
+
+## Notes
+- All changes should be isolated to the development environment and must not affect the production configuration.
+- When transitioning to production, remove the `devMode` flag and re-enable full authentication workflows.
+
+This directive ensures the app remains accessible and functional in Replit's development environment, streamlining your testing process while preserving the app's structural integrity for future deployment.

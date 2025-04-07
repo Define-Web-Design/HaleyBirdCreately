@@ -81,5 +81,97 @@ async function startServer() {
   }
 }
 
+// Import modules needed for keep-alive functionality
+import * as http from 'http';
+import * as fs from 'fs';
+import * as path from 'path';
+
+// Configure keep-alive mechanism for Replit environment
+try {
+  // Only enable in development mode
+  if (process.env.NODE_ENV !== 'production') {
+    // Create logs directory if it doesn't exist
+    const logsDir = path.join(process.cwd(), 'logs');
+    if (!fs.existsSync(logsDir)) {
+      fs.mkdirSync(logsDir, { recursive: true });
+    }
+    
+    const LOG_FILE = path.join(logsDir, 'keep-alive.log');
+    const PING_INTERVAL = 5 * 60 * 1000; // 5 minutes
+    
+    // Log function
+    const logKeepAlive = (message: string) => {
+      const timestamp = new Date().toISOString();
+      const logMessage = `[${timestamp}] ${message}`;
+      console.log(logMessage);
+      fs.appendFileSync(LOG_FILE, logMessage + '\n');
+    };
+    
+    // Simple keep-alive server
+    const keepAliveServer = http.createServer((req, res) => {
+      if (req.url === '/health' || req.url === '/ping') {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          status: 'healthy',
+          timestamp: new Date().toISOString()
+        }));
+        logKeepAlive('Received health check ping');
+      } else {
+        res.writeHead(404);
+        res.end('Not Found');
+      }
+    });
+    
+    // Start on a different port to avoid conflicts
+    const KEEP_ALIVE_PORT = 3333;
+    keepAliveServer.listen(KEEP_ALIVE_PORT, '0.0.0.0', () => {
+      logKeepAlive(`Keep-alive server listening on port ${KEEP_ALIVE_PORT}`);
+    });
+    
+    // Set up self-ping interval
+    const pingInterval = setInterval(() => {
+      logKeepAlive('Sending self-ping to keep application alive...');
+      
+      const req = http.request({
+        hostname: 'localhost',
+        port: KEEP_ALIVE_PORT,
+        path: '/ping',
+        method: 'GET'
+      }, (res) => {
+        let data = '';
+        res.on('data', (chunk) => { data += chunk; });
+        res.on('end', () => {
+          if (res.statusCode === 200) {
+            logKeepAlive('Self-ping successful');
+          } else {
+            logKeepAlive(`Self-ping failed with status code ${res.statusCode}`);
+          }
+        });
+      });
+      
+      req.on('error', (error) => {
+        logKeepAlive(`Self-ping error: ${error.message}`);
+      });
+      
+      req.end();
+    }, PING_INTERVAL);
+    
+    // Handle process termination
+    process.on('SIGINT', () => {
+      clearInterval(pingInterval);
+      keepAliveServer.close();
+    });
+    
+    process.on('SIGTERM', () => {
+      clearInterval(pingInterval);
+      keepAliveServer.close();
+    });
+    
+    logKeepAlive('Keep-alive service initialized to prevent app from sleeping');
+  }
+} catch (error) {
+  console.error('Failed to initialize keep-alive service:', error);
+}
+
 // Start the server
 startServer();
