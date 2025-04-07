@@ -61,7 +61,8 @@ export default function ApplePhotosIntegration({ onImportComplete }: ApplePhotos
   const importMutation = useMutation({
     mutationFn: async (photoIds: string[]) => {
       // For demo purposes, simulate a successful import
-      // In a real implementation, we would use apiRequest here
+      // In a real implementation, we would use apiRequest here to fetch from an API
+      // But we'll just simulate a delay and return mock data
       await new Promise(resolve => setTimeout(resolve, 1500));
       
       // Return mock data for the demo

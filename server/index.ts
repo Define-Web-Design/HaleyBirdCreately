@@ -84,7 +84,7 @@ async function startServer() {
 // Import modules needed for keep-alive functionality
 import * as http from 'http';
 import * as fs from 'fs';
-import * as path from 'path';
+// Use the existing path import rather than importing it again
 
 // Configure keep-alive mechanism for Replit environment
 try {
