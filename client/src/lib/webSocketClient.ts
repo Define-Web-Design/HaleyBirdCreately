@@ -16,8 +16,9 @@ class WebSocketClient {
   private socket: WebSocket | null = null;
   private isConnected = false;
   private reconnectAttempts = 0;
-  private maxReconnectAttempts = 5;
+  private maxReconnectAttempts = 20; // Increased for better resilience
   private reconnectTimeout: number = 1000; // Start with 1 second timeout
+  private reconnectTimer: any = null;
   private messageHandlers: Record<string, WebSocketMessageHandler[]> = {};
   private clientId: string | null = null;
   
@@ -52,6 +53,12 @@ class WebSocketClient {
    * Close the WebSocket connection
    */
   close() {
+    // Clear any reconnect timer
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+    
     if (this.socket) {
       this.socket.close();
       this.socket = null;
@@ -264,8 +271,21 @@ class WebSocketClient {
   
   // Attempt to reconnect to the WebSocket server
   private attemptReconnect() {
+    // Clear any existing reconnect timer
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+    
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
       console.log('Maximum reconnection attempts reached. Giving up.');
+      // Notify listeners that reconnection has failed permanently
+      this.notifyHandlers('reconnection_failed', {
+        timestamp: new Date().toISOString(),
+        attempts: this.reconnectAttempts,
+        maxAttempts: this.maxReconnectAttempts,
+        message: 'WebSocket reconnection failed after maximum attempts. Please refresh the page.'
+      });
       return;
     }
     
@@ -277,11 +297,22 @@ class WebSocketClient {
     
     console.log(`Attempting to reconnect in ${Math.round(timeout)}ms (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
     
-    setTimeout(() => {
+    // Notify listeners about reconnection attempt
+    this.notifyHandlers('reconnection_attempt', {
+      timestamp: new Date().toISOString(),
+      attempt: this.reconnectAttempts,
+      maxAttempts: this.maxReconnectAttempts,
+      timeout: Math.round(timeout),
+      nextAttemptAt: new Date(Date.now() + timeout).toISOString()
+    });
+    
+    // Store the timer reference so we can cancel it if needed
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = null;
       this.connect();
     }, timeout);
     
-    // Increase timeout for next attempt (exponential backoff)
+    // Increase timeout for next attempt (exponential backoff with upper bound)
     this.reconnectTimeout = Math.min(30000, this.reconnectTimeout * 2);
   }
 }

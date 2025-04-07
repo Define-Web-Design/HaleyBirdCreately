@@ -28,49 +28,101 @@ export function initializeWebSocketServer(server: Server) {
 
   wss.on('connection', (ws) => {
     const clientId = generateClientId();
-    clients.set(clientId, ws);
+    
+    // Store client with WebSocket connection and empty subscriptions
+    clients.set(clientId, {
+      ws: ws,
+      subscriptions: {},
+      connectedAt: new Date().toISOString()
+    });
     
     console.log(`WebSocket client connected: ${clientId}`);
     
     // Send initial connection confirmation
     ws.send(JSON.stringify({
       type: 'connection_established',
-      payload: { clientId }
+      payload: { 
+        clientId,
+        message: 'WebSocket connection established successfully',
+        timestamp: new Date().toISOString()
+      }
     }));
 
     // Handle incoming messages
     ws.on('message', async (message) => {
       try {
         const parsedMessage = JSON.parse(message.toString()) as WebSocketMessage;
+        console.log(`Received WebSocket message from ${clientId}: ${parsedMessage.type}`);
         
         // Handle different message types
         switch (parsedMessage.type) {
           case 'subscribe_tasks':
-            // Store subscription information with the client
+            // Get the current client data
+            const clientData = clients.get(clientId) || { ws, subscriptions: {} };
+            
+            // Update subscriptions for this client
             clients.set(clientId, {
-              ...clients.get(clientId),
+              ...clientData,
               subscriptions: {
-                ...(clients.get(clientId)?.subscriptions || {}),
+                ...(clientData.subscriptions || {}),
                 tasks: true
-              }
+              },
+              lastActivity: new Date().toISOString()
             });
+            
+            // Confirm subscription
+            ws.send(JSON.stringify({
+              type: 'subscription_confirmed',
+              payload: { 
+                topic: 'tasks',
+                timestamp: new Date().toISOString()
+              }
+            }));
             break;
             
           case 'subscribe_notifications':
+            // Get the current client data
+            const notifClientData = clients.get(clientId) || { ws, subscriptions: {} };
+            
+            // Update subscriptions for this client
             clients.set(clientId, {
-              ...clients.get(clientId),
+              ...notifClientData,
               subscriptions: {
-                ...(clients.get(clientId)?.subscriptions || {}),
+                ...(notifClientData.subscriptions || {}),
                 notifications: true
-              }
+              },
+              lastActivity: new Date().toISOString()
             });
+            
+            // Confirm subscription
+            ws.send(JSON.stringify({
+              type: 'subscription_confirmed',
+              payload: { 
+                topic: 'notifications',
+                timestamp: new Date().toISOString()
+              }
+            }));
             break;
             
           default:
             console.log(`Received unknown message type: ${parsedMessage.type}`);
+            ws.send(JSON.stringify({
+              type: 'error',
+              payload: { 
+                message: `Unknown message type: ${parsedMessage.type}`,
+                timestamp: new Date().toISOString()
+              }
+            }));
         }
       } catch (error) {
         console.error('Error processing WebSocket message:', error);
+        ws.send(JSON.stringify({
+          type: 'error',
+          payload: { 
+            message: 'Error processing message',
+            timestamp: new Date().toISOString()
+          }
+        }));
       }
     });
 
@@ -113,16 +165,27 @@ export function broadcastNotification(notification: any): void {
 // Broadcast message to clients subscribed to a specific topic
 function broadcastToSubscribers(topic: string, message: WebSocketMessage): void {
   const messageStr = JSON.stringify(message);
+  let sentCount = 0;
+  let errorCount = 0;
   
-  clients.forEach((client, clientId) => {
-    const subscriptions = client.subscriptions || {};
+  clients.forEach((clientData, clientId) => {
+    // Handle both cases: when client data is the WebSocket itself or an object with WebSocket and metadata
+    const ws = clientData.send ? clientData : clientData.ws;
+    const subscriptions = clientData.subscriptions || {};
     
-    if (subscriptions[topic] && client.readyState === 1) {
+    // Only send to clients that are subscribed to this topic and are in the OPEN state
+    if (subscriptions[topic] && ws && ws.readyState === 1) {
       try {
-        client.send(messageStr);
+        ws.send(messageStr);
+        sentCount++;
       } catch (error) {
         console.error(`Error sending message to client ${clientId}:`, error);
+        errorCount++;
       }
     }
   });
+  
+  if (sentCount > 0 || errorCount > 0) {
+    console.log(`Broadcast "${message.type}" to ${sentCount} clients (${errorCount} errors)`);
+  }
 }

@@ -12,11 +12,13 @@ export function useTaskVerification() {
   useEffect(() => {
     // Handle connection events
     const handleOpen = () => {
+      console.log('Task verification: WebSocket connection opened');
       setConnected(true);
       webSocketClient.subscribe('tasks');
     };
     
     const handleClose = () => {
+      console.log('Task verification: WebSocket connection closed');
       setConnected(false);
     };
     
@@ -28,19 +30,42 @@ export function useTaskVerification() {
       });
     };
     
+    // Handle reconnection attempts
+    const handleReconnectionAttempt = (data: any) => {
+      console.log(`Task verification: Reconnection attempt ${data.attempt}/${data.maxAttempts}`);
+    };
+    
+    // Handle permanent reconnection failure
+    const handleReconnectionFailed = (data: any) => {
+      console.error('Task verification: WebSocket reconnection failed permanently', data);
+      setConnected(false);
+    };
+    
     // Set up event handlers
     webSocketClient.on('connection_open', handleOpen);
     webSocketClient.on('connection_close', handleClose);
     webSocketClient.on('task_update', handleTaskUpdate);
+    webSocketClient.on('reconnection_attempt', handleReconnectionAttempt);
+    webSocketClient.on('reconnection_failed', handleReconnectionFailed);
     
-    // Connect to WebSocket server
-    webSocketClient.connect();
+    // Connect to WebSocket server if not already connected
+    if (!webSocketClient.connected) {
+      webSocketClient.connect();
+    } else {
+      // If already connected, update our state to reflect that
+      setConnected(true);
+      // And make sure we're subscribed
+      webSocketClient.subscribe('tasks');
+    }
     
     // Clean up on unmount
     return () => {
       webSocketClient.off('connection_open', handleOpen);
       webSocketClient.off('connection_close', handleClose);
       webSocketClient.off('task_update', handleTaskUpdate);
+      webSocketClient.off('reconnection_attempt', handleReconnectionAttempt);
+      webSocketClient.off('reconnection_failed', handleReconnectionFailed);
+      // Note: We don't close the connection here because it might be used by other components
     };
   }, [queryClient]);
 
