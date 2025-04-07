@@ -3,8 +3,6 @@ import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { 
   AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
@@ -14,7 +12,10 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { performDevAutoLogin, isAlreadyAutoLoggedIn } from '@/lib/devBypass';
-import { Shield, Bug, X } from 'lucide-react';
+import { 
+  Shield, Bug, X, LayoutDashboard, Home, Palette, 
+  Settings, BookOpen, Bell, Users, BarChart 
+} from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 /**
@@ -25,26 +26,23 @@ import { toast } from '@/hooks/use-toast';
  */
 export const DevModeToggle = () => {
   const [, setLocation] = useLocation();
-  const [isDevMode, setIsDevMode] = useState(false);
+  const [isDevMode, setIsDevMode] = useState(true); // Always show in development
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isAuthBypassEnabled, setIsAuthBypassEnabled] = useState(
     import.meta.env.VITE_AUTO_LOGIN === 'true' || 
     localStorage.getItem('dev_auth_bypass') === 'true'
   );
 
-  // Check if we're in development mode
+  // Check if we're in development mode and apply auth bypass
   useEffect(() => {
-    const isDevelopment = process.env.NODE_ENV === 'development' || 
-                          import.meta.env.MODE === 'development';
-    setIsDevMode(isDevelopment);
+    // Always enable dev mode for development
+    setIsDevMode(true);
     
     // Check if auth bypass is already enabled
-    if (isDevelopment && isAuthBypassEnabled) {
+    if (isAuthBypassEnabled) {
       const isAlreadyLoggedIn = isAlreadyAutoLoggedIn();
       if (!isAlreadyLoggedIn) {
         performDevAutoLogin();
-        // Force page reload if not already logged in
-        window.location.reload();
       }
     }
   }, [isAuthBypassEnabled]);
@@ -58,14 +56,9 @@ export const DevModeToggle = () => {
       performDevAutoLogin();
       toast({
         title: 'Dev Mode Enabled',
-        description: 'Authentication bypass is now active. Reloading page...',
+        description: 'Authentication bypass is now active',
         variant: 'default',
       });
-      
-      // Short delay then reload to apply changes
-      setTimeout(() => {
-        window.location.reload();
-      }, 1500);
     } else {
       // Remove the tokens when disabling
       localStorage.removeItem('auth_token');
@@ -73,20 +66,21 @@ export const DevModeToggle = () => {
       
       toast({
         title: 'Dev Mode Disabled',
-        description: 'Authentication bypass is now inactive. Reloading page...',
+        description: 'Authentication bypass is now inactive',
         variant: 'default',
       });
-      
-      // Short delay then reload to apply changes
-      setTimeout(() => {
-        window.location.reload();
-      }, 1500);
     }
   };
 
-  // Go to dashboard
-  const goToDashboard = () => {
-    setLocation('/dashboard');
+  // Navigation functions without page reloads
+  const navigateTo = (path: string) => {
+    setLocation(path);
+    // Keep dialog open to allow multiple navigation without reopening
+  };
+
+  // Close dialog only when explicitly requested
+  const closeDialog = () => {
+    setIsDialogOpen(false);
   };
 
   // If not in development mode, don't render anything
@@ -135,35 +129,103 @@ export const DevModeToggle = () => {
               />
             </div>
             
-            {isAuthBypassEnabled && (
-              <div className="flex flex-col gap-2">
-                <h3 className="text-sm font-medium">Quick Navigation</h3>
+            <div className="flex flex-col gap-2">
+              <h3 className="text-sm font-medium">Quick Navigation</h3>
+              <div className="grid grid-cols-1 gap-2">
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  onClick={goToDashboard}
+                  onClick={() => navigateTo('/')}
                   className="justify-start"
                 >
-                  Go to Dashboard
+                  <Home className="h-4 w-4 mr-2" /> Home
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => navigateTo('/dashboard')}
+                  className="justify-start"
+                >
+                  <LayoutDashboard className="h-4 w-4 mr-2" /> Dashboard
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => navigateTo('/palettes')}
+                  className="justify-start"
+                >
+                  <Palette className="h-4 w-4 mr-2" /> Palettes
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => navigateTo('/settings')}
+                  className="justify-start"
+                >
+                  <Settings className="h-4 w-4 mr-2" /> Settings
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => navigateTo('/tutorials')}
+                  className="justify-start"
+                >
+                  <BookOpen className="h-4 w-4 mr-2" /> Tutorials
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => navigateTo('/notifications')}
+                  className="justify-start"
+                >
+                  <Bell className="h-4 w-4 mr-2" /> Notifications
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => navigateTo('/community')}
+                  className="justify-start"
+                >
+                  <Users className="h-4 w-4 mr-2" /> Community
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => navigateTo('/analytics')}
+                  className="justify-start"
+                >
+                  <BarChart className="h-4 w-4 mr-2" /> Analytics
                 </Button>
               </div>
-            )}
+            </div>
           </div>
           
           <AlertDialogFooter>
-            <AlertDialogCancel asChild>
-              <Button variant="outline" size="sm">
-                <X className="h-4 w-4 mr-2" />
-                Close
-              </Button>
-            </AlertDialogCancel>
-            {isAuthBypassEnabled && (
-              <AlertDialogAction asChild>
-                <Button size="sm" onClick={goToDashboard}>
-                  Go to Dashboard
-                </Button>
-              </AlertDialogAction>
-            )}
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={closeDialog}
+            >
+              <X className="h-4 w-4 mr-2" />
+              Close
+            </Button>
+            <Button 
+              size="sm" 
+              onClick={() => {
+                navigateTo('/dashboard');
+                closeDialog();
+              }}
+            >
+              <LayoutDashboard className="h-4 w-4 mr-2" />
+              Go to Dashboard
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

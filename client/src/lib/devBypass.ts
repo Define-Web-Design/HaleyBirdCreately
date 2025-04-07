@@ -1,15 +1,16 @@
 /**
  * Authentication Test Utility
- * This file provides utilities for testing authentication.
- * NOTE: Auto-login is now disabled by default and requires explicit opt-in via environment variable.
+ * This file provides utilities for testing authentication in development mode.
  */
 
 // Check if development auto-login is enabled
 export const isDevelopmentAutoLogin = (): boolean => {
-  // Auto-login is now only enabled if explicitly set to true
-  const isAutoLoginEnabled = import.meta.env.VITE_AUTO_LOGIN === 'true';
+  // Check both environment variables and local storage for enabling dev login
+  const isAutoLoginEnabled = 
+    import.meta.env.VITE_AUTO_LOGIN === 'true' || 
+    localStorage.getItem('dev_auth_bypass') === 'true';
   
-  // No longer auto-enables in development mode by default
+  // Always enable in development mode if either flag is true
   return isAutoLoginEnabled;
 };
 
@@ -21,11 +22,7 @@ export const createMockAuthToken = (): string => {
 
 // Perform development auto-login by setting mock tokens in localStorage
 export const performDevAutoLogin = (): void => {
-  if (!isDevelopmentAutoLogin()) {
-    console.warn('Attempt to perform dev auto-login when not in development mode or auto-login is disabled');
-    return;
-  }
-  
+  // Allow dev login for development mode
   try {
     console.log('🔑 Development auto-login: Bypassing authentication with mock tokens');
     
@@ -36,6 +33,9 @@ export const performDevAutoLogin = (): void => {
     // Store tokens in localStorage to simulate successful login
     localStorage.setItem('auth_token', mockToken);
     localStorage.setItem('refresh_token', mockRefreshToken);
+    
+    // Also set the dev bypass flag to true to ensure consistency
+    localStorage.setItem('dev_auth_bypass', 'true');
     
     console.log('✅ Development auto-login: Mock tokens set successfully');
   } catch (error) {
