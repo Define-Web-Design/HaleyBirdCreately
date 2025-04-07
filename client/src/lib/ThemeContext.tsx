@@ -1,10 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-
-// Import only the necessary functions to avoid circular dependencies
-// These functions will be lazily imported in the useEffect to prevent initialization errors
-let initTouchFeedback: (enabled: boolean) => void;
-let setTactileFeedback: (enabled: boolean) => void;
-let cleanupTouchFeedback: () => void;
+import { setTactileFeedbackEnabled } from '../utils/hapticFeedback';
+import { initTouchFeedback, setTactileFeedback, cleanupTouchFeedback } from './touchFeedback';
 
 interface ThemeContextProps {
   theme: string;
@@ -341,20 +337,11 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     const newValue = !isTactileFeedbackEnabled;
     setIsTactileFeedbackEnabled(newValue);
     
-    // Apply or remove tactile feedback classes and initialize touch feedback system
-    if (newValue) {
-      document.documentElement.classList.add('tactile-feedback-enabled');
-      // Initialize the touch feedback system if the function exists
-      if (initTouchFeedback) {
-        initTouchFeedback(true);
-      }
-    } else {
-      document.documentElement.classList.remove('tactile-feedback-enabled');
-      // Set tactile feedback to disabled if the function exists
-      if (setTactileFeedback) {
-        setTactileFeedback(false);
-      }
-    }
+    // Update the global tactile feedback setting
+    setTactileFeedbackEnabled(newValue);
+    
+    // Initialize the touch feedback system with the new value
+    initTouchFeedback(newValue);
   };
   
   // Set transition speed
@@ -371,30 +358,14 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     }
   };
 
-  // Initialize touch feedback system on mount with dynamic imports
+  // Initialize touch feedback system on mount
   useEffect(() => {
-    // Dynamically import the touch feedback functions to prevent circular dependencies
-    const loadTouchFeedback = async () => {
-      try {
-        const touchModule = await import('./touchFeedback');
-        initTouchFeedback = touchModule.initTouchFeedback;
-        setTactileFeedback = touchModule.setTactileFeedback;
-        cleanupTouchFeedback = touchModule.cleanupTouchFeedback;
-        
-        // Now that the functions are loaded, initialize the touch feedback system
-        initTouchFeedback(isTactileFeedbackEnabled);
-      } catch (error) {
-        console.error('Failed to load touch feedback module:', error);
-      }
-    };
-    
-    loadTouchFeedback();
+    // Initialize touch feedback system
+    initTouchFeedback(isTactileFeedbackEnabled);
     
     // Clean up event listeners on component unmount
     return () => {
-      if (cleanupTouchFeedback) {
-        cleanupTouchFeedback();
-      }
+      cleanupTouchFeedback();
     };
   }, [isTactileFeedbackEnabled]);
   
@@ -405,16 +376,12 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     // Handle tactile feedback toggle
     if (isTactileFeedbackEnabled) {
       html.classList.add('tactile-feedback-enabled');
-      // Update the touch feedback system if the function is available
-      if (setTactileFeedback) {
-        setTactileFeedback(true);
-      }
+      setTactileFeedback(true);
+      setTactileFeedbackEnabled(true);
     } else {
       html.classList.remove('tactile-feedback-enabled');
-      // Update the touch feedback system if the function is available
-      if (setTactileFeedback) {
-        setTactileFeedback(false);
-      }
+      setTactileFeedback(false);
+      setTactileFeedbackEnabled(false);
     }
     
     // Set transition speed CSS variable and data attribute

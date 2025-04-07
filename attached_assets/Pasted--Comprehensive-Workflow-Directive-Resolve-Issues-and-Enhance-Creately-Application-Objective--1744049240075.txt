@@ -1,0 +1,132 @@
+# Comprehensive Workflow Directive: Resolve Issues and Enhance Creately Application
+
+## **Objective**
+Address and resolve critical issues in the Creately application systematically. This workflow ensures logical progression by building on the successful implementation of each preceding step, positively enhancing the app’s functionality while maintaining stability.
+
+---
+
+## **Workflow Steps**
+
+### **Step 1: Break Circular Dependencies**
+#### **Objective**
+Resolve circular dependencies between the following files to prevent render loops and structural errors:
+- `ThemeContext.tsx` → `touchFeedback.ts`
+- `touchFeedback.ts` → `use-mobile.ts`
+- Duplicate files: `use-mobile.ts` and `use-mobile.tsx`.
+
+#### **Actions**
+1. **Create a Shared Utilities File**:
+   - Move haptic feedback logic from `touchFeedback.ts` into a new utilities file:
+     ```typescript
+     // File: client/src/utils/hapticFeedback.ts
+     export const triggerHapticFeedback = () => {
+       // Add haptic feedback logic here
+     };
+     ```
+   - Update imports in `ThemeContext.tsx` and `touchFeedback.ts` to reference `hapticFeedback.ts`.
+
+2. **Remove Duplicate Mobile Hook File**:
+   - Delete `use-mobile.tsx` and retain `use-mobile.ts` as the single source of truth.
+   - Update all imports across the app to use `use-mobile.ts`:
+     ```javascript
+     import { useMobile } from '../hooks/use-mobile';
+     ```
+
+3. **Validate Dependencies**:
+   - Test the files for proper functionality without circular imports.
+   - Confirm haptic feedback works across components.
+
+---
+
+### **Step 2: Fix ApplePhotosIntegration Component Issues**
+#### **Objective**
+Resolve the infinite update loop caused by improper React Query configurations and connection status management.
+
+#### **Actions**
+1. **Update useQuery Settings**:
+   - Configure queries to use aggressive caching and prevent redundant refetching:
+     ```javascript
+     useQuery('connectionStatus', fetchConnectionStatus, {
+       staleTime: Infinity, 
+       cacheTime: Infinity, 
+       refetchOnWindowFocus: false, 
+       refetchOnMount: false
+     });
+     ```
+
+2. **Refactor Connection Status Query**:
+   - Isolate connection status handling logic into a dedicated function or hook to simplify dependency management.
+
+3. **Validate Fix**:
+   - Test the component to ensure the infinite update loop is resolved.
+   - Verify connection status updates occur correctly without unnecessary refetches.
+
+---
+
+### **Step 3: Optimize Global React Query Configuration**
+#### **Objective**
+Enhance React Query performance globally by minimizing unnecessary refetches and implementing proper caching.
+
+#### **Actions**
+1. **Modify Global React Query Settings**:
+   - Update the global configuration file:
+     ```javascript
+     // File: client/src/lib/reactQueryConfig.ts
+     export const queryConfig = {
+       refetchOnWindowFocus: false,
+       refetchOnMount: false,
+       staleTime: Infinity,
+       cacheTime: Infinity
+     };
+     ```
+
+2. **Apply Consistent Query Behavior**:
+   - Ensure all components use the updated global query configuration for consistency.
+
+3. **Validate Queries**:
+   - Test various queries to confirm effective caching and performance improvements.
+
+---
+
+### **Step 4: Refactor ProtectedRoute.tsx in Authentication System**
+#### **Objective**
+Fix issues in `ProtectedRoute.tsx` caused by development bypass logic and synchronization errors in auto-login functionality.
+
+#### **Actions**
+1. **Remove Development Bypass Logic**:
+   - Refactor the component to eliminate page reloads:
+     ```javascript
+     const ProtectedRoute = ({ children }) => {
+       const isAuthenticated = useAuth();
+       return isAuthenticated ? children : <Redirect to="/login" />;
+     };
+     ```
+
+2. **Optimize Login Flow**:
+   - Ensure the auto-login functionality handles state synchronization seamlessly.
+
+3. **Validate Authentication**:
+   - Test login and protected routes to confirm smooth transitions without reloads or synchronization issues.
+
+---
+
+## **Completion Verification**
+
+### **Validate Entire Workflow**
+After completing all steps:
+1. **Dependencies**:
+   - Ensure all circular dependencies are resolved, and file imports are clean and consistent.
+2. **ApplePhotosIntegration**:
+   - Confirm the infinite update loop is fixed, with queries functioning as intended.
+3. **React Query Configuration**:
+   - Validate optimized global query settings and consistent caching performance across the app.
+4. **Authentication System**:
+   - Verify that ProtectedRoute and login functionalities work seamlessly without reloads or synchronization issues.
+
+### **Test Overall App Stability**
+1. Test all major features and workflows to ensure no new issues are introduced.
+2. Document changes and updates to ensure the app remains maintainable and scalable.
+
+---
+
+This cohesive workflow provides a step-by-step plan to resolve critical issues in the Creately application while progressively enhancing its stability and performance. Let me know if further adjustments are needed! 🚀✨

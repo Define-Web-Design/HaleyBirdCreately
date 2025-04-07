@@ -5,7 +5,7 @@
  * including touch trails, finger tracking, and touch ripple effects.
  */
 
-import { hapticFeedback as hapticFeedbackFunc } from '../hooks/use-mobile';
+import { triggerHapticFeedback } from '../utils/hapticFeedback';
 
 // Configuration options
 const TOUCH_TRAIL_ENABLED = false; // Disable the trail entirely
@@ -141,7 +141,7 @@ function resizeTrailCanvas(): void {
  */
 function handleTouchStart(e: TouchEvent): void {
   // Haptic feedback for touch start
-  hapticFeedbackFunc('light');
+  triggerHapticFeedback('light');
 }
 
 /**
@@ -158,13 +158,8 @@ export function triggerFeedback(
   // Don't do anything if feedback is disabled
   if (!tactileFeedbackEnabled) return;
   
-  // Map the type to the haptic feedback intensity
-  const hapticType = type === 'heavy' ? 'strong' : 
-                    (type === 'light' ? 'light' : 
-                    (type === 'medium' ? 'medium' : type));
-                    
-  // Trigger haptic feedback
-  hapticFeedbackFunc(hapticType as any);
+  // Trigger haptic feedback directly
+  triggerHapticFeedback(type);
   
   // Create a ripple effect if trail canvas exists
   if (trailContext && trailCanvas) {
@@ -286,11 +281,11 @@ function addTouchEffectsToElements(): void {
         
         // Add haptic feedback based on element type
         if (element.tagName === 'BUTTON' || element.getAttribute('role') === 'button') {
-          hapticFeedbackFunc('medium');
+          triggerHapticFeedback('medium');
         } else if (element.tagName === 'A') {
-          hapticFeedbackFunc('light');
+          triggerHapticFeedback('light');
         } else if (element.classList.contains('card')) {
-          hapticFeedbackFunc('medium');
+          triggerHapticFeedback('medium');
         }
       }, { passive: true });
       
