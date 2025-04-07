@@ -1,4 +1,3 @@
-
 /**
  * App Status Monitor
  * 
@@ -6,11 +5,11 @@
  * to ensure system health and performance.
  */
 
-const fs = require('fs');
-const path = require('path');
-const os = require('os');
-const { exec } = require('child_process');
-const util = require('util');
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
+import { exec } from 'child_process';
+import util from 'util';
 
 const execPromise = util.promisify(exec);
 const LOG_DIR = path.join(__dirname, '..', 'logs', 'app-status');
@@ -107,7 +106,7 @@ class AppStatusMonitor {
     // CPU load
     const cpus = os.cpus();
     const cpuCount = cpus.length;
-    
+
     try {
       // Get CPU load from top command
       const { stdout } = await execPromise("top -bn1 | grep 'Cpu(s)' | awk '{print $2 + $4}'");
@@ -133,7 +132,7 @@ class AppStatusMonitor {
     };
 
     this.status.system.uptime = formatUptime(os.uptime());
-    
+
     // Process memory usage (Node.js specific)
     const nodeMemoryUsage = process.memoryUsage();
     this.status.performance.memoryUsage = {
@@ -161,14 +160,14 @@ class AppStatusMonitor {
    */
   async checkClientBuildStatus() {
     const clientDistPath = path.join(__dirname, '..', 'client', 'dist');
-    
+
     if (fs.existsSync(clientDistPath)) {
       try {
         const stats = fs.statSync(clientDistPath);
         const lastModified = stats.mtime;
         const now = new Date();
         const ageInDays = (now - lastModified) / (1000 * 60 * 60 * 24);
-        
+
         this.status.application.clientBuildStatus = {
           exists: true,
           lastBuilt: lastModified.toISOString(),
@@ -214,7 +213,7 @@ class AppStatusMonitor {
     try {
       const { stdout } = await execPromise('node -e "const { securityMonitor } = require(\'./server/services/securityMonitor.js\'); securityMonitor.validateAssetIntegrity().then(results => console.log(JSON.stringify(results)))"');
       const securityResults = JSON.parse(stdout);
-      
+
       this.status.security = {
         issuesDetected: securityResults.valid ? [] : securityResults.issues || ['Unknown security issues'],
         lastSecurityCheck: new Date().toISOString(),
@@ -318,12 +317,12 @@ class AppStatusMonitor {
     summary += `  - Node Version: ${status.system.nodeVersion}\n\n`;
 
     // Overall status
-    const healthStatus = criticalIssues.length === 0 
-      ? '✅ HEALTHY' 
-      : criticalIssues.length <= 2 && warnings.length <= 3 
-        ? '⚠️ NEEDS ATTENTION' 
+    const healthStatus = criticalIssues.length === 0
+      ? '✅ HEALTHY'
+      : criticalIssues.length <= 2 && warnings.length <= 3
+        ? '⚠️ NEEDS ATTENTION'
         : '❌ UNHEALTHY';
-    
+
     summary += `OVERALL STATUS: ${healthStatus}\n`;
     summary += '=================================================\n';
 
@@ -336,24 +335,24 @@ class AppStatusMonitor {
   logStatusCheck() {
     const logFile = path.join(LOG_DIR, `status-${new Date().toISOString().slice(0, 10)}.json`);
     const summary = this.generateSummary();
-    
+
     try {
       // Write JSON status to file
       fs.writeFileSync(
-        logFile, 
+        logFile,
         JSON.stringify(this.status, null, 2)
       );
-      
+
       // Write summary to console
       console.log(summary);
-      
+
       // Write summary to a readable log file
       fs.writeFileSync(
         path.join(LOG_DIR, `summary-${new Date().toISOString().slice(0, 10)}.txt`),
         summary,
         { flag: 'a' } // Append mode
       );
-      
+
       return true;
     } catch (error) {
       console.error('Error saving status log:', error);
@@ -368,18 +367,18 @@ class AppStatusMonitor {
 async function monitorAppStatus(intervalMinutes = 60) {
   const monitor = new AppStatusMonitor();
   const intervalMs = intervalMinutes * 60 * 1000;
-  
+
   console.log(`Starting app status monitoring (interval: ${intervalMinutes} minutes)`);
-  
+
   // Run initial check
   await monitor.runFullStatusCheck();
-  
+
   // Set up interval for continuous monitoring
   setInterval(async () => {
     console.log(`\nRunning scheduled app status check (${new Date().toLocaleString()})`);
     await monitor.runFullStatusCheck();
   }, intervalMs);
-  
+
   return monitor;
 }
 
@@ -397,13 +396,13 @@ async function runAppStatusCheck() {
  */
 function formatBytes(bytes, decimals = 2) {
   if (bytes === 0) return '0 Bytes';
-  
+
   const k = 1024;
   const dm = decimals < 0 ? 0 : decimals;
   const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-  
+
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  
+
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
@@ -415,7 +414,7 @@ function formatUptime(uptime) {
   const hours = Math.floor((uptime % 86400) / 3600);
   const minutes = Math.floor((uptime % 3600) / 60);
   const seconds = Math.floor(uptime % 60);
-  
+
   return `${days}d ${hours}h ${minutes}m ${seconds}s`;
 }
 
@@ -424,7 +423,7 @@ if (require.main === module) {
   // Check if monitoring mode is enabled
   const args = process.argv.slice(2);
   const intervalArg = args[0];
-  
+
   if (intervalArg && !isNaN(intervalArg)) {
     // Run in monitoring mode
     monitorAppStatus(parseInt(intervalArg, 10));
@@ -441,8 +440,11 @@ if (require.main === module) {
   }
 }
 
-module.exports = {
+export {
   AppStatusMonitor,
   monitorAppStatus,
   runAppStatusCheck
 };
+
+// Import and use the new runAppStatusCheck function
+import { runAppStatusCheck } from './app-status'; // Adjust path as needed

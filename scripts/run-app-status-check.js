@@ -1,53 +1,35 @@
-/**
- * App Status Check Runner
- * 
- * Command-line utility to run application status checks
- * and generate detailed reports.
- */
+// ES Module syntax for importing app-status.js
+import { runAppStatusCheck } from './app-status.js';
 
-const { runAppStatusCheck } = require('./app-status');
-const fs = require('fs');
-const path = require('path');
+// Run the app status check and display results
+runAppStatusCheck()
+  .then(report => {
+    console.log('App Status Report generated successfully');
+    console.log('----------------------------------------');
+    console.log(`Overall Status: ${report.overview.status}`);
+    console.log(`Status Message: ${report.overview.statusMessage}`);
 
-async function main() {
-  console.log('Starting comprehensive app status check...');
-
-  try {
-    // Create logs directory if it doesn't exist
-    const logsDir = path.join(__dirname, '..', 'logs', 'app-status');
-    if (!fs.existsSync(logsDir)) {
-      fs.mkdirSync(logsDir, { recursive: true });
+    // Display service statuses
+    console.log('\nService Statuses:');
+    for (const [service, status] of Object.entries(report.services)) {
+      console.log(`- ${service}: ${status.status}`);
+      if (status.issues.length > 0) {
+        console.log(`  Issues: ${status.issues.join(', ')}`);
+      }
     }
 
-    // Run the status check
-    const result = await runAppStatusCheck();
-
-    if (!result.success) {
-      console.error('App status check failed:', result.error);
-      process.exit(1);
+    // Display recommendations
+    if (report.recommendations.critical.length > 0) {
+      console.log('\nCritical Recommendations:');
+      report.recommendations.critical.forEach(rec => console.log(`- ${rec}`));
     }
 
-    // Print summary to console (this is already handled in runAppStatusCheck)
-
-    // Return success
-    console.log('\nStatus check complete. See logs directory for detailed reports:');
-    console.log(`${logsDir}/status-*.json - Detailed JSON data`);
-    console.log(`${logsDir}/summary-*.txt - Human-readable summaries`);
-
-    // Exit with appropriate code
-    const hasIssues = result.summary.includes('CRITICAL ISSUES') || 
-                     result.status.application.serverRunning === false;
-
-    process.exit(hasIssues ? 1 : 0);
-  } catch (error) {
-    console.error('Error running app status check:', error);
+    if (report.recommendations.improvements.length > 0) {
+      console.log('\nImprovement Recommendations:');
+      report.recommendations.improvements.forEach(rec => console.log(`- ${rec}`));
+    }
+  })
+  .catch(error => {
+    console.error('Error generating app status report:', error);
     process.exit(1);
-  }
-}
-
-// Run if this script is called directly
-if (require.main === module) {
-  main();
-}
-
-module.exports = { runStatusCheck: main };
+  });
