@@ -1,235 +1,241 @@
-import { Link } from 'wouter';
-import { ContentItem } from '@/lib/types';
 
-interface ContentCardProps {
-  content: ContentItem;
-  onEdit?: (id: number) => void;
-  onShare?: (id: number) => void;
-  onEnhance?: (id: number) => void;
-}
-
-const ContentCard = ({ content, onEdit, onShare, onEnhance }: ContentCardProps) => {
-  // Platform icon mapping
-  const getPlatformIcon = (platform?: string) => {
-    switch (platform?.toLowerCase()) {
-      case 'instagram': return 'fab fa-instagram';
-      case 'tiktok': return 'fab fa-tiktok';
-      case 'pinterest': return 'fab fa-pinterest';
-      case 'twitter': return 'fab fa-twitter';
-      default: return 'fas fa-globe';
-    }
-  };
-
-  // Status badge styling
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'Posted':
-        return {
-          bg: 'bg-accent/10 text-accent',
-          text: 'High Engagement'
-        };
-      case 'Scheduled':
-        return {
-          bg: 'bg-secondary/10 text-secondary',
-          text: 'Trending Topic'
-        };
-      case 'Draft':
-      default:
-        return {
-          bg: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400',
-          text: 'In Progress'
-        };
-    }
-  };
-
-  const statusBadge = getStatusBadge(content.status);
-  
-  // Handle button click with event stopping
-  const handleButtonClick = (handler?: (id: number) => void) => (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (handler) {
-      handler(content.id);
-    }
-  };
-
-  return (
-    <Link href={`/content/${content.id}`}>
-      <div className="content-card bg-white dark:bg-gray-900 rounded-xl shadow-sm overflow-hidden border border-gray-100 dark:border-gray-800 flex flex-col group transition-all hover:translate-y-[-4px] hover:shadow-lg">
-        {/* Image section */}
-        <div className="relative">
-          <img 
-            src={content.imageUrl || 'https://images.unsplash.com/photo-1492707892479-7bc8d5a4ee93?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&h=800&q=80'} 
-            alt={content.title} 
-            className="w-full h-48 object-cover"
-          />
-          
-          {/* Overlay actions */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-between p-3">
-            <div className="flex space-x-2">
-              <button 
-                className="h-8 w-8 rounded-full bg-white/90 text-gray-800 flex items-center justify-center hover:bg-white transition-colors"
-                onClick={handleButtonClick(onEdit)}
-              >
-                <i className="fas fa-edit"></i>
-              </button>
-              <button 
-                className="h-8 w-8 rounded-full bg-white/90 text-gray-800 flex items-center justify-center hover:bg-white transition-colors"
-                onClick={handleButtonClick(onShare)}
-              >
-                <i className="fas fa-share-alt"></i>
-              </button>
-            </div>
-            <div>
-              <button 
-                className="h-8 w-8 rounded-full bg-primary text-white flex items-center justify-center hover:bg-primary/90 transition-colors"
-                onClick={handleButtonClick(onEnhance)}
-              >
-                <i className="fas fa-magic"></i>
-              </button>
-            </div>
-          </div>
-          
-          {/* Status badge */}
-          <div className="absolute top-3 right-3">
-            {content.platform && (
-              <span className="bg-white/90 dark:bg-gray-900/90 text-xs px-2 py-1 rounded-full text-gray-700 dark:text-gray-300">
-                <i className={`${getPlatformIcon(content.platform)} mr-1`}></i> {content.status}
-              </span>
-            )}
-          </div>
-        </div>
-        
-        {/* Content details */}
-        <div className="p-4 flex-1 flex flex-col">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="font-medium">{content.title}</h3>
-            <span className={`${statusBadge.bg} text-xs px-2 py-1 rounded`}>{statusBadge.text}</span>
-          </div>
-          
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-            {content.description || 'No description provided.'}
-          </p>
-          
-          <div className="mt-auto">
-            {content.status === 'Posted' && (
-              <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center">
-                  <span className="text-gray-500 dark:text-gray-400 mr-4">
-                    <i className="fas fa-heart mr-1"></i> {content.engagement || 0}
-                  </span>
-                  <span className="text-gray-500 dark:text-gray-400">
-                    <i className="fas fa-comment mr-1"></i> {Math.floor((content.engagement || 0) / 15)}
-                  </span>
-                </div>
-                <span className="text-gray-500 dark:text-gray-400">
-                  {new Date(content.postedAt || content.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                </span>
-              </div>
-            )}
-            
-            {content.status === 'Scheduled' && (
-              <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center">
-                  <span className="text-gray-500 dark:text-gray-400 mr-4">
-                    <i className="fas fa-calendar mr-1"></i> {new Date(content.scheduledFor || '').toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                  </span>
-                  <span className="text-gray-500 dark:text-gray-400">
-                    <i className="fas fa-clock mr-1"></i> {new Date(content.scheduledFor || '').toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
-                  </span>
-                </div>
-              </div>
-            )}
-            
-            {content.status === 'Draft' && (
-              <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center space-x-3">
-                  <button 
-                    className="text-primary hover:text-primary/80 transition-colors"
-                    onClick={handleButtonClick(onEnhance)}
-                  >
-                    <i className="fas fa-wand-magic-sparkles mr-1"></i> Enhance
-                  </button>
-                  <button className="text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary transition-colors">
-                    <i className="fas fa-hashtag mr-1"></i> Generate Tags
-                  </button>
-                </div>
-              </div>
-            )}
-            
-            {/* AI Analysis Bar */}
-            <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
-              <div className="flex items-center">
-                <div className="mr-3">
-                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                    {content.status === 'Posted' ? 'AI Sentiment' : 
-                     content.status === 'Scheduled' ? 'AI Prediction' : 'Completion'}
-                  </span>
-                </div>
-                <div className="flex-1 h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
-                  <div 
-                    className={`h-full ${
-                      content.status === 'Posted' ? 'bg-gradient-to-r from-primary to-secondary' : 
-                      content.status === 'Scheduled' ? 'bg-gradient-to-r from-accent to-blue-400' : 
-                      'bg-gradient-to-r from-yellow-300 to-primary'
-                    }`} 
-                    style={{ width: `${content.aiSentiment || 65}%` }}
-                  ></div>
-                </div>
-                <span className="ml-2 text-xs font-medium">
-                  {content.aiSentiment || 65}%
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </Link>
-  );
-};
-
-export default ContentCard;
-/**
- * Content Card Component
- * Optimized for mobile viewing with responsive design
- */
-import React from 'react';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from './card';
-import { useMobile } from '@/hooks/use-mobile';
+import React, { useState, useRef } from "react";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { useTouchSwipe } from "@/hooks/use-touch-swipe";
+import { motion, AnimatePresence } from "framer-motion";
+import { useMobile } from "@/hooks/use-mobile";
+import { addTouchFeedback, HapticIntensity } from "@/lib/touchFeedback";
+import { useEffect } from "react";
 
 interface ContentCardProps {
   title: string;
-  children: React.ReactNode;
-  footer?: React.ReactNode;
+  description?: string;
+  image?: string;
+  author?: {
+    name: string;
+    avatar?: string;
+  };
+  date?: string;
+  tags?: string[];
+  onView?: () => void;
+  onShare?: () => void;
+  onDelete?: () => void;
   className?: string;
-  onClick?: () => void;
+  children?: React.ReactNode;
+  interactive?: boolean;
 }
 
-export function ContentCard({ 
-  title, 
-  children, 
-  footer, 
-  className = '',
-  onClick
+export function ContentCard({
+  title,
+  description,
+  image,
+  author,
+  date,
+  tags = [],
+  onView,
+  onShare,
+  onDelete,
+  className = "",
+  children,
+  interactive = true,
 }: ContentCardProps) {
-  const { isMobile } = useMobile();
+  const { isMobile, touchEnabled } = useMobile();
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [showActions, setShowActions] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
   
+  // Setup swipe handlers for mobile
+  const { ref: swipeRef, state: swipeState } = useTouchSwipe({
+    onSwipeLeft: () => {
+      if (isMobile && interactive) {
+        setShowActions(true);
+      }
+    },
+    onSwipeRight: () => {
+      if (isMobile && interactive) {
+        setShowActions(false);
+      }
+    },
+  }, { threshold: 30 });
+  
+  // Set up the card element as the swipe target
+  useEffect(() => {
+    if (cardRef.current && swipeRef.current !== cardRef.current) {
+      swipeRef.current = cardRef.current;
+    }
+  }, [cardRef, swipeRef]);
+  
+  // Add touch feedback to the card
+  useEffect(() => {
+    if (!cardRef.current || !touchEnabled || !interactive) return;
+    
+    const cleanup = addTouchFeedback(cardRef.current, {
+      haptic: true,
+      hapticIntensity: HapticIntensity.LIGHT,
+      visualFeedback: true,
+      activeClass: 'scale-[0.99]'
+    });
+    
+    return cleanup;
+  }, [touchEnabled, interactive]);
+  
+  const toggleExpand = () => {
+    setIsExpanded(!isExpanded);
+  };
+  
+  const handleCardClick = () => {
+    if (interactive && onView) {
+      onView();
+    }
+  };
+
   return (
     <Card 
-      className={`content-card ${isMobile ? 'mobile-content-card' : ''} ${className}`}
-      onClick={onClick}
+      ref={cardRef}
+      className={`relative overflow-hidden transition-all duration-200 ${
+        interactive ? "cursor-pointer hover:shadow-md" : ""
+      } ${isExpanded ? "scale-[1.02]" : ""} ${className}`}
+      data-swipe-handler
+      aria-expanded={isExpanded}
+      role={interactive ? "button" : undefined}
+      tabIndex={interactive ? 0 : undefined}
+      onClick={interactive ? handleCardClick : undefined}
+      onKeyDown={interactive ? (e) => e.key === "Enter" && handleCardClick() : undefined}
     >
-      <CardHeader className={isMobile ? 'p-3' : 'p-4'}>
-        <CardTitle className={isMobile ? 'text-lg' : 'text-xl'}>{title}</CardTitle>
+      {image && (
+        <div className="relative w-full h-40 overflow-hidden">
+          <img
+            src={image}
+            alt={`${title} preview`}
+            className="w-full h-full object-cover transition-transform duration-200 ease-in-out"
+            loading="lazy"
+          />
+          {tags.length > 0 && (
+            <div className="absolute top-2 right-2 flex flex-wrap gap-1 max-w-[70%] justify-end">
+              {tags.slice(0, 3).map((tag) => (
+                <Badge key={tag} variant="secondary" className="text-xs">
+                  {tag}
+                </Badge>
+              ))}
+              {tags.length > 3 && (
+                <Badge variant="outline" className="text-xs">
+                  +{tags.length - 3}
+                </Badge>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      <CardHeader>
+        <CardTitle className="line-clamp-2">{title}</CardTitle>
+        {description && (
+          <CardDescription className={isExpanded ? "" : "line-clamp-2"}>
+            {description}
+          </CardDescription>
+        )}
       </CardHeader>
-      <CardContent className={isMobile ? 'p-3 pt-0' : 'p-4 pt-0'}>
-        {children}
+
+      <CardContent>
+        <AnimatePresence>
+          {(isExpanded || !isMobile) && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              {children}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </CardContent>
-      {footer && (
-        <CardFooter className={isMobile ? 'p-3 pt-1' : 'p-4 pt-2'}>
-          {footer}
-        </CardFooter>
+
+      <CardFooter className="flex justify-between items-center">
+        <div className="flex items-center gap-2">
+          {author && (
+            <div className="flex items-center gap-2">
+              <Avatar className="h-6 w-6">
+                <AvatarImage src={author.avatar} alt={author.name} />
+                <AvatarFallback>
+                  {author.name.substring(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <span className="text-sm text-muted-foreground">{author.name}</span>
+            </div>
+          )}
+          {date && <span className="text-xs text-muted-foreground">{date}</span>}
+        </div>
+
+        {isMobile && interactive && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleExpand();
+            }}
+            aria-label={isExpanded ? "Collapse" : "Expand"}
+          >
+            {isExpanded ? "Less" : "More"}
+          </Button>
+        )}
+      </CardFooter>
+
+      {/* Swipeable actions panel for mobile */}
+      {isMobile && interactive && (onShare || onDelete) && (
+        <AnimatePresence>
+          {showActions && (
+            <motion.div
+              initial={{ x: 100, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: 100, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="absolute top-0 right-0 h-full bg-popover border-l flex flex-col items-center justify-center gap-2 px-2"
+            >
+              {onShare && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onShare();
+                  }}
+                  aria-label="Share"
+                >
+                  Share
+                </Button>
+              )}
+              {onDelete && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete();
+                  }}
+                  aria-label="Delete"
+                >
+                  Delete
+                </Button>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      )}
+
+      {/* Swipe indicator for mobile */}
+      {isMobile && interactive && (onShare || onDelete) && !showActions && (
+        <div 
+          className="absolute top-0 right-0 h-full w-1 bg-primary opacity-20"
+          aria-hidden="true"
+        />
       )}
     </Card>
   );
 }
+
+export default ContentCard;

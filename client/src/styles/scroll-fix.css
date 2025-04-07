@@ -1,118 +1,130 @@
-/* Ensure all pages are scrollable to the bottom */
+
+/* Mobile scrolling fixes */
+
+/* Prevent overscroll behavior on body */
 html, body {
-  height: 100%;
-  min-height: 100%;
-  overflow-x: hidden;
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* Fix for iOS momentum scrolling */
+.overflow-y-auto,
+.overflow-auto,
+.scrollable {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent content shifting on mobile browsers when address bar appears/disappears */
+html {
+  height: -webkit-fill-available;
 }
 
 body {
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch; /* For smooth scrolling on iOS */
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
 }
 
-#root {
-  min-height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-main {
-  flex: 1;
-  padding-bottom: 2rem; /* Add bottom padding to ensure content isn't cut off */
-}
-
-/* Prevent overflow issues with fixed elements */
-.fixed-element {
-  position: fixed;
-  z-index: 50;
-}
-
-/* Ensure dialogs and modals can be scrolled on mobile */
-.dialog-content, 
-[role="dialog"], 
-.modal {
-  max-height: 90vh;
-  overflow-y: auto;
-}
-
-/* Fix for iOS Safari 100vh issue */
-@supports (-webkit-touch-callout: none) {
-  .h-screen {
-    height: -webkit-fill-available;
-  }
-  .min-h-screen {
-    min-height: -webkit-fill-available;
-  }
-}
-
-/* Specific fix for color palette containers to ensure they don't cause overflow */
-.color-palette-container {
-  overflow-x: hidden;
-  width: 100%;
-}
-/**
- * Mobile scrolling fixes
- * Addresses common scrolling issues on iOS and Android devices
- */
-
-/* Prevent iOS momentum scrolling issues */
-html, body {
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior-y: none;
-}
-
-/* Fix position:fixed elements on iOS */
-.fixed {
+/* Fix for fixed position elements on iOS */
+.fixed,
+[style*="position: fixed"] {
   -webkit-transform: translateZ(0);
   transform: translateZ(0);
 }
 
-/* Fix iOS input zoom */
-@media screen and (max-width: 768px) {
-  input, textarea, select {
-    font-size: 16px !important;
-  }
+/* Handle bottom safe area for iOS devices with notches */
+.pb-safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0);
 }
 
-/* Improve scroll performance */
-.scroll-container {
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
-  will-change: scroll-position;
+.pt-safe-area-top {
+  padding-top: env(safe-area-inset-top, 0);
 }
 
-/* Fix iOS viewport height issues */
-.vh-fix {
-  height: 100vh;
-  height: -webkit-fill-available;
-  height: stretch;
-}
-
-/* Fix iOS rubber band effect */
-.prevent-overscroll {
-  overscroll-behavior: none;
-}
-
-/* Fix sticky elements */
-.sticky {
-  position: -webkit-sticky;
-  position: sticky;
-}
-
-/* Fix for iOS safe areas */
-@supports (padding: max(0px)) {
-  .safe-area-inset-bottom {
-    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+/* Adjust content to prevent keyboard overlap on mobile */
+@media (max-width: 768px) {
+  .keyboard-adjust {
+    position: relative;
+    transition: transform 0.3s ease-out;
   }
   
-  .safe-area-inset-top {
-    padding-top: max(0.5rem, env(safe-area-inset-top));
+  .keyboard-active .keyboard-adjust {
+    transform: translateY(-40%);
   }
 }
 
-/* Prevent content jumping on keyboard open */
-.keyboard-aware {
-  height: auto;
-  min-height: 100%;
+/* Custom class for sticky headers that work better on mobile */
+.sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: inherit;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
 }
+
+/* Prevent fixed headers from disappearing during momentum scroll on iOS */
+.fixed-header {
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+/* Fix for pull-to-refresh behavior on mobile that can interfere with custom gestures */
+.disable-pull-refresh {
+  overscroll-behavior-y: contain;
+}
+
+/* Fix for content shifting when switching between pages with different scroll states */
+.page-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Fix for elements with 100vh height on mobile browsers */
+.full-height {
+  height: 100vh;
+  height: calc(var(--vh, 1vh) * 100);
+}
+
+/* Add some utility classes for handling touch interactions */
+.touch-action-none {
+  touch-action: none;
+}
+
+.touch-action-pan-y {
+  touch-action: pan-y;
+}
+
+.touch-action-pan-x {
+  touch-action: pan-x;
+}
+
+/* Fix for iOS bounce effect interfering with fixed headers */
+.fixed-ios {
+  position: fixed;
+  width: 100%;
+  transform: translateZ(0);
+}
+
+/* Add JavaScript to calculate viewport height properly */
+:root {
+  --vh: 1vh;
+}
+
+/* This should be added to your main.tsx or App.tsx:
+  useEffect(() => {
+    // Set the value of --vh to be equal to 1% of the window height
+    function setVhVariable() {
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+    }
+    
+    setVhVariable();
+    window.addEventListener('resize', setVhVariable);
+    
+    return () => {
+      window.removeEventListener('resize', setVhVariable);
+    };
+  }, []);
+*/

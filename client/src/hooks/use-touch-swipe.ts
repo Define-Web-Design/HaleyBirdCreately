@@ -1,107 +1,198 @@
 
-/**
- * Touch Swipe Hook
- * Detects swipe gestures on touch devices
- */
-import { useState, useEffect, useRef } from 'react';
-import { useMobile } from './use-mobile';
+import { useRef, useEffect, useState } from 'react';
 
-interface SwipeOptions {
-  threshold?: number;
+interface SwipeHandlers {
   onSwipeLeft?: () => void;
   onSwipeRight?: () => void;
   onSwipeUp?: () => void;
   onSwipeDown?: () => void;
 }
 
-interface TouchPosition {
-  x: number;
-  y: number;
+interface SwipeState {
+  swiping: boolean;
+  direction: 'left' | 'right' | 'up' | 'down' | null;
+  distance: number;
 }
 
-export function useTouchSwipe(
-  ref: React.RefObject<HTMLElement>,
-  options: SwipeOptions = {}
-) {
+interface UseTouchSwipeOptions {
+  threshold?: number;
+  preventDefaultTouchmove?: boolean;
+  disableContextMenu?: boolean;
+}
+
+const DEFAULT_THRESHOLD = 50; // Minimum swipe distance in pixels
+
+/**
+ * Hook to detect swipe gestures on touch devices
+ */
+export const useTouchSwipe = (
+  handlers: SwipeHandlers,
+  options: UseTouchSwipeOptions = {}
+) => {
   const {
-    threshold = 50,
-    onSwipeLeft,
-    onSwipeRight,
-    onSwipeUp,
-    onSwipeDown
+    threshold = DEFAULT_THRESHOLD,
+    preventDefaultTouchmove = true,
+    disableContextMenu = false
   } = options;
+
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const elementRef = useRef<HTMLElement | null>(null);
   
-  const { isTouch } = useMobile();
-  const [swiping, setSwiping] = useState(false);
-  const [direction, setDirection] = useState<'left' | 'right' | 'up' | 'down' | null>(null);
-  const touchStart = useRef<TouchPosition | null>(null);
-  
+  const [state, setState] = useState<SwipeState>({
+    swiping: false,
+    direction: null,
+    distance: 0
+  });
+
   useEffect(() => {
-    if (!isTouch || !ref.current) return;
-    
-    const element = ref.current;
-    
+    const element = elementRef.current;
+    if (!element) return;
+
     const handleTouchStart = (e: TouchEvent) => {
-      if (e.touches.length === 1) {
-        touchStart.current = {
-          x: e.touches[0].clientX,
-          y: e.touches[0].clientY
+      try {
+        if (e.touches.length !== 1) return;
+        
+        const touch = e.touches[0];
+        touchStartRef.current = {
+          x: touch.clientX,
+          y: touch.clientY
         };
-        setSwiping(true);
+        
+        setState({
+          swiping: true,
+          direction: null,
+          distance: 0
+        });
+      } catch (error) {
+        console.error('Error in touch start handler:', error);
       }
     };
-    
+
     const handleTouchMove = (e: TouchEvent) => {
-      if (!touchStart.current || !swiping) return;
-      
-      const touchX = e.touches[0].clientX;
-      const touchY = e.touches[0].clientY;
-      const diffX = touchStart.current.x - touchX;
-      const diffY = touchStart.current.y - touchY;
-      
-      // Determine swipe direction based on the greatest difference
-      if (Math.abs(diffX) > Math.abs(diffY)) {
-        // Horizontal swipe
-        if (Math.abs(diffX) > threshold) {
-          setDirection(diffX > 0 ? 'left' : 'right');
+      try {
+        if (!touchStartRef.current || e.touches.length !== 1) return;
+        
+        if (preventDefaultTouchmove) {
+          e.preventDefault();
         }
-      } else {
-        // Vertical swipe
-        if (Math.abs(diffY) > threshold) {
-          setDirection(diffY > 0 ? 'up' : 'down');
+        
+        const touch = e.touches[0];
+        const deltaX = touch.clientX - touchStartRef.current.x;
+        const deltaY = touch.clientY - touchStartRef.current.y;
+        
+        // Determine primary direction of swipe
+        const absX = Math.abs(deltaX);
+        const absY = Math.abs(deltaY);
+        
+        let direction: 'left' | 'right' | 'up' | 'down' | null = null;
+        let distance = 0;
+        
+        if (absX > absY) {
+          // Horizontal swipe
+          direction = deltaX > 0 ? 'right' : 'left';
+          distance = absX;
+        } else {
+          // Vertical swipe
+          direction = deltaY > 0 ? 'down' : 'up';
+          distance = absY;
         }
+        
+        setState({
+          swiping: true,
+          direction,
+          distance
+        });
+      } catch (error) {
+        console.error('Error in touch move handler:', error);
       }
     };
-    
-    const handleTouchEnd = () => {
-      if (direction === 'left' && onSwipeLeft) {
-        onSwipeLeft();
-      } else if (direction === 'right' && onSwipeRight) {
-        onSwipeRight();
-      } else if (direction === 'up' && onSwipeUp) {
-        onSwipeUp();
-      } else if (direction === 'down' && onSwipeDown) {
-        onSwipeDown();
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      try {
+        if (!touchStartRef.current) return;
+        
+        if (state.distance >= threshold && state.direction) {
+          // Trigger the appropriate handler if threshold is met
+          switch (state.direction) {
+            case 'left':
+              handlers.onSwipeLeft?.();
+              break;
+            case 'right':
+              handlers.onSwipeRight?.();
+              break;
+            case 'up':
+              handlers.onSwipeUp?.();
+              break;
+            case 'down':
+              handlers.onSwipeDown?.();
+              break;
+          }
+        }
+        
+        // Reset state
+        touchStartRef.current = null;
+        setState({
+          swiping: false,
+          direction: null,
+          distance: 0
+        });
+      } catch (error) {
+        console.error('Error in touch end handler:', error);
+        
+        // Reset on error to prevent getting stuck
+        touchStartRef.current = null;
+        setState({
+          swiping: false,
+          direction: null,
+          distance: 0
+        });
       }
-      
-      // Reset state
-      touchStart.current = null;
-      setSwiping(false);
-      setDirection(null);
     };
-    
+
+    const handleTouchCancel = () => {
+      // Reset on cancel
+      touchStartRef.current = null;
+      setState({
+        swiping: false,
+        direction: null,
+        distance: 0
+      });
+    };
+
+    const handleContextMenu = (e: MouseEvent) => {
+      if (disableContextMenu) {
+        e.preventDefault();
+      }
+    };
+
     // Add event listeners
-    element.addEventListener('touchstart', handleTouchStart);
-    element.addEventListener('touchmove', handleTouchMove);
+    element.addEventListener('touchstart', handleTouchStart, { passive: !preventDefaultTouchmove });
+    element.addEventListener('touchmove', handleTouchMove, { passive: !preventDefaultTouchmove });
     element.addEventListener('touchend', handleTouchEnd);
+    element.addEventListener('touchcancel', handleTouchCancel);
     
-    // Cleanup
+    if (disableContextMenu) {
+      element.addEventListener('contextmenu', handleContextMenu);
+    }
+
+    // Clean up
     return () => {
       element.removeEventListener('touchstart', handleTouchStart);
       element.removeEventListener('touchmove', handleTouchMove);
       element.removeEventListener('touchend', handleTouchEnd);
+      element.removeEventListener('touchcancel', handleTouchCancel);
+      
+      if (disableContextMenu) {
+        element.removeEventListener('contextmenu', handleContextMenu);
+      }
     };
-  }, [ref, isTouch, threshold, direction, swiping, onSwipeLeft, onSwipeRight, onSwipeUp, onSwipeDown]);
-  
-  return { swiping, direction };
-}
+  }, [handlers, threshold, preventDefaultTouchmove, disableContextMenu, state.distance, state.direction]);
+
+  // Return the ref to be attached to the element and current state
+  return {
+    ref: elementRef,
+    state
+  };
+};
+
+export default useTouchSwipe;

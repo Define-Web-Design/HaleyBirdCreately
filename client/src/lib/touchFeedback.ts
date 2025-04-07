@@ -7,6 +7,180 @@
 import { useTouchPosition } from '@/hooks/use-mobile';
 
 /**
+ * Utility functions for implementing touch and haptic feedback
+ */
+
+// Haptic feedback intensity levels
+export enum HapticIntensity {
+  LIGHT = 'light',
+  MEDIUM = 'medium',
+  HEAVY = 'heavy',
+  SUCCESS = 'success',
+  WARNING = 'warning',
+  ERROR = 'error'
+}
+
+/**
+ * Trigger haptic feedback on supported devices
+ * @param intensity The intensity/type of haptic feedback
+ * @returns Promise that resolves when feedback is complete
+ */
+export function triggerHapticFeedback(intensity: HapticIntensity = HapticIntensity.MEDIUM): Promise<void> {
+  // Check if the device supports vibration
+  if (!window.navigator.vibrate) {
+    return Promise.resolve();
+  }
+
+  // Map intensity to vibration pattern in milliseconds
+  const patterns = {
+    [HapticIntensity.LIGHT]: [10],
+    [HapticIntensity.MEDIUM]: [35],
+    [HapticIntensity.HEAVY]: [75],
+    [HapticIntensity.SUCCESS]: [10, 30, 30],
+    [HapticIntensity.WARNING]: [30, 50, 30],
+    [HapticIntensity.ERROR]: [50, 100, 50, 100, 50]
+  };
+
+  // Trigger vibration with the selected pattern
+  return new Promise(resolve => {
+    window.navigator.vibrate(patterns[intensity]);
+
+    // Calculate total duration of the pattern
+    const totalDuration = patterns[intensity].reduce((sum, duration) => sum + duration, 0);
+
+    // Resolve promise after the vibration completes
+    setTimeout(resolve, totalDuration);
+  });
+}
+
+/**
+ * Add touch feedback to an element
+ * @param element The DOM element to add feedback to
+ * @param options Configuration options
+ */
+export function addTouchFeedback(
+  element: HTMLElement,
+  options: {
+    haptic?: boolean;
+    hapticIntensity?: HapticIntensity;
+    visualFeedback?: boolean;
+    activeClass?: string;
+    rippleColor?: string;
+  } = {}
+): () => void {
+  const {
+    haptic = false,
+    hapticIntensity = HapticIntensity.LIGHT,
+    visualFeedback = true,
+    activeClass = 'touch-active',
+    rippleColor
+  } = options;
+
+  // Add base class for styling
+  if (visualFeedback) {
+    element.classList.add('touch-feedback');
+
+    // Add custom ripple color if specified
+    if (rippleColor) {
+      element.style.setProperty('--ripple-color', rippleColor);
+    }
+  }
+
+  // Event handlers
+  const handleTouchStart = () => {
+    if (visualFeedback) {
+      element.classList.add(activeClass);
+    }
+
+    if (haptic) {
+      triggerHapticFeedback(hapticIntensity).catch(err => {
+        console.error('Error triggering haptic feedback:', err);
+      });
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (visualFeedback) {
+      element.classList.remove(activeClass);
+    }
+  };
+
+  // Add event listeners
+  element.addEventListener('touchstart', handleTouchStart);
+  element.addEventListener('touchend', handleTouchEnd);
+  element.addEventListener('touchcancel', handleTouchEnd);
+
+  // Return cleanup function
+  return () => {
+    element.removeEventListener('touchstart', handleTouchStart);
+    element.removeEventListener('touchend', handleTouchEnd);
+    element.removeEventListener('touchcancel', handleTouchEnd);
+
+    if (visualFeedback) {
+      element.classList.remove('touch-feedback');
+      element.classList.remove(activeClass);
+
+      if (rippleColor) {
+        element.style.removeProperty('--ripple-color');
+      }
+    }
+  };
+}
+
+/**
+ * Enable haptic feedback system-wide
+ * @param enabled Whether haptic feedback should be enabled
+ */
+export function setHapticFeedbackEnabled(enabled: boolean): void {
+  localStorage.setItem('hapticFeedbackEnabled', enabled ? 'true' : 'false');
+}
+
+/**
+ * Check if haptic feedback is enabled
+ * @returns Boolean indicating if haptic feedback is enabled
+ */
+export function isHapticFeedbackEnabled(): boolean {
+  return localStorage.getItem('hapticFeedbackEnabled') !== 'false';
+}
+
+/**
+ * Apply touch feedback to all interactive elements in a container
+ * @param container The parent element to search within
+ */
+export function applyTouchFeedbackToInteractiveElements(
+  container: HTMLElement = document.body
+): () => void {
+  // Find all interactive elements
+  const elements = container.querySelectorAll<HTMLElement>(
+    'button, a, [role="button"], .btn, .interactive, .clickable, .card'
+  );
+
+  // Store cleanup functions
+  const cleanupFunctions: (() => void)[] = [];
+
+  // Add touch feedback to each element
+  elements.forEach(element => {
+    // Skip elements that already have touch feedback
+    if (element.classList.contains('touch-feedback')) {
+      return;
+    }
+
+    const cleanup = addTouchFeedback(element, {
+      haptic: isHapticFeedbackEnabled(),
+      visualFeedback: true
+    });
+
+    cleanupFunctions.push(cleanup);
+  });
+
+  // Return a function that cleans up all event listeners
+  return () => {
+    cleanupFunctions.forEach(cleanup => cleanup());
+  };
+}
+
+
+/**
  * Types of haptic feedback available
  */
 export type HapticFeedbackType = 'light' | 'medium' | 'heavy' | 'success' | 'warning' | 'error';
@@ -45,7 +219,7 @@ export function initTouchFeedback(enabled: boolean = true): void {
   if (isInitialized) {
     return;
   }
-  
+
   // Set initial state
   saveTouchFeedbackOptions({ enabled });
   isInitialized = true;
@@ -55,34 +229,32 @@ export function initTouchFeedback(enabled: boolean = true): void {
     const interactiveElements = document.querySelectorAll(
       'button, a, .interactive, [role="button"], input[type="submit"], input[type="button"], input[type="checkbox"], input[type="radio"]'
     );
-    
+
     interactiveElements.forEach(el => {
       const element = el as HTMLElement;
-      
+
       // Touch start handler
       const touchStartHandler = (e: TouchEvent) => {
         if (!loadTouchFeedbackOptions().enabled) return;
-        
+
         const touch = e.touches[0];
         const rect = element.getBoundingClientRect();
         const x = touch.clientX - rect.left;
         const y = touch.clientY - rect.top;
-        
-        triggerFeedback(touch.clientX, touch.clientY, 'light');
+
+        triggerVisualFeedback(touch.clientX, touch.clientY, HapticIntensity.LIGHT); //Use new trigger function
         element.classList.add('touch-active');
       };
-      
+
       // Touch end handler
       const touchEndHandler = () => {
         element.classList.remove('touch-active');
-        
-        // Success feedback removed as per user request to eliminate green dot feedback
       };
-      
+
       // Add event listeners
       element.addEventListener('touchstart', touchStartHandler, { passive: true });
       element.addEventListener('touchend', touchEndHandler, { passive: true });
-      
+
       // Track for cleanup
       touchEventListeners.push(
         { element, type: 'touchstart', listener: touchStartHandler as EventListener, options: { passive: true } },
@@ -90,14 +262,14 @@ export function initTouchFeedback(enabled: boolean = true): void {
       );
     });
   };
-  
+
   // Set up listeners initially
   setupTouchListeners();
-  
+
   // Set up mutation observer to handle dynamically added elements
   const observer = new MutationObserver((mutations) => {
     let shouldUpdateListeners = false;
-    
+
     mutations.forEach(mutation => {
       if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
         // Check if any of the added nodes are interactive elements
@@ -111,7 +283,7 @@ export function initTouchFeedback(enabled: boolean = true): void {
         });
       }
     });
-    
+
     if (shouldUpdateListeners) {
       // Clean up existing listeners
       cleanupTouchListeners();
@@ -119,24 +291,24 @@ export function initTouchFeedback(enabled: boolean = true): void {
       setupTouchListeners();
     }
   });
-  
+
   // Start observing
   observer.observe(document.body, { childList: true, subtree: true });
-  
+
   // Handle body touch events for general feedback
   const bodyTouchHandler = (e: TouchEvent) => {
     if (!loadTouchFeedbackOptions().enabled) return;
-    
+
     // Only trigger for direct body touches, not on interactive elements
-    if (!(e.target instanceof HTMLElement) || 
+    if (!(e.target instanceof HTMLElement) ||
         e.target.matches('button, a, .interactive, [role="button"], input')) {
       return;
     }
-    
+
     const touch = e.touches[0];
-    triggerFeedback(touch.clientX, touch.clientY, 'light');
+    triggerVisualFeedback(touch.clientX, touch.clientY, HapticIntensity.LIGHT); //Use new trigger function
   };
-  
+
   document.body.addEventListener('touchstart', bodyTouchHandler, { passive: true });
   touchEventListeners.push({ element: document.body, type: 'touchstart', listener: bodyTouchHandler as EventListener, options: { passive: true } });
 }
@@ -150,7 +322,7 @@ function cleanupTouchListeners(): void {
       element.removeEventListener(type, listener, options);
     }
   });
-  
+
   touchEventListeners = [];
 }
 
@@ -160,7 +332,7 @@ function cleanupTouchListeners(): void {
 export function cleanupTouchFeedback(): void {
   cleanupTouchListeners();
   isInitialized = false;
-  
+
   // Remove any remaining touch-related elements
   const touchElements = document.querySelectorAll('.haptic-feedback-ripple, .touch-trail');
   touchElements.forEach(el => {
@@ -175,7 +347,7 @@ export function cleanupTouchFeedback(): void {
  */
 export function setTactileFeedback(enabled: boolean): void {
   saveTouchFeedbackOptions({ enabled });
-  
+
   if (!isInitialized && enabled) {
     initTouchFeedback(enabled);
   }
@@ -193,7 +365,7 @@ export function loadTouchFeedbackOptions(): TouchFeedbackOptions {
   } catch (error) {
     console.warn('Failed to load touch feedback settings:', error);
   }
-  
+
   return defaultOptions;
 }
 
@@ -216,34 +388,34 @@ export function saveTouchFeedbackOptions(options: Partial<TouchFeedbackOptions>)
  * Trigger a visual feedback effect at the specified position
  */
 export function triggerVisualFeedback(
-  x: number, 
-  y: number, 
-  type: HapticFeedbackType = 'light',
+  x: number,
+  y: number,
+  type: HapticIntensity = HapticIntensity.LIGHT,
   options: TouchFeedbackOptions = loadTouchFeedbackOptions()
 ): void {
   if (!options.enabled || !options.visualFeedback) {
     return;
   }
-  
+
   try {
     // Create a ripple element
     const ripple = document.createElement('div');
     ripple.className = `haptic-feedback-ripple haptic-${type}`;
-    
+
     // Set the position
     ripple.style.left = `${x}px`;
     ripple.style.top = `${y}px`;
-    
+
     // Set size and opacity based on intensity
     const size = 40 + (options.intensity / 100) * 60; // 40px to 100px based on intensity
     ripple.style.width = `${size}px`;
     ripple.style.height = `${size}px`;
     ripple.style.marginLeft = `-${size / 2}px`;
     ripple.style.marginTop = `-${size / 2}px`;
-    
+
     // Add to the DOM
     document.body.appendChild(ripple);
-    
+
     // Clean up after animation completes
     setTimeout(() => {
       if (document.body.contains(ripple)) {
@@ -260,63 +432,6 @@ export function triggerVisualFeedback(
   }
 }
 
-/**
- * Trigger a haptic feedback if available on the device
- */
-export function triggerHapticFeedback(
-  type: HapticFeedbackType = 'light',
-  options: TouchFeedbackOptions = loadTouchFeedbackOptions()
-): void {
-  if (!options.enabled || !options.hapticFeedback) {
-    return;
-  }
-  
-  // Use navigator.vibrate if available (most modern browsers/devices)
-  if ('vibrate' in navigator) {
-    switch (type) {
-      case 'light':
-        navigator.vibrate(10);
-        break;
-      case 'medium':
-        navigator.vibrate(20);
-        break;
-      case 'heavy':
-        navigator.vibrate(35);
-        break;
-      case 'success':
-        navigator.vibrate([10, 30, 10]);
-        break;
-      case 'warning':
-        navigator.vibrate([20, 30, 20]);
-        break;
-      case 'error':
-        navigator.vibrate([30, 20, 30, 20, 30]);
-        break;
-    }
-  }
-}
-
-/**
- * Combined function to trigger both visual and haptic feedback
- */
-export function triggerFeedback(
-  x: number,
-  y: number,
-  type: HapticFeedbackType = 'light',
-  options: TouchFeedbackOptions = loadTouchFeedbackOptions()
-): void {
-  if (!options.enabled) {
-    return;
-  }
-  
-  if (options.visualFeedback) {
-    triggerVisualFeedback(x, y, type, options);
-  }
-  
-  if (options.hapticFeedback) {
-    triggerHapticFeedback(type, options);
-  }
-}
 
 /**
  * Hook to create a touch trail effect
@@ -324,22 +439,22 @@ export function triggerFeedback(
 export function useTouchTrail() {
   const { touchPosition, isActive } = useTouchPosition();
   const options = loadTouchFeedbackOptions();
-  
+
   const createTrailElement = (x: number, y: number) => {
     if (!options.enabled || !options.trailEffect || !isActive) {
       return;
     }
-    
+
     const trail = document.createElement('div');
     trail.className = 'touch-trail';
-    
+
     // Set position
     trail.style.left = `${x}px`;
     trail.style.top = `${y}px`;
-    
+
     // Add to DOM
     document.body.appendChild(trail);
-    
+
     // Fade out and remove
     setTimeout(() => {
       trail.style.opacity = '0';
@@ -350,11 +465,27 @@ export function useTouchTrail() {
       }, 300);
     }, 100);
   };
-  
+
   // Create trail elements at the current touch position
   if (isActive && options.enabled && options.trailEffect) {
     createTrailElement(touchPosition.x, touchPosition.y);
   }
-  
+
   return { touchPosition, isActive };
 }
+
+export default {
+  triggerHapticFeedback,
+  addTouchFeedback,
+  setHapticFeedbackEnabled,
+  isHapticFeedbackEnabled,
+  applyTouchFeedbackToInteractiveElements,
+  HapticIntensity,
+  initTouchFeedback,
+  cleanupTouchFeedback,
+  setTactileFeedback,
+  loadTouchFeedbackOptions,
+  saveTouchFeedbackOptions,
+  triggerVisualFeedback,
+  useTouchTrail
+};
