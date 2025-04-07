@@ -40,6 +40,7 @@ import { DashboardPage } from "./pages/DashboardPage";
 import { LandingPage } from "./pages/LandingPage";
 import PageTransition from "@/components/ui/page-transition";
 import { initTouchFeedback } from "@/lib/touchFeedback";
+import { DevModeToggle } from "./components/dev/DevModeToggle";
 import './styles/color-blindness.css'; // Added for color blindness styles
 import './styles/transitions.css'; // Added for page transitions
 import './styles/touchFeedback.css'; // Added for touch feedback effects
@@ -381,6 +382,7 @@ function App() {
                 </svg>
               </div>
               <Router />
+              <DevModeToggle />
             </TaskVerificationProvider>
           </AuthProvider>
         </ThemeProvider>
