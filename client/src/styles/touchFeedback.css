@@ -1,345 +1,35 @@
 /**
  * Touch Feedback CSS
- * Provides visual feedback effects for touch interactions
- * Designed to enhance mobile experience with micro-interactions
+ * Styles for touch interactions, ripple effects, and feedback 
  */
 
-/* Common styles for all touch feedback effects */
-.touch-feedback-light,
-.touch-feedback-medium,
-.touch-feedback-strong {
-  transition: transform 0.15s ease, opacity 0.15s ease;
+/* Touch feedback target */
+.touch-feedback-target {
+  position: relative;
+  overflow: hidden;
+  transform: translate3d(0, 0, 0); /* Hardware acceleration */
+  backface-visibility: hidden;
+  -webkit-tap-highlight-color: transparent;
 }
 
-/* Light touch feedback - subtle scale effect */
-.touch-feedback-light {
-  transform: scale(0.98);
-  opacity: 0.9;
-}
-
-/* Medium touch feedback - noticeable scale and opacity change */
-.touch-feedback-medium {
-  transform: scale(0.95);
-  opacity: 0.8;
-}
-
-/* Strong touch feedback - significant scale and opacity change */
-.touch-feedback-strong {
-  transform: scale(0.9);
-  opacity: 0.7;
-}
-
-/* Base ripple effect for touch feedback */
-.haptic-feedback-ripple {
-  position: absolute;
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 9999;
-  transform: scale(0);
-  will-change: transform, opacity;
-}
-
-/* Standard light touch ripple */
-.haptic-light {
-  background: radial-gradient(circle, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0) 70%);
-  animation: haptic-ripple-light 0.5s var(--transition-easing);
-}
-
-/* Medium intensity touch ripple */
-.haptic-medium {
-  background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%);
-  animation: haptic-ripple-medium 0.6s var(--transition-easing);
-}
-
-/* Heavy intense touch ripple */
-.haptic-heavy {
-  background: radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0) 70%);
-  animation: haptic-ripple-heavy 0.7s var(--transition-easing);
-}
-
-/* Success feedback ripple - removed green dot as per user request */
-.haptic-success {
-  display: none; /* Hide the green dot completely */
-}
-
-/* Warning feedback ripple (with amber tint) */
-.haptic-warning {
-  background: radial-gradient(circle, rgba(237,137,54,0.7) 0%, rgba(237,137,54,0) 70%);
-  animation: haptic-ripple-warning 0.6s var(--transition-easing);
-}
-
-/* Error feedback ripple (with red tint) */
-.haptic-error {
-  background: radial-gradient(circle, rgba(229,62,62,0.7) 0%, rgba(229,62,62,0) 70%);
-  animation: haptic-ripple-error 0.6s var(--transition-easing);
-}
-
-/* Animations for different ripple types */
-@keyframes haptic-ripple-light {
-  0% {
-    transform: scale(0);
-    opacity: 0.6;
-  }
-  70% {
-    transform: scale(1.4);
-    opacity: 0.3;
-  }
-  100% {
-    transform: scale(1.8);
-    opacity: 0;
-  }
-}
-
-@keyframes haptic-ripple-medium {
-  0% {
-    transform: scale(0);
-    opacity: 0.7;
-  }
-  70% {
-    transform: scale(1.5);
-    opacity: 0.4;
-  }
-  100% {
-    transform: scale(2);
-    opacity: 0;
-  }
-}
-
-@keyframes haptic-ripple-heavy {
-  0% {
-    transform: scale(0);
-    opacity: 0.8;
-  }
-  70% {
-    transform: scale(1.6);
-    opacity: 0.5;
-  }
-  100% {
-    transform: scale(2.2);
-    opacity: 0;
-  }
-}
-
-@keyframes haptic-ripple-success {
-  0% {
-    transform: scale(0);
-    opacity: 0.7;
-  }
-  10% {
-    transform: scale(0.4);
-    opacity: 0.8;
-  }
-  70% {
-    transform: scale(1.6);
-    opacity: 0.4;
-  }
-  100% {
-    transform: scale(2);
-    opacity: 0;
-  }
-}
-
-@keyframes haptic-ripple-warning {
-  0% {
-    transform: scale(0);
-    opacity: 0.7;
-  }
-  10% {
-    transform: scale(0.4);
-    opacity: 0.8;
-  }
-  40% {
-    transform: scale(1.2);
-    opacity: 0.6;
-  }
-  100% {
-    transform: scale(2);
-    opacity: 0;
-  }
-}
-
-@keyframes haptic-ripple-error {
-  0% {
-    transform: scale(0);
-    opacity: 0.7;
-  }
-  10% {
-    transform: scale(0.3);
-    opacity: 0.9;
-  }
-  30% {
-    transform: scale(0.8);
-    opacity: 0.8;
-  }
-  70% {
-    transform: scale(1.4);
-    opacity: 0.5;
-  }
-  100% {
-    transform: scale(2);
-    opacity: 0;
-  }
-}
-
-/* Touch trail effect */
-.touch-trail {
-  position: absolute;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background-color: var(--primary-color, rgba(124, 58, 237, 0.3));
-  pointer-events: none;
-  transition: opacity 0.3s;
-  z-index: 9999;
-  mix-blend-mode: screen;
-  filter: blur(1px);
-  opacity: 0.7;
-}
-
-/* Interactive elements touch state */
+/* Touch active state */
 .touch-active {
-  transform: scale(0.98);
-  transition: transform 0.15s var(--transition-easing);
-}
-
-/* Button-specific touch feedback */
-button.touch-active,
-[role="button"].touch-active,
-.interactive.touch-active {
+  transition: transform 0.15s cubic-bezier(0.2, 0, 0.1, 1);
+  transform: scale(0.97);
   opacity: 0.9;
-  transform: scale(0.97);
-  transition: transform 0.15s var(--transition-easing), opacity 0.15s var(--transition-easing);
 }
 
-/* Slider touch feedback */
-input[type="range"].touch-active {
-  --thumb-shadow: 0 0 10px var(--primary-color, rgba(124, 58, 237, 0.5));
-}
-
-/* Input touch feedback */
-input[type="text"].touch-active,
-input[type="email"].touch-active,
-input[type="password"].touch-active,
-textarea.touch-active {
-  box-shadow: 0 0 0 2px var(--primary-color, rgba(124, 58, 237, 0.3));
-  transition: box-shadow 0.2s var(--transition-easing);
-}
-
-/* Checkbox and radio touch feedback */
-input[type="checkbox"].touch-active,
-input[type="radio"].touch-active {
-  transform: scale(1.2);
-  transition: transform 0.15s var(--transition-easing);
-}
-
-/* Micro-interaction for swiping gestures */
-.swipe-action-feedback {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 60px;
-  opacity: 0;
-  pointer-events: none;
-  background: linear-gradient(90deg,
-    rgba(255,255,255,0) 0%,
-    rgba(255,255,255,0.1) 50%,
-    rgba(255,255,255,0) 100%);
-  animation: swipe-highlight 0.5s var(--transition-easing);
-}
-
-.swipe-left .swipe-action-feedback {
-  left: 0;
-  right: auto;
-  transform-origin: left;
-}
-
-.swipe-right .swipe-action-feedback {
-  right: 0;
-  left: auto;
-  transform-origin: right;
-}
-
-@keyframes swipe-highlight {
-  0% {
-    opacity: 0;
-    transform: scaleX(0);
-  }
-  50% {
-    opacity: 0.5;
-    transform: scaleX(1);
-  }
-  100% {
-    opacity: 0;
-    transform: scaleX(1.5);
-  }
-}
-
-/* Micro-interaction ripple effect */
-.micro-interaction-ripple {
+/* Touch ripple effect */
+.touch-ripple-effect {
   position: absolute;
   border-radius: 50%;
-  transform: scale(0);
-  background: rgba(255, 255, 255, 0.4);
-  pointer-events: none;
-  z-index: 10;
-  animation: micro-interaction-ripple 0.6s var(--transition-easing);
-}
-
-@keyframes micro-interaction-ripple {
-  to {
-    transform: scale(2);
-    opacity: 0;
-  }
-}
-
-/* Touch feedback classes for different intensities */
-.touch-feedback-light:active {
-  transform: scale(0.98);
-  transition: transform 0.2s var(--transition-easing);
-}
-
-.touch-feedback-medium:active {
-  transform: scale(0.97);
-  transition: transform 0.2s var(--transition-easing);
-}
-
-.touch-feedback-heavy:active {
-  transform: scale(0.95);
-  transition: transform 0.2s var(--transition-easing);
-}
-
-/* Reduce motion for users with preference set */
-@media (prefers-reduced-motion) {
-  .haptic-feedback-ripple,
-  .touch-trail,
-  .swipe-action-feedback,
-  .micro-interaction-ripple {
-    display: none;
-  }
-
-  .touch-active,
-  .touch-feedback-light:active,
-  .touch-feedback-medium:active,
-  .touch-feedback-heavy:active {
-    transform: none !important;
-    opacity: 0.8 !important;
-    transition: opacity 0.1s linear !important;
-  }
-}
-/* Touch Feedback Styles - Optimized for performance */
-.haptic-feedback-ripple {
-  position: absolute;
-  background: rgba(255, 255, 255, 0.5);
-  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.3);
   transform: scale(0);
   pointer-events: none;
-  z-index: 9999;
-  will-change: transform, opacity;
-  animation: haptic-ripple-out 400ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
-  contain: layout style paint;
+  animation: ripple-animation 0.6s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
 }
 
-@keyframes haptic-ripple-out {
+@keyframes ripple-animation {
   0% {
     transform: scale(0);
     opacity: 0.5;
@@ -350,375 +40,77 @@ input[type="radio"].touch-active {
   }
 }
 
-.haptic-light {
-  background: rgba(255, 255, 255, 0.4);
-}
-
-.haptic-medium {
-  background: rgba(255, 255, 255, 0.5);
-}
-
-.haptic-heavy {
-  background: rgba(255, 255, 255, 0.6);
-}
-
-.haptic-success {
-  background: rgba(72, 187, 120, 0.5);
-}
-
-.haptic-warning {
-  background: rgba(237, 137, 54, 0.5);
-}
-
-.haptic-error {
-  background: rgba(229, 62, 62, 0.5);
-}
-
-.touch-trail {
-  position: absolute;
-  background: rgba(255, 255, 255, 0.3);
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
+/* Finger trail canvas */
+.finger-trail-canvas {
   pointer-events: none;
-  z-index: 9998;
-  opacity: 0.5;
-  transition: opacity 300ms ease-out;
-  will-change: opacity;
-  margin-left: -10px;
-  margin-top: -10px;
+  touch-action: none;
+  will-change: transform;
 }
 
-/* Add touch-active class for interactive elements */
-.touch-active {
-  transform: scale(0.97) !important;
-  transition: transform 100ms ease-out !important;
+/* Extra touch feedback for different components */
+
+/* Buttons */
+button.touch-active, 
+.btn.touch-active, 
+[role="button"].touch-active {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  transform: translateY(1px) scale(0.98);
 }
 
-/* Dark mode adjustments */
-.dark .haptic-feedback-ripple {
-  background: rgba(0, 0, 0, 0.2);
-}
-
-.dark .haptic-light {
-  background: rgba(0, 0, 0, 0.15);
-}
-
-.dark .haptic-medium {
-  background: rgba(0, 0, 0, 0.2);
-}
-
-.dark .haptic-heavy {
-  background: rgba(0, 0, 0, 0.25);
-}
-
-.dark .touch-trail {
-  background: rgba(0, 0, 0, 0.2);
-}
-
-/* Reduced motion settings */
-@media (prefers-reduced-motion) {
-  .haptic-feedback-ripple, .touch-trail {
-    animation: none;
-    opacity: 0.3;
-    transition: none;
-  }
-
-  .touch-active {
-    transform: none !important;
-    transition: none !important;
-  }
-}
-
-/* Touch feedback animations and styles for mobile devices */
-
-/* Base class for elements that should have touch feedback */
-.touch-feedback {
-  position: relative;
-  overflow: hidden;
-  -webkit-tap-highlight-color: transparent; /* Remove default highlight on iOS */
-  user-select: none; /* Prevent text selection during touch */
-}
-
-/* Ripple animation container */
-.touch-feedback::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 5px;
-  height: 5px;
-  background: rgba(255, 255, 255, 0.5);
-  opacity: 0;
-  border-radius: 100%;
-  transform: scale(1, 1) translate(-50%, -50%);
-  transform-origin: 50% 50%;
-  pointer-events: none;
-}
-
-/* Active state animation for the ripple effect */
-.touch-feedback:active::after {
-  animation: ripple 0.5s ease-out;
-}
-
-/* Ripple animation */
-@keyframes ripple {
-  0% {
-    transform: scale(0, 0);
-    opacity: 0.5;
-  }
-  20% {
-    transform: scale(25, 25);
-    opacity: 0.3;
-  }
-  100% {
-    opacity: 0;
-    transform: scale(40, 40);
-  }
-}
-
-/* Dark mode version */
-.dark .touch-feedback::after {
-  background: rgba(255, 255, 255, 0.3);
-}
-
-/* Active state for buttons and clickable items */
-.touch-active {
-  transform: scale(0.97);
-  transition: transform 0.1s ease-in-out;
-}
-
-/* Color variants for feedback */
-.touch-feedback-primary:active::after {
-  background: rgba(var(--primary-rgb), 0.3);
-}
-
-.touch-feedback-secondary:active::after {
-  background: rgba(var(--secondary-rgb), 0.3);
-}
-
-.touch-feedback-danger:active::after {
-  background: rgba(255, 59, 48, 0.3);
-}
-
-/* Feedback for different UI elements */
-button.touch-feedback:active,
-.btn.touch-feedback:active,
-a.touch-feedback:active {
+/* Links */
+a.touch-active:not(.btn) {
   opacity: 0.8;
+  transform: scale(0.99);
 }
 
-/* Pressure sensitivity animation */
-@supports (background: (light-level: normal)) {
-  .pressure-sensitive {
-    transition: transform 0.1s ease-out;
-  }
-
-  .pressure-sensitive:active {
-    transform: scale(0.96);
-  }
+/* Cards */
+.card.touch-active {
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+  transform: translateY(2px) scale(0.99);
 }
 
-/* Haptic feedback class - this requires JavaScript to trigger phone vibration */
-.haptic-feedback {
-  position: relative;
+/* Sliders */
+input[type="range"].touch-active {
+  opacity: 0.95;
 }
 
-/* Apply to all interactive elements on mobile */
-@media (max-width: 768px) {
-  button,
-  .btn,
-  a[role="button"],
-  .interactive,
-  .clickable,
-  input[type="button"],
-  input[type="submit"],
-  input[type="reset"] {
-    -webkit-tap-highlight-color: transparent;
-  }
+/* Input fields */
+input[type="text"].touch-active,
+input[type="email"].touch-active,
+input[type="password"].touch-active,
+textarea.touch-active {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary-lighter);
 }
 
-/* iOS-style button press effect */
-.ios-press {
-  transition: all 0.1s ease-out;
+/* Checkboxes and radio buttons */
+input[type="checkbox"].touch-active,
+input[type="radio"].touch-active {
+  transform: scale(1.1);
 }
 
-.ios-press:active {
-  filter: brightness(0.9);
-  transform: scale(0.97);
-}
-
-/* Android-style ripple container for Material Design style feedback */
-.android-ripple {
-  position: relative;
-  overflow: hidden;
-  transform: translate3d(0, 0, 0);
-}
-
-.android-ripple::after {
-  content: "";
-  display: block;
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  top: 0;
-  left: 0;
-  pointer-events: none;
-  background-image: radial-gradient(circle, #000 10%, transparent 10.01%);
-  background-repeat: no-repeat;
-  background-position: 50%;
-  transform: scale(10, 10);
-  opacity: 0;
-  transition: transform 0.4s, opacity 0.8s;
-}
-
-.android-ripple:active::after {
-  transform: scale(0, 0);
-  opacity: 0.2;
-  transition: 0s;
-}
-
-/* Dark mode version */
-.dark .android-ripple::after {
-  background-image: radial-gradient(circle, #fff 10%, transparent 10.01%);
-}
-
-/* Prevent text selection when double-tapping on mobile */
-.no-select {
-  -webkit-user-select: none;
-  user-select: none;
-}
-
-/* Make sure touch targets are large enough for mobile */
-@media (max-width: 768px) {
-  .touch-target {
-    min-height: 44px;
-    min-width: 44px;
-    padding: 10px;
-  }
-
-  .touch-target-inline {
-    padding: 10px;
-  }
-}
-
-/* Active state for buttons with touch feedback */
-.touch-active {
-  transition: all 0.15s ease;
+/* Menu items */
+.menu-item.touch-active {
   background-color: rgba(0, 0, 0, 0.05);
 }
 
-/* Dark mode version */
-@media (prefers-color-scheme: dark) {
-  .touch-active {
-    background-color: rgba(255, 255, 255, 0.1);
-  }
+/* Dark mode adjustments */
+.dark .touch-ripple-effect {
+  background-color: rgba(255, 255, 255, 0.15);
 }
 
-/* Prevent default touch actions for custom touch elements */
-.custom-touch-element {
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
+.dark .menu-item.touch-active {
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
-/* Prevent gray highlight on tap for iOS */
-* {
-  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
-}
-
-/* Target iOS devices specifically */
+/* Fix for iOS Safari */
 @supports (-webkit-touch-callout: none) {
-  .ios-touch-fix {
-    cursor: pointer;
+  .touch-feedback-target, .touch-active {
+    -webkit-transform: translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0);
   }
-}
-
-/* Touch feedback styles for mobile devices */
-
-/* Base touch feedback class */
-.touch-feedback {
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
-  position: relative;
-  overflow: hidden;
-}
-
-/* Ripple effect */
-.touch-feedback::after {
-  content: '';
-  display: block;
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  top: 0;
-  left: 0;
-  pointer-events: none;
-  background-image: radial-gradient(circle, #fff 10%, transparent 10.01%);
-  background-repeat: no-repeat;
-  background-position: 50%;
-  transform: scale(10, 10);
-  opacity: 0;
-  transition: transform 0.5s, opacity 1s;
-}
-
-.touch-feedback:active::after {
-  transform: scale(0, 0);
-  opacity: 0.3;
-  transition: 0s;
-}
-
-/* Active state feedback for buttons */
-button.touch-feedback:active,
-.button.touch-feedback:active,
-[role="button"].touch-feedback:active {
-  transform: scale(0.98);
-}
-
-/* Disable selection on interactive elements */
-.touch-feedback {
-  user-select: none;
-  -webkit-user-select: none;
-}
-
-/* Touch target size standards */
-.touch-target {
-  min-height: 44px;
-  min-width: 44px;
-}
-
-/* Apply touch target size to common interactive elements */
-@media (max-width: 768px) {
-  button,
-  .btn,
-  [role="button"],
-  a.link,
-  input[type="button"],
-  input[type="submit"],
-  input[type="reset"] {
-    min-height: 44px;
-    min-width: 44px;
+  
+  .touch-ripple-effect {
+    -webkit-animation: ripple-animation 0.6s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
   }
-
-  /* Ensure proper spacing between touch targets */
-  button + button,
-  .btn + .btn,
-  [role="button"] + [role="button"] {
-    margin-left: 8px;
-  }
-}
-
-/* Haptic feedback animations */
-@keyframes haptic-pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(0.98); }
-  100% { transform: scale(1); }
-}
-
-.haptic-feedback {
-  animation: haptic-pulse 0.2s ease-in-out;
-}
-
-/* Prevent native scrolling behavior when custom scroll handlers are used */
-.disable-overscroll {
-  overscroll-behavior: none;
 }

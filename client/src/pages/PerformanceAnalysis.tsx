@@ -1,6 +1,6 @@
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
-import { PageSpeedIntegration } from '@/components/utils/PageSpeedIntegration';
+import PageSpeedIntegration from '@/components/utils/PageSpeedIntegration';
 
 /**
  * Performance Analysis Page

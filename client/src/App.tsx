@@ -31,7 +31,7 @@ import SettingsPage from "./pages/settings";
 import CookieConsent from "./components/common/CookieConsent";
 import { ThemeProvider } from "./lib/ThemeContext";
 import { TaskVerificationProvider } from "./context/task-verification-context";
-import { PageTransitionWrapper } from "@/components/ui/page-transition";
+import PageTransition from "@/components/ui/page-transition";
 import { initTouchFeedback } from "@/lib/touchFeedback";
 import './styles/color-blindness.css'; // Added for color blindness styles
 import './styles/transitions.css'; // Added for page transitions
@@ -83,11 +83,10 @@ function Router() {
   return (
     <AppShell>
       <AutoDismissToaster defaultDuration={5000} />
-      <PageTransitionWrapper options={{ 
-        type: 'layered', 
-        duration: 400,
-        easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)' // More spring-like feel
-      }}>
+      <PageTransition 
+        duration={0.4}
+        className="layered-transition"
+      >
         <Switch>
           <Route path="/" component={Dashboard} />
           <Route path="/content-library" component={ContentLibrary} />
@@ -124,7 +123,7 @@ function Router() {
           <Route path="/nav-test" component={NavigationTest} />
           <Route component={NotFound} />
         </Switch>
-      </PageTransitionWrapper>
+      </PageTransition>
       <CookieConsent 
         privacyPolicyUrl="/privacy"
         termsOfServiceUrl="/terms-of-service"

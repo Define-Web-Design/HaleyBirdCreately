@@ -16,7 +16,7 @@ export interface HapticFeedbackOptions {
  * Check if the device supports vibration API
  */
 export function hasVibrationSupport(): boolean {
-  return typeof window !== 'undefined' && 'navigator' in window && 'vibrate' in window.navigator;
+  return 'navigator' in window && 'vibrate' in navigator;
 }
 
 /**
@@ -28,22 +28,12 @@ export function triggerHapticFeedback(pattern: number | number[]): Promise<void>
   }
 
   return new Promise((resolve) => {
-    try {
-      window.navigator.vibrate(pattern);
-      
-      // For a single duration
-      if (typeof pattern === 'number') {
-        setTimeout(resolve, pattern);
-      } 
-      // For a pattern array
-      else {
-        const totalDuration = pattern.reduce((total, duration) => total + duration, 0);
-        setTimeout(resolve, totalDuration);
-      }
-    } catch (error) {
-      console.error('Error triggering haptic feedback:', error);
-      resolve();
-    }
+    navigator.vibrate(pattern);
+    // Resolve after the vibration is complete
+    const totalDuration = Array.isArray(pattern)
+      ? pattern.reduce((sum, val) => sum + val, 0)
+      : pattern;
+    setTimeout(resolve, totalDuration);
   });
 }
 
@@ -51,26 +41,22 @@ export function triggerHapticFeedback(pattern: number | number[]): Promise<void>
  * Haptic feedback patterns for different intensities
  */
 export const hapticFeedback = {
-  // Light feedback (subtle)
-  light: () => triggerHapticFeedback(10),
-  
-  // Medium feedback (standard)
-  medium: () => triggerHapticFeedback(25),
-  
-  // Heavy feedback (stronger)
-  heavy: () => triggerHapticFeedback(50),
-  
-  // Success feedback (double pulse)
-  success: () => triggerHapticFeedback([10, 30, 20]),
-  
-  // Warning feedback (triple pulse)
-  warning: () => triggerHapticFeedback([20, 40, 20, 40, 20]),
-  
-  // Error feedback (longer vibration)
-  error: () => triggerHapticFeedback([30, 50, 30, 50, 30]),
-
-  // Custom pattern
-  custom: (pattern: number | number[]) => triggerHapticFeedback(pattern)
+  light: async (): Promise<void> => triggerHapticFeedback(15),
+  medium: async (): Promise<void> => triggerHapticFeedback([20, 15, 20]),
+  heavy: async (): Promise<void> => triggerHapticFeedback([30, 20, 40, 20, 30]),
+  success: async (): Promise<void> => triggerHapticFeedback([10, 15, 30]),
+  warning: async (): Promise<void> => triggerHapticFeedback([20, 30, 40, 30, 20]),
+  error: async (): Promise<void> => triggerHapticFeedback([30, 20, 50, 20, 60, 20, 30]),
+  // Pattern for user interactions
+  buttonPress: async (): Promise<void> => triggerHapticFeedback(15),
+  toggle: async (): Promise<void> => triggerHapticFeedback(20),
+  sliderMove: async (): Promise<void> => triggerHapticFeedback(10),
+  sliderRelease: async (): Promise<void> => triggerHapticFeedback(25),
+  // Pattern for system events
+  notification: async (): Promise<void> => triggerHapticFeedback([20, 30, 40]),
+  alert: async (): Promise<void> => triggerHapticFeedback([30, 20, 50, 20, 30]),
+  selectItem: async (): Promise<void> => triggerHapticFeedback([10, 10]),
+  refresh: async (): Promise<void> => triggerHapticFeedback([15, 10, 15]),
 };
 
 /**
@@ -80,56 +66,46 @@ export function addTouchFeedback(
   element: HTMLElement,
   options: HapticFeedbackOptions = {}
 ): () => void {
-  if (!element) return () => {};
-
-  const {
-    haptic = true,
-    visualFeedback = true,
-    intensity = 'medium'
+  const { 
+    haptic = true, 
+    visualFeedback = true, 
+    intensity = 'light' 
   } = options;
 
-  // Handle touch start
-  const handleTouchStart = () => {
-    try {
-      // Trigger haptic feedback if enabled
-      if (haptic && hasVibrationSupport()) {
-        switch (intensity) {
-          case 'light':
-            hapticFeedback.light();
-            break;
-          case 'medium':
-            hapticFeedback.medium();
-            break;
-          case 'heavy':
-            hapticFeedback.heavy();
-            break;
-          case 'success':
-            hapticFeedback.success();
-            break;
-          case 'warning':
-            hapticFeedback.warning();
-            break;
-          case 'error':
-            hapticFeedback.error();
-            break;
-        }
-      }
+  // Add touch ripple effect class to element for styling
+  element.classList.add('touch-feedback-target');
 
-      // Add visual feedback if enabled
-      if (visualFeedback) {
-        applyVisualFeedback(element, intensity);
-      }
-    } catch (error) {
-      console.error('Error in haptic feedback:', error);
+  // Configure element for feedback behavior
+  if (visualFeedback) {
+    element.dataset.feedbackVisual = 'true';
+  }
+
+  if (haptic) {
+    element.dataset.feedbackHaptic = intensity;
+  }
+
+  // Event handler to trigger feedback
+  const touchHandler = (e: TouchEvent) => {
+    // Apply visual feedback if enabled
+    if (visualFeedback) {
+      applyVisualFeedback(element, e);
+    }
+
+    // Apply haptic feedback if enabled and supported
+    if (haptic && hasVibrationSupport()) {
+      hapticFeedback[intensity as keyof typeof hapticFeedback]();
     }
   };
 
   // Add event listener
-  element.addEventListener('touchstart', handleTouchStart, { passive: true });
+  element.addEventListener('touchstart', touchHandler, { passive: true });
 
   // Return cleanup function
   return () => {
-    element.removeEventListener('touchstart', handleTouchStart);
+    element.removeEventListener('touchstart', touchHandler);
+    element.classList.remove('touch-feedback-target');
+    delete element.dataset.feedbackVisual;
+    delete element.dataset.feedbackHaptic;
   };
 }
 
@@ -138,51 +114,32 @@ export function addTouchFeedback(
  */
 function applyVisualFeedback(
   element: HTMLElement,
-  intensity: 'light' | 'medium' | 'heavy' | 'success' | 'warning' | 'error'
+  event: TouchEvent
 ): void {
-  // Save original styles
-  const originalTransform = element.style.transform;
-  const originalTransition = element.style.transition;
+  // Create a ripple element
+  const ripple = document.createElement('span');
+  ripple.classList.add('touch-ripple-effect');
 
-  // Map intensity to visual effect strength
-  const scaleMap = {
-    light: 0.98,
-    medium: 0.95,
-    heavy: 0.92,
-    success: 0.95,
-    warning: 0.94,
-    error: 0.93
-  };
+  // Position the ripple where the user touched
+  const rect = element.getBoundingClientRect();
+  const touchX = event.touches[0].clientX - rect.left;
+  const touchY = event.touches[0].clientY - rect.top;
 
-  const scale = scaleMap[intensity];
-  
-  // Apply scale effect
-  element.style.transition = 'transform 100ms ease-in-out';
-  element.style.transform = `scale(${scale})`;
+  // Calculate ripple size (should be larger of width/height to cover element)
+  const size = Math.max(rect.width, rect.height) * 1.5;
 
-  // Add appropriate class based on type
-  if (['success', 'warning', 'error'].includes(intensity)) {
-    element.classList.add(`haptic-${intensity}`);
-  }
+  // Apply size and position
+  ripple.style.width = ripple.style.height = `${size}px`;
+  ripple.style.left = `${touchX - (size / 2)}px`;
+  ripple.style.top = `${touchY - (size / 2)}px`;
 
-  // Reset after animation
-  setTimeout(() => {
-    element.style.transform = originalTransform;
-    
-    setTimeout(() => {
-      element.style.transition = originalTransition;
-      
-      // Remove any added classes
-      if (['success', 'warning', 'error'].includes(intensity)) {
-        element.classList.remove(`haptic-${intensity}`);
-      }
-    }, 100);
-  }, 100);
+  // Add ripple to element
+  element.appendChild(ripple);
+
+  // Remove ripple after animation completes
+  ripple.addEventListener('animationend', () => {
+    ripple.remove();
+  });
 }
 
-export default {
-  hasVibrationSupport,
-  triggerHapticFeedback,
-  hapticFeedback,
-  addTouchFeedback
-};
+export default hapticFeedback;
