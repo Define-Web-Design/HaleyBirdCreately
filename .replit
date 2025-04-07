@@ -63,7 +63,7 @@ localPort = 8425
 externalPort = 3002
 
 [workflows]
-runButton = "Unified Development Server"
+runButton = "Main Development Server"
 
 [[workflows.workflow]]
 name = "Project"
@@ -3709,7 +3709,7 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "# Run linting and type checking"
+args = "# Run linting and type checking in parallel"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
@@ -3718,6 +3718,10 @@ args = "npm run lint"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npx tsc --noEmit"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node -e \"const { securityMonitor } = require('./server/services/securityMonitor.js'); securityMonitor.validateAssetIntegrity().then(results => console.log('Security Validation:', results.valid ? 'PASSED' : 'FAILED'))\""
 
 [[workflows.workflow]]
 name = "Mobile Testing"
@@ -3928,6 +3932,35 @@ args = ""
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "# Run accessibility checks"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node -e \"const { runAccessibilityAudit } = require('./client/src/utils/navigation-tester.js'); runAccessibilityAudit().then(results => console.log('Accessibility Score:', results.score, '/ 100'))\""
+
+[[workflows.workflow]]
+name = "Parallel Task Validation"
+author = 40896524
+mode = "parallel"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run various validation tasks in parallel for maximum efficiency"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run lint"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npx tsc --noEmit"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node -e \"const { securityMonitor } = require('./server/services/securityMonitor.js'); securityMonitor.validateAssetIntegrity().then(results => console.log('Security Validation:', results.valid ? 'PASSED' : 'FAILED'))\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node -e \"const { testAppResponsiveness } = require('./client/src/utils/responsive-tester.js'); testAppResponsiveness().then(result => console.log('Mobile Optimization:', result.success ? 'PASSED' : 'FAILED'))\""
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
