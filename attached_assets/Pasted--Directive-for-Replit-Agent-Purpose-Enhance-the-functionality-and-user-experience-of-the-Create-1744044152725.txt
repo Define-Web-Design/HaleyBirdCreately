@@ -1,0 +1,73 @@
+# Directive for Replit Agent
+
+## Purpose
+Enhance the functionality and user experience of the Creately login interface by addressing the following components.
+
+---
+
+## Components to Address
+
+### 1. **Header**
+- **Branding**: Ensure the "Creately" logo is prominently displayed for visual anchoring.
+- **Navigation Links**: Verify that all sidebar links (Dashboard, Content Library, Content Calendar, etc.) lead to their respective modules.
+- **Accessibility**: Add ARIA labels for improved screen reader support.
+
+### 2. **Login Section**
+- **Username & Password Fields**: Confirm proper input validation and error handling.
+  - Example: Display clear error messages for empty fields or invalid credentials.
+- **Sign-In Button**: Ensure it is functional and provides feedback (e.g., loading spinner) upon action.
+- **Registration Link**: Test that the "Register" link redirects to the account creation page seamlessly.
+
+### 3. **Sidebar**
+- **Toggle Sidebar**: Verify accessibility and ensure smooth collapsing/expanding animations.
+- **Navigation to Tools**:
+  - Dashboard
+  - Content Library
+  - Content Calendar
+  - Analytics
+  - Mood Boards
+  - Content Vault
+  - Apple Photos
+  - Creative Symbiosis
+  - Color Palettes
+  - Mood Capsules
+- Ensure AI-enhanced features like prompts and cross-platform tools are functional.
+
+### 4. **Footer**
+- **Legal Links**: Test "Terms," "Privacy," and "Support" links for accuracy and usability.
+- **Copyright Notice**: Ensure accurate and responsive display.
+
+---
+
+## Visual Enhancements
+- Standardize font styles and sizes across components for consistency.
+- Implement responsive design to ensure optimal viewing on various devices.
+- Add hover and focus states to all interactive elements for improved user feedback.
+
+---
+
+## AI Integration
+- Test and optimize AI-enhanced features such as creative prompts and performance analysis.
+- Validate AI-generated suggestions for usability and appropriateness.
+
+---
+
+## Debugging Notes
+- Analyze any console errors or warnings.
+- Verify seamless functionality without requiring a master admin login for components accessible to general users.
+
+---
+
+## Accessibility and Compliance
+- Conduct WCAG (Web Content Accessibility Guidelines) validation.
+- Confirm compliance with data privacy regulations (GDPR, CCPA, etc.).
+
+---
+
+## Testing Recommendations
+- Perform end-to-end testing for all workflows.
+- Include both general users and admin accounts in the test scenarios.
+
+---
+
+Let me know if additional details or modifications are needed!

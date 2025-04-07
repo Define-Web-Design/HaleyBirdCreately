@@ -71,11 +71,31 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
       } else {
         // Otherwise, try to get default theme from the API
         try {
-          const response = await fetch('/api/public/theme');
-          if (response.ok) {
-            const themeData = await response.json();
+          // Try authenticated endpoint first
+          let themeResponse = await fetch('/api/theme', {
+            credentials: 'include', // Include cookies for authentication
+          }).catch(() => null); // Catch and return null if it fails
+          
+          // If authenticated endpoint fails, fallback to public theme
+          if (!themeResponse || !themeResponse.ok) {
+            themeResponse = await fetch('/api/public/theme').catch(() => null);
+          }
+          
+          // If we got a successful response from either endpoint
+          if (themeResponse && themeResponse.ok) {
+            const themeData = await themeResponse.json();
             console.log('Fetched initial theme from API:', themeData);
-            setTheme(themeData.primary);
+            
+            // Check if the theme data has the expected properties
+            if (themeData && themeData.primary) {
+              setTheme(themeData.primary);
+              localStorage.setItem('themeColor', themeData.primary);
+            } else {
+              console.error('Theme data missing primary color');
+            }
+          } else {
+            // If both API calls fail, use default theme from context
+            console.log('Using fallback theme from default context');
           }
         } catch (error) {
           console.error('Failed to fetch initial theme from API:', error);

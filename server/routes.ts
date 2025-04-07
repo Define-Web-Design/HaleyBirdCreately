@@ -1,6 +1,8 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import storage from "./storage";
+import path from "path";
+import fs from "fs";
 
 // Helper function to get active integrations
 async function getActiveIntegrations(userId: number) {
@@ -244,18 +246,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Theme route to get the current theme - publicly accessible
+  // Theme routes - both public and authenticated
   app.get('/api/public/theme', (req, res) => {
     // Improved default theme configuration that matches our UI design
     const defaultTheme = {
       primary: '#F2994A', // Matches our app's gradient starting color
       appearance: 'system', // Use system preference by default
       variant: 'vibrant', // Use vibrant variant for more appealing UI
-      radius: 0.5 // Moderate border radius
+      radius: 0.5, // Moderate border radius
+      design: {
+        background: 'hsl(0, 0%, 100%)',
+        surface: 'hsl(0, 0%, 98%)',
+        text: 'hsl(0, 0%, 10%)',
+        accent: 'hsl(211, 100%, 50%)',
+        muted: 'hsl(0, 0%, 96%)'
+      }
     };
 
     console.log('Serving default theme:', defaultTheme);
     res.json(defaultTheme);
+  });
+
+  // Get theme endpoint (authenticated)
+  app.get('/api/theme', authenticate(), (req, res) => {
+    // Read from the theme.json file and serve it
+    try {
+      const themePath = path.join(__dirname, '..', 'theme.json');
+      const themeData = fs.readFileSync(themePath, 'utf8');
+      const theme = JSON.parse(themeData);
+      res.json(theme);
+    } catch (error) {
+      console.error('Error reading theme file:', error);
+      
+      // Fallback to default theme
+      const defaultTheme = {
+        primary: '#F2994A',
+        appearance: 'system',
+        variant: 'vibrant',
+        radius: 0.5,
+        design: {
+          background: 'hsl(0, 0%, 100%)',
+          surface: 'hsl(0, 0%, 98%)',
+          text: 'hsl(0, 0%, 10%)',
+          accent: 'hsl(211, 100%, 50%)',
+          muted: 'hsl(0, 0%, 96%)'
+        }
+      };
+      res.json(defaultTheme);
+    }
+  });
+
+  // Update theme endpoint (authenticated)
+  app.post('/api/theme', authenticate(), (req, res) => {
+    try {
+      const { primary, appearance, variant, radius } = req.body;
+      
+      // Simple validation
+      if (!primary) {
+        return res.status(400).json({ error: 'Primary color is required' });
+      }
+      
+      // Create theme object
+      const updatedTheme = {
+        primary,
+        appearance: appearance || 'system',
+        variant: variant || 'vibrant',
+        radius: radius || 0.5,
+        design: {
+          background: 'hsl(0, 0%, 100%)',
+          surface: 'hsl(0, 0%, 98%)',
+          text: 'hsl(0, 0%, 10%)',
+          accent: primary,
+          muted: 'hsl(0, 0%, 96%)'
+        }
+      };
+      
+      // In production, we'd store this in a database per user
+      // For now, just update the theme.json file
+      const themePath = path.join(__dirname, '..', 'theme.json');
+      fs.writeFileSync(themePath, JSON.stringify(updatedTheme, null, 2));
+      
+      res.json(updatedTheme);
+    } catch (error) {
+      console.error('Error updating theme:', error);
+      res.status(500).json({ error: 'Failed to update theme' });
+    }
   });
 
   // Allow OPTIONS requests for CORS preflight

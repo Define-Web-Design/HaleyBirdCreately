@@ -1,0 +1,69 @@
+#   Replit Agent Directive: Enhanced Authentication Workflow (Optimized for Haley's Vision)
+
+**Task:** Implement a secure, user-friendly, and efficient authentication workflow for Creately, addressing Home Screen obstruction and incorporating comprehensive testing. Prioritize user empowerment, emotional resonance, and a balance of practicality and innovation in all solutions.
+
+**Instructions:**
+
+1.  **Security Hardening (Prioritize Robustness):**
+
+    * **Password Strength:**
+        * Enforce: min. 12 chars, uppercase, lowercase, numbers, symbols (to protect user data).
+        * Integrate: real-time strength meter (for user guidance and security awareness).
+        * Consider: optional/mandatory MFA (authenticator app, SMS, email) (for enhanced security).
+    * **Storage:**
+        * Verify: strong hashing (bcrypt, Argon2) with salting (to ensure password safety).
+        * Ensure: absolutely no plaintext storage (to prevent catastrophic breaches).
+    * **Input Validation (Prevent Exploits):**
+        * Use: parameterized queries/prepared statements (to avoid SQL injection).
+        * Validate: client-side and server-side (format, length, content) (for data integrity and security).
+    * **XSS Prevention (Protect Users):**
+        * Sanitize: all user input (to prevent malicious script injection).
+        * Implement: Content Security Policy (CSP) (to restrict resource loading).
+    * **Session Security (Maintain Trust):**
+        * Generate: cryptographically secure session IDs (to prevent session hijacking).
+        * Invalidate: on logout/password change (to secure user accounts).
+        * Set: HttpOnly, Secure, SameSite cookie flags (to protect session cookies).
+    * **Authorization (Empower Control):**
+        * Implement: RBAC or similar (to manage user permissions effectively).
+        * Enforce: permission checks for resource access (to give users appropriate control).
+
+2.  **Usability Optimization (Enhance User Experience):**
+
+    * **Streamline (Intuitive Design):**
+        * Registration: collect only essential info (for user convenience).
+        * Offer: social login (Google, etc.) (to reduce friction).
+        * Provide: clear, concise, empathetic error messages (to guide users).
+    * **Recovery (Reliable Access):**
+        * Implement: secure "Forgot Password" (email verification/security questions) (to ensure account recovery).
+        * Provide: clear instructions/feedback (to support users).
+    * **Accessibility (Inclusive Design):**
+        * Ensure: ARIA labels, keyboard navigation, sufficient color contrast (to cater to diverse needs).
+
+3.  **Home Screen & Navigation (Prioritize User Flow):**
+
+    * **Defer (Non-Intrusive Approach):** Do NOT block Home Screen on initial load (to allow exploration and reduce friction).
+    * **Profile (Clear Navigation):** Place login/signup options in Profile section (intuitive icons/labels) (to guide users).
+    * **Prompt (Contextual Guidance):** Use non-intrusive, dismissible prompts for login/signup when accessing restricted features (saving, advanced collaboration) (to encourage engagement without being forceful).
+
+4.  **Testing Protocol (Rigorous Quality Assurance):**
+
+    * **Unit (Component Focus):** Individual component functionality.
+    * **Integration (System Interaction):** Interaction between authentication parts (login, registration, etc.).
+    * **End-to-End (User Scenarios):** Complete user scenarios (login, logout, recovery, access to features).
+    * **Security (Vulnerability Prevention):** Penetration testing, vulnerability scanning, code reviews.
+    * **Usability (User-Centric Validation):** Real user testing for ease of use, clarity, and satisfaction (crucial for emotional resonance).
+
+5.  **Implementation Notes (Practical Guidance):**
+
+    * **Libraries (Reliable Technology):** Use secure, established libraries (Passport.js, Auth0, Firebase Auth).
+    * **Data (Secure Handling):** Securely handle sensitive user data (privacy compliance).
+    * **Logging (Proactive Monitoring):** Implement comprehensive error logging/monitoring.
+
+**Emphasis (Haley's Vision):**
+
+* **User Empowerment:** Design a system that gives users control and a sense of security.
+* **Emotional Resonance:** Create a smooth, intuitive, and frustration-free experience that fosters positive user engagement.
+* **Practical Innovation:** Balance security and functionality with innovative UI/UX solutions.
+* **Ethical Considerations:** Prioritize user privacy and data security.
+* **Collaboration:** Facilitate seamless integration with other app features.
+* **Iterative Improvement:** Build a system that can be easily updated and improved based on user feedback.
