@@ -3826,5 +3826,71 @@ args = "# Run the consolidated validation system"
 task = "shell.exec"
 args = "node -e \"const { runFullSystemValidation, displayFullValidationResults } = require('./client/src/utils/consolidated-validation.js'); runFullSystemValidation().then(report => { displayFullValidationResults(report); process.exit(report.overallSuccess ? 0 : 1); })\""
 
+[[workflows.workflow]]
+name = "Full Stack Validation"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Kill any running processes"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pkill -f node || true"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run comprehensive validation suite"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node -e \"const { runFullSystemValidation, displayFullValidationResults } = require('./client/src/utils/consolidated-validation.js'); runFullSystemValidation().then(report => { displayFullValidationResults(report); process.exit(report.overallSuccess ? 0 : 1); })\""
+
+[[workflows.workflow]]
+name = "Mobile Optimization"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Kill any running processes first"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pkill -f node || true"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Start server with mobile optimizations"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "NODE_ENV=development MOBILE_OPTIMIZED=true npm run dev &"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "sleep 5"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run responsive design testing"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node -e \"const { testAppResponsiveness } = require('./client/src/utils/responsive-tester.js'); testAppResponsiveness().then(result => { console.log(JSON.stringify(result.summary, null, 2)); console.log(result.success ? '✅ Mobile tests passed' : '⚠️ Some mobile tests failed'); });\""
+
 [objectStorage]
 defaultBucketID = "replit-objstore-0f505a20-ca44-41fd-a1d9-978b798832cc"
