@@ -1,88 +1,54 @@
-import { motion, AnimatePresence } from 'framer-motion';
 import React, { useEffect, useState } from 'react';
-import { useMobile } from '@/hooks/use-mobile';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useLocation } from 'wouter';
+import { useIsMobile } from '@/hooks/use-mobile';
 
-type PageTransitionProps = {
+interface PageTransitionProps {
   children: React.ReactNode;
-  location: string;
-  transitionStyle?: 'fade' | 'slide' | 'scale' | 'none';
-  duration?: number;
-};
+  className?: string;
+}
 
-const transitionVariants = {
-  fade: {
-    initial: { opacity: 0 },
-    in: { opacity: 1 },
-    out: { opacity: 0 },
-  },
-  slide: {
-    initial: { opacity: 0, x: 20 },
-    in: { opacity: 1, x: 0 },
-    out: { opacity: 0, x: -20 },
-  },
-  scale: {
-    initial: { opacity: 0, scale: 0.9 },
-    in: { opacity: 1, scale: 1 },
-    out: { opacity: 0, scale: 1.1 },
-  },
-  none: {
-    initial: { opacity: 1 },
-    in: { opacity: 1 },
-    out: { opacity: 1 },
-  },
-};
+export function PageTransition({ children, className = '' }: PageTransitionProps) {
+  const [location] = useLocation();
+  const [key, setKey] = useState(location);
+  const isMobile = useIsMobile();
 
-export const PageTransition: React.FC<PageTransitionProps> = ({ 
-  children, 
-  location,
-  transitionStyle = 'fade',
-  duration = 0.3
-}) => {
-  const [currentStyle, setCurrentStyle] = useState(transitionStyle);
-  const [currentDuration, setCurrentDuration] = useState(duration);
-  const { isMobile } = useMobile();
-
-  // Adjust transition for mobile devices for better performance
+  // Update key when location changes to trigger animation
   useEffect(() => {
-    if (isMobile) {
-      // On mobile, use simpler transitions and shorter duration
-      setCurrentStyle(transitionStyle === 'none' ? 'none' : 'fade');
-      // Even shorter for iOS devices to avoid jank
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
-      setCurrentDuration(isIOS ? 0.15 : (duration > 0.2 ? 0.2 : duration));
-    } else {
-      setCurrentStyle(transitionStyle);
-      setCurrentDuration(duration);
-    }
-  }, [isMobile, transitionStyle, duration]);
+    // Short delay to ensure any in-progress state changes are completed
+    const timer = setTimeout(() => {
+      setKey(location);
+    }, 10);
+    return () => clearTimeout(timer);
+  }, [location]);
 
-  const pageTransition = {
-    type: 'tween',
-    ease: 'easeInOut',
-    duration: currentDuration,
+  // Mobile-optimized slide transition
+  const variants = isMobile ? {
+    initial: { opacity: 0, x: 10 },
+    animate: { opacity: 1, x: 0 },
+    exit: { opacity: 0, x: -10 }
+  } : {
+    // Desktop fade transition
+    initial: { opacity: 0 },
+    animate: { opacity: 1 },
+    exit: { opacity: 0 }
   };
 
-  // Skip animation completely if style is none
-  if (currentStyle === 'none') {
-    return <div className="page-content">{children}</div>;
-  }
-
   return (
-    <AnimatePresence mode="wait" initial={false}>
+    <AnimatePresence mode="wait">
       <motion.div
-        key={location}
+        key={key}
         initial="initial"
-        animate="in"
-        exit="out"
-        variants={transitionVariants[currentStyle]}
-        transition={pageTransition}
-        className="page-transition"
-        data-testid="page-transition"
+        animate="animate"
+        exit="exit"
+        variants={variants}
+        transition={{ duration: 0.2 }}
+        className={className}
       >
-        <div className="page-content">
-          {children}
-        </div>
+        {children}
       </motion.div>
     </AnimatePresence>
   );
-};
+}
+
+export default PageTransition;

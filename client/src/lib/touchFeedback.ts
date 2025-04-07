@@ -7,8 +7,110 @@
 import { useTouchPosition } from '@/hooks/use-mobile';
 
 /**
- * Utility functions for implementing touch and haptic feedback
+ * Utility for providing haptic-like feedback on touch devices
  */
+
+interface TouchFeedbackOptions {
+  element: HTMLElement;
+  intensity?: 'light' | 'medium' | 'strong';
+  duration?: number;
+  visualFeedback?: boolean;
+}
+
+class TouchFeedbackManager {
+  private supportsVibration: boolean = false;
+
+  constructor() {
+    // Check for vibration support
+    this.supportsVibration = 'vibrate' in navigator;
+  }
+
+  /**
+   * Trigger haptic-like feedback on a touch device
+   */
+  public provideFeedback({ 
+    element, 
+    intensity = 'medium', 
+    duration = 20,
+    visualFeedback = true 
+  }: TouchFeedbackOptions): void {
+    // Apply vibration if supported
+    try {
+      if (this.supportsVibration) {
+        // Different durations based on intensity
+        const vibrationDuration = 
+          intensity === 'light' ? duration / 2 : 
+          intensity === 'strong' ? duration * 2 : 
+          duration;
+
+        navigator.vibrate(vibrationDuration);
+      }
+
+      // Apply visual feedback if enabled
+      if (visualFeedback) {
+        this.applyVisualFeedback(element, intensity);
+      }
+    } catch (error) {
+      console.error('Error providing touch feedback:', error);
+    }
+  }
+
+  /**
+   * Apply visual feedback to simulate a touch/tap
+   */
+  private applyVisualFeedback(element: HTMLElement, intensity: 'light' | 'medium' | 'strong'): void {
+    try {
+      // Save original transition
+      const originalTransition = element.style.transition;
+
+      // Add animation class based on intensity
+      const className = `touch-feedback-${intensity}`;
+      element.classList.add(className);
+
+      // Remove class after animation completes
+      setTimeout(() => {
+        element.classList.remove(className);
+        element.style.transition = originalTransition;
+      }, 150);
+    } catch (error) {
+      console.error('Error applying visual feedback:', error);
+    }
+  }
+
+  /**
+   * Check if device supports haptic feedback
+   */
+  public supportsHapticFeedback(): boolean {
+    return this.supportsVibration;
+  }
+}
+
+// Export singleton instance
+export const touchFeedback = new TouchFeedbackManager();
+
+// Function to add touch feedback to an element
+export function addTouchFeedback(
+  element: HTMLElement, 
+  options: Omit<TouchFeedbackOptions, 'element'> = {}
+): () => void {
+  if (!element) return () => {}; // Exit if no element
+
+  const handleTouchStart = () => {
+    touchFeedback.provideFeedback({
+      element,
+      ...options
+    });
+  };
+
+  // Add event listener
+  element.addEventListener('touchstart', handleTouchStart, { passive: true });
+
+  // Return cleanup function
+  return () => {
+    element.removeEventListener('touchstart', handleTouchStart);
+  };
+}
+
 
 // Haptic feedback intensity levels
 export enum HapticIntensity {
@@ -51,80 +153,6 @@ export function triggerHapticFeedback(intensity: HapticIntensity = HapticIntensi
     // Resolve promise after the vibration completes
     setTimeout(resolve, totalDuration);
   });
-}
-
-/**
- * Add touch feedback to an element
- * @param element The DOM element to add feedback to
- * @param options Configuration options
- */
-export function addTouchFeedback(
-  element: HTMLElement,
-  options: {
-    haptic?: boolean;
-    hapticIntensity?: HapticIntensity;
-    visualFeedback?: boolean;
-    activeClass?: string;
-    rippleColor?: string;
-  } = {}
-): () => void {
-  const {
-    haptic = false,
-    hapticIntensity = HapticIntensity.LIGHT,
-    visualFeedback = true,
-    activeClass = 'touch-active',
-    rippleColor
-  } = options;
-
-  // Add base class for styling
-  if (visualFeedback) {
-    element.classList.add('touch-feedback');
-
-    // Add custom ripple color if specified
-    if (rippleColor) {
-      element.style.setProperty('--ripple-color', rippleColor);
-    }
-  }
-
-  // Event handlers
-  const handleTouchStart = () => {
-    if (visualFeedback) {
-      element.classList.add(activeClass);
-    }
-
-    if (haptic) {
-      triggerHapticFeedback(hapticIntensity).catch(err => {
-        console.error('Error triggering haptic feedback:', err);
-      });
-    }
-  };
-
-  const handleTouchEnd = () => {
-    if (visualFeedback) {
-      element.classList.remove(activeClass);
-    }
-  };
-
-  // Add event listeners
-  element.addEventListener('touchstart', handleTouchStart);
-  element.addEventListener('touchend', handleTouchEnd);
-  element.addEventListener('touchcancel', handleTouchEnd);
-
-  // Return cleanup function
-  return () => {
-    element.removeEventListener('touchstart', handleTouchStart);
-    element.removeEventListener('touchend', handleTouchEnd);
-    element.removeEventListener('touchcancel', handleTouchEnd);
-
-    if (visualFeedback) {
-      element.classList.remove('touch-feedback');
-      element.classList.remove(activeClass);
-
-      if (rippleColor) {
-        element.style.removeProperty('--ripple-color');
-      }
-    }
-  };
 }
 
 /**
@@ -178,6 +206,7 @@ export function applyTouchFeedbackToInteractiveElements(
     cleanupFunctions.forEach(cleanup => cleanup());
   };
 }
+
 
 
 /**
@@ -242,13 +271,12 @@ export function initTouchFeedback(enabled: boolean = true): void {
         const x = touch.clientX - rect.left;
         const y = touch.clientY - rect.top;
 
-        triggerVisualFeedback(touch.clientX, touch.clientY, HapticIntensity.LIGHT); //Use new trigger function
-        element.classList.add('touch-active');
+        touchFeedback.provideFeedback({ element, intensity: 'light' }); //Use new trigger function
+
       };
 
       // Touch end handler
       const touchEndHandler = () => {
-        element.classList.remove('touch-active');
       };
 
       // Add event listeners
@@ -306,7 +334,7 @@ export function initTouchFeedback(enabled: boolean = true): void {
     }
 
     const touch = e.touches[0];
-    triggerVisualFeedback(touch.clientX, touch.clientY, HapticIntensity.LIGHT); //Use new trigger function
+    touchFeedback.provideFeedback({ element: document.body, intensity: 'light' }); //Use new trigger function
   };
 
   document.body.addEventListener('touchstart', bodyTouchHandler, { passive: true });
@@ -384,54 +412,6 @@ export function saveTouchFeedbackOptions(options: Partial<TouchFeedbackOptions>)
   }
 }
 
-/**
- * Trigger a visual feedback effect at the specified position
- */
-export function triggerVisualFeedback(
-  x: number,
-  y: number,
-  type: HapticIntensity = HapticIntensity.LIGHT,
-  options: TouchFeedbackOptions = loadTouchFeedbackOptions()
-): void {
-  if (!options.enabled || !options.visualFeedback) {
-    return;
-  }
-
-  try {
-    // Create a ripple element
-    const ripple = document.createElement('div');
-    ripple.className = `haptic-feedback-ripple haptic-${type}`;
-
-    // Set the position
-    ripple.style.left = `${x}px`;
-    ripple.style.top = `${y}px`;
-
-    // Set size and opacity based on intensity
-    const size = 40 + (options.intensity / 100) * 60; // 40px to 100px based on intensity
-    ripple.style.width = `${size}px`;
-    ripple.style.height = `${size}px`;
-    ripple.style.marginLeft = `-${size / 2}px`;
-    ripple.style.marginTop = `-${size / 2}px`;
-
-    // Add to the DOM
-    document.body.appendChild(ripple);
-
-    // Clean up after animation completes
-    setTimeout(() => {
-      if (document.body.contains(ripple)) {
-        try {
-          document.body.removeChild(ripple);
-        } catch (e) {
-          console.warn('Error removing ripple element:', e);
-        }
-      }
-    }, 600); // Match the animation duration
-  } catch (error) {
-    console.warn('Error in visual feedback:', error);
-    // Fail silently - don't let visual feedback errors break functionality
-  }
-}
-
 
 /**
  * Hook to create a touch trail effect
@@ -486,6 +466,6 @@ export default {
   setTactileFeedback,
   loadTouchFeedbackOptions,
   saveTouchFeedbackOptions,
-  triggerVisualFeedback,
-  useTouchTrail
+  useTouchTrail,
+  touchFeedback
 };

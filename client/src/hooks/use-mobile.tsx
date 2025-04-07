@@ -1,3 +1,45 @@
+import { useState, useEffect } from 'react';
+
+/**
+ * Custom hook to detect if the current device is a mobile device
+ * This uses both user agent detection and screen size for better accuracy
+ */
+export function useIsMobile(): boolean {
+  const [isMobile, setIsMobile] = useState<boolean>(false);
+
+  useEffect(() => {
+    // Check if userAgent exists (we're in browser environment)
+    const checkMobile = () => {
+      if (typeof navigator !== 'undefined' && navigator.userAgent) {
+        const userAgent = navigator.userAgent.toLowerCase();
+        const mobileRegex = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i;
+        const isMobileDevice = mobileRegex.test(userAgent);
+
+        // Also check screen size for tablets or responsive views
+        const isSmallScreen = window.innerWidth <= 768;
+
+        setIsMobile(isMobileDevice || isSmallScreen);
+      } else {
+        setIsMobile(false);
+      }
+    };
+
+    checkMobile();
+
+    // Add resize listener for responsive behavior
+    window.addEventListener('resize', checkMobile);
+
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+    };
+  }, []);
+
+  return isMobile;
+}
+
+// Named export for useIsMobile
+export default useIsMobile;
+
 import { useState, useEffect, useCallback } from 'react';
 
 export interface DeviceInfo {
@@ -44,8 +86,8 @@ export function useMobile(): DeviceInfo {
 
     // Check if device supports touch
     const isTouchDevice = 'ontouchstart' in window || 
-                        navigator.maxTouchPoints > 0 || 
-                        (navigator as any).msMaxTouchPoints > 0;
+                          navigator.maxTouchPoints > 0 || 
+                          (navigator as any).msMaxTouchPoints > 0;
 
     setDeviceInfo({
       isMobile,
@@ -86,15 +128,6 @@ export function checkIsMobile(): boolean {
 
   const width = window.innerWidth;
   return width < 768 || ('ontouchstart' in window && width < 1024);
-}
-
-/**
- * Hook specifically for checking if the device is mobile
- * Simplified version of useMobile for components that only need this information
- */
-export function useIsMobile(): boolean {
-  const deviceInfo = useMobile();
-  return deviceInfo.isMobile;
 }
 
 /**

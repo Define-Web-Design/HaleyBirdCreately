@@ -1,200 +1,155 @@
+import { useState, useEffect, RefObject, useCallback } from 'react';
 
-import { useRef, useEffect, useState } from 'react';
-
-interface SwipeHandlers {
+export interface SwipeParams {
+  element: RefObject<HTMLElement>;
   onSwipeLeft?: () => void;
   onSwipeRight?: () => void;
   onSwipeUp?: () => void;
   onSwipeDown?: () => void;
+  threshold?: number; // Minimum distance required for swipe
+  preventDefaultTouchmove?: boolean; // Whether to prevent default touchmove behavior
 }
 
-interface SwipeState {
+export interface SwipeState {
   swiping: boolean;
-  direction: 'left' | 'right' | 'up' | 'down' | null;
+  direction: string | null;
   distance: number;
 }
 
-interface UseTouchSwipeOptions {
-  threshold?: number;
-  preventDefaultTouchmove?: boolean;
-  disableContextMenu?: boolean;
-}
+export function useTouchSwipe({
+  element,
+  onSwipeLeft,
+  onSwipeRight,
+  onSwipeUp,
+  onSwipeDown,
+  threshold = 50,
+  preventDefaultTouchmove = true,
+}: SwipeParams): SwipeState {
+  const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
+  const [touchEnd, setTouchEnd] = useState<{ x: number; y: number } | null>(null);
+  const [swiping, setSwiping] = useState<boolean>(false);
+  const [direction, setDirection] = useState<string | null>(null);
+  const [distance, setDistance] = useState<number>(0);
 
-const DEFAULT_THRESHOLD = 50; // Minimum swipe distance in pixels
+  // Safe event handler to prevent errors when accessing element.current
+  const safeAddEventListener = useCallback((eventName: string, handler: EventListener): (() => void) => {
+    if (element.current) {
+      element.current.addEventListener(eventName, handler, { passive: !preventDefaultTouchmove });
+      return () => {
+        if (element.current) {
+          element.current.removeEventListener(eventName, handler);
+        }
+      };
+    }
+    return () => {};
+  }, [element, preventDefaultTouchmove]);
 
-/**
- * Hook to detect swipe gestures on touch devices
- */
-export const useTouchSwipe = (
-  handlers: SwipeHandlers,
-  options: UseTouchSwipeOptions = {}
-) => {
-  const {
-    threshold = DEFAULT_THRESHOLD,
-    preventDefaultTouchmove = true,
-    disableContextMenu = false
-  } = options;
-
-  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
-  const elementRef = useRef<HTMLElement | null>(null);
-  
-  const [state, setState] = useState<SwipeState>({
-    swiping: false,
-    direction: null,
-    distance: 0
-  });
-
+  // Handle touch start
   useEffect(() => {
-    const element = elementRef.current;
-    if (!element) return;
+    if (!element.current) return;
 
     const handleTouchStart = (e: TouchEvent) => {
       try {
-        if (e.touches.length !== 1) return;
-        
-        const touch = e.touches[0];
-        touchStartRef.current = {
-          x: touch.clientX,
-          y: touch.clientY
-        };
-        
-        setState({
-          swiping: true,
-          direction: null,
-          distance: 0
-        });
+        // Only process single-touch events to avoid multi-touch gesture conflicts
+        if (e.touches.length === 1) {
+          setTouchEnd(null); // Reset end position
+          setTouchStart({
+            x: e.touches[0].clientX,
+            y: e.touches[0].clientY
+          });
+          setSwiping(true);
+          setDirection(null);
+          setDistance(0);
+        }
       } catch (error) {
         console.error('Error in touch start handler:', error);
       }
     };
 
+    return safeAddEventListener('touchstart', handleTouchStart);
+  }, [element, safeAddEventListener]);
+
+  // Handle touch move
+  useEffect(() => {
+    if (!element.current) return;
+
     const handleTouchMove = (e: TouchEvent) => {
       try {
-        if (!touchStartRef.current || e.touches.length !== 1) return;
-        
-        // Only call preventDefault if absolutely necessary and allowed
-        // This avoids issues with passive event listeners
-        if (preventDefaultTouchmove && typeof e.cancelable === 'boolean' && e.cancelable) {
+        // Prevent default only when configured to do so
+        if (preventDefaultTouchmove) {
           e.preventDefault();
         }
-        
-        const touch = e.touches[0];
-        const deltaX = touch.clientX - touchStartRef.current.x;
-        const deltaY = touch.clientY - touchStartRef.current.y;
-        
-        // Determine primary direction of swipe
-        const absX = Math.abs(deltaX);
-        const absY = Math.abs(deltaY);
-        
-        let direction: 'left' | 'right' | 'up' | 'down' | null = null;
-        let distance = 0;
-        
-        if (absX > absY) {
-          // Horizontal swipe
-          direction = deltaX > 0 ? 'right' : 'left';
-          distance = absX;
-        } else {
-          // Vertical swipe
-          direction = deltaY > 0 ? 'down' : 'up';
-          distance = absY;
-        }
-        
-        setState({
-          swiping: true,
-          direction,
-          distance
+
+        if (!touchStart) return;
+
+        setTouchEnd({
+          x: e.touches[0].clientX,
+          y: e.touches[0].clientY
         });
       } catch (error) {
         console.error('Error in touch move handler:', error);
       }
     };
 
-    const handleTouchEnd = (e: TouchEvent) => {
+    return safeAddEventListener('touchmove', handleTouchMove);
+  }, [element, touchStart, preventDefaultTouchmove, safeAddEventListener]);
+
+  // Handle touch end
+  useEffect(() => {
+    if (!element.current) return;
+
+    const handleTouchEnd = () => {
       try {
-        if (!touchStartRef.current) return;
-        
-        if (state.distance >= threshold && state.direction) {
-          // Trigger the appropriate handler if threshold is met
-          switch (state.direction) {
-            case 'left':
-              handlers.onSwipeLeft?.();
-              break;
-            case 'right':
-              handlers.onSwipeRight?.();
-              break;
-            case 'up':
-              handlers.onSwipeUp?.();
-              break;
-            case 'down':
-              handlers.onSwipeDown?.();
-              break;
-          }
+        if (!touchStart || !touchEnd) {
+          setSwiping(false);
+          return;
         }
-        
-        // Reset state
-        touchStartRef.current = null;
-        setState({
-          swiping: false,
-          direction: null,
-          distance: 0
-        });
+
+        // Calculate distances
+        const horizontalDistance = touchEnd.x - touchStart.x;
+        const verticalDistance = touchEnd.y - touchStart.y;
+        const absHorizontal = Math.abs(horizontalDistance);
+        const absVertical = Math.abs(verticalDistance);
+
+        // Set distance to the larger of horizontal or vertical movement
+        const maxDistance = Math.max(absHorizontal, absVertical);
+        setDistance(maxDistance);
+
+        // Determine swipe direction
+        let swipeDirection = null;
+        let callback = null;
+
+        if (absHorizontal > absVertical && absHorizontal > threshold) {
+          // Horizontal swipe
+          swipeDirection = horizontalDistance > 0 ? 'right' : 'left';
+          callback = horizontalDistance > 0 ? onSwipeRight : onSwipeLeft;
+        } else if (absVertical > threshold) {
+          // Vertical swipe
+          swipeDirection = verticalDistance > 0 ? 'down' : 'up';
+          callback = verticalDistance > 0 ? onSwipeDown : onSwipeUp;
+        }
+
+        setDirection(swipeDirection);
+        setSwiping(false);
+
+        // Call the appropriate callback if a swipe was detected
+        if (callback) {
+          callback();
+        }
+
+        // Reset touch data
+        setTouchStart(null);
+        setTouchEnd(null);
       } catch (error) {
         console.error('Error in touch end handler:', error);
-        
-        // Reset on error to prevent getting stuck
-        touchStartRef.current = null;
-        setState({
-          swiping: false,
-          direction: null,
-          distance: 0
-        });
+        setSwiping(false);
       }
     };
 
-    const handleTouchCancel = () => {
-      // Reset on cancel
-      touchStartRef.current = null;
-      setState({
-        swiping: false,
-        direction: null,
-        distance: 0
-      });
-    };
+    return safeAddEventListener('touchend', handleTouchEnd);
+  }, [element, touchStart, touchEnd, threshold, onSwipeLeft, onSwipeRight, onSwipeUp, onSwipeDown, safeAddEventListener]);
 
-    const handleContextMenu = (e: MouseEvent) => {
-      if (disableContextMenu) {
-        e.preventDefault();
-      }
-    };
-
-    // Add event listeners
-    element.addEventListener('touchstart', handleTouchStart, { passive: true });
-    element.addEventListener('touchmove', handleTouchMove, { passive: !preventDefaultTouchmove });
-    element.addEventListener('touchend', handleTouchEnd, { passive: true });
-    element.addEventListener('touchcancel', handleTouchCancel, { passive: true });
-    
-    if (disableContextMenu) {
-      element.addEventListener('contextmenu', handleContextMenu);
-    }
-
-    // Clean up
-    return () => {
-      element.removeEventListener('touchstart', handleTouchStart);
-      element.removeEventListener('touchmove', handleTouchMove);
-      element.removeEventListener('touchend', handleTouchEnd);
-      element.removeEventListener('touchcancel', handleTouchCancel);
-      
-      if (disableContextMenu) {
-        element.removeEventListener('contextmenu', handleContextMenu);
-      }
-    };
-  }, [handlers, threshold, preventDefaultTouchmove, disableContextMenu, state.distance, state.direction]);
-
-  // Return the ref to be attached to the element and current state
-  return {
-    ref: elementRef,
-    state
-  };
-};
+  return { swiping, direction, distance };
+}
 
 export default useTouchSwipe;

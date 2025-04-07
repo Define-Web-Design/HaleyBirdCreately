@@ -1,9 +1,73 @@
-
 /* Mobile scrolling fixes */
+
+/* Enable momentum scrolling on iOS */
+* {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent scroll chaining between elements */
+html, body {
+  overscroll-behavior: none;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  position: relative;
+}
+
+/* Fix for rubber-banding effect on iOS */
+html {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  overflow: auto;
+  width: 100%;
+  height: 100%;
+}
+
+/* Fix for nested scrollable areas */
+.scrollable-container {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Fix for "stuck" scrolling on mobile */
+input, textarea, [contenteditable] {
+  -webkit-user-select: auto;
+  user-select: auto;
+}
+
+/* Fix for hidden overflow issues with position:fixed elements */
+.fixed-element {
+  transform: translateZ(0);
+}
+
+/* Prevent pull-to-refresh on mobile browsers */
+body {
+  overscroll-behavior-y: contain;
+}
+
+/* Fix for Safari 100vh issue */
+.full-height {
+  height: 100vh;
+  height: calc(var(--vh, 1vh) * 100);
+}
+
+/* Media query for mobile devices */
+@media (max-width: 768px) {
+  .prevent-overscroll {
+    overscroll-behavior: contain;
+  }
+}
+
 
 /* Prevent overscroll behavior on body */
 html, body {
-  overscroll-behavior: none;
+  /* overscroll-behavior: none;  Removed as it's now handled above */
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
 }
@@ -50,7 +114,7 @@ body {
     position: relative;
     transition: transform 0.3s ease-out;
   }
-  
+
   .keyboard-active .keyboard-adjust {
     transform: translateY(-40%);
   }
@@ -122,10 +186,10 @@ body {
       const vh = window.innerHeight * 0.01;
       document.documentElement.style.setProperty('--vh', `${vh}px`);
     }
-    
+
     setVhVariable();
     window.addEventListener('resize', setVhVariable);
-    
+
     return () => {
       window.removeEventListener('resize', setVhVariable);
     };

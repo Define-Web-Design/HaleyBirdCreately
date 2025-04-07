@@ -4,6 +4,31 @@
  * Designed to enhance mobile experience with micro-interactions
  */
 
+/* Common styles for all touch feedback effects */
+.touch-feedback-light,
+.touch-feedback-medium,
+.touch-feedback-strong {
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+/* Light touch feedback - subtle scale effect */
+.touch-feedback-light {
+  transform: scale(0.98);
+  opacity: 0.9;
+}
+
+/* Medium touch feedback - noticeable scale and opacity change */
+.touch-feedback-medium {
+  transform: scale(0.95);
+  opacity: 0.8;
+}
+
+/* Strong touch feedback - significant scale and opacity change */
+.touch-feedback-strong {
+  transform: scale(0.9);
+  opacity: 0.7;
+}
+
 /* Base ripple effect for touch feedback */
 .haptic-feedback-ripple {
   position: absolute;
@@ -178,7 +203,7 @@
 }
 
 /* Button-specific touch feedback */
-button.touch-active, 
+button.touch-active,
 [role="button"].touch-active,
 .interactive.touch-active {
   opacity: 0.9;
@@ -215,9 +240,9 @@ input[type="radio"].touch-active {
   width: 60px;
   opacity: 0;
   pointer-events: none;
-  background: linear-gradient(90deg, 
-    rgba(255,255,255,0) 0%, 
-    rgba(255,255,255,0.1) 50%, 
+  background: linear-gradient(90deg,
+    rgba(255,255,255,0) 0%,
+    rgba(255,255,255,0.1) 50%,
     rgba(255,255,255,0) 100%);
   animation: swipe-highlight 0.5s var(--transition-easing);
 }
@@ -291,7 +316,7 @@ input[type="radio"].touch-active {
   .micro-interaction-ripple {
     display: none;
   }
-  
+
   .touch-active,
   .touch-feedback-light:active,
   .touch-feedback-medium:active,
@@ -574,5 +599,36 @@ a.touch-feedback:active {
 
   .touch-target-inline {
     padding: 10px;
+  }
+}
+
+/* Active state for buttons with touch feedback */
+.touch-active {
+  transition: all 0.15s ease;
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* Dark mode version */
+@media (prefers-color-scheme: dark) {
+  .touch-active {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* Prevent default touch actions for custom touch elements */
+.custom-touch-element {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Prevent gray highlight on tap for iOS */
+* {
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+}
+
+/* Target iOS devices specifically */
+@supports (-webkit-touch-callout: none) {
+  .ios-touch-fix {
+    cursor: pointer;
   }
 }
