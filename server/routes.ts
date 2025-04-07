@@ -40,6 +40,7 @@ import {
 import { securityMonitor } from "./services/securityMonitor";
 import { authenticate } from "./middleware/auth";
 import authRoutes from "./routes/auth";
+import hubspotRoutes from './routes/hubspot';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Apply global security middleware
@@ -51,6 +52,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register auth routes - these need to be registered before authentication middleware
   app.use("/api/auth", authRoutes);
+  app.use('/api/hubspot', hubspotRoutes);
 
   // Create a list of public routes that don't require authentication
   const publicRoutes = [
@@ -277,7 +279,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(theme);
     } catch (error) {
       console.error('Error reading theme file:', error);
-      
+
       // Fallback to default theme
       const defaultTheme = {
         primary: '#F2994A',
@@ -300,12 +302,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/theme', authenticate(), (req, res) => {
     try {
       const { primary, appearance, variant, radius } = req.body;
-      
+
       // Simple validation
       if (!primary) {
         return res.status(400).json({ error: 'Primary color is required' });
       }
-      
+
       // Create theme object
       const updatedTheme = {
         primary,
@@ -320,12 +322,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           muted: 'hsl(0, 0%, 96%)'
         }
       };
-      
+
       // In production, we'd store this in a database per user
       // For now, just update the theme.json file
       const themePath = path.join(__dirname, '..', 'theme.json');
       fs.writeFileSync(themePath, JSON.stringify(updatedTheme, null, 2));
-      
+
       res.json(updatedTheme);
     } catch (error) {
       console.error('Error updating theme:', error);
@@ -985,8 +987,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { period } = req.params;
       const userId = 1; // Mock user ID
 
-      if (!period) {
-        return res.status(400).json({ message: "Period is required" });
+      if (!period) {        return res.status(400).json({ message: "Period is required" });
       }
 
       const history = await storage.getCreativeHistoryByUserIdAndPeriod(userId, period);
