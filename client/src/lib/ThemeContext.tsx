@@ -376,11 +376,9 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     // Handle tactile feedback toggle
     if (isTactileFeedbackEnabled) {
       html.classList.add('tactile-feedback-enabled');
-      setTactileFeedback(true);
       setTactileFeedbackEnabled(true);
     } else {
       html.classList.remove('tactile-feedback-enabled');
-      setTactileFeedback(false);
       setTactileFeedbackEnabled(false);
     }
     
