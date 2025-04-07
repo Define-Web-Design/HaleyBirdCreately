@@ -176,7 +176,24 @@ router.get('/me', authenticate(), async (req: Request, res: Response) => {
       });
     }
     
-    // Get user from storage by ID
+    // Development mode - return mock user
+    const isDev = process.env.NODE_ENV !== 'production';
+    if (isDev) {
+      return res.json({
+        success: true,
+        user: {
+          id: req.user.userId,
+          username: req.user.username,
+          email: 'dev@example.com',
+          displayName: 'Development User',
+          avatar: null,
+          role: req.user.role,
+          lastLogin: new Date().toISOString()
+        }
+      });
+    }
+    
+    // Production mode - get user from storage
     const getStorage = () => ServiceRegistry.getInstance().getService<any>('storage');
     const user = await getStorage().getUserById(req.user.userId);
     

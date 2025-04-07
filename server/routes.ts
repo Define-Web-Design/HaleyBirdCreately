@@ -2030,7 +2030,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Theme routes moved above the authentication middleware
 
+  // Create the HTTP server
   const httpServer = createServer(app);
-
+  
   return httpServer;
 }
