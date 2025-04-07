@@ -1,0 +1,62 @@
+# Comprehensive Directive for Replit Assistant: Debugging, Optimization, and Task Validation
+
+## **Instructions**
+Use Replit’s built-in tools and capabilities to debug, optimize, and validate Creately’s codebase efficiently.
+
+---
+
+### **1. Debugging and Error Resolution**
+- Analyze the codebase for errors, logic flaws, and deprecated configurations (e.g., remove `fetchConnectionCache`).
+- Debug workflows and correct issues, including scrolling functionality across layouts.
+- Validate corrective actions through regression tests to ensure no new errors are introduced.
+
+---
+
+### **2. Responsiveness Optimization**
+- Test the app’s responsiveness across various devices (smartphones, tablets, desktops) and screen sizes.
+- Validate scrolling functionality and adjust layouts using CSS media queries as necessary.
+- Suggest CSS adjustments for padding, margins, or components requiring improvement.
+
+---
+
+### **3. Code Cleanup**
+- Use linting tools (e.g., ESLint) to remove unused variables, imports, and redundant code.
+- Format the codebase using Prettier for consistent style and readability.
+  - Suggested Prettier Configuration:
+    ```json
+    {
+      "singleQuote": true,
+      "trailingComma": "es5",
+      "semi": false
+    }
+    ```
+
+---
+
+### **4. Performance Enhancements**
+- Implement lazy loading for non-critical components to reduce load times.
+- Recommend or integrate CDN usage for serving static assets efficiently.
+- Provide performance profiling logs and propose fixes for detected bottlenecks.
+
+---
+
+### **5. Testing APIs and WebSocket**
+- Validate all API endpoints using tools like Postman or Insomnia:
+  - Ensure proper handling of inputs, outputs, and errors.
+  - Perform randomized input validations to ensure robustness.
+- Test WebSocket server (`/ws-api`):
+  - Simulate edge cases, including dropped connections, and confirm exponential backoff logic operates correctly.
+
+---
+
+### **6. Structured Debug Logs**
+- Integrate structured logging tools (e.g., Winston) to track errors, requests, and events with metadata such as timestamps and request IDs.
+
+---
+
+### **Deliverables**
+1. Debugging results showing resolved issues and improved workflows.
+2. Confirmation of responsiveness checks for mobile and desktop layouts, including proposed CSS fixes.
+3. Logs and validation for WebSocket and API reliability tests.
+4. A clean, formatted, and optimized codebase ready for further testing.
+5. Performance profiling results with bottlenecks addressed.
