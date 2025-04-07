@@ -247,16 +247,20 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             )}
             {children}
 
-            {/* Condensed Footer with Creative Intelligence tagline */}
+            {/* Condensed Footer with Original Elements */}
             <footer className="mt-6 pt-3 border-t border-border">
               <div className="container mx-auto px-2">
                 <div className="flex flex-wrap justify-between items-center gap-2 py-2">
                   <div className="flex flex-col">
+                    <div className="flex items-center mb-1">
+                      <div className="bg-gradient-to-r from-[#F2994A] to-[#FF9DAE] h-6 w-6 rounded-lg flex items-center justify-center text-white font-bold text-sm mr-1.5">C</div>
+                      <span className="text-sm font-semibold">Creately</span>
+                    </div>
                     <p className="text-xs text-muted-foreground">
-                      &copy; {new Date().getFullYear()} Creately
+                      A creative intelligence platform for design and content creation
                     </p>
-                    <p className="text-xs text-muted-foreground">
-                      Powered by advanced AI - Voice features enabled
+                    <p className="text-xs text-muted-foreground mt-1">
+                      &copy; {new Date().getFullYear()} Creately. All rights reserved.
                     </p>
                   </div>
                   <div className="flex flex-row gap-3 text-xs">
