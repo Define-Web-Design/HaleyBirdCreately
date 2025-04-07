@@ -4,9 +4,9 @@ import dotenv from "dotenv";
 // Load environment variables
 dotenv.config();
 
-// the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-const MODEL = "gpt-4o";
-const VISION_MODEL = "gpt-4o"; // Model with vision capabilities
+// Using the latest OpenAI models for best performance
+const MODEL = "gpt-4o"; // Latest model for text-based features
+const VISION_MODEL = "gpt-4o"; // Latest model with vision capabilities
 
 // Attempt to get API key from different possible sources
 const apiKey = process.env.OPENAI_API_KEY || 

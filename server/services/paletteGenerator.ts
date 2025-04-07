@@ -151,7 +151,7 @@ export async function generateAIPalette(description: string): Promise<Palette> {
     });
 
     const openaiPromise = openai.chat.completions.create({
-      model: "gpt-3.5-turbo", // Use a more widely available model
+      model: "gpt-4o", // Using the latest model for best performance
       messages: [
         {
           role: "system",

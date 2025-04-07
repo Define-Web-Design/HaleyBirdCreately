@@ -255,8 +255,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                     <p className="text-xs text-muted-foreground">
                       &copy; {new Date().getFullYear()} Creately
                     </p>
-                    <p className="text-xs text-primary/70 font-medium">
-                      Unleash your creative intelligence
+                    <p className="text-xs text-muted-foreground">
+                      Powered by advanced AI - Voice features enabled
                     </p>
                   </div>
                   <div className="flex flex-row gap-3 text-xs">
