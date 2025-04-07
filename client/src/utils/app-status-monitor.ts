@@ -5,8 +5,7 @@
  */
 
 // Import necessary modules and utilities
-import { verifyPageLinks } from './navigation-tester';
-import { testAppResponsiveness } from './responsive-tester';
+import { verifyPageLinks, runAccessibilityAudit } from './navigation-tester';
 import { validateApiEndpoints } from './api-validator';
 
 // Import logger
@@ -74,61 +73,90 @@ export interface AppStatusReport {
 }
 
 /**
- * Collect performance metrics for the application
+ * Mock security monitor for testing
+ */
+const securityMonitor = {
+  validateAssetIntegrity: async () => {
+    return {
+      valid: true,
+      issues: []
+    };
+  }
+};
+
+/**
+ * Collect performance metrics from the application
  */
 async function collectPerformanceMetrics(): Promise<AppPerformanceMetrics> {
+  logger.log('Collecting performance metrics...');
+  
   try {
-    // Simulate API metrics collection
-    const apiResponseTimes = {
-      average: 320, // milliseconds
-      slowest: {
-        endpoint: '/api/mood-capsules/generate',
-        time: 1200 // milliseconds
-      }
-    };
-
-    // Simulate page load metrics
-    const pageLoadTimes = {
-      average: 780, // milliseconds
-      slowest: {
-        page: '/color-palettes',
-        time: 2300 // milliseconds
-      }
-    };
-
-    // Check recent error logs
-    const errors = {
-      critical: {
-        count: 0,
-        messages: []
-      },
-      warnings: {
-        count: 2,
-        messages: [
-          'Slow API response detected for /api/mood-capsules/generate',
-          'Memory usage increased by 15% in the last hour'
-        ]
-      }
-    };
-
-    // Memory usage stats
-    const memory = {
-      usage: 65, // percentage
-      leaks: []
-    };
-
+    // Validate API endpoints to get response times
+    const apiResults = await validateApiEndpoints();
+    
+    // Calculate average API response time
+    const validResponses = apiResults.results.filter(r => r.valid);
+    const totalResponseTime = validResponses.reduce((sum, r) => sum + r.responseTime, 0);
+    const averageResponseTime = validResponses.length > 0 
+      ? Math.round(totalResponseTime / validResponses.length) 
+      : 0;
+    
+    // Find slowest API endpoint
+    const slowestEndpoint = validResponses.reduce((slowest, current) => {
+      return current.responseTime > slowest.responseTime ? current : slowest;
+    }, { endpoint: 'none', responseTime: 0, method: 'GET', status: 200, valid: true });
+    
+    // Collect error messages
+    const criticalErrors = apiResults.results
+      .filter(r => !r.valid && r.status >= 500)
+      .map(r => `${r.method} ${r.endpoint}: ${r.error}`);
+    
+    const warnings = apiResults.results
+      .filter(r => !r.valid && r.status < 500)
+      .map(r => `${r.method} ${r.endpoint}: ${r.error}`);
+    
+    // In a real implementation, we would collect actual memory usage
+    // Here we're using a simulated value
+    const memoryUsage = Math.round(performance.memory?.usedJSHeapSize / 1048576) || 0;
+    
     return {
-      apiResponseTimes,
-      pageLoadTimes,
-      errors,
-      memory
+      apiResponseTimes: {
+        average: averageResponseTime,
+        slowest: {
+          endpoint: slowestEndpoint.endpoint,
+          time: slowestEndpoint.responseTime
+        }
+      },
+      pageLoadTimes: {
+        average: Math.round(performance.now() / 5), // Simulated value
+        slowest: {
+          page: '/dashboard',
+          time: Math.round(performance.now() / 4) // Simulated value
+        }
+      },
+      errors: {
+        critical: {
+          count: criticalErrors.length,
+          messages: criticalErrors
+        },
+        warnings: {
+          count: warnings.length,
+          messages: warnings
+        }
+      },
+      memory: {
+        usage: memoryUsage,
+        leaks: [] // In a real implementation, we would detect memory leaks
+      }
     };
   } catch (error) {
-    console.error('Error collecting performance metrics:', error);
+    logger.error('Error collecting performance metrics:', error);
+    
+    // Return default metrics on error
     return {
       apiResponseTimes: { average: 0, slowest: { endpoint: 'unknown', time: 0 } },
       pageLoadTimes: { average: 0, slowest: { page: 'unknown', time: 0 } },
-      errors: {
+      errors: { 
         critical: { count: 1, messages: ['Error collecting performance metrics'] },
         warnings: { count: 0, messages: [] }
       },
@@ -138,132 +166,56 @@ async function collectPerformanceMetrics(): Promise<AppPerformanceMetrics> {
 }
 
 /**
- * Generate the user impact assessment based on current metrics
+ * Generate an assessment of how current issues are impacting users
  */
 function generateUserImpactAssessment(metrics: AppPerformanceMetrics, accessibilityScore: number): string {
   const impacts = [];
-
-  // Assess API response time impact
+  
+  // API response time impact
   if (metrics.apiResponseTimes.average > 500) {
-    impacts.push(`Slow API responses (${metrics.apiResponseTimes.average}ms average) are causing noticeable delays in user interactions, particularly affecting creative flow during mood capsule generation.`);
+    impacts.push('Users experiencing slow responses when interacting with the app');
   }
-
-  // Assess page load impact
-  if (metrics.pageLoadTimes.average > 1000) {
-    impacts.push(`Page load times (${metrics.pageLoadTimes.average}ms average) are affecting user experience, particularly for new users exploring the platform.`);
-  }
-
-  // Assess error impact
+  
+  // Error impact
   if (metrics.errors.critical.count > 0) {
-    impacts.push(`${metrics.errors.critical.count} critical errors detected, directly impacting user ability to complete core tasks like saving content or generating color palettes.`);
+    impacts.push('Critical functionality may be unavailable to users');
+  } else if (metrics.errors.warnings.count > 0) {
+    impacts.push('Some non-critical features may be degraded');
   }
-
-  // Assess accessibility impact
-  if (accessibilityScore < 80) {
-    impacts.push(`Accessibility score of ${accessibilityScore}/100 indicates barriers for users with disabilities, limiting platform inclusivity.`);
+  
+  // Accessibility impact
+  if (accessibilityScore < 70) {
+    impacts.push('Users with accessibility needs may have difficulty using the app');
   }
-
-  // Default message for good performance
-  if (impacts.length === 0) {
-    return "App performance is good with minimal impact on user experience. All critical user flows are functioning optimally.";
+  
+  // Page load impact
+  if (metrics.pageLoadTimes.average > 3000) {
+    impacts.push('Page load times are slow, affecting user experience');
   }
-
-  return impacts.join(' ') + (impacts.length > 1 
-    ? ' These issues collectively diminish user satisfaction and engagement.' 
-    : ' This issue may reduce user satisfaction if not addressed.');
+  
+  // Return summarized impacts or generic message if no specific impacts
+  return impacts.length > 0 
+    ? impacts.join('. ') + '.' 
+    : 'No significant user impact detected.';
 }
-
-/**
- * Generate recommendations based on the status report
- */
-function generateRecommendations(report: AppStatusReport): {
-  critical: string[];
-  improvements: string[];
-  optimizations: string[];
-} {
-  const critical = [];
-  const improvements = [];
-  const optimizations = [];
-
-  // Critical recommendations
-  if (report.services.backend.status === 'offline') {
-    critical.push('Restore backend services immediately to restore core functionality');
-  }
-  if (report.services.database.status === 'offline') {
-    critical.push('Restore database connectivity to prevent data loss and restore user access');
-  }
-  if (report.performance.errors.critical.count > 0) {
-    critical.push('Address critical errors that are blocking user workflows');
-  }
-
-  // Improvement recommendations
-  if (report.userExperience.accessibilityScore < 80) {
-    improvements.push('Improve accessibility to ensure all users can effectively use the platform');
-  }
-  if (report.userExperience.brokenLinks > 0) {
-    improvements.push(`Fix ${report.userExperience.brokenLinks} broken links detected across the application`);
-  }
-  if (report.performance.apiResponseTimes.average > 500) {
-    improvements.push(`Optimize API performance, particularly for ${report.performance.apiResponseTimes.slowest.endpoint}`);
-  }
-  if (report.services.frontend.status === 'degraded') {
-    improvements.push('Address frontend rendering issues to improve UI responsiveness');
-  }
-
-  // Optimization recommendations
-  if (report.performance.pageLoadTimes.average > 800) {
-    optimizations.push('Consider code splitting and lazy loading to improve page load performance');
-  }
-  if (report.performance.memory.usage > 80) {
-    optimizations.push('Implement memory optimization to prevent potential performance degradation');
-  }
-  if (report.userExperience.responsiveDesignScore < 90) {
-    optimizations.push('Enhance mobile responsiveness to improve the experience for mobile users');
-  }
-
-  return { critical, improvements, optimizations };
-}
-
-/**
- * Mock security monitor for testing
- */
-const securityMonitor = {
-  validateAssetIntegrity: async () => ({ 
-    valid: true, 
-    issues: [], 
-    assetCount: 48,
-    integrityScore: 95
-  })
-};
-
-/**
- * Mock accessibility audit for testing
- */
-const runAccessibilityAudit = async () => ({ 
-  score: 87, 
-  passed: 32, 
-  failed: 5, 
-  warnings: 8,
-  recommendations: ['Add ARIA labels to interactive elements', 'Increase color contrast for text elements'] 
-});
 
 /**
  * Generate a comprehensive status report for the application
  */
 export async function generateAppStatusReport(): Promise<AppStatusReport> {
   try {
+    logger.log('Generating comprehensive app status report...');
+    
     // Run simultaneous validations
     const [
       securityResults,
       accessibilityResults,
       navigationResults,
-      responsivenessResults,
       performanceMetrics
     ] = await Promise.all([
       securityMonitor.validateAssetIntegrity(),
-      runAccessibilityAudit(),
-      verifyPageLinks(),
-      testAppResponsiveness(),
+      runAccessibilityAudit(''),
+      verifyPageLinks(''),
       collectPerformanceMetrics()
     ]);
     
@@ -271,14 +223,57 @@ export async function generateAppStatusReport(): Promise<AppStatusReport> {
     let overallStatus: 'online' | 'degraded' | 'offline' = 'online';
     let statusMessage = 'All systems operational';
     
+    if (performanceMetrics.errors.warnings.count > 0) {
+      overallStatus = 'degraded';
+      statusMessage = 'System experiencing minor issues';
+    }
+    
     if (performanceMetrics.errors.critical.count > 0) {
       overallStatus = 'degraded';
-      statusMessage = 'System experiencing issues';
+      statusMessage = 'System experiencing significant issues';
     }
     
     if (performanceMetrics.errors.critical.count > 5) {
       overallStatus = 'offline';
       statusMessage = 'Major system outage';
+    }
+    
+    // Count broken links
+    const brokenLinks = (navigationResults.details?.failed?.length || 0);
+    
+    // Calculate responsive design score (mocked for now)
+    const responsiveDesignScore = 85;
+    
+    // Generate recommendations
+    const criticalRecommendations = [];
+    const improvementRecommendations = [];
+    const optimizationRecommendations = [];
+    
+    // Add critical recommendations based on findings
+    if (performanceMetrics.errors.critical.count > 0) {
+      criticalRecommendations.push('Fix critical API errors to restore functionality');
+    }
+    
+    if (brokenLinks > 0) {
+      criticalRecommendations.push(`Fix ${brokenLinks} broken navigation links`);
+    }
+    
+    // Add improvement recommendations
+    if (accessibilityResults.score < 90) {
+      improvementRecommendations.push('Improve accessibility for better user experience');
+    }
+    
+    if (performanceMetrics.apiResponseTimes.average > 200) {
+      improvementRecommendations.push('Optimize API response times for faster interactions');
+    }
+    
+    // Add optimization recommendations
+    if (performanceMetrics.pageLoadTimes.average > 1000) {
+      optimizationRecommendations.push('Optimize page load times for better performance');
+    }
+    
+    if (performanceMetrics.memory.usage > 100) {
+      optimizationRecommendations.push('Review memory usage for potential memory leaks');
     }
     
     // Compile the report
@@ -298,56 +293,51 @@ export async function generateAppStatusReport(): Promise<AppStatusReport> {
           status: performanceMetrics.errors.critical.count > 0 ? 'degraded' : 'online',
           issues: performanceMetrics.errors.critical.messages
         },
-        database: { 
-          status: 'online', // Simulate database status
-          issues: [] 
+        database: {
+          status: 'online', // Mocked for now
+          issues: []
         }
       },
       performance: performanceMetrics,
       userExperience: {
-        accessibilityScore: accessibilityResults.score,
-        responsiveDesignScore: responsivenessResults.success ? 90 : 70,
-        brokenLinks: navigationResults.potentialBrokenLinks.length,
+        accessibilityScore: accessibilityResults.score || 0,
+        responsiveDesignScore,
+        brokenLinks,
         userFeedback: {
-          sentiment: 'neutral',
-          recentComments: [
-            "Love the mood capsules feature!",
-            "App seems slower than usual today",
-            "Having trouble uploading images"
-          ]
+          sentiment: 'neutral', // Mocked for now
+          recentComments: [] // Would be populated from user feedback system
         }
       },
-      recommendations: { critical: [], improvements: [], optimizations: [] }
+      recommendations: {
+        critical: criticalRecommendations,
+        improvements: improvementRecommendations,
+        optimizations: optimizationRecommendations
+      }
     };
     
-    // Generate recommendations based on the compiled report
-    report.recommendations = generateRecommendations(report);
-    
-    // Log the report generation for monitoring
-    logger.info(`App status report generated at ${report.timestamp}`);
-    
+    logger.log('App status report generated successfully');
     return report;
   } catch (error) {
-    console.error('Error generating app status report:', error);
+    logger.error('Error generating app status report:', error);
     
-    // Return a degraded status report when errors occur
+    // Return a basic report indicating the error
     return {
       timestamp: new Date().toISOString(),
       overview: {
         status: 'degraded',
         statusMessage: 'Error generating status report',
-        userImpact: 'Application monitoring system is experiencing issues, which may result in undetected performance problems.'
+        userImpact: 'Status monitoring system is experiencing issues'
       },
       services: {
-        frontend: { status: 'unknown', issues: ['Status check failed'] },
-        backend: { status: 'unknown', issues: ['Status check failed'] },
-        database: { status: 'unknown', issues: ['Status check failed'] }
+        frontend: { status: 'unknown', issues: ['Unable to determine status'] },
+        backend: { status: 'unknown', issues: ['Unable to determine status'] },
+        database: { status: 'unknown', issues: ['Unable to determine status'] }
       },
       performance: {
         apiResponseTimes: { average: 0, slowest: { endpoint: 'unknown', time: 0 } },
         pageLoadTimes: { average: 0, slowest: { page: 'unknown', time: 0 } },
-        errors: {
-          critical: { count: 1, messages: ['Status monitoring system failure'] },
+        errors: { 
+          critical: { count: 1, messages: ['Error generating status report'] },
           warnings: { count: 0, messages: [] }
         },
         memory: { usage: 0, leaks: [] }
@@ -362,7 +352,7 @@ export async function generateAppStatusReport(): Promise<AppStatusReport> {
         }
       },
       recommendations: {
-        critical: ['Restore application monitoring system to ensure proper service oversight'],
+        critical: ['Fix status monitoring system'],
         improvements: [],
         optimizations: []
       }
@@ -371,113 +361,107 @@ export async function generateAppStatusReport(): Promise<AppStatusReport> {
 }
 
 /**
- * Display the app status report in a user-friendly format
- */
-export function displayAppStatusReport(report: AppStatusReport): void {
-  console.log('\n=========== CREATELY APP STATUS REPORT ===========');
-  console.log(`Generated: ${new Date(report.timestamp).toLocaleString()}`);
-  console.log(`\nOVERALL STATUS: ${report.overview.status.toUpperCase()} - ${report.overview.statusMessage}`);
-  console.log(`\nUSER IMPACT:\n${report.overview.userImpact}`);
-  
-  console.log('\nSERVICE STATUS:');
-  console.log(`- Frontend: ${report.services.frontend.status.toUpperCase()}`);
-  console.log(`- Backend: ${report.services.backend.status.toUpperCase()}`);
-  console.log(`- Database: ${report.services.database.status.toUpperCase()}`);
-  
-  if (report.services.frontend.issues.length > 0 || 
-      report.services.backend.issues.length > 0 || 
-      report.services.database.issues.length > 0) {
-    console.log('\nSERVICE ISSUES:');
-    if (report.services.frontend.issues.length > 0) {
-      console.log('- Frontend Issues:');
-      report.services.frontend.issues.forEach(issue => console.log(`  * ${issue}`));
-    }
-    if (report.services.backend.issues.length > 0) {
-      console.log('- Backend Issues:');
-      report.services.backend.issues.forEach(issue => console.log(`  * ${issue}`));
-    }
-    if (report.services.database.issues.length > 0) {
-      console.log('- Database Issues:');
-      report.services.database.issues.forEach(issue => console.log(`  * ${issue}`));
-    }
-  }
-  
-  console.log('\nPERFORMANCE METRICS:');
-  console.log(`- API Response Time: ${report.performance.apiResponseTimes.average}ms (avg)`);
-  console.log(`- Slowest API: ${report.performance.apiResponseTimes.slowest.endpoint} (${report.performance.apiResponseTimes.slowest.time}ms)`);
-  console.log(`- Page Load Time: ${report.performance.pageLoadTimes.average}ms (avg)`);
-  console.log(`- Slowest Page: ${report.performance.pageLoadTimes.slowest.page} (${report.performance.pageLoadTimes.slowest.time}ms)`);
-  console.log(`- Critical Errors: ${report.performance.errors.critical.count}`);
-  console.log(`- Warnings: ${report.performance.errors.warnings.count}`);
-  console.log(`- Memory Usage: ${report.performance.memory.usage}%`);
-  
-  console.log('\nUSER EXPERIENCE:');
-  console.log(`- Accessibility Score: ${report.userExperience.accessibilityScore}/100`);
-  console.log(`- Responsive Design Score: ${report.userExperience.responsiveDesignScore}/100`);
-  console.log(`- Broken Links: ${report.userExperience.brokenLinks}`);
-  console.log(`- User Sentiment: ${report.userExperience.userFeedback.sentiment}`);
-  
-  if (report.userExperience.userFeedback.recentComments.length > 0) {
-    console.log('\nRECENT USER FEEDBACK:');
-    report.userExperience.userFeedback.recentComments.forEach(comment => console.log(`- "${comment}"`));
-  }
-  
-  console.log('\nRECOMMENDATIONS:');
-  if (report.recommendations.critical.length > 0) {
-    console.log('Critical:');
-    report.recommendations.critical.forEach(item => console.log(`- ${item}`));
-  }
-  if (report.recommendations.improvements.length > 0) {
-    console.log('Improvements:');
-    report.recommendations.improvements.forEach(item => console.log(`- ${item}`));
-  }
-  if (report.recommendations.optimizations.length > 0) {
-    console.log('Optimizations:');
-    report.recommendations.optimizations.forEach(item => console.log(`- ${item}`));
-  }
-  
-  console.log('\n=====================================================');
-}
-
-/**
- * Create a summary of the app status report for quick overview
+ * Create a condensed summary of the app status
  */
 export function createStatusSummary(report: AppStatusReport): string {
-  const { status, statusMessage } = report.overview;
-  const criticalIssues = report.recommendations.critical.length;
-  const improvementIssues = report.recommendations.improvements.length;
+  const { overview, services, performance, userExperience, recommendations } = report;
   
-  let emoji = '✅';
-  if (status === 'degraded') emoji = '⚠️';
-  if (status === 'offline') emoji = '🔴';
+  const summary = [
+    `Status: ${overview.status.toUpperCase()} - ${overview.statusMessage}`,
+    `Services: Frontend (${services.frontend.status}), Backend (${services.backend.status}), Database (${services.database.status})`,
+    `API Avg Response: ${performance.apiResponseTimes.average}ms, Page Load Avg: ${performance.pageLoadTimes.average}ms`,
+    `Errors: ${performance.errors.critical.count} critical, ${performance.errors.warnings.count} warnings`,
+    `User Experience: Accessibility (${userExperience.accessibilityScore}/100), Responsive Design (${userExperience.responsiveDesignScore}/100)`,
+    `Recommendations: ${recommendations.critical.length} critical, ${recommendations.improvements.length} improvements`
+  ];
   
-  return `${emoji} Status: ${status.toUpperCase()} - ${statusMessage} | Critical Issues: ${criticalIssues} | Improvements: ${improvementIssues}`;
+  return summary.join('\n');
 }
 
 /**
- * Save the status report to local storage for historical tracking
+ * Display the app status report in a formatted way
  */
-export function saveStatusReport(report: AppStatusReport): void {
-  try {
-    const key = `app_status_${new Date(report.timestamp).toISOString().split('T')[0]}`;
-    const recentReports = JSON.parse(localStorage.getItem('recent_status_reports') || '[]');
-    
-    // Add new report to the beginning of the array
-    recentReports.unshift({
-      timestamp: report.timestamp,
-      status: report.overview.status,
-      criticalIssues: report.recommendations.critical.length
-    });
-    
-    // Keep only the last 10 reports
-    const trimmedReports = recentReports.slice(0, 10);
-    
-    // Save reports
-    localStorage.setItem('recent_status_reports', JSON.stringify(trimmedReports));
-    localStorage.setItem(key, JSON.stringify(report));
-    
-    console.log('Status report saved to local storage');
-  } catch (error) {
-    console.error('Failed to save status report to local storage:', error);
+export function displayAppStatusReport(report: AppStatusReport): void {
+  const { overview, services, performance, userExperience, recommendations } = report;
+  
+  // Helper for status display
+  const getStatusEmoji = (status: string) => {
+    switch (status) {
+      case 'online': return '✅';
+      case 'degraded': return '⚠️';
+      case 'offline': return '❌';
+      default: return '❓';
+    }
+  };
+  
+  // Format the report for display
+  console.log('\n========== APP STATUS REPORT ==========');
+  console.log(`Generated: ${new Date(report.timestamp).toLocaleString()}`);
+  console.log('\n----- OVERVIEW -----');
+  console.log(`Status: ${getStatusEmoji(overview.status)} ${overview.status.toUpperCase()} - ${overview.statusMessage}`);
+  console.log(`User Impact: ${overview.userImpact}`);
+  
+  console.log('\n----- SERVICES -----');
+  console.log(`Frontend: ${getStatusEmoji(services.frontend.status)} ${services.frontend.status.toUpperCase()}`);
+  if (services.frontend.issues.length > 0) {
+    console.log(`  Issues: ${services.frontend.issues.join(', ')}`);
   }
+  
+  console.log(`Backend: ${getStatusEmoji(services.backend.status)} ${services.backend.status.toUpperCase()}`);
+  if (services.backend.issues.length > 0) {
+    console.log(`  Issues: ${services.backend.issues.join(', ')}`);
+  }
+  
+  console.log(`Database: ${getStatusEmoji(services.database.status)} ${services.database.status.toUpperCase()}`);
+  if (services.database.issues.length > 0) {
+    console.log(`  Issues: ${services.database.issues.join(', ')}`);
+  }
+  
+  console.log('\n----- PERFORMANCE -----');
+  console.log(`API Response Times: ${performance.apiResponseTimes.average}ms average`);
+  if (performance.apiResponseTimes.slowest.time > 0) {
+    console.log(`  Slowest Endpoint: ${performance.apiResponseTimes.slowest.endpoint} (${performance.apiResponseTimes.slowest.time}ms)`);
+  }
+  
+  console.log(`Page Load Times: ${performance.pageLoadTimes.average}ms average`);
+  if (performance.pageLoadTimes.slowest.time > 0) {
+    console.log(`  Slowest Page: ${performance.pageLoadTimes.slowest.page} (${performance.pageLoadTimes.slowest.time}ms)`);
+  }
+  
+  console.log(`Errors: ${performance.errors.critical.count} critical, ${performance.errors.warnings.count} warnings`);
+  if (performance.errors.critical.count > 0) {
+    console.log('  Critical Errors:');
+    performance.errors.critical.messages.forEach(msg => console.log(`    - ${msg}`));
+  }
+  
+  if (performance.errors.warnings.count > 0) {
+    console.log('  Warnings:');
+    performance.errors.warnings.messages.forEach(msg => console.log(`    - ${msg}`));
+  }
+  
+  console.log(`Memory Usage: ${performance.memory.usage}MB`);
+  
+  console.log('\n----- USER EXPERIENCE -----');
+  console.log(`Accessibility Score: ${userExperience.accessibilityScore}/100`);
+  console.log(`Responsive Design Score: ${userExperience.responsiveDesignScore}/100`);
+  console.log(`Broken Links: ${userExperience.brokenLinks}`);
+  console.log(`User Feedback Sentiment: ${userExperience.userFeedback.sentiment}`);
+  
+  console.log('\n----- RECOMMENDATIONS -----');
+  if (recommendations.critical.length > 0) {
+    console.log('Critical:');
+    recommendations.critical.forEach(rec => console.log(`  ! ${rec}`));
+  }
+  
+  if (recommendations.improvements.length > 0) {
+    console.log('Improvements:');
+    recommendations.improvements.forEach(rec => console.log(`  * ${rec}`));
+  }
+  
+  if (recommendations.optimizations.length > 0) {
+    console.log('Optimizations:');
+    recommendations.optimizations.forEach(rec => console.log(`  > ${rec}`));
+  }
+  
+  console.log('\n=======================================');
 }

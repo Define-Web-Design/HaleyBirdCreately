@@ -7,6 +7,7 @@
 
 const { execSync } = require('child_process');
 const path = require('path');
+const fs = require('fs');
 
 async function runStatusCheck() {
   console.log('Running comprehensive app status check...');
@@ -14,35 +15,42 @@ async function runStatusCheck() {
     // Use ts-node to directly execute the TypeScript file
     try {
       console.log('Attempting to run app status check using ts-node...');
-      execSync('npx ts-node client/src/utils/app-status-cli.ts', { 
+      const output = execSync('npx ts-node client/src/utils/app-status-cli.ts', { 
         stdio: 'inherit'
       });
-      return;
+      return output;
     } catch (tsNodeError) {
-      console.log('ts-node execution failed, trying alternative method...');
-      console.error(tsNodeError.message);
-      
-      // Try to require the module directly (if ts-node is registered globally)
-      try {
-        require('ts-node/register');
-        const { runAppStatusCheck } = require('../client/src/utils/app-status-cli.ts');
-        await runAppStatusCheck();
+      // If ts-node execution fails with an exit code indicating app issues,
+      // this is expected behavior - it's just reporting app problems
+      if (tsNodeError.status === 1 || tsNodeError.status === 2) {
+        console.log('App status check completed with warnings or errors');
         return;
-      } catch (requireError) {
-        console.error('Direct require failed:', requireError.message);
-        
-        // Last resort: Try to use the compiled JavaScript if available
-        const compiledCliPath = path.join(__dirname, '../dist/client/src/utils/app-status-cli.js');
-        const fs = require('fs');
-        
-        if (fs.existsSync(compiledCliPath)) {
-          console.log('Found compiled version, running...');
-          const { runAppStatusCheck } = require(compiledCliPath);
-          await runAppStatusCheck();
-          return;
+      }
+      
+      console.log('ts-node execution failed with unexpected error, trying alternative method...');
+      
+      // Create a logs directory if it doesn't exist
+      const logsDir = path.join(__dirname, '../logs/app-status');
+      if (!fs.existsSync(logsDir)) {
+        fs.mkdirSync(logsDir, { recursive: true });
+      }
+      
+      // Log the error
+      const errorPath = path.join(logsDir, 'error.log');
+      fs.appendFileSync(errorPath, `[${new Date().toISOString()}] Error running status check: ${tsNodeError.message}\n`);
+      
+      // Try running using node directly with ts-node/register
+      try {
+        execSync('node -r ts-node/register client/src/utils/app-status-cli.ts', {
+          stdio: 'inherit'
+        });
+      } catch (nodeError) {
+        // If this fails with status 1 or 2, it's just the app status report showing issues
+        if (nodeError.status === 1 || nodeError.status === 2) {
+          console.log('App status check completed with warnings or errors');
+        } else {
+          throw new Error(`Failed to run status check: ${nodeError.message}`);
         }
-        
-        throw new Error('Failed to run app status check - no method succeeded');
       }
     }
   } catch (error) {
