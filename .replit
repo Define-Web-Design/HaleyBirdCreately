@@ -3235,5 +3235,66 @@ args = "  }"
 task = "shell.exec"
 args = "\""
 
+[[workflows.workflow]]
+name = "Task Verification"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Kill any running node processes"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pkill -f node || true"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run ESLint to check for code quality"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run lint"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run TypeScript type checking"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npx tsc --noEmit"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run the comprehensive validation system"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node -e \"require('./client/src/utils/consolidated-validation.js').runCompleteWorkflowValidation('Verify all tasks and validate implementation').then(success => { console.log(success ? 'Validation successful!' : 'Validation failed'); process.exit(success ? 0 : 1); })\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# If validation passes, create a checkpoint"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node -e \"const { validateBeforeCheckpoint } = require('./client/src/utils/validation-coordinator.js'); validateBeforeCheckpoint('Automated checkpoint').then(canProceed => { console.log(canProceed ? 'Ready for checkpoint creation' : 'Not ready for checkpoint - fix validation errors'); process.exit(canProceed ? 0 : 1); });\""
+
 [objectStorage]
 defaultBucketID = "replit-objstore-0f505a20-ca44-41fd-a1d9-978b798832cc"

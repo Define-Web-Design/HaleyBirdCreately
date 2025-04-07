@@ -614,6 +614,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Task Verification Routes
+  import taskVerificationRoutes from './routes/task-verification';
+  app.use(`${apiPrefix}/task-verification`, taskVerificationRoutes);
 
   // Get all tasks
   app.get(`${apiPrefix}/task-verification/tasks`, async (req: Request, res: Response) => {

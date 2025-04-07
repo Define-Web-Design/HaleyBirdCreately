@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { TaskVerification, TaskVerificationResult } from '../utils/task-verification';
 import { checkpointManager } from '../utils/checkpoint-manager';
+import TaskVerificationImplementation from '../utils/task-verification-implementation';
 
 interface TaskVerificationContextType {
   status: TaskVerificationResult | null;
