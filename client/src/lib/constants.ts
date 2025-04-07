@@ -92,6 +92,12 @@ export const SMART_TOOLS = [
     isNew: true,
   },
   {
+    name: "Performance Analysis",
+    path: "/performance-analysis",
+    icon: "fas fa-chart-bar",
+    isNew: true,
+  },
+  {
     name: "Cross-Platform Tools",
     path: "/cross-platform-tools",
     icon: "fas fa-sync",

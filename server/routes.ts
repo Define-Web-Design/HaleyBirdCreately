@@ -9,6 +9,7 @@ import {
   suggestPostingTimes
 } from "./ai/content";
 import { generateMoodPalette, generateAIPalette } from "./services/paletteGenerator";
+import { runPageSpeedAnalysis, saveResults, formatAnalysisForResponse } from "./services/pageSpeedService";
 import { MoodTone } from "../shared/schema";
 import { 
   apiLimiter, 
@@ -225,6 +226,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.header('Access-Control-Allow-Methods', 'GET,OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Content-Type');
     res.sendStatus(204);
+  });
+  
+  // PageSpeed Insights API route
+  app.post('/api/pagespeed/analyze', async (req, res) => {
+    try {
+      const { url, device = 'mobile' } = req.body;
+      
+      if (!url) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'URL is required for PageSpeed analysis' 
+        });
+      }
+      
+      if (!['mobile', 'desktop'].includes(device)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Device must be either "mobile" or "desktop"'
+        });
+      }
+      
+      console.log(`Running PageSpeed analysis for ${url} on ${device}`);
+      
+      if (!process.env.PAGESPEED_INSIGHTS_API_KEY) {
+        return res.status(500).json({
+          success: false,
+          message: 'PageSpeed API key not configured'
+        });
+      }
+      
+      // Run the analysis
+      const results = await runPageSpeedAnalysis(url, device as 'mobile' | 'desktop');
+      
+      // Save the results to files
+      const fileInfo = saveResults(results as any, url, device);
+      
+      // Format the results for API response
+      const formattedResults = formatAnalysisForResponse(results as any);
+      
+      res.json({
+        success: true,
+        results: formattedResults,
+        files: fileInfo ? {
+          jsonFilename: fileInfo.jsonFilename,
+          summaryFilename: fileInfo.summaryFilename
+        } : null
+      });
+    } catch (error: any) {
+      console.error('Error running PageSpeed analysis:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: error.message || 'Failed to run PageSpeed analysis'
+      });
+    }
   });
   
   // Apply access validation to all other API routes

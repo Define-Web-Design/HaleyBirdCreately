@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 /**
  * PageSpeed Insights Integration Script
  * 
@@ -15,38 +13,36 @@
  * - An internet connection to access PageSpeed Insights API
  */
 
-const https = require('https');
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import https from 'https';
+import dotenv from 'dotenv';
 
-// ANSI color codes for terminal output
+// Load environment variables
+dotenv.config();
+
+// Constants
+const API_KEY = process.env.PAGESPEED_INSIGHTS_API_KEY;
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const LOGS_DIR = path.join(__dirname, '..', 'logs', 'pagespeed');
+
+// Ensure logs directory exists
+if (!fs.existsSync(LOGS_DIR)) {
+  fs.mkdirSync(LOGS_DIR, { recursive: true });
+}
+
+// Color codes for terminal output
 const colors = {
-  reset: '\x1b[0m',
-  bright: '\x1b[1m',
-  dim: '\x1b[2m',
   red: '\x1b[31m',
   green: '\x1b[32m',
   yellow: '\x1b[33m',
   blue: '\x1b[34m',
   magenta: '\x1b[35m',
   cyan: '\x1b[36m',
-  white: '\x1b[37m',
-  bgRed: '\x1b[41m',
-  bgGreen: '\x1b[42m',
-  bgYellow: '\x1b[43m',
+  reset: '\x1b[0m',
+  bold: '\x1b[1m'
 };
-
-// Default configuration
-const config = {
-  apiKey: process.env.PAGESPEED_API_KEY || '', // Optional API key
-  outputDir: path.join(process.cwd(), 'logs', 'pagespeed'),
-  timeStamp: new Date().toISOString().replace(/:/g, '-').slice(0, 19),
-};
-
-// Ensure logs directory exists
-if (!fs.existsSync(config.outputDir)) {
-  fs.mkdirSync(config.outputDir, { recursive: true });
-}
 
 /**
  * Parse command line arguments
@@ -54,16 +50,21 @@ if (!fs.existsSync(config.outputDir)) {
 function parseArgs() {
   const args = process.argv.slice(2);
   
-  if (args.length < 1) {
-    console.log(`${colors.bright}${colors.yellow}Usage:${colors.reset} node pagespeed-insights.js URL [device]`);
-    console.log(`${colors.dim}Example: node pagespeed-insights.js https://example.com mobile${colors.reset}`);
+  if (args.length === 0) {
+    console.error(`${colors.red}Error: URL is required${colors.reset}`);
+    console.log(`Usage: node pagespeed-insights.js <URL> [device]`);
     process.exit(1);
   }
   
-  return {
-    url: args[0],
-    device: args[1] || 'mobile' // Default to mobile
-  };
+  const url = args[0];
+  const device = args[1] || 'mobile';
+  
+  if (!['mobile', 'desktop'].includes(device.toLowerCase())) {
+    console.warn(`${colors.yellow}Warning: Invalid device type "${device}". Using "mobile" instead.${colors.reset}`);
+    return { url, device: 'mobile' };
+  }
+  
+  return { url, device: device.toLowerCase() };
 }
 
 /**
@@ -71,10 +72,12 @@ function parseArgs() {
  */
 async function runPageSpeedAnalysis(url, device = 'mobile') {
   return new Promise((resolve, reject) => {
-    console.log(`\n${colors.bright}${colors.blue}Analyzing ${url} for ${device}...${colors.reset}\n`);
-    
-    // Construct API URL
-    const apiUrl = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(url)}&strategy=${device}${config.apiKey ? `&key=${config.apiKey}` : ''}`;
+    if (!API_KEY) {
+      reject(new Error('PageSpeed Insights API key is missing. Please set the PAGESPEED_INSIGHTS_API_KEY environment variable.'));
+      return;
+    }
+
+    const apiUrl = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(url)}&strategy=${device}&key=${API_KEY}`;
     
     https.get(apiUrl, (res) => {
       let data = '';
@@ -84,163 +87,227 @@ async function runPageSpeedAnalysis(url, device = 'mobile') {
       });
       
       res.on('end', () => {
-        try {
-          const result = JSON.parse(data);
-          if (result.error) {
-            reject(new Error(`API Error: ${result.error.message}`));
-            return;
+        if (res.statusCode !== 200) {
+          try {
+            const error = JSON.parse(data);
+            reject(new Error(`API Error: ${error.error.message}`));
+          } catch (e) {
+            reject(new Error(`HTTP Error: ${res.statusCode}`));
           }
-          resolve(result);
-        } catch (error) {
-          reject(new Error(`Failed to parse API response: ${error.message}`));
+          return;
+        }
+        
+        try {
+          const results = JSON.parse(data);
+          resolve(results);
+        } catch (e) {
+          reject(new Error(`Failed to parse API response: ${e.message}`));
         }
       });
-    }).on('error', (error) => {
-      reject(new Error(`Request failed: ${error.message}`));
+    }).on('error', (e) => {
+      reject(new Error(`Request failed: ${e.message}`));
     });
   });
+}
+
+/**
+ * Format a score (0-1) into a human-readable format with color
+ */
+function formatScore(score) {
+  if (score >= 0.9) {
+    return `${colors.green}${Math.round(score * 100)}${colors.reset}`; // Good
+  } else if (score >= 0.5) {
+    return `${colors.yellow}${Math.round(score * 100)}${colors.reset}`; // Needs Improvement
+  } else {
+    return `${colors.red}${Math.round(score * 100)}${colors.reset}`; // Poor
+  }
 }
 
 /**
  * Format and display the analysis results
  */
 function displayResults(results) {
-  // Extract lighthouse results
-  const lighthouse = results.lighthouseResult;
-  const categories = lighthouse.categories;
-  const audits = lighthouse.audits;
+  const { lighthouseResult } = results;
+  const { categories, audits } = lighthouseResult;
   
   // Display overall scores
-  console.log(`${colors.bright}${colors.magenta}=== Performance Overview ====${colors.reset}\n`);
+  console.log(`\n${colors.bold}${colors.blue}=== PageSpeed Insights Results ===${colors.reset}\n`);
   
-  Object.keys(categories).forEach(key => {
-    const category = categories[key];
-    const score = Math.round(category.score * 100);
-    let color = colors.red;
-    
-    if (score >= 90) color = colors.green;
-    else if (score >= 50) color = colors.yellow;
-    
-    console.log(`${category.title}: ${color}${score}${colors.reset} / 100`);
-  });
+  console.log(`${colors.bold}Overall Scores (out of 100):${colors.reset}`);
+  for (const [category, data] of Object.entries(categories)) {
+    console.log(`- ${data.title}: ${formatScore(data.score)}`);
+  }
   
   // Display Core Web Vitals
-  console.log(`\n${colors.bright}${colors.cyan}=== Core Web Vitals ====${colors.reset}\n`);
+  console.log(`\n${colors.bold}Core Web Vitals:${colors.reset}`);
   
-  const coreVitals = [
-    { id: 'first-contentful-paint', name: 'First Contentful Paint (FCP)' },
-    { id: 'largest-contentful-paint', name: 'Largest Contentful Paint (LCP)' },
-    { id: 'cumulative-layout-shift', name: 'Cumulative Layout Shift (CLS)' },
-    { id: 'total-blocking-time', name: 'Total Blocking Time (TBT)' },
-    { id: 'speed-index', name: 'Speed Index' },
-    { id: 'interactive', name: 'Time to Interactive' }
-  ];
+  // LCP - Largest Contentful Paint
+  const lcp = audits['largest-contentful-paint'];
+  console.log(`- Largest Contentful Paint: ${lcp.displayValue}`);
+  console.log(`  ${lcp.description}`);
   
-  coreVitals.forEach(vital => {
-    const audit = audits[vital.id];
-    if (audit) {
-      const score = Math.round(audit.score * 100) || 0;
-      let color = colors.red;
-      
-      if (score >= 90) color = colors.green;
-      else if (score >= 50) color = colors.yellow;
-      
-      console.log(`${vital.name}: ${color}${audit.displayValue || 'N/A'}${colors.reset} (Score: ${color}${score}${colors.reset})`);
-    }
-  });
+  // CLS - Cumulative Layout Shift
+  const cls = audits['cumulative-layout-shift'];
+  console.log(`- Cumulative Layout Shift: ${cls.displayValue}`);
+  console.log(`  ${cls.description}`);
   
-  // Display top optimization opportunities
-  console.log(`\n${colors.bright}${colors.yellow}=== Top Opportunities ====${colors.reset}\n`);
+  // FID/TBT - First Input Delay / Total Blocking Time
+  const tbt = audits['total-blocking-time'];
+  console.log(`- Total Blocking Time: ${tbt.displayValue}`);
+  console.log(`  ${tbt.description}`);
   
+  // Display top opportunities for improvement
+  console.log(`\n${colors.bold}Top Opportunities for Improvement:${colors.reset}`);
+  
+  // Filter opportunities that have "numericValue" and sort by highest impact
   const opportunities = Object.values(audits)
-    .filter(audit => audit.details && audit.details.type === 'opportunity' && audit.score < 1)
-    .sort((a, b) => (a.score || 0) - (b.score || 0))
+    .filter(audit => audit.details && audit.details.type === 'opportunity' && audit.numericValue)
+    .sort((a, b) => b.numericValue - a.numericValue)
     .slice(0, 5);
   
   if (opportunities.length === 0) {
-    console.log(`${colors.green}No significant opportunities found!${colors.reset}`);
+    console.log('- No specific opportunities identified.');
   } else {
     opportunities.forEach((opportunity, index) => {
-      const score = Math.round((opportunity.score || 0) * 100);
-      let color = colors.red;
-      
-      if (score >= 90) color = colors.green;
-      else if (score >= 50) color = colors.yellow;
-      
-      console.log(`${index + 1}. ${colors.bright}${opportunity.title}${colors.reset} (Score: ${color}${score}${colors.reset})`);
-      console.log(`   ${colors.dim}${opportunity.description}${colors.reset}`);
-      
-      if (opportunity.displayValue) {
-        console.log(`   Potential savings: ${colors.cyan}${opportunity.displayValue}${colors.reset}`);
-      }
-      console.log('');
+      console.log(`${index + 1}. ${opportunity.title}`);
+      console.log(`   Potential saving: ${opportunity.displayValue}`);
     });
   }
   
   // Display diagnostics
-  console.log(`\n${colors.bright}${colors.blue}=== Diagnostics ====${colors.reset}\n`);
+  console.log(`\n${colors.bold}Diagnostics:${colors.reset}`);
   
   const diagnostics = Object.values(audits)
-    .filter(audit => audit.details && audit.details.type === 'diagnostic' && audit.score !== null && audit.score < 1)
-    .sort((a, b) => (a.score || 0) - (b.score || 0))
+    .filter(audit => audit.details && audit.details.type === 'diagnostic' && !audit.score)
     .slice(0, 5);
   
   if (diagnostics.length === 0) {
-    console.log(`${colors.green}No significant diagnostic issues found!${colors.reset}`);
+    console.log('- No specific diagnostics to report.');
   } else {
     diagnostics.forEach((diagnostic, index) => {
-      const score = Math.round((diagnostic.score || 0) * 100);
-      let color = colors.red;
-      
-      if (score >= 90) color = colors.green;
-      else if (score >= 50) color = colors.yellow;
-      
-      console.log(`${index + 1}. ${colors.bright}${diagnostic.title}${colors.reset} (Score: ${color}${score}${colors.reset})`);
-      console.log(`   ${colors.dim}${diagnostic.description}${colors.reset}\n`);
+      console.log(`${index + 1}. ${diagnostic.title}`);
+      if (diagnostic.displayValue) {
+        console.log(`   ${diagnostic.displayValue}`);
+      }
     });
   }
+  
+  // Display passed audits (strengths)
+  console.log(`\n${colors.bold}Strengths (Passed Audits):${colors.reset}`);
+  
+  const strengths = Object.values(audits)
+    .filter(audit => audit.score === 1)
+    .slice(0, 5);
+  
+  if (strengths.length === 0) {
+    console.log('- No specific strengths to report.');
+  } else {
+    strengths.forEach((strength, index) => {
+      console.log(`${index + 1}. ${strength.title}`);
+    });
+  }
+  
+  console.log(`\n${colors.blue}Complete results saved to logs/pagespeed directory${colors.reset}`);
 }
 
 /**
  * Save the analysis results to a file
  */
 function saveResults(results, url, device) {
-  const filename = `pagespeed-${device}-${config.timeStamp}.json`;
-  const filePath = path.join(config.outputDir, filename);
+  const timestamp = new Date().toISOString().replace(/:/g, '-').replace(/\..+/, '');
+  const hostname = new URL(url).hostname;
   
-  // Create a summary file for quick reference
-  const summaryFilename = `pagespeed-summary-${device}-${config.timeStamp}.txt`;
-  const summaryFilePath = path.join(config.outputDir, summaryFilename);
+  // Save the full JSON result
+  const jsonFilename = `pagespeed-${device}-${hostname}-${timestamp}.json`;
+  const jsonPath = path.join(LOGS_DIR, jsonFilename);
+  fs.writeFileSync(jsonPath, JSON.stringify(results, null, 2));
   
-  try {
-    // Save full JSON results
-    fs.writeFileSync(filePath, JSON.stringify(results, null, 2));
-    
-    // Save readable summary
-    const lighthouse = results.lighthouseResult;
-    const categories = lighthouse.categories;
-    
-    let summary = `PageSpeed Insights Analysis Summary\n`;
-    summary += `====================================\n\n`;
-    summary += `URL: ${url}\n`;
-    summary += `Device: ${device}\n`;
-    summary += `Date: ${new Date().toISOString()}\n\n`;
-    summary += `Overall Scores:\n`;
-    
-    Object.keys(categories).forEach(key => {
-      const category = categories[key];
-      const score = Math.round(category.score * 100);
-      summary += `${category.title}: ${score} / 100\n`;
-    });
-    
-    fs.writeFileSync(summaryFilePath, summary);
-    
-    console.log(`\n${colors.bright}${colors.green}Results saved:${colors.reset}`);
-    console.log(`- Full details: ${colors.cyan}${filePath}${colors.reset}`);
-    console.log(`- Summary: ${colors.cyan}${summaryFilePath}${colors.reset}\n`);
-  } catch (error) {
-    console.error(`${colors.red}Failed to save results: ${error.message}${colors.reset}`);
+  // Create a more readable summary
+  const { lighthouseResult } = results;
+  const { categories, audits } = lighthouseResult;
+  
+  let summary = `# PageSpeed Insights Analysis\n\n`;
+  summary += `URL: ${url}\n`;
+  summary += `Device: ${device}\n`;
+  summary += `Date: ${new Date().toLocaleString()}\n\n`;
+  
+  // Add overall scores
+  summary += `## Overall Scores\n\n`;
+  for (const [category, data] of Object.entries(categories)) {
+    summary += `- ${data.title}: ${Math.round(data.score * 100)}/100\n`;
   }
+  
+  // Add Core Web Vitals
+  summary += `\n## Core Web Vitals\n\n`;
+  
+  // LCP - Largest Contentful Paint
+  const lcp = audits['largest-contentful-paint'];
+  summary += `- Largest Contentful Paint: ${lcp.displayValue}\n`;
+  
+  // CLS - Cumulative Layout Shift
+  const cls = audits['cumulative-layout-shift'];
+  summary += `- Cumulative Layout Shift: ${cls.displayValue}\n`;
+  
+  // FID/TBT - First Input Delay / Total Blocking Time
+  const tbt = audits['total-blocking-time'];
+  summary += `- Total Blocking Time: ${tbt.displayValue}\n`;
+  
+  // Add top opportunities
+  summary += `\n## Top Opportunities for Improvement\n\n`;
+  
+  const opportunities = Object.values(audits)
+    .filter(audit => audit.details && audit.details.type === 'opportunity' && audit.numericValue)
+    .sort((a, b) => b.numericValue - a.numericValue)
+    .slice(0, 10);
+  
+  if (opportunities.length === 0) {
+    summary += `- No specific opportunities identified.\n`;
+  } else {
+    opportunities.forEach((opportunity, index) => {
+      summary += `${index + 1}. ${opportunity.title}\n`;
+      summary += `   Potential saving: ${opportunity.displayValue}\n`;
+    });
+  }
+  
+  // Add diagnostics
+  summary += `\n## Diagnostics\n\n`;
+  
+  const diagnostics = Object.values(audits)
+    .filter(audit => audit.details && audit.details.type === 'diagnostic' && !audit.score)
+    .slice(0, 10);
+  
+  if (diagnostics.length === 0) {
+    summary += `- No specific diagnostics to report.\n`;
+  } else {
+    diagnostics.forEach((diagnostic, index) => {
+      summary += `${index + 1}. ${diagnostic.title}\n`;
+      if (diagnostic.displayValue) {
+        summary += `   ${diagnostic.displayValue}\n`;
+      }
+    });
+  }
+  
+  // Add passed audits (strengths)
+  summary += `\n## Strengths (Passed Audits)\n\n`;
+  
+  const strengths = Object.values(audits)
+    .filter(audit => audit.score === 1)
+    .slice(0, 10);
+  
+  if (strengths.length === 0) {
+    summary += `- No specific strengths to report.\n`;
+  } else {
+    strengths.forEach((strength, index) => {
+      summary += `${index + 1}. ${strength.title}\n`;
+    });
+  }
+  
+  // Save the summary
+  const summaryFilename = `pagespeed-summary-${device}-${hostname}-${timestamp}.txt`;
+  const summaryPath = path.join(LOGS_DIR, summaryFilename);
+  fs.writeFileSync(summaryPath, summary);
+  
+  return { jsonPath, summaryPath };
 }
 
 /**
@@ -249,14 +316,31 @@ function saveResults(results, url, device) {
 async function main() {
   try {
     const { url, device } = parseArgs();
-    const results = await runPageSpeedAnalysis(url, device);
-    displayResults(results);
-    saveResults(results, url, device);
     
-    console.log(`\n${colors.bright}${colors.green}Analysis completed successfully!${colors.reset}`);
-    console.log(`${colors.dim}Run this script periodically to track performance improvements.${colors.reset}\n`);
+    console.log(`${colors.blue}Analyzing ${colors.yellow}${url}${colors.blue} for ${colors.yellow}${device}${colors.blue} devices...${colors.reset}`);
+    console.log(`${colors.cyan}This may take a minute or two. Please wait...${colors.reset}`);
+    
+    const results = await runPageSpeedAnalysis(url, device);
+    
+    // Display results in the console
+    displayResults(results);
+    
+    // Save results to file
+    const { jsonPath, summaryPath } = saveResults(results, url, device);
+    
+    console.log(`\n${colors.green}Analysis complete!${colors.reset}`);
+    console.log(`Full results saved to: ${jsonPath}`);
+    console.log(`Summary saved to: ${summaryPath}`);
+    
   } catch (error) {
-    console.error(`\n${colors.bright}${colors.bgRed}Error:${colors.reset} ${colors.red}${error.message}${colors.reset}\n`);
+    console.error(`${colors.red}${colors.bold}Error:${colors.reset} ${error.message}`);
+    
+    if (error.message.includes('API key')) {
+      console.log(`\n${colors.yellow}To fix this issue:${colors.reset}`);
+      console.log(`1. Make sure you have set the PAGESPEED_INSIGHTS_API_KEY in your .env file`);
+      console.log(`2. Get an API key from Google Cloud Console if you don't have one: https://developers.google.com/speed/docs/insights/v5/get-started`);
+    }
+    
     process.exit(1);
   }
 }

@@ -1,0 +1,129 @@
+```markdown
+# Comprehensive Directive: Secure Integration and Monitoring of "Creately API Key" with Google PageSpeed Insights API
+
+## **Objective**
+Ensure the secure integration, functionality, and monitoring of the "Creately API Key" with the Google PageSpeed Insights API. This directive outlines steps to implement the API key, validate its integration, restrict its usage, automate checks, and maintain routine monitoring.
+
+---
+
+## **1. Add the API Key to Your App**
+- Retrieve the "Creately API Key" from the Google Developer Console:
+  ```
+  API Key: AIzaSyC2s911ZN17vm7mpmkYdpidGQQzVRJOEBW
+  ```
+- Store the API key securely:
+  - Use **environment variables** to manage the API key securely:
+    ```env
+    PAGESPEED_INSIGHTS_API_KEY=AIzaSyC2s911ZN17vm7mpmkYdpidGQQzVRJOEBW
+    ```
+  - Do **not** hardcode the API key directly into your application code to prevent unauthorized exposure.
+
+---
+
+## **2. Restrict the API Key**
+Enhance the security of the "Creately API Key" by configuring restrictions in the Google Cloud Console:
+- **Application Restrictions**:
+  - For web-based apps: Use **HTTP Referrers (websites)** to restrict the API key to trusted domains (e.g., `https://yourdomain.com/*`).
+  - For server-side apps: Use **IP Address Restrictions** to allow only specific server IPs to use the key.
+  - For mobile apps: Restrict to specific Android package names or iOS bundle IDs.
+- **API Restrictions**:
+  - Under "API restrictions," set the key to only work with **PageSpeed Insights API**.
+- Save and confirm the restrictions:
+  - Test that the restrictions block unauthorized use while allowing functionality within the specified constraints.
+
+---
+
+## **3. Integrate the API Key with Your App**
+Use the API key in your app to interact with the Google PageSpeed Insights API:
+- **Endpoint**:
+  ```
+  https://pagespeedonline.googleapis.com/pagespeedonline/v5/runPagespeed?url=https://yourappurl.com&key=YOUR_API_KEY
+  ```
+  Replace `YOUR_API_KEY` with `AIzaSyC2s911ZN17vm7mpmkYdpidGQQzVRJOEBW`.
+- **Example Integration in JavaScript**:
+  ```javascript
+  const axios = require("axios");
+
+  const apiKey = process.env.PAGESPEED_INSIGHTS_API_KEY;
+  const url = "https://yourappurl.com";
+
+  async function getPageSpeedInsights() {
+    const endpoint = `https://pagespeedonline.googleapis.com/pagespeedonline/v5/runPagespeed?url=${url}&key=${apiKey}`;
+    const response = await axios.get(endpoint);
+    console.log(response.data);
+  }
+
+  getPageSpeedInsights();
+  ```
+
+---
+
+## **4. Validate API Integration**
+Test the integration of the API key with the app:
+- Execute sample API requests to verify successful communication:
+  ```bash
+  curl "https://pagespeedonline.googleapis.com/pagespeedonline/v5/runPagespeed?url=https://yourappurl.com&key=YOUR_API_KEY"
+  ```
+- Confirm that the API key responds correctly and returns valid data for metrics like:
+  - **First Contentful Paint (FCP)**
+  - **Largest Contentful Paint (LCP)**
+  - **Cumulative Layout Shift (CLS)**
+- Test restricted use cases to ensure unauthorized requests (e.g., from unlisted domains or IPs) are blocked.
+
+---
+
+## **5. Monitor Key Usage and Automate Routine Checks**
+Set up a schedule for ongoing monitoring and validation:
+- **Automate API Calls**:
+  - Use Cron jobs or scheduling scripts to periodically test the API and assess app performance.
+  - Example Cron job for weekly checks:
+    ```bash
+    0 0 * * 1 curl "https://pagespeedonline.googleapis.com/pagespeedonline/v5/runPagespeed?url=https://yourappurl.com&key=YOUR_API_KEY" > /path/to/logfile.txt
+    ```
+- **Log and Analyze Results**:
+  - Store API responses in logs or databases for historical tracking.
+  - Review trends in performance metrics and use the insights for iterative optimization.
+
+---
+
+## **6. Monitor API Key Activity**
+Utilize the Google Cloud Console for key usage tracking:
+- Navigate to **APIs & Services** > **Credentials**.
+- Monitor:
+  - **Usage Logs**: Review the volume of API requests and identify anomalies.
+  - **Error Rates**: Address spikes in errors or failures.
+- Set up alerts:
+  - Configure notifications for unusual activity, such as high API usage or unauthorized attempts.
+
+---
+
+## **7. Rotate the API Key Regularly**
+Periodically rotate the "Creately API Key" to maintain security:
+- Replace the old key with a new one in the Google Cloud Console.
+- Update the new key in your app’s environment variables or configuration files.
+- Validate the integration of the new key with the app.
+
+---
+
+## **8. Establish Check Intervals**
+Set appropriate intervals for routine checks:
+- **Weekly**:
+  - Schedule API calls and review performance metrics.
+  - Validate API restrictions and functionality.
+- **Bi-weekly or Monthly**:
+  - Monitor usage patterns and identify improvements or anomalies.
+  - Rotate keys if necessary, ensuring smooth transitions.
+
+---
+
+## **9. Maintain Security Best Practices**
+- Regularly review and update API key restrictions to match changes in infrastructure or app usage.
+- Document all processes, changes, and findings for future reference.
+- Keep track of Google API usage quotas and adjust workflows if nearing limits.
+
+---
+
+This comprehensive directive ensures the secure integration, monitoring, and ongoing optimization of the "Creately API Key" with the Google PageSpeed Insights API. By adhering to these steps, your app can leverage the API effectively while maintaining robust security and performance standards. Let me know if further refinements are needed! 🚀✨
+``` 
+
+This final directive combines all steps into one streamlined markdown document, ensuring clarity and practicality for implementation. Let me know if there's anything else I can assist with! 🌟

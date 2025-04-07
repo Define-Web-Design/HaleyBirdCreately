@@ -48,7 +48,8 @@ const limiter = rateLimit({
 
 const app = express();
 const server = createServer(app);
-const port = process.env.PORT || 5000; // Use port 5000 as required by Replit
+// Always use port 5000 for consistency with Replit workflows
+const port = 5000; 
 const isProduction = process.env.NODE_ENV === 'production';
 
 // Set trust proxy to handle X-Forwarded-For header correctly in Replit environment
@@ -124,14 +125,13 @@ server.listen(port, () => {
   logger.info(`Server running on http://localhost:${port}`, {port}); //Use the structured logger
 });
 
-
 // Global error handler
 process.on('uncaughtException', (error) => {
-  // Use the logError function from our logger
-  const { logError } = require('./utils/logger');
-  logError(error, {
+  // Use the logger directly
+  logger.error(`Uncaught Exception: ${error.message}`, {
     type: 'uncaughtException',
-    fatal: true
+    fatal: true,
+    stack: error.stack
   });
 
   // Give logger time to write to files before exiting
@@ -141,9 +141,8 @@ process.on('uncaughtException', (error) => {
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-  // Use the logError function from our logger
-  const { logWarn } = require('./utils/logger');
-  logWarn('Unhandled Promise Rejection', {
+  // Use the logger directly
+  logger.warn('Unhandled Promise Rejection', {
     type: 'unhandledRejection',
     reason: reason instanceof Error ? reason.message : String(reason),
     stack: reason instanceof Error ? reason.stack : undefined

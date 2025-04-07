@@ -1,0 +1,103 @@
+```markdown
+# Comprehensive Directive: Securely Integrate "Creately API Key" with Google PageSpeed Insights API
+
+## **Objective**
+Integrate the "Creately API Key" into your application securely and efficiently, leveraging the Google PageSpeed Insights API for performance analysis and optimization while ensuring security best practices.
+
+---
+
+## **1. Add the API Key**
+- Retrieve the "Creately API Key" from the Google Developer Console:
+  ```
+  API Key: AIzaSyC2s911ZN17vm7mpmkYdpidGQQzVRJOEBW
+  ```
+- Store the API key securely in your application:
+  - Use **environment variables** to securely manage the API key:
+    ```env
+    PAGESPEED_INSIGHTS_API_KEY=AIzaSyC2s911ZN17vm7mpmkYdpidGQQzVRJOEBW
+    ```
+  - Avoid hardcoding the API key directly into your application code to reduce security risks.
+
+---
+
+## **2. Restrict the API Key Usage**
+Secure the "Creately API Key" by applying appropriate restrictions in the Google Cloud Console:
+- **Application Restrictions**:
+  - **Web-Based Apps**: Use **HTTP Referrers (websites)** to restrict the API key to trusted domains (e.g., `https://yourdomain.com/*`).
+  - **Server-Side Apps**: Use **IP Address Restrictions** to limit usage to specific server IPs.
+  - **Mobile Apps**: If applicable, use Android package names or iOS bundle IDs to restrict usage to mobile applications.
+- **API Restrictions**:
+  - Under "API restrictions," select **Restrict key** and set it to work exclusively with the **PageSpeed Insights API**.
+- **Save and Validate**:
+  - Apply the restrictions and test that the key works as intended within its defined parameters.
+
+---
+
+## **3. Integrate the API Key with Your App**
+Use the API key to interact with the Google PageSpeed Insights API:
+- **Endpoint**:
+  ```
+  https://pagespeedonline.googleapis.com/pagespeedonline/v5/runPagespeed?url=https://yourappurl.com&key=YOUR_API_KEY
+  ```
+  Replace `YOUR_API_KEY` with the restricted "Creately API Key."
+- **Example Integration in JavaScript**:
+  ```javascript
+  const axios = require("axios");
+
+  const apiKey = process.env.PAGESPEED_INSIGHTS_API_KEY;
+  const url = "https://yourappurl.com";
+
+  async function getPageSpeedInsights() {
+    const endpoint = `https://pagespeedonline.googleapis.com/pagespeedonline/v5/runPagespeed?url=${url}&key=${apiKey}`;
+    const response = await axios.get(endpoint);
+    console.log(response.data);
+  }
+
+  getPageSpeedInsights();
+  ```
+
+---
+
+## **4. Handle API Responses**
+Process the API responses to extract and display insights:
+- **Extract Key Metrics**:
+  - **First Contentful Paint (FCP)**: Measure the time taken for the first visible element to load.
+  - **Largest Contentful Paint (LCP)**: Evaluate the time taken for the largest visible element to render.
+  - **Cumulative Layout Shift (CLS)**: Assess the stability of visual elements during loading.
+  - **Total Blocking Time (TBT)**: Analyze how long scripts block interactivity.
+- **Opportunities and Diagnostics**:
+  - Optimize performance based on recommendations (e.g., compress images, reduce unused CSS).
+- **Display Insights**:
+  - Implement a user-friendly dashboard to present metrics and actionable suggestions.
+
+---
+
+## **5. Validate Integration and Monitor Usage**
+- **Test API Integration**:
+  - Ensure API requests return valid responses without errors.
+  - Confirm that restrictions applied to the API key are effective in blocking unauthorized usage.
+- **Monitor API Usage**:
+  - Use the Google Cloud Console to track API activity and detect anomalies.
+  - Rotate the API key periodically to maintain security.
+
+---
+
+## **6. Automate Performance Monitoring**
+Establish a routine for regular performance monitoring:
+- Schedule periodic API calls to generate reports on performance metrics.
+- Log results to track historical data and improvements over time.
+- Use trends and insights to make proactive adjustments to app performance.
+
+---
+
+## **7. Maintain Security Best Practices**
+- Regularly review key restrictions to align with changes in app usage or infrastructure.
+- Set up alerts in the Google Cloud Console for unusual API activity.
+- Document all processes and security measures for future reference.
+
+---
+
+This directive combines all necessary steps to securely and efficiently integrate the "Creately API Key" with the Google PageSpeed Insights API, ensuring optimal performance analysis and adherence to security best practices. Let me know if further refinements are needed! 🚀✨
+``` 
+
+This fully consolidated directive is structured and streamlined for ease of implementation, ensuring all aspects are covered in one cohesive markdown document. Let me know if there's anything else you'd like adjusted! 🌟
