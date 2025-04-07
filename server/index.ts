@@ -11,6 +11,7 @@ import { initializeWebSocketServer } from './websocket';
 import { storage } from './storage';
 import dotenv from 'dotenv';
 import ws from 'ws';
+import logger, { requestLogger } from './utils/logger';
 
 // Extend the request type to include database connection
 declare global {
@@ -70,6 +71,7 @@ app.use(session({
 // Body parsing middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(requestLogger); // Add request logging
 
 // Apply rate limiter to all requests
 app.use(limiter);

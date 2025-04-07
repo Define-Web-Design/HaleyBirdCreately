@@ -59,7 +59,7 @@ localPort = 8425
 externalPort = 3002
 
 [workflows]
-runButton = "Simultaneous Task Execution"
+runButton = "Comprehensive Debug and Validation"
 
 [[workflows.workflow]]
 name = "Project"
@@ -1442,7 +1442,7 @@ args = "node -e \""
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "  const { verifyResponsiveDesign } = require('./client/src/utils/navigation-tester.js');"
+args = "  const { verifyResponsiveDesign } = require('./client/src/utils/responsive-tester.js');"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
@@ -1475,3 +1475,152 @@ args = "  });"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "\""
+
+[[workflows.workflow]]
+name = "Comprehensive Debug and Validation"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Kill any running processes first"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pkill -f node || true"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run code quality checks - lint and type check in parallel"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run lint & npx tsc --noEmit & wait"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Start with basic code cleanup"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"Running code cleanup and formatting...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npx prettier --write \"client/src/**/*.{ts,tsx}\" \"server/**/*.ts\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run the comprehensive validation with debug logs"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"Starting comprehensive validation and debugging...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node -e \""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "  const { taskOrchestrator } = require('./client/src/utils/task-validation-orchestrator');"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "  const { runFullSystemValidation, displayFullValidationResults } = require('./client/src/utils/consolidated-validation');"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "  "
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "  console.log('Running comprehensive validation with debugging...');"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "  runFullSystemValidation().then(report => {"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "    displayFullValidationResults(report);"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "    console.log('Validation complete - check results above');"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "    "
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "    // Log performance metrics"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "    console.log('Performance metrics:');"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "    console.log('====================');"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "    const sections = report.sections.filter(s => s.name.includes('API') || s.name.includes('Performance'));"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "    sections.forEach(section => {"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "      console.log(`${section.name}: ${section.success ? 'PASSED' : 'FAILED'}`);"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "      console.log(JSON.stringify(section.details, null, 2));"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "    });"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "  }).catch(err => {"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "    console.error('Validation error:', err);"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "  });"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Start the development server"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"

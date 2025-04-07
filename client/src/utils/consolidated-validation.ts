@@ -23,9 +23,14 @@ export interface ValidationReport {
 /**
  * Runs all validation checks in the system and returns a consolidated report
  */
+import { PerformanceProfiler } from './performance-profiler';
+
 export async function runFullSystemValidation(): Promise<ValidationReport> {
   console.log('Starting full system validation...');
   console.log('='.repeat(80));
+  
+  // Start overall performance measurement
+  PerformanceProfiler.startMeasure('FullSystemValidation');
   
   const timestamp = new Date().toISOString();
   const sections: ValidationReport['sections'] = [];
@@ -235,6 +240,15 @@ export async function runFullSystemValidation(): Promise<ValidationReport> {
       summary: `Validation failed with error: ${error.message || error}`,
       recommendations: ['Check the validation system for errors']
     };
+  } finally {
+    // End performance measurement and add to sections
+    const duration = PerformanceProfiler.endMeasure('FullSystemValidation');
+    console.log(`Full validation completed in ${duration?.toFixed(2)}ms`);
+    
+    // Generate performance report
+    const performanceReport = PerformanceProfiler.generatePerformanceReport();
+    console.log('\nPerformance Report:');
+    console.log(performanceReport);
   }
 }
 
