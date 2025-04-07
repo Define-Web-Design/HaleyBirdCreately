@@ -48,7 +48,25 @@ export const SwipeableContainer: React.FC<SwipeableContainerProps> = ({
     if (disabled || initialX.current === null) return;
     
     const currentX = e.touches[0].clientX;
+    const currentY = e.touches[0].clientY;
     const diffX = currentX - initialX.current;
+    
+    // Get the initial touch Y position if available
+    const initialTouchY = e.touches[0].clientY;
+    
+    // Detect vertical scrolling - if the user is primarily scrolling vertically, don't interfere
+    if (Math.abs(diffX) < 15) {
+      // Small horizontal movement, likely a vertical scroll - abort swiping
+      return;
+    }
+    
+    // Only prevent default for clear horizontal swipes with significant movement
+    // This helps ensure normal page scrolling works properly
+    if (Math.abs(diffX) > 50) {
+      // Carefully prevent default only for obviously horizontal swipes
+      // This helps ensure we don't block vertical scrolling
+      e.preventDefault();
+    }
     
     // Limit the offset based on actions available
     if ((diffX > 0 && !rightAction) || (diffX < 0 && !leftAction)) {
@@ -56,7 +74,7 @@ export const SwipeableContainer: React.FC<SwipeableContainerProps> = ({
       return;
     }
     
-    // Apply resistance as we move further
+    // Apply resistance as we move further for a more natural feel
     const resistance = Math.abs(diffX) > 50 ? 0.5 : 1;
     setOffset(diffX * resistance);
   };

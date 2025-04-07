@@ -58,14 +58,23 @@ function Router() {
   useEffect(() => {
     if (isMobile) {
       document.body.classList.add('mobile-device');
+      
+      // Allow scrolling by setting body to not prevent touch action
+      document.body.style.touchAction = 'auto';
+      document.body.style.position = 'relative';
+      document.body.style.overscrollBehavior = 'auto'; // Allow normal overscroll behavior
+      document.documentElement.style.height = '100%';
+      document.body.style.height = '100%';
+      document.body.style.overflow = 'auto';
+    } else {
+      document.body.classList.remove('mobile-device');
     }
-
-    // Prevent overscroll behavior on mobile
-    document.body.style.overscrollBehavior = 'none';
 
     return () => {
       document.body.classList.remove('mobile-device');
-      document.body.style.overscrollBehavior = 'auto';
+      document.body.style.touchAction = '';
+      document.body.style.position = '';
+      document.body.style.overscrollBehavior = '';
     };
   }, [isMobile]);
 
