@@ -8,11 +8,11 @@
 import { hapticFeedback as hapticFeedbackFunc } from '../hooks/use-mobile';
 
 // Configuration options
-const TOUCH_TRAIL_ENABLED = true;
-const FINGER_TRAIL_COLOR = 'rgba(255, 255, 255, 0.5)';
-const FINGER_TRAIL_MAX_PARTICLES = 15;
-const FINGER_TRAIL_PARTICLE_SIZE = 15;
-const FINGER_TRAIL_LIFETIME = 700; // ms
+const TOUCH_TRAIL_ENABLED = false; // Disable the trail entirely
+const FINGER_TRAIL_COLOR = 'rgba(0, 0, 0, 0)'; // Fully transparent
+const FINGER_TRAIL_MAX_PARTICLES = 0; // No particles
+const FINGER_TRAIL_PARTICLE_SIZE = 0; // Zero sized particles
+const FINGER_TRAIL_LIFETIME = 0; // Immediate cleanup
 
 // Touch trail state
 let trailCanvas: HTMLCanvasElement | null = null;

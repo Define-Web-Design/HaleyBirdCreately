@@ -140,18 +140,19 @@ InteractiveButton.displayName = "InteractiveButton";
 export { InteractiveButton };
 import React from 'react';
 import { Button, ButtonProps } from '@/components/ui/button';
-import { shortFeedback } from '@/lib/touchFeedback';
+import { triggerFeedback } from '@/lib/touchFeedback';
 import { useMobile } from '@/hooks/use-mobile';
+import { hapticFeedback } from '@/hooks/use-mobile';
 
 interface InteractiveButtonProps extends ButtonProps {
-  feedbackType?: 'short' | 'medium' | 'success' | 'error';
+  feedbackType?: 'light' | 'medium' | 'heavy' | 'success' | 'warning' | 'error';
   onLongPress?: () => void;
   longPressDelay?: number;
 }
 
 export function InteractiveButton({
   children,
-  feedbackType = 'short',
+  feedbackType = 'light',
   onLongPress,
   longPressDelay = 500,
   onClick,
@@ -164,8 +165,11 @@ export function InteractiveButton({
 
   // Handle touch feedback
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    if (isMobile) {
-      shortFeedback();
+    if (mobile.isMobile) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const x = e.clientX || rect.left + rect.width / 2;
+      const y = e.clientY || rect.top + rect.height / 2;
+      triggerFeedback(x, y, feedbackType);
     }
     
     if (onClick) {
@@ -181,7 +185,8 @@ export function InteractiveButton({
     pressTimer.current = setTimeout(() => {
       if (onLongPress) {
         onLongPress();
-        shortFeedback();
+        // Use haptic feedback directly for long press
+        hapticFeedback('medium');
       }
     }, longPressDelay);
   };
