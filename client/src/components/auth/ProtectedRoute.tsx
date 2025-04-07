@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, Shield, Loader2 } from 'lucide-react';
+import { isDevelopmentAutoLogin, performDevAutoLogin, isAlreadyAutoLoggedIn } from '@/lib/devBypass';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -22,13 +23,51 @@ export const ProtectedRoute = ({
   roles = [],
   redirectPath = '/login'
 }: ProtectedRouteProps) => {
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { isAuthenticated, isLoading, user, login } = useAuth();
   const [, setLocation] = useLocation();
   const [match] = useRoute(redirectPath);
   // State to track if we should show an auth prompt before redirect
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
+  // State to track if auto-login attempt has been made
+  const [autoLoginAttempted, setAutoLoginAttempted] = useState(false);
 
+  // Handle development auto-login by directly mocking authentication data
   useEffect(() => {
+    // If auto-login is enabled in development, not authenticated yet, and login attempt not made yet
+    if (isDevelopmentAutoLogin() && !isLoading && !isAuthenticated && !autoLoginAttempted) {
+      console.log('🔑 Development auto-login enabled - bypassing login screen with mock user...');
+      
+      // Skip the actual login API call and directly inject mock user data
+      try {
+        // Check if already auto-logged in to prevent unnecessary reloads
+        if (!isAlreadyAutoLoggedIn()) {
+          // Set up mock authentication
+          performDevAutoLogin();
+          
+          // Mark as attempted to prevent infinite loops
+          setAutoLoginAttempted(true);
+          
+          // Force a page reload to apply the new tokens and authenticate the user
+          // This is a simple way to bypass authentication without modifying the AuthContext
+          window.location.reload();
+        } else {
+          // Already auto-logged in, just mark as attempted
+          setAutoLoginAttempted(true);
+        }
+      } catch (error) {
+        console.error('Development auto-login error:', error);
+        setAutoLoginAttempted(true);
+      }
+    }
+  }, [isLoading, isAuthenticated, autoLoginAttempted]);
+
+  // Regular authentication flow for redirecting unauthenticated users
+  useEffect(() => {
+    // Skip if auto-login is enabled and hasn't been attempted yet
+    if (isDevelopmentAutoLogin() && !autoLoginAttempted) {
+      return;
+    }
+    
     // If authentication check is complete and user is not authenticated
     if (!isLoading && !isAuthenticated && !match) {
       // Show auth prompt first before redirecting
@@ -50,7 +89,7 @@ export const ProtectedRoute = ({
         setLocation('/unauthorized');
       }
     }
-  }, [isAuthenticated, isLoading, match, redirectPath, roles, setLocation, user]);
+  }, [isAuthenticated, isLoading, match, redirectPath, roles, setLocation, user, autoLoginAttempted]);
 
   // Handle immediate login click
   const handleLoginClick = () => {

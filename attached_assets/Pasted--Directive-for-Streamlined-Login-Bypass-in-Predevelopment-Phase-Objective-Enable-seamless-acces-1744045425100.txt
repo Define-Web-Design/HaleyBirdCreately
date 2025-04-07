@@ -1,0 +1,88 @@
+# Directive for Streamlined Login Bypass in Predevelopment Phase
+
+## Objective
+Enable seamless access for testing all app features during the predevelopment phase without requiring repeated logins after updates, while ensuring the login structure and functionality remain intact for deployment.
+
+---
+
+## Approach
+
+### 1. **Development Mode Flag**
+- Introduce a `devMode` configuration in the app settings to enable a temporary login bypass during development.
+- When `devMode=true`:
+  - Skip authentication checks.
+  - Automatically grant access to the testing environment.
+- Ensure the `devMode` flag is securely disabled or removed in production builds.
+
+---
+
+### 2. **Static Test Account**
+- Create a static test account with hardcoded credentials for internal testing purposes:
+  - **Username:** `test_user`
+  - **Password:** `test_password`
+- Configure the static account to function only in the development environment and restrict its usage in production.
+
+---
+
+### 3. **Session Persistence**
+- Enable persistent sessions in development mode:
+  - Store session tokens temporarily in cookies or local storage.
+  - Automatically renew session tokens to maintain access across updates.
+
+---
+
+## Implementation Steps
+
+1. **Add a `devMode` Flag**:
+   - Create a new configuration key in the app’s settings file (e.g., `devMode`).
+   - Modify the authentication logic to check if `devMode` is active:
+     - If `devMode=true`, bypass the login process and grant access.
+     - Ensure the flag is switched off for production deployments.
+
+2. **Static Test Account**:
+   - Add the hardcoded `test_user` credentials to the app's user database.
+   - Add validation to restrict this account to the development environment only.
+
+3. **Session Persistence for Development**:
+   - Implement temporary session storage using cookies or local storage.
+   - Set a short expiry time (e.g., 30 minutes) for security, with automatic renewal upon update detection.
+
+4. **Testing Environment Isolation**:
+   - Apply all changes exclusively to the development branch or environment.
+   - Protect the production environment from any development-specific changes.
+
+---
+
+## Tools and Frameworks
+- **Authentication Libraries**:
+  - Use Passport.js or Firebase Authentication to manage test accounts and bypass logic.
+- **Session Management**:
+  - Implement session storage using localStorage, cookies, or Express-session.
+- **Replit Environment**:
+  - Utilize Replit’s environment variables to toggle `devMode` securely.
+
+---
+
+## Validation Checklist
+1. **Login Bypass Testing**:
+   - Confirm that all app features are accessible without manual login when `devMode=true`.
+   - Validate that the bypass does not disrupt workflows or trigger unintended side effects.
+
+2. **Static Test Account Functionality**:
+   - Test the static account (`test_user`) to simulate various user behaviors.
+   - Verify the account cannot be accessed in production or outside development mode.
+
+3. **Session Persistence Stability**:
+   - Ensure session tokens are correctly stored and renewed during development.
+   - Validate session expiration and renewal workflows.
+
+4. **Production Readiness**:
+   - Confirm the `devMode` flag and test account are securely disabled or removed before deployment.
+   - Test login workflows in production mode to ensure full authentication functionality.
+
+---
+
+## Notes
+- This bypass is strictly for the predevelopment phase to streamline testing. It must not compromise security or functionality when the app transitions to deployment.
+- Once the app is ready for production, remove the `devMode` flag and static test account entirely, ensuring login processes are fully restored.
+
