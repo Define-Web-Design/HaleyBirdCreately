@@ -56,80 +56,28 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     const initializeAuth = async () => {
       // Check if we have a refresh token but no valid access token
       if (refreshToken && !token) {
-        // Try to refresh the token first
-        const refreshed = await refreshAccessToken();
-        if (refreshed) {
-          // Token refresh successful, fetchCurrentUser will be triggered by token change
-          return;
+        try {
+          // Try to refresh the token first
+          await refreshTokenMutation.mutateAsync();
+          // No need to call fetchCurrentUser here, it will be triggered by token change
+        } catch (error) {
+          console.error('Failed to refresh token during initialization', error);
         }
-      }
-      
-      // If we have a token, try to get user data
-      if (token) {
+      } else if (token) {
+        // If we have a token, try to get user data
         fetchCurrentUser();
       }
     };
     
     initializeAuth();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token, refreshToken, refreshAccessToken]);
-
-  // Setup API request interceptor for token refresh
+  }, []); // Empty dependency array - only run once on mount
+  
+  // Update user when token changes
   useEffect(() => {
-    // Create a function to handle token expiration
-    const handleApiRequest = async (url: string, options: RequestInit) => {
-      try {
-        // Check if the token exists and we should attempt to use it
-        if (!options.headers) {
-          options.headers = {};
-        }
-
-        // If we have a token and this is not the refresh token endpoint, 
-        // add the Authorization header
-        if (token && !url.includes('/api/auth/refresh-token')) {
-          (options.headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
-        }
-
-        // Make the original request
-        const response = await fetch(url, options);
-        
-        // If the response indicates an expired token (401 Unauthorized)
-        // and we have a refresh token, try to refresh the token and retry the request
-        if (response.status === 401 && refreshToken && !url.includes('/api/auth/refresh-token')) {
-          // Try to refresh the token
-          const refreshed = await refreshAccessToken();
-          
-          // If token refresh was successful, retry the original request with the new token
-          if (refreshed && token) {
-            // Update the Authorization header with the new token
-            (options.headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
-            
-            // Retry the original request
-            return fetch(url, options);
-          }
-        }
-        
-        return response;
-      } catch (error) {
-        console.error('API request interceptor error:', error);
-        throw error;
-      }
-    };
-
-    // Monkey patch the global fetch to use our interceptor
-    const originalFetch = window.fetch;
-    window.fetch = async (url: RequestInfo | URL, options: RequestInit = {}) => {
-      if (typeof url === 'string' && url.includes('/api/')) {
-        return handleApiRequest(url, options);
-      }
-      return originalFetch(url, options);
-    };
-
-    // Clean up by restoring the original fetch when the component unmounts
-    return () => {
-      window.fetch = originalFetch;
-    };
-  }, [token, refreshToken, refreshAccessToken]);
+    if (token) {
+      fetchCurrentUser();
+    }
+  }, [token]);
 
   // Authentication status
   const isAuthenticated = !!user;
