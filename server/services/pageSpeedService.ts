@@ -2,7 +2,7 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import https from 'https';
-import { logger } from '../utils/logger';
+import { log } from '../utils/logger';
 
 interface PageSpeedResult {
   score: number;
@@ -27,16 +27,16 @@ class PageSpeedService {
     try {
       await fs.mkdir(this.logDir, { recursive: true });
     } catch (error) {
-      logger.error('Failed to create PageSpeed logs directory', { error });
+      log.error(new Error('Failed to create PageSpeed logs directory'), { error });
     }
   }
 
   async analyzeUrl(url: string, isMobile: boolean = false): Promise<PageSpeedResult> {
-    logger.info(`Running PageSpeed analysis for ${url} (mobile: ${isMobile})`);
+    log.info(`Running PageSpeed analysis for ${url} (mobile: ${isMobile})`);
     
     try {
       if (!this.apiKey) {
-        logger.warn('PageSpeed API key not set');
+        log.warn('PageSpeed API key not set');
         throw new Error('PageSpeed API key not configured');
       }
 
@@ -53,7 +53,7 @@ class PageSpeedService {
       
       return result;
     } catch (error) {
-      logger.error('PageSpeed analysis failed', { url, error });
+      log.error(new Error('PageSpeed analysis failed'), { url, error });
       throw error;
     }
   }
@@ -105,7 +105,7 @@ class PageSpeedService {
         timestamp: new Date().toISOString()
       };
     } catch (error) {
-      logger.error('Failed to parse PageSpeed response', { error });
+      log.error(new Error('Failed to parse PageSpeed response'), { error });
       return {
         score: 0,
         loadingSpeed: 0,
@@ -125,7 +125,7 @@ class PageSpeedService {
         JSON.stringify({ url, ...result }, null, 2)
       );
     } catch (error) {
-      logger.error('Failed to log PageSpeed result', { error });
+      log.error(new Error('Failed to log PageSpeed result'), { error });
     }
   }
 }
