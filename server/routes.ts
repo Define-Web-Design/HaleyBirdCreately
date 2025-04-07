@@ -18,6 +18,8 @@ import {
   monitorSecurity
 } from "./middleware/security";
 import { securityMonitor } from "./services/securityMonitor";
+import { authenticate } from "./middleware/auth";
+import authRoutes from "./routes/auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Apply global security middleware
@@ -26,6 +28,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Apply rate limiting to all API routes
   app.use("/api", apiLimiter);
+  
+  // Add authentication middleware (except for public routes)
+  app.use(authenticate);
+  
+  // Register auth routes
+  app.use("/api/auth", authRoutes);
 
   // Platform integration routes
   app.get('/api/user/integrations', async (req, res) => {
