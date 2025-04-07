@@ -11,6 +11,8 @@ import os from 'os';
 import { exec } from 'child_process';
 import util from 'util';
 import { fileURLToPath } from 'url';
+import { runAppStatusCheck } from './app-status-check'; // Import the new utility
+
 
 const execPromise = util.promisify(exec);
 // Get the directory name
@@ -24,261 +26,42 @@ if (!fs.existsSync(LOG_DIR)) {
   fs.mkdirSync(LOG_DIR, { recursive: true });
 }
 
-// App Status Service (from edited code)
-// This utility checks the status of various application components
 
+// Create logs directory if it doesn't exist (redundant, removed)
 
-// Create logs directory if it doesn't exist
-const logsDir = path.join(__dirname, '..', 'logs', 'app-status');
-if (!fs.existsSync(logsDir)) {
-  fs.mkdirSync(logsDir, { recursive: true });
-}
 
 /**
  * Runs a comprehensive check of the application status
  * @returns {Promise<Object>} Status report
  */
-async function runAppStatusCheck() {
-  console.log('Running app status check...');
 
-  const startTime = Date.now();
-  const results = {
-    timestamp: new Date().toISOString(),
-    status: 'healthy', // Default to healthy, will change if issues found
-    checkedServices: 0,
-    onlineServices: 0,
-    offlineServices: 0,
-    issues: [],
-    details: {},
-    executionTimeMs: 0
-  };
-
-  try {
-    // Check file system health
-    const fsStatus = await checkFileSystemHealth();
-    results.details.fileSystem = fsStatus;
-    results.checkedServices++;
-
-    if (fsStatus.status === 'healthy') {
-      results.onlineServices++;
-    } else {
-      results.offlineServices++;
-      results.status = 'degraded';
-      results.issues.push({
-        service: 'File System',
-        message: fsStatus.message || 'File system issues detected'
-      });
-    }
-
-    // Check node modules
-    const nodeModulesStatus = await checkNodeModules();
-    results.details.nodeModules = nodeModulesStatus;
-    results.checkedServices++;
-
-    if (nodeModulesStatus.status === 'healthy') {
-      results.onlineServices++;
-    } else {
-      results.offlineServices++;
-      results.status = 'degraded';
-      results.issues.push({
-        service: 'Node Modules',
-        message: nodeModulesStatus.message || 'Node modules issues detected'
-      });
-    }
-
-    // Check configuration files
-    const configStatus = await checkConfigFiles();
-    results.details.configFiles = configStatus;
-    results.checkedServices++;
-
-    if (configStatus.status === 'healthy') {
-      results.onlineServices++;
-    } else {
-      results.offlineServices++;
-      results.status = 'degraded';
-      results.issues.push({
-        service: 'Configuration',
-        message: configStatus.message || 'Configuration issues detected'
-      });
-    }
-
-    // Log results
-    logStatusCheck(results);
-
-    // Calculate execution time
-    results.executionTimeMs = Date.now() - startTime;
-
-    return results;
-  } catch (error) {
-    console.error('Error in app status check:', error);
-    results.status = 'error';
-    results.issues.push({
-      service: 'Status Check',
-      message: `Internal error: ${error.message}`
-    });
-    results.executionTimeMs = Date.now() - startTime;
-
-    // Log error results
-    logStatusCheck(results);
-
-    return results;
-  }
-}
+// This function is replaced by the imported runAppStatusCheck
 
 /**
- * Checks the file system health
+ * Checks the file system health (removed)
  * @returns {Promise<Object>} Status report
  */
-async function checkFileSystemHealth() {
-  try {
-    // Check critical directories
-    const criticalDirs = [
-      path.join(__dirname, '..', 'client', 'src'),
-      path.join(__dirname, '..', 'server'),
-      path.join(__dirname, '..', 'scripts'),
-      path.join(__dirname, '..', 'public')
-    ];
-
-    for (const dir of criticalDirs) {
-      if (!fs.existsSync(dir)) {
-        return {
-          status: 'error',
-          message: `Critical directory missing: ${dir}`
-        };
-      }
-    }
-
-    // Check writable logs directory
-    const testFile = path.join(logsDir, 'test-write.txt');
-    fs.writeFileSync(testFile, 'test');
-    fs.unlinkSync(testFile);
-
-    return {
-      status: 'healthy',
-      message: 'File system is healthy'
-    };
-  } catch (error) {
-    return {
-      status: 'error',
-      message: `File system error: ${error.message}`
-    };
-  }
-}
+//async function checkFileSystemHealth() { ... } // Removed
 
 /**
- * Checks node modules health
+ * Checks node modules health (removed)
  * @returns {Promise<Object>} Status report
  */
-async function checkNodeModules() {
-  try {
-    const nodeModulesPath = path.join(__dirname, '..', 'node_modules');
-
-    if (!fs.existsSync(nodeModulesPath)) {
-      return {
-        status: 'warning',
-        message: 'Node modules directory not found. Dependencies may need installation.'
-      };
-    }
-
-    // Check for critical packages
-    const criticalPackages = ['react', 'express', 'vite'];
-    const missingPackages = [];
-
-    for (const pkg of criticalPackages) {
-      const pkgPath = path.join(nodeModulesPath, pkg);
-      if (!fs.existsSync(pkgPath)) {
-        missingPackages.push(pkg);
-      }
-    }
-
-    if (missingPackages.length > 0) {
-      return {
-        status: 'warning',
-        message: `Missing critical packages: ${missingPackages.join(', ')}`
-      };
-    }
-
-    return {
-      status: 'healthy',
-      message: 'Node modules are properly installed'
-    };
-  } catch (error) {
-    return {
-      status: 'error',
-      message: `Node modules check error: ${error.message}`
-    };
-  }
-}
+//async function checkNodeModules() { ... } // Removed
 
 /**
- * Checks configuration files health
+ * Checks configuration files health (removed)
  * @returns {Promise<Object>} Status report
  */
-async function checkConfigFiles() {
-  try {
-    // Check critical configuration files
-    const criticalFiles = [
-      path.join(__dirname, '..', 'package.json'),
-      path.join(__dirname, '..', '.replit'),
-      path.join(__dirname, '..', 'vite.config.ts')
-    ];
+//async function checkConfigFiles() { ... } // Removed
 
-    const missingFiles = [];
+//This function is largely replaced by the new logging in runAppStatusCheck.  
+//The structure is different, so the old function is removed.
+// * Logs the status check results to a file
+// * @param {Object} results - The results to log
+// */
+//function logStatusCheck(results) { ... } // Removed
 
-    for (const file of criticalFiles) {
-      if (!fs.existsSync(file)) {
-        missingFiles.push(file);
-      }
-    }
-
-    if (missingFiles.length > 0) {
-      return {
-        status: 'error',
-        message: `Missing critical configuration files: ${missingFiles.join(', ')}`
-      };
-    }
-
-    // Check package.json format
-    const packageJsonPath = path.join(__dirname, '..', 'package.json');
-    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
-
-    if (!packageJson.name || !packageJson.version || !packageJson.scripts) {
-      return {
-        status: 'warning',
-        message: 'package.json is missing essential fields'
-      };
-    }
-
-    return {
-      status: 'healthy',
-      message: 'Configuration files are present and valid'
-    };
-  } catch (error) {
-    return {
-      status: 'error',
-      message: `Configuration check error: ${error.message}`
-    };
-  }
-}
-
-/**
- * Logs the status check results to a file
- * @param {Object} results - The results to log
- */
-function logStatusCheck(results) {
-  try {
-    const timestamp = new Date().toISOString().replace(/:/g, '-');
-    const logFile = path.join(logsDir, `status-check-${timestamp}.json`);
-    fs.writeFileSync(logFile, JSON.stringify(results, null, 2));
-    console.log(`Status check logged to ${logFile}`);
-
-    // Maintain a latest.json file for quick access
-    const latestFile = path.join(logsDir, 'latest.json');
-    fs.writeFileSync(latestFile, JSON.stringify(results, null, 2));
-  } catch (error) {
-    console.error('Error logging status check:', error);
-  }
-}
 
 // Add a monitor function for continuous monitoring
 async function monitorAppStatus(intervalMinutes = 60) {
@@ -346,7 +129,7 @@ async function checkSystemResources() {
       heapUsed: formatBytes(nodeMemoryUsage.heapUsed),
       external: formatBytes(nodeMemoryUsage.external),
     };
-  }
+}
 
 
 /**

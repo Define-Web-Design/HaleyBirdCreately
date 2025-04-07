@@ -2948,11 +2948,11 @@ args = ""
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "# Run the app status monitor with a 30-minute interval"
+args = "# Run the app status monitor with a 15-minute interval"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "node scripts/monitor-app-status.js 30"
+args = "node scripts/monitor-app-status.js 15"
 
 [[workflows.workflow]]
 name = "App Status Monitor"
