@@ -165,6 +165,64 @@ router.post('/refresh-token', async (req: Request, res: Response) => {
   }
 });
 
+// Get current user data
+router.get('/me', authenticate(), async (req: Request, res: Response) => {
+  try {
+    // If we've reached this point, the user should be authenticated
+    // and req.user should be available from the middleware
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+    }
+    
+    // Return the user data from the request object
+    return res.json({
+      success: true,
+      user: req.user
+    });
+  } catch (error) {
+    console.error('Get current user error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'An error occurred while retrieving user data'
+    });
+  }
+});
+
+// Logout route
+router.post('/logout', async (req: Request, res: Response) => {
+  try {
+    // Get refresh token from request body
+    const { refreshToken } = req.body;
+    
+    // Log the user out by invalidating the refresh token
+    const authService = getAuthService();
+    await authService.logout(refreshToken);
+    
+    // Also clear the session if it exists
+    if (req.session) {
+      req.session.destroy((err) => {
+        if (err) {
+          console.error('Error destroying session:', err);
+        }
+      });
+    }
+    
+    return res.json({
+      success: true,
+      message: 'Logged out successfully'
+    });
+  } catch (error) {
+    console.error('Logout error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'An error occurred during logout'
+    });
+  }
+});
+
 // Get current user info route
 router.get('/me', authenticate(), async (req: Request, res: Response) => {
   try {

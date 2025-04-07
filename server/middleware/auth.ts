@@ -7,8 +7,11 @@ declare global {
   namespace Express {
     interface Request {
       user?: {
-        userId: number;
+        id: number;
+        userId?: number; // For backward compatibility
         username: string;
+        email?: string;
+        displayName?: string;
         role: string;
       };
       token?: string;
@@ -28,29 +31,34 @@ export const authenticate = (required: boolean = true) => {
       if (isDev) {
         // Create a development user if in development mode
         req.user = {
-          userId: 1,
+          id: 1,
+          userId: 1, // For backward compatibility
           username: 'dev_user',
+          email: 'dev@example.com',
+          displayName: 'Development User',
           role: 'admin'
         };
         req.token = 'dev-token';
         return next();
       }
-      
+
       // Get the AuthService from the ServiceRegistry
       const authService = ServiceRegistry.getInstance().getService<AuthService>('auth');
-      
+
       // Check Authorization header for JWT token
       const authHeader = req.headers.authorization;
       const token = authHeader && authHeader.startsWith('Bearer ') 
         ? authHeader.substring(7) 
         : null;
-      
+
       // If token exists, verify it
       if (token) {
         const payload = authService.verifyToken(token);
         if (payload) {
+          // Map payload to the user object expected by the client
           req.user = {
-            userId: payload.userId,
+            id: payload.userId,
+            userId: payload.userId, // For backward compatibility
             username: payload.username,
             role: payload.role
           };
@@ -58,17 +66,19 @@ export const authenticate = (required: boolean = true) => {
           return next();
         }
       }
-      
+
       // If no token or invalid token, check for session-based authentication
       if (req.session && req.session.userId) {
+        // Get user from session
         req.user = {
-          userId: req.session.userId,
+          id: req.session.userId,
+          userId: req.session.userId, // For backward compatibility
           username: req.session.username || 'user',
           role: req.session.role || 'user'
         };
         return next();
       }
-      
+
       // If authentication is required and no valid auth method was found
       if (required) {
         return res.status(401).json({ 
@@ -76,7 +86,7 @@ export const authenticate = (required: boolean = true) => {
           message: 'Authentication required' 
         });
       }
-      
+
       // If authentication is optional, continue
       next();
     } catch (error) {
@@ -88,40 +98,6 @@ export const authenticate = (required: boolean = true) => {
         });
       }
       next();
-    }
-  };
-};
-
-/**
- * Role-based authorization middleware
- */
-export const authorize = (allowedRoles: string[]) => {
-  return (req: Request, res: Response, next: NextFunction) => {
-    try {
-      // Check if user exists and has a role
-      if (!req.user || !req.user.role) {
-        return res.status(403).json({ 
-          success: false, 
-          message: 'Unauthorized: User role not found' 
-        });
-      }
-      
-      // Check if user's role is in the allowed roles
-      if (!allowedRoles.includes(req.user.role)) {
-        return res.status(403).json({ 
-          success: false, 
-          message: 'Unauthorized: Insufficient permissions' 
-        });
-      }
-      
-      // Role check passed, continue
-      next();
-    } catch (error) {
-      console.error('Authorization error:', error);
-      res.status(403).json({ 
-        success: false, 
-        message: 'Authorization failed' 
-      });
     }
   };
 };

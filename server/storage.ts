@@ -29,6 +29,78 @@ export interface IStorage {
   deleteRefreshToken(token: string): Promise<boolean>;
   revokeRefreshToken(token: string): Promise<boolean>;
   deleteRefreshTokensByUserId(userId: number): Promise<boolean>;
+  
+  // Content operations
+  getContentByUserId(userId: number): Promise<any[]>;
+  getArchivedContentByUserId(userId: number): Promise<any[]>;
+  getContentById(contentId: number): Promise<any | null>;
+  
+  // Analytics operations
+  getAnalyticsByUserId(userId: number, period: string): Promise<any>;
+  
+  // Mood board operations
+  getMoodBoardsByUserId(userId: number): Promise<any[]>;
+  createMoodBoard(moodBoard: any): Promise<any>;
+  
+  // Task Verification operations
+  getTaskVerificationTasksByUserId(userId: number): Promise<any[]>;
+  verifyTask(taskId: string, userId: number): Promise<any>;
+  addEvolutionPoints(userId: number, points: number): Promise<any>;
+  trackUserEngagement(engagement: any): Promise<any>;
+  createTask(task: any): Promise<any>;
+  updateTaskStatus(taskId: string, userId: number, status: string): Promise<any>;
+  updateTaskProgress(taskId: string, userId: number, progressPercentage: number): Promise<any>;
+  
+  // Platform Integration operations
+  createPlatformIntegration(integration: any): Promise<any>;
+  getPlatformIntegrationById(id: number): Promise<any>;
+  deactivatePlatformIntegration(id: number): Promise<any>;
+  
+  // Legal acceptance operations
+  recordLegalAcceptance(acceptance: any): Promise<any>;
+  insertLegalAcceptance(acceptance: any): Promise<any>;
+  getLegalAcceptanceByUser(userId: number, documentType: string): Promise<any>;
+  
+  // User capabilities
+  getUserCapabilitiesByUserId(userId: number): Promise<any[]>;
+  unlockUserCapability(capability: any): Promise<any>;
+  upgradeCapabilityLevel(userId: number, capabilityName: string): Promise<any>;
+  
+  // Creative history
+  getCreativeHistoryByUserIdAndPeriod(userId: number, period: string): Promise<any>;
+  updateCreativeHistory(id: number, updates: any): Promise<any>;
+  refreshCreativeEnergyPoints(userId: number): Promise<any>;
+  
+  // Color palettes
+  getColorPalettesByUserId(userId: number): Promise<any[]>;
+  getColorPaletteById(id: number): Promise<any>;
+  createColorPalette(palette: any): Promise<any>;
+  updateColorPalette(id: number, updates: any): Promise<any>;
+  incrementColorPaletteUsage(id: number): Promise<any>;
+  getColorPalettesByMood(mood: string): Promise<any[]>;
+  
+  // Mood capsules
+  getMoodCapsulesByUserId(userId: number): Promise<any[]>;
+  getMoodCapsuleById(id: number): Promise<any>;
+  createMoodCapsule(capsule: any): Promise<any>;
+  updateMoodCapsule(id: number, updates: any): Promise<any>;
+  deleteMoodCapsule(id: number): Promise<boolean>;
+  archiveMoodCapsule(id: number): Promise<any>;
+  
+  // Content sentiment
+  getContentSentimentById(contentId: number): Promise<any>;
+  getContentSentimentsByUserId(userId: number): Promise<any[]>;
+  analyzeContentSentiment(contentIds: number[]): Promise<any[]>;
+  generateCaptionForMoodCapsule(contentIds: number[], emotionalTone: string, captionTone?: string): Promise<string>;
+  
+  // Security and asset operations
+  getAssetOwnership(assetId: string): Promise<any>;
+  registerAssetOwnership(asset: any): Promise<any>;
+  getSecurityAlerts(limit: number): Promise<any[]>;
+  
+  // User management
+  getUser(userId: number): Promise<any>;
+}
   cleanExpiredRefreshTokens(): Promise<number>; // Returns number of deleted refresh tokens
 }
 
