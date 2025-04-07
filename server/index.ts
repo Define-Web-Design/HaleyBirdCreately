@@ -11,7 +11,7 @@ import { initializeWebSocketServer } from './websocket';
 import { storage } from './storage';
 import dotenv from 'dotenv';
 import ws from 'ws';
-import logger, { requestLogger } from './utils/logger'; //Import the logger
+import logger, { httpLogger, requestIdMiddleware } from './utils/logger'; //Import the logger
 
 // Extend the request type to include database connection
 declare global {
@@ -71,7 +71,8 @@ app.use(session({
 // Body parsing middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(requestLogger); // Add request logging
+app.use(requestIdMiddleware); // Add request ID to each request
+app.use(httpLogger); // Add request logging
 
 // Apply rate limiter to all requests
 app.use(limiter);
@@ -126,7 +127,9 @@ server.listen(port, () => {
 
 // Global error handler
 process.on('uncaughtException', (error) => {
-  logger.error(error, {
+  // Use the logError function from our logger
+  const { logError } = require('./utils/logger');
+  logError(error, {
     type: 'uncaughtException',
     fatal: true
   });
@@ -138,10 +141,12 @@ process.on('uncaughtException', (error) => {
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-  logger.error('Unhandled Promise Rejection', {
+  // Use the logError function from our logger
+  const { logWarn } = require('./utils/logger');
+  logWarn('Unhandled Promise Rejection', {
     type: 'unhandledRejection',
-    reason,
-    promise
+    reason: reason instanceof Error ? reason.message : String(reason),
+    stack: reason instanceof Error ? reason.stack : undefined
   });
 });
 
