@@ -3296,5 +3296,358 @@ args = "# If validation passes, create a checkpoint"
 task = "shell.exec"
 args = "node -e \"const { validateBeforeCheckpoint } = require('./client/src/utils/validation-coordinator.js'); validateBeforeCheckpoint('Automated checkpoint').then(canProceed => { console.log(canProceed ? 'Ready for checkpoint creation' : 'Not ready for checkpoint - fix validation errors'); process.exit(canProceed ? 0 : 1); });\""
 
+[[workflows.workflow]]
+name = "Task Verification Suite"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Kill any running node processes first"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pkill -f node || true"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run basic code quality checks"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run lint"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npx tsc --noEmit"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run the comprehensive task verification system"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node -e \""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "  const { taskOrchestrator } = require('./client/src/utils/task-validation-orchestrator');"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "  const { runFullSystemValidation, displayFullValidationResults } = require('./client/src/utils/consolidated-validation');"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "  "
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "  console.log('Starting comprehensive task verification for all assistants...');"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "  "
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "  // Define standard verification tasks for all assistants"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "  const standardTasks = ["
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "    {"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "      id: 'implementation-validation',"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "      type: 'feature',"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "      description: 'Verify all implemented features work correctly'"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "    },"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "    {"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "      id: 'accessibility-standards',"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "      type: 'accessibility',"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "      description: 'Ensure accessibility compliance across all components'"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "    },"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "    {"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "      id: 'api-endpoints',"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "      type: 'feature',"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "      description: 'Validate all API endpoints and integrations'"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "    },"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "    {"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "      id: 'security-measures',"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "      type: 'security',"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "      description: 'Verify security protocols and data protection measures'"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "    },"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "    {"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "      id: 'responsive-design',"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "      type: 'enhancement',"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "      description: 'Ensure responsive design across all device sizes'"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "    },"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "    {"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "      id: 'navigation-verification',"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "      type: 'fix',"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "      description: 'Verify all navigation links and user flows'"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "    }"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "  ];"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "  "
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "  // Register all standard tasks"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "  taskOrchestrator.registerTasks(standardTasks);"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "  "
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "  // Run full system validation first"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "  runFullSystemValidation().then(report => {"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "    displayFullValidationResults(report);"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "    "
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = '''    console.log('\\n--- Task Verification Results ---');'''
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "    // Run batch verification for all tasks"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "    taskOrchestrator.batchVerifyAllTasks(standardTasks).then(batchResult => {"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "      console.log(`Batch verification completed: ${batchResult.completedTasks}/${batchResult.completedTasks + batchResult.failedTasks} tasks verified successfully`);"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "      console.log(`Can create checkpoint: ${batchResult.canCreateCheckpoint ? 'YES' : 'NO'}`);"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "      "
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "      if (batchResult.canCreateCheckpoint) {"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "        const checkpoint = taskOrchestrator.createCheckpoint();"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = '''        console.log('\\nCHECKPOINT STATUS:', checkpoint.message);'''
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "      } else {"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = '''        console.log('\\nOUTSTANDING TASKS:');'''
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "        // Show which tasks still need attention"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "        for (const taskId in batchResult.report?.sections || {}) {"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "          const section = batchResult.report.sections[taskId];"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "          if (!section.success) {"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "            console.log(`- ${section.name}: Failed validation`);"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "            if (section.details && section.details.issues) {"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "              section.details.issues.slice(0, 3).forEach(issue => {"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "                console.log(`  * ${issue}`);"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "              });"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "              if (section.details.issues.length > 3) {"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "                console.log(`  * ... and ${section.details.issues.length - 3} more issues`);"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "              }"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "            }"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "          }"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "        }"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "      }"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "      "
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "      process.exit(batchResult.canCreateCheckpoint ? 0 : 1);"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "    });"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "  });"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "\""
+
 [objectStorage]
 defaultBucketID = "replit-objstore-0f505a20-ca44-41fd-a1d9-978b798832cc"

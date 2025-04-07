@@ -183,3 +183,139 @@ Examples:
 
 // Run the CLI
 main();
+/**
+ * Task Verification CLI
+ * 
+ * A command-line interface for running task verification checks
+ * and reporting on their status. This tool allows quick validation
+ * of all tasks across Replit assistants.
+ */
+
+import { TaskRequest, taskOrchestrator } from './task-validation-orchestrator';
+import { runFullSystemValidation, displayFullValidationResults } from './consolidated-validation';
+import { securityMonitor } from '../../server/services/securityMonitor';
+
+// Define standard verification tasks that should be checked for all assistants
+const standardTasks: Omit<TaskRequest, 'status'>[] = [
+  {
+    id: 'implementation-validation',
+    type: 'feature',
+    description: 'Verify all implemented features work correctly'
+  },
+  {
+    id: 'accessibility-standards',
+    type: 'accessibility',
+    description: 'Ensure accessibility compliance across all components'
+  },
+  {
+    id: 'api-endpoints',
+    type: 'feature',
+    description: 'Validate all API endpoints and integrations'
+  },
+  {
+    id: 'security-measures',
+    type: 'security',
+    description: 'Verify security protocols and data protection measures'
+  },
+  {
+    id: 'responsive-design',
+    type: 'enhancement',
+    description: 'Ensure responsive design across all device sizes'
+  },
+  {
+    id: 'navigation-verification',
+    type: 'fix',
+    description: 'Verify all navigation links and user flows'
+  }
+];
+
+/**
+ * Run verification for all tasks and display results
+ */
+export async function verify(): Promise<boolean> {
+  console.log('='.repeat(80));
+  console.log('TASK VERIFICATION CLI');
+  console.log('Identifying and validating all outstanding tasks for Replit assistants');
+  console.log('='.repeat(80));
+  
+  try {
+    // Register all standard tasks
+    taskOrchestrator.registerTasks(standardTasks);
+    
+    // Run full system validation
+    console.log('\nRunning full system validation...');
+    const validationReport = await runFullSystemValidation();
+    displayFullValidationResults(validationReport);
+    
+    // Run batch verification for all tasks
+    console.log('\nVerifying all registered tasks simultaneously...');
+    const batchResult = await taskOrchestrator.batchVerifyAllTasks(standardTasks);
+    
+    console.log('\n=== TASK VERIFICATION SUMMARY ===');
+    console.log(`Total tasks: ${batchResult.completedTasks + batchResult.failedTasks}`);
+    console.log(`Tasks verified: ${batchResult.completedTasks}`);
+    console.log(`Tasks failed: ${batchResult.failedTasks}`);
+    console.log(`Overall status: ${batchResult.success ? 'PASSED ✅' : 'INCOMPLETE ❌'}`);
+    
+    if (batchResult.failedTasks > 0) {
+      console.log('\n=== OUTSTANDING TASKS ===');
+      // List all uncompleted tasks
+      if (batchResult.report?.sections) {
+        Object.entries(batchResult.report.sections)
+          .filter(([_, section]) => !section.success)
+          .forEach(([id, section]) => {
+            console.log(`- ${section.name}: Failed validation`);
+            if (section.details && section.details.issues) {
+              section.details.issues.slice(0, 3).forEach(issue => {
+                console.log(`  * ${issue}`);
+              });
+              if (section.details.issues.length > 3) {
+                console.log(`  * ... and ${section.details.issues.length - 3} more issues`);
+              }
+            }
+          });
+      }
+    }
+    
+    // Check if we can create a checkpoint
+    if (batchResult.canCreateCheckpoint) {
+      console.log('\n=== CHECKPOINT STATUS ===');
+      const checkpoint = taskOrchestrator.createCheckpoint();
+      console.log(checkpoint.message);
+    } else {
+      console.log('\n=== CHECKPOINT STATUS ===');
+      console.log('Cannot create checkpoint - validation incomplete');
+      console.log('Please address the outstanding tasks listed above');
+    }
+    
+    return batchResult.success;
+  } catch (error) {
+    console.error('Error during task verification:', error);
+    return false;
+  }
+}
+
+/**
+ * Check security aspects of the application
+ */
+async function verifySecurityAspects(): Promise<void> {
+  console.log('\nVerifying security aspects...');
+  try {
+    const securityResults = await securityMonitor.validateAssetIntegrity();
+    console.log('Security validation:', securityResults.valid ? 'PASSED ✅' : 'FAILED ❌');
+    
+    if (!securityResults.valid && securityResults.issues.length > 0) {
+      console.log('Security issues found:');
+      securityResults.issues.forEach(issue => console.log(`- ${issue}`));
+    }
+  } catch (error) {
+    console.error('Security validation error:', error);
+  }
+}
+
+// Allow direct execution from command line
+if (require.main === module) {
+  verify().then(success => {
+    process.exit(success ? 0 : 1);
+  });
+}
