@@ -1,66 +1,53 @@
-
 /**
- * Script to run a comprehensive app status check
- * This provides detailed information about the application's health
- * including API response times, page load speeds, errors, and more
+ * App Status Check Runner
+ * 
+ * Command-line utility to run application status checks
+ * and generate detailed reports.
  */
 
-const { execSync } = require('child_process');
-const path = require('path');
+const { runAppStatusCheck } = require('./app-status');
 const fs = require('fs');
+const path = require('path');
 
-async function runStatusCheck() {
-  console.log('Running comprehensive app status check...');
+async function main() {
+  console.log('Starting comprehensive app status check...');
+
   try {
-    // Use ts-node to directly execute the TypeScript file
-    try {
-      console.log('Attempting to run app status check using ts-node...');
-      execSync('npx ts-node client/src/utils/app-status-cli.ts', { 
-        stdio: 'inherit'
-      });
-    } catch (tsNodeError) {
-      // If ts-node execution fails with an exit code indicating app issues,
-      // this is expected behavior - it's just reporting app problems
-      if (tsNodeError.status === 1 || tsNodeError.status === 2) {
-        console.log('App status check completed with warnings or errors');
-        return;
-      }
-      
-      console.log('ts-node execution failed with unexpected error, trying alternative method...');
-      
-      // Create a logs directory if it doesn't exist
-      const logsDir = path.join(__dirname, '../logs/app-status');
-      if (!fs.existsSync(logsDir)) {
-        fs.mkdirSync(logsDir, { recursive: true });
-      }
-      
-      // Log the error
-      const errorPath = path.join(logsDir, 'error.log');
-      fs.appendFileSync(errorPath, `[${new Date().toISOString()}] Error running status check: ${tsNodeError.message}\n`);
-      
-      // Try running using node directly with ts-node/register
-      try {
-        execSync('node -r ts-node/register client/src/utils/app-status-cli.ts', {
-          stdio: 'inherit'
-        });
-      } catch (nodeError) {
-        // If this fails with status 1 or 2, it's just the app status report showing issues
-        if (nodeError.status === 1 || nodeError.status === 2) {
-          console.log('App status check completed with warnings or errors');
-        } else {
-          throw new Error(`Failed to run status check: ${nodeError.message}`);
-        }
-      }
+    // Create logs directory if it doesn't exist
+    const logsDir = path.join(__dirname, '..', 'logs', 'app-status');
+    if (!fs.existsSync(logsDir)) {
+      fs.mkdirSync(logsDir, { recursive: true });
     }
+
+    // Run the status check
+    const result = await runAppStatusCheck();
+
+    if (!result.success) {
+      console.error('App status check failed:', result.error);
+      process.exit(1);
+    }
+
+    // Print summary to console (this is already handled in runAppStatusCheck)
+
+    // Return success
+    console.log('\nStatus check complete. See logs directory for detailed reports:');
+    console.log(`${logsDir}/status-*.json - Detailed JSON data`);
+    console.log(`${logsDir}/summary-*.txt - Human-readable summaries`);
+
+    // Exit with appropriate code
+    const hasIssues = result.summary.includes('CRITICAL ISSUES') || 
+                     result.status.application.serverRunning === false;
+
+    process.exit(hasIssues ? 1 : 0);
   } catch (error) {
     console.error('Error running app status check:', error);
-    process.exit(3);
+    process.exit(1);
   }
 }
 
-// Run the status check when the script is executed directly
+// Run if this script is called directly
 if (require.main === module) {
-  runStatusCheck();
+  main();
 }
 
-module.exports = { runStatusCheck };
+module.exports = { runStatusCheck: main };
