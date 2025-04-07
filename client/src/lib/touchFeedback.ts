@@ -145,6 +145,42 @@ function handleTouchStart(e: TouchEvent): void {
 }
 
 /**
+ * Trigger haptic and visual feedback at specific coordinates
+ * @param x - X coordinate for the feedback
+ * @param y - Y coordinate for the feedback
+ * @param type - Type of feedback to trigger
+ */
+export function triggerFeedback(
+  x: number, 
+  y: number, 
+  type: 'light' | 'medium' | 'heavy' | 'success' | 'warning' | 'error' = 'medium'
+): void {
+  // Don't do anything if feedback is disabled
+  if (!tactileFeedbackEnabled) return;
+  
+  // Map the type to the haptic feedback intensity
+  const hapticType = type === 'heavy' ? 'strong' : 
+                    (type === 'light' ? 'light' : 
+                    (type === 'medium' ? 'medium' : type));
+                    
+  // Trigger haptic feedback
+  hapticFeedbackFunc(hapticType as any);
+  
+  // Create a ripple effect if trail canvas exists
+  if (trailContext && trailCanvas) {
+    // Add a larger particle for touch effect
+    addTrailParticle(x, y);
+    
+    // Add a few more particles for a more pronounced effect
+    for (let i = 0; i < 3; i++) {
+      const offsetX = x + (Math.random() * 20 - 10);
+      const offsetY = y + (Math.random() * 20 - 10);
+      addTrailParticle(offsetX, offsetY);
+    }
+  }
+}
+
+/**
  * Handle touch move events
  */
 function handleTouchMove(e: TouchEvent): void {

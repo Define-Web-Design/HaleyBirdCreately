@@ -158,9 +158,9 @@ export function InteractiveButton({
   className,
   ...props
 }: InteractiveButtonProps) {
-  const { isMobile } = useMobile();
+  const mobile = useMobile();
   const pressTimer = React.useRef<NodeJS.Timeout | null>(null);
-  const [isPressing, setIsPressing] = useState(false);
+  const [isPressing, setIsPressing] = React.useState(false);
 
   // Handle touch feedback
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {

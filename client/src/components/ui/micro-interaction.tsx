@@ -65,7 +65,9 @@ export function MicroInteraction({
 }: MicroInteractionProps) {
   const elementRef = useRef<HTMLDivElement>(null);
   const [isPressed, setIsPressed] = useState(false);
-  const { isMobile, isTouch } = useMobile();
+  const mobile = useMobile();
+  const isMobile = mobile.isMobile;
+  const isTouch = mobile.isTouchDevice;
   
   // Handle touch and mouse events
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
