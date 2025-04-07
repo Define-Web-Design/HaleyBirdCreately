@@ -19,7 +19,7 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
-const LoginPage = () => {
+export const LoginPage = () => {
   const { login, isLoading } = useAuth();
   const [location, setLocation] = useLocation();
   const [error, setError] = useState<string | null>(null);
@@ -130,4 +130,3 @@ const LoginPage = () => {
   );
 };
 
-export default LoginPage;

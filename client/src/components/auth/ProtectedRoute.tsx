@@ -1,7 +1,10 @@
-import { ReactNode, useEffect } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { useLocation, useRoute } from 'wouter';
 import { useAuth } from '../../contexts/AuthContext';
-import { Spinner } from '@/components/ui/spinner';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertCircle, Shield, Loader2 } from 'lucide-react';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -22,12 +25,21 @@ export const ProtectedRoute = ({
   const { isAuthenticated, isLoading, user } = useAuth();
   const [, setLocation] = useLocation();
   const [match] = useRoute(redirectPath);
+  // State to track if we should show an auth prompt before redirect
+  const [showAuthPrompt, setShowAuthPrompt] = useState(false);
 
   useEffect(() => {
     // If authentication check is complete and user is not authenticated
     if (!isLoading && !isAuthenticated && !match) {
-      // Redirect to login
-      setLocation(redirectPath);
+      // Show auth prompt first before redirecting
+      setShowAuthPrompt(true);
+      
+      // Set a timer to auto-redirect after a few seconds if user doesn't click
+      const timer = setTimeout(() => {
+        setLocation(redirectPath);
+      }, 3000); // 3 seconds
+      
+      return () => clearTimeout(timer);
     }
     
     // If roles are specified and user doesn't have required role
@@ -40,17 +52,54 @@ export const ProtectedRoute = ({
     }
   }, [isAuthenticated, isLoading, match, redirectPath, roles, setLocation, user]);
 
+  // Handle immediate login click
+  const handleLoginClick = () => {
+    setLocation(redirectPath);
+  };
+
   // Show loading state while checking authentication
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <Spinner size="lg" />
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
         <span className="ml-2">Authenticating...</span>
       </div>
     );
   }
 
-  // If not authenticated, render nothing (will redirect in useEffect)
+  // If not authenticated, show auth prompt
+  if (!isAuthenticated && showAuthPrompt) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <div className="flex items-center justify-center mb-2">
+              <Shield className="h-10 w-10 text-primary" />
+            </div>
+            <CardTitle className="text-center">Authentication Required</CardTitle>
+            <CardDescription className="text-center">
+              You need to sign in to access this page
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Alert className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                You'll be redirected to the login page in a few seconds
+              </AlertDescription>
+            </Alert>
+          </CardContent>
+          <CardFooter className="flex justify-center">
+            <Button onClick={handleLoginClick} className="w-full">
+              Sign In Now
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+    );
+  }
+
+  // If not authenticated and prompt not shown, render nothing (will redirect in useEffect)
   if (!isAuthenticated) {
     return null;
   }

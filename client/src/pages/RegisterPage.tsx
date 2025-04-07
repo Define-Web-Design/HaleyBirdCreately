@@ -36,7 +36,7 @@ const registerSchema = z.object({
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
-const RegisterPage = () => {
+export const RegisterPage = () => {
   const { register, isLoading } = useAuth();
   const [location, setLocation] = useLocation();
   const [error, setError] = useState<string | null>(null);
@@ -214,4 +214,3 @@ const RegisterPage = () => {
   );
 };
 
-export default RegisterPage;

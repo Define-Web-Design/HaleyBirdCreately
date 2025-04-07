@@ -37,6 +37,7 @@ import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
 import { UnauthorizedPage } from "./pages/UnauthorizedPage";
 import { DashboardPage } from "./pages/DashboardPage";
+import { LandingPage } from "./pages/LandingPage";
 import PageTransition from "@/components/ui/page-transition";
 import { initTouchFeedback } from "@/lib/touchFeedback";
 import './styles/color-blindness.css'; // Added for color blindness styles
@@ -94,47 +95,238 @@ function Router() {
         className="layered-transition"
       >
         <Switch>
-          {/* Auth Routes */}
+          {/* Public Routes - No Authentication Required */}
           <Route path="/login" component={LoginPage} />
           <Route path="/register" component={RegisterPage} />
           <Route path="/unauthorized" component={UnauthorizedPage} />
-          <Route path="/auth-dashboard" component={DashboardPage} />
-          
-          {/* Existing Routes */}
-          <Route path="/" component={Dashboard} />
-          <Route path="/content-library" component={ContentLibrary} />
-          <Route path="/content-library/all" component={ContentLibrary} />
-          <Route path="/content-library/recent" component={ContentLibrary} />
-          <Route path="/content-library/categories" component={ContentLibrary} />
-          <Route path="/content-library/favorites" component={ContentLibrary} />
-          <Route path="/content/:id" component={ContentDetail} />
-          <Route path="/content-calendar" component={ContentCalendar} />
-          <Route path="/analytics" component={Analytics} />
-          <Route path="/mood-boards" component={MoodBoards} />
-          <Route path="/content-vault" component={ContentVault} />
-          <Route path="/apple-photos" component={ApplePhotos} />
-          <Route path="/creative-symbiosis" component={CreativeSymbiosis} />
-          <Route path="/color-palettes" component={ColorPalettes} />
-          <Route path="/color-palettes/all" component={ColorPalettes} />
-          <Route path="/color-palettes/recent" component={ColorPalettes} />
-          <Route path="/color-palettes/categories" component={ColorPalettes} />
-          <Route path="/color-palettes/favorites" component={ColorPalettes} />
-          <Route path="/mood-capsules" component={MoodCapsules} />
-          <Route path="/ai-enhancement" component={AIEnhancement} />
-          <Route path="/creative-prompts" component={CreativePrompts} />
-          <Route path="/creative-tools" component={CreativeTools} />
-          <Route path="/cross-platform-tools" component={CrossPlatformTools} />
-          <Route path="/features-showcase" component={FeaturesShowcase} />
-          <Route path="/performance-analysis" component={PerformanceAnalysis} />
-          <Route path="/profile" component={Profile} />
-          <Route path="/profile/accessibility" component={Profile} />
-          <Route path="/profile/integrations" component={Profile} />
           <Route path="/legal" component={LegalPage} />
           <Route path="/privacy" component={PrivacyPage} />
           <Route path="/terms-of-service" component={LegalPage} />
-          <Route path="/settings" component={SettingsPage} />
-          <Route path="/nav-test" component={NavigationTest} />
-          <Route component={NotFound} />
+          
+          {/* Protected Routes - Authentication Required */}
+          <Route path="/" component={LandingPage} />
+          <Route path="/dashboard">
+            {(params) => (
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            )}
+          </Route>
+          <Route path="/auth-dashboard">
+            {(params) => (
+              <ProtectedRoute>
+                <DashboardPage />
+              </ProtectedRoute>
+            )}
+          </Route>
+          <Route path="/content-library">
+            {(params) => (
+              <ProtectedRoute>
+                <ContentLibrary />
+              </ProtectedRoute>
+            )}
+          </Route>
+          <Route path="/content-library/all">
+            {(params) => (
+              <ProtectedRoute>
+                <ContentLibrary />
+              </ProtectedRoute>
+            )}
+          </Route>
+          <Route path="/content-library/recent">
+            {(params) => (
+              <ProtectedRoute>
+                <ContentLibrary />
+              </ProtectedRoute>
+            )}
+          </Route>
+          <Route path="/content-library/categories">
+            {(params) => (
+              <ProtectedRoute>
+                <ContentLibrary />
+              </ProtectedRoute>
+            )}
+          </Route>
+          <Route path="/content-library/favorites">
+            {(params) => (
+              <ProtectedRoute>
+                <ContentLibrary />
+              </ProtectedRoute>
+            )}
+          </Route>
+          <Route path="/content/:id">
+            {(params) => (
+              <ProtectedRoute>
+                <ContentDetail />
+              </ProtectedRoute>
+            )}
+          </Route>
+          <Route path="/content-calendar">
+            {(params) => (
+              <ProtectedRoute>
+                <ContentCalendar />
+              </ProtectedRoute>
+            )}
+          </Route>
+          <Route path="/analytics">
+            {(params) => (
+              <ProtectedRoute>
+                <Analytics />
+              </ProtectedRoute>
+            )}
+          </Route>
+          <Route path="/mood-boards">
+            {(params) => (
+              <ProtectedRoute>
+                <MoodBoards />
+              </ProtectedRoute>
+            )}
+          </Route>
+          <Route path="/content-vault">
+            {(params) => (
+              <ProtectedRoute>
+                <ContentVault />
+              </ProtectedRoute>
+            )}
+          </Route>
+          <Route path="/apple-photos">
+            {(params) => (
+              <ProtectedRoute>
+                <ApplePhotos />
+              </ProtectedRoute>
+            )}
+          </Route>
+          <Route path="/creative-symbiosis">
+            {(params) => (
+              <ProtectedRoute>
+                <CreativeSymbiosis />
+              </ProtectedRoute>
+            )}
+          </Route>
+          <Route path="/color-palettes">
+            {(params) => (
+              <ProtectedRoute>
+                <ColorPalettes />
+              </ProtectedRoute>
+            )}
+          </Route>
+          <Route path="/color-palettes/all">
+            {(params) => (
+              <ProtectedRoute>
+                <ColorPalettes />
+              </ProtectedRoute>
+            )}
+          </Route>
+          <Route path="/color-palettes/recent">
+            {(params) => (
+              <ProtectedRoute>
+                <ColorPalettes />
+              </ProtectedRoute>
+            )}
+          </Route>
+          <Route path="/color-palettes/categories">
+            {(params) => (
+              <ProtectedRoute>
+                <ColorPalettes />
+              </ProtectedRoute>
+            )}
+          </Route>
+          <Route path="/color-palettes/favorites">
+            {(params) => (
+              <ProtectedRoute>
+                <ColorPalettes />
+              </ProtectedRoute>
+            )}
+          </Route>
+          <Route path="/mood-capsules">
+            {(params) => (
+              <ProtectedRoute>
+                <MoodCapsules />
+              </ProtectedRoute>
+            )}
+          </Route>
+          <Route path="/ai-enhancement">
+            {(params) => (
+              <ProtectedRoute>
+                <AIEnhancement />
+              </ProtectedRoute>
+            )}
+          </Route>
+          <Route path="/creative-prompts">
+            {(params) => (
+              <ProtectedRoute>
+                <CreativePrompts />
+              </ProtectedRoute>
+            )}
+          </Route>
+          <Route path="/creative-tools">
+            {(params) => (
+              <ProtectedRoute>
+                <CreativeTools />
+              </ProtectedRoute>
+            )}
+          </Route>
+          <Route path="/cross-platform-tools">
+            {(params) => (
+              <ProtectedRoute>
+                <CrossPlatformTools />
+              </ProtectedRoute>
+            )}
+          </Route>
+          <Route path="/features-showcase">
+            {(params) => (
+              <ProtectedRoute>
+                <FeaturesShowcase />
+              </ProtectedRoute>
+            )}
+          </Route>
+          <Route path="/performance-analysis">
+            {(params) => (
+              <ProtectedRoute>
+                <PerformanceAnalysis />
+              </ProtectedRoute>
+            )}
+          </Route>
+          <Route path="/profile">
+            {(params) => (
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            )}
+          </Route>
+          <Route path="/profile/accessibility">
+            {(params) => (
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            )}
+          </Route>
+          <Route path="/profile/integrations">
+            {(params) => (
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            )}
+          </Route>
+          <Route path="/settings">
+            {(params) => (
+              <ProtectedRoute>
+                <SettingsPage />
+              </ProtectedRoute>
+            )}
+          </Route>
+          <Route path="/nav-test">
+            {(params) => (
+              <ProtectedRoute>
+                <NavigationTest />
+              </ProtectedRoute>
+            )}
+          </Route>
+          <Route>
+            {(params) => (
+              <NotFound />
+            )}
+          </Route>
         </Switch>
       </PageTransition>
       <CookieConsent 
