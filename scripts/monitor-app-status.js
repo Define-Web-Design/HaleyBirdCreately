@@ -1,7 +1,32 @@
 
-const { generateAppStatusReport, displayAppStatusReport } = require('../client/src/utils/app-status-monitor.js');
+/**
+ * Script for periodic monitoring of app status
+ * This automatically runs status checks at specified intervals
+ * and saves reports for historical analysis
+ */
+
 const fs = require('fs');
 const path = require('path');
+
+// Note: We need to require the ESM module using dynamic import when running directly
+async function loadMonitor() {
+  try {
+    // Try to import the compiled JS version first
+    return await import('../client/src/utils/app-status-monitor.js');
+  } catch (error) {
+    console.error('Error loading app-status-monitor.js:', error.message);
+    
+    // Fallback to .ts version with ts-node if available
+    try {
+      // This requires ts-node to be installed
+      require('ts-node/register');
+      return require('../client/src/utils/app-status-monitor.ts');
+    } catch (innerError) {
+      console.error('Could not load app-status-monitor module:', innerError.message);
+      throw new Error('Unable to load status monitor module');
+    }
+  }
+}
 
 /**
  * Run periodic monitoring of app status and save reports
@@ -15,19 +40,22 @@ async function monitorAppStatus(intervalMinutes = 60) {
     fs.mkdirSync(logsDir, { recursive: true });
   }
   
+  // Load the monitor module
+  const monitor = await loadMonitor();
+  
   // Run initial check
-  await runAndSaveStatusCheck();
+  await runAndSaveStatusCheck(monitor);
   
   // Set up interval for periodic checks
-  setInterval(runAndSaveStatusCheck, intervalMinutes * 60 * 1000);
+  setInterval(() => runAndSaveStatusCheck(monitor), intervalMinutes * 60 * 1000);
   
-  async function runAndSaveStatusCheck() {
+  async function runAndSaveStatusCheck(monitor) {
     try {
       console.log('Running scheduled app status check...');
-      const report = await generateAppStatusReport();
+      const report = await monitor.generateAppStatusReport();
       
       // Display report in console
-      displayAppStatusReport(report);
+      monitor.displayAppStatusReport(report);
       
       // Save report to logs directory
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
@@ -44,16 +72,35 @@ async function monitorAppStatus(intervalMinutes = 60) {
         
         console.log('⚠️ Alert logged due to issues detected');
       }
+      
+      // Create a summary file that is always overwritten with latest status
+      const summaryPath = path.join(logsDir, 'current-status.json');
+      const summary = {
+        timestamp: report.timestamp,
+        status: report.overview.status,
+        statusMessage: report.overview.statusMessage,
+        criticalIssues: report.recommendations.critical.length,
+        improvements: report.recommendations.improvements.length
+      };
+      fs.writeFileSync(summaryPath, JSON.stringify(summary, null, 2));
     } catch (error) {
       console.error('Error in scheduled status check:', error);
+      
+      // Log the error to the alerts file
+      const alertsPath = path.join(logsDir, 'alerts.log');
+      const alertEntry = `[${new Date().toISOString()}] MONITOR ERROR: ${error.message}\n`;
+      fs.appendFileSync(alertsPath, alertEntry);
     }
   }
 }
 
-// If run directly, start monitoring with default 60 minute interval
+// If run directly, start monitoring with default or provided interval
 if (require.main === module) {
   const interval = process.argv[2] ? parseInt(process.argv[2]) : 60;
-  monitorAppStatus(interval);
+  monitorAppStatus(interval).catch(error => {
+    console.error('Failed to start monitoring:', error);
+    process.exit(1);
+  });
 }
 
 module.exports = { monitorAppStatus };
