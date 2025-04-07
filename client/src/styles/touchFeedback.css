@@ -301,3 +301,105 @@ input[type="radio"].touch-active {
     transition: opacity 0.1s linear !important;
   }
 }
+/* Touch Feedback Styles */
+.haptic-feedback-ripple {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  transform: scale(0);
+  pointer-events: none;
+  z-index: 9999;
+  will-change: transform, opacity;
+  animation: haptic-ripple-out 600ms ease-out forwards;
+}
+
+@keyframes haptic-ripple-out {
+  0% {
+    transform: scale(0);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+.haptic-light {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.haptic-medium {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.haptic-heavy {
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.haptic-success {
+  background: rgba(72, 187, 120, 0.5);
+}
+
+.haptic-warning {
+  background: rgba(237, 137, 54, 0.5);
+}
+
+.haptic-error {
+  background: rgba(229, 62, 62, 0.5);
+}
+
+.touch-trail {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.3);
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9998;
+  opacity: 0.5;
+  transition: opacity 300ms ease-out;
+  will-change: opacity;
+  margin-left: -10px;
+  margin-top: -10px;
+}
+
+/* Add touch-active class for interactive elements */
+.touch-active {
+  transform: scale(0.97) !important;
+  transition: transform 100ms ease-out !important;
+}
+
+/* Dark mode adjustments */
+.dark .haptic-feedback-ripple {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.dark .haptic-light {
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.dark .haptic-medium {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.dark .haptic-heavy {
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.dark .touch-trail {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+/* Reduced motion settings */
+@media (prefers-reduced-motion) {
+  .haptic-feedback-ripple, .touch-trail {
+    animation: none;
+    opacity: 0.3;
+    transition: none;
+  }
+
+  .touch-active {
+    transform: none !important;
+    transition: none !important;
+  }
+}

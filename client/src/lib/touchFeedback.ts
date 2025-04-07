@@ -225,30 +225,39 @@ export function triggerVisualFeedback(
     return;
   }
   
-  // Create a ripple element
-  const ripple = document.createElement('div');
-  ripple.className = `haptic-feedback-ripple haptic-${type}`;
-  
-  // Set the position
-  ripple.style.left = `${x}px`;
-  ripple.style.top = `${y}px`;
-  
-  // Set size and opacity based on intensity
-  const size = 40 + (options.intensity / 100) * 60; // 40px to 100px based on intensity
-  ripple.style.width = `${size}px`;
-  ripple.style.height = `${size}px`;
-  ripple.style.marginLeft = `-${size / 2}px`;
-  ripple.style.marginTop = `-${size / 2}px`;
-  
-  // Add to the DOM
-  document.body.appendChild(ripple);
-  
-  // Clean up after animation completes
-  setTimeout(() => {
-    if (document.body.contains(ripple)) {
-      document.body.removeChild(ripple);
-    }
-  }, 600); // Match the animation duration
+  try {
+    // Create a ripple element
+    const ripple = document.createElement('div');
+    ripple.className = `haptic-feedback-ripple haptic-${type}`;
+    
+    // Set the position
+    ripple.style.left = `${x}px`;
+    ripple.style.top = `${y}px`;
+    
+    // Set size and opacity based on intensity
+    const size = 40 + (options.intensity / 100) * 60; // 40px to 100px based on intensity
+    ripple.style.width = `${size}px`;
+    ripple.style.height = `${size}px`;
+    ripple.style.marginLeft = `-${size / 2}px`;
+    ripple.style.marginTop = `-${size / 2}px`;
+    
+    // Add to the DOM
+    document.body.appendChild(ripple);
+    
+    // Clean up after animation completes
+    setTimeout(() => {
+      if (document.body.contains(ripple)) {
+        try {
+          document.body.removeChild(ripple);
+        } catch (e) {
+          console.warn('Error removing ripple element:', e);
+        }
+      }
+    }, 600); // Match the animation duration
+  } catch (error) {
+    console.warn('Error in visual feedback:', error);
+    // Fail silently - don't let visual feedback errors break functionality
+  }
 }
 
 /**

@@ -5,17 +5,29 @@
 import { useState, useEffect } from 'react';
 
 /**
- * Hook to detect if the device is mobile based on screen width and user agent
- * @returns An object with mobile detection results
+ * Enhanced hook to detect if the device is mobile based on screen width, user agent, and device capabilities
+ * @returns An object with comprehensive mobile detection results
  */
 export function useMobile() {
   const [isMobile, setIsMobile] = useState(false);
   const [isTouch, setIsTouch] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
+  const [isAndroid, setIsAndroid] = useState(false);
+  const [isMobileDevice, setIsMobileDevice] = useState(false);
+  const [viewport, setViewport] = useState({
+    width: window.innerWidth,
+    height: window.innerHeight
+  });
   
   useEffect(() => {
     // Detect mobile based on screen width
     const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 768);
+      const width = window.innerWidth;
+      setIsMobile(width <= 768);
+      setViewport({
+        width: window.innerWidth,
+        height: window.innerHeight
+      });
     };
     
     // Detect touch capability
@@ -23,20 +35,56 @@ export function useMobile() {
       setIsTouch('ontouchstart' in window || navigator.maxTouchPoints > 0);
     };
     
+    // Detect OS
+    const checkOS = () => {
+      const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera || '';
+      setIsIOS(/iPad|iPhone|iPod/.test(userAgent) && !(window as any).MSStream);
+      setIsAndroid(/android/i.test(userAgent));
+      
+      // Check if device is mobile using more comprehensive detection
+      const mobileRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+      setIsMobileDevice(mobileRegex.test(userAgent) || (window.innerWidth <= 768 && 'ontouchstart' in window));
+      
+      // Add appropriate class to body for CSS targeting
+      if (mobileRegex.test(userAgent)) {
+        document.body.classList.add('mobile-device');
+        
+        if (/iPhone|iPad|iPod/.test(userAgent)) {
+          document.body.classList.add('ios-device');
+        }
+        
+        if (/Android/.test(userAgent)) {
+          document.body.classList.add('android-device');
+        }
+      }
+    };
+    
     // Initial checks
     checkMobile();
     checkTouch();
+    checkOS();
     
     // Setup event listeners for window resize
     window.addEventListener('resize', checkMobile);
     
+    // Setup orientation change listener for mobile devices
+    window.addEventListener('orientationchange', checkMobile);
+    
     // Cleanup
     return () => {
       window.removeEventListener('resize', checkMobile);
+      window.removeEventListener('orientationchange', checkMobile);
     };
   }, []);
   
-  return { isMobile, isTouch };
+  return { 
+    isMobile, 
+    isTouch, 
+    isIOS, 
+    isAndroid,
+    isMobileDevice,
+    viewport
+  };
 }
 
 /**

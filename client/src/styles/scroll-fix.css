@@ -50,3 +50,69 @@ main {
   overflow-x: hidden;
   width: 100%;
 }
+/**
+ * Mobile scrolling fixes
+ * Addresses common scrolling issues on iOS and Android devices
+ */
+
+/* Prevent iOS momentum scrolling issues */
+html, body {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: none;
+}
+
+/* Fix position:fixed elements on iOS */
+.fixed {
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+}
+
+/* Fix iOS input zoom */
+@media screen and (max-width: 768px) {
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+}
+
+/* Improve scroll performance */
+.scroll-container {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  will-change: scroll-position;
+}
+
+/* Fix iOS viewport height issues */
+.vh-fix {
+  height: 100vh;
+  height: -webkit-fill-available;
+  height: stretch;
+}
+
+/* Fix iOS rubber band effect */
+.prevent-overscroll {
+  overscroll-behavior: none;
+}
+
+/* Fix sticky elements */
+.sticky {
+  position: -webkit-sticky;
+  position: sticky;
+}
+
+/* Fix for iOS safe areas */
+@supports (padding: max(0px)) {
+  .safe-area-inset-bottom {
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  }
+  
+  .safe-area-inset-top {
+    padding-top: max(0.5rem, env(safe-area-inset-top));
+  }
+}
+
+/* Prevent content jumping on keyboard open */
+.keyboard-aware {
+  height: auto;
+  min-height: 100%;
+}
