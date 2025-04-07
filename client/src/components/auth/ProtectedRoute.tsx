@@ -31,31 +31,29 @@ export const ProtectedRoute = ({
   // State to track if auto-login attempt has been made
   const [autoLoginAttempted, setAutoLoginAttempted] = useState(false);
 
-  // Handle development auto-login by directly mocking authentication data
+  // Check if development auto-login is explicitly enabled via environment variable
   useEffect(() => {
-    // If auto-login is enabled in development, not authenticated yet, and login attempt not made yet
+    // Auto-login is now disabled by default and requires explicit opt-in
     if (isDevelopmentAutoLogin() && !isLoading && !isAuthenticated && !autoLoginAttempted) {
-      console.log('🔑 Development auto-login enabled - bypassing login screen with mock user...');
+      console.log('🔑 Testing auto-login explicitly enabled via environment variable...');
       
-      // Skip the actual login API call and directly inject mock user data
       try {
         // Check if already auto-logged in to prevent unnecessary reloads
         if (!isAlreadyAutoLoggedIn()) {
-          // Set up mock authentication
+          // Set up mock authentication only if explicitly enabled
           performDevAutoLogin();
           
           // Mark as attempted to prevent infinite loops
           setAutoLoginAttempted(true);
           
-          // Force a page reload to apply the new tokens and authenticate the user
-          // This is a simple way to bypass authentication without modifying the AuthContext
+          // Force a page reload to apply the new tokens
           window.location.reload();
         } else {
           // Already auto-logged in, just mark as attempted
           setAutoLoginAttempted(true);
         }
       } catch (error) {
-        console.error('Development auto-login error:', error);
+        console.error('Testing auto-login error:', error);
         setAutoLoginAttempted(true);
       }
     }

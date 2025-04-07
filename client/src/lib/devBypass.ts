@@ -1,23 +1,16 @@
 /**
- * Development Bypass Utility
- * This file provides utilities for bypassing authentication during development.
+ * Authentication Test Utility
+ * This file provides utilities for testing authentication.
+ * NOTE: Auto-login is now disabled by default and requires explicit opt-in via environment variable.
  */
 
 // Check if development auto-login is enabled
 export const isDevelopmentAutoLogin = (): boolean => {
-  // Check if running in development mode
-  const isDevelopment = process.env.NODE_ENV === 'development' || 
-                       import.meta.env.MODE === 'development';
-  
-  // Check if auto-login is explicitly enabled via environment variable
+  // Auto-login is now only enabled if explicitly set to true
   const isAutoLoginEnabled = import.meta.env.VITE_AUTO_LOGIN === 'true';
   
-  // Enable auto-login in development by default unless explicitly disabled
-  const isAutoLoginDisabled = import.meta.env.VITE_AUTO_LOGIN === 'false';
-  
-  // Development auto-login is enabled if in development mode AND not explicitly disabled,
-  // OR if explicitly enabled via environment variable
-  return (isDevelopment && !isAutoLoginDisabled) || isAutoLoginEnabled;
+  // No longer auto-enables in development mode by default
+  return isAutoLoginEnabled;
 };
 
 // Create a mock authentication token for development

@@ -42,17 +42,37 @@ declare global {
  */
 export const authenticate = (options?: { bypassAuth?: boolean }) => {
   return async (req: Request, res: Response, next: NextFunction) => {
-    // Development bypass for easier testing (only if explicitly requested or configured via environment)
-    const bypassAuth = options?.bypassAuth || process.env.BYPASS_AUTH === 'true' || process.env.NODE_ENV === 'development';
+    // Only bypass auth if explicitly configured (removed automatic development mode bypass)
+    const bypassAuth = options?.bypassAuth || process.env.BYPASS_AUTH === 'true';
     
     if (bypassAuth) {
-      console.log('Authentication bypassed in development mode');
-      // Set mock user for development
+      console.log('Authentication bypassed due to explicit configuration');
+      // Set mock user for testing
       req.user = {
         id: 1,
         email: 'dev@example.com',
         username: 'devuser',
         role: 'admin'
+      };
+      return next();
+    }
+    
+    // Check for Replit authentication headers
+    const replitUserId = req.headers['x-replit-user-id'];
+    const replitUserName = req.headers['x-replit-user-name'];
+    const replitUserRoles = req.headers['x-replit-user-roles'];
+    
+    if (replitUserId) {
+      // If Replit authentication headers are present, use them
+      // Extract single values from potentially array-typed headers
+      const userId = String(Array.isArray(replitUserId) ? replitUserId[0] : replitUserId);
+      const userName = String(Array.isArray(replitUserName) ? replitUserName[0] : replitUserName || 'replit-user');
+      const userRole = String(Array.isArray(replitUserRoles) ? replitUserRoles[0] : replitUserRoles || 'user');
+      
+      req.user = {
+        id: userId,
+        username: userName,
+        role: userRole
       };
       return next();
     }

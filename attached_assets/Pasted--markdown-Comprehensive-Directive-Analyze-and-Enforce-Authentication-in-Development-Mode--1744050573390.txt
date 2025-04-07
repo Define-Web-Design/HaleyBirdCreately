@@ -1,0 +1,138 @@
+```markdown
+# Comprehensive Directive: Analyze and Enforce Authentication in Development Mode
+
+## **Objective**
+Review the current implementation of authentication in the project and address the development authentication bypass mechanism to enforce authentication in all environments, including development mode. Implement changes systematically to avoid disrupting the existing app functionality.
+
+---
+
+## **Part 1: Analyze Current Authentication Implementation**
+### **Existing Authentication Setup**
+1. **Server-Side Bypass**:
+   - Located in `server/middleware/auth.ts`.
+   - Authentication is bypassed when `BYPASS_AUTH=true` or `NODE_ENV=development`.
+   - Bypass sets a mock user with the admin role, skipping credential checks.
+
+2. **Client-Side Bypass**:
+   - Defined in `client/src/lib/devBypass.ts`.
+   - When `VITE_AUTO_LOGIN=true`, mock tokens are created and stored in `localStorage` to simulate a logged-in user.
+
+3. **Protected Routes Implementation**:
+   - Found in `client/src/components/auth/ProtectedRoute.tsx`.
+   - Automatically logs in users in development mode using `isDevelopmentAutoLogin()` and `performDevAutoLogin()`.
+
+---
+
+## **Part 2: Enforce Authentication in Development Mode**
+
+### **Step 1: Modify Server-Side Authentication Middleware**
+#### **Objective**
+Remove authentication bypass in development mode to enforce real authentication.
+
+#### **Actions**
+1. Open `server/middleware/auth.ts`.
+2. Locate the condition for bypassing authentication:
+   ```javascript
+   if (process.env.BYPASS_AUTH === 'true' || process.env.NODE_ENV === 'development') {
+       req.user = { role: 'admin', id: 'mock-id', name: 'Mock User' };
+       next();
+   }
+   ```
+3. Remove or comment out the bypass logic:
+   ```javascript
+   if (process.env.BYPASS_AUTH === 'true') {
+       req.user = { role: 'admin', id: 'mock-id', name: 'Mock User' };
+       next();
+   }
+   ```
+
+4. Test the updated middleware to ensure it validates real authentication headers (e.g., Replit headers such as `X-Replit-User-Id`).
+
+---
+
+### **Step 2: Disable Client-Side Auto-Login**
+#### **Objective**
+Prevent mock token creation and auto-login in development mode.
+
+#### **Actions**
+1. Open `client/src/lib/devBypass.ts`.
+2. Locate the functionality for auto-login based on the `VITE_AUTO_LOGIN` variable.
+3. Update the condition to disable auto-login:
+   ```javascript
+   if (process.env.VITE_AUTO_LOGIN === 'true') {
+       // Disable mock token creation
+       console.warn("Auto-login is disabled for development mode.");
+   }
+   ```
+
+4. Set `VITE_AUTO_LOGIN=false` in the `.env` file:
+   ```
+   VITE_AUTO_LOGIN=false
+   ```
+
+5. Remove any tokens stored in `localStorage`:
+   ```javascript
+   localStorage.removeItem('mockToken');
+   ```
+
+---
+
+### **Step 3: Adjust ProtectedRoute Component**
+#### **Objective**
+Ensure proper authentication logic in `ProtectedRoute.tsx` without relying on auto-login.
+
+#### **Actions**
+1. Open `client/src/components/auth/ProtectedRoute.tsx`.
+2. Replace development auto-login logic with standard authentication checks:
+   ```javascript
+   const ProtectedRoute = ({ children }) => {
+       const isAuthenticated = useAuth();
+
+       if (!isAuthenticated) {
+           return <Redirect to="/login" />;
+       }
+
+       return children;
+   };
+   ```
+
+3. Remove the usage of `performDevAutoLogin()` and any associated page reload logic.
+
+---
+
+### **Step 4: Validate Real Authentication**
+#### **Objective**
+Test authentication flow to confirm it works consistently across all environments.
+
+#### **Actions**
+1. Ensure the server validates requests using real authentication headers:
+   - Verify Replit authentication headers (`X-Replit-User-Id`, `X-Replit-User-Name`) are being processed correctly.
+2. Test the login flow:
+   - Confirm that authenticated users can access protected routes.
+   - Verify unauthenticated users are redirected to the login page.
+
+---
+
+## **Part 3: Completion Verification**
+1. **Server-Side Validation**:
+   - Confirm that the server-side middleware enforces authentication in all environments.
+   - Test with real authentication headers to ensure proper validation.
+
+2. **Client-Side Behavior**:
+   - Verify `VITE_AUTO_LOGIN` is set to `false`, and mock tokens are no longer created.
+   - Confirm users must log in through the standard authentication flow.
+
+3. **Protected Routes**:
+   - Ensure protected routes only allow access to authenticated users.
+   - Test redirection for unauthenticated users.
+
+4. **Stability and Functionality**:
+   - Confirm no disruption to existing workflows.
+   - Test all major app features to ensure they function correctly after implementing the changes.
+
+---
+
+This directive ensures a systematic approach to enforcing authentication in development mode while maintaining app stability. Let me know if you need further assistance! 🚀✨
+``` 
+
+This markdown organizes the necessary steps to analyze, update, and enforce authentication across your application. It provides a cohesive workflow to maintain app stability while implementing changes. Let me know if you'd like adjustments or additional details! 🌟
