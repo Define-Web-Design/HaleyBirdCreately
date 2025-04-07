@@ -1,35 +1,30 @@
-// ES Module syntax for importing app-status.js
+
+// App Status Check Runner
+// This script runs the comprehensive app status check
+
 import { runAppStatusCheck } from './app-status.js';
 
-// Run the app status check and display results
-runAppStatusCheck()
-  .then(report => {
-    console.log('App Status Report generated successfully');
-    console.log('----------------------------------------');
-    console.log(`Overall Status: ${report.overview.status}`);
-    console.log(`Status Message: ${report.overview.statusMessage}`);
+console.log('Starting comprehensive app status check...');
 
-    // Display service statuses
-    console.log('\nService Statuses:');
-    for (const [service, status] of Object.entries(report.services)) {
-      console.log(`- ${service}: ${status.status}`);
-      if (status.issues.length > 0) {
-        console.log(`  Issues: ${status.issues.join(', ')}`);
-      }
-    }
-
-    // Display recommendations
-    if (report.recommendations.critical.length > 0) {
-      console.log('\nCritical Recommendations:');
-      report.recommendations.critical.forEach(rec => console.log(`- ${rec}`));
-    }
-
-    if (report.recommendations.improvements.length > 0) {
-      console.log('\nImprovement Recommendations:');
-      report.recommendations.improvements.forEach(rec => console.log(`- ${rec}`));
-    }
-  })
-  .catch(error => {
-    console.error('Error generating app status report:', error);
-    process.exit(1);
-  });
+try {
+  const results = await runAppStatusCheck();
+  console.log('App Status Check Completed');
+  console.log('-------------------------');
+  console.log('Summary:');
+  console.log(`- Overall Status: ${results.status}`);
+  console.log(`- Checked Services: ${results.checkedServices}`);
+  console.log(`- Services Online: ${results.onlineServices}`);
+  console.log(`- Services Offline: ${results.offlineServices}`);
+  
+  if (results.issues.length > 0) {
+    console.log('\nIssues Detected:');
+    results.issues.forEach((issue, index) => {
+      console.log(`${index + 1}. ${issue.service}: ${issue.message}`);
+    });
+  }
+  
+  process.exit(results.status === 'healthy' ? 0 : 1);
+} catch (error) {
+  console.error('Error running app status check:', error);
+  process.exit(1);
+}

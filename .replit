@@ -63,7 +63,7 @@ localPort = 8425
 externalPort = 3002
 
 [workflows]
-runButton = "Main Development Server"
+runButton = "Optimized Development"
 
 [[workflows.workflow]]
 name = "Project"
@@ -3965,6 +3965,100 @@ args = "node -e \"const { testAppResponsiveness } = require('./client/src/utils/
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "node -e \"const { runAccessibilityAudit } = require('./client/src/utils/navigation-tester.js'); runAccessibilityAudit().then(results => console.log('Accessibility Score:', results.score, '/ 100'))\""
+
+[[workflows.workflow]]
+name = "Optimized Development"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Kill any running processes first"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pkill -f node || true"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run code quality checks"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run lint"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npx tsc --noEmit"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run the app status check"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node scripts/run-app-status-check.js"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Start the development server"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
+
+[[workflows.workflow]]
+name = "Validation Suite"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Kill any running processes first"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pkill -f node || true"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run code quality checks"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run lint"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npx tsc --noEmit"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run the comprehensive validation system"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node -e \"require('./client/src/utils/consolidated-validation.js').runFullSystemValidation().then(report => { require('./client/src/utils/consolidated-validation.js').displayFullValidationResults(report); process.exit(report.overallSuccess ? 0 : 1); })\""
 
 [objectStorage]
 defaultBucketID = "replit-objstore-0f505a20-ca44-41fd-a1d9-978b798832cc"
