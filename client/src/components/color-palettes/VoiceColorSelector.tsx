@@ -43,14 +43,26 @@ const VoiceColorSelector: React.FC<VoiceColorSelectorProps> = ({
   const { toast } = useToast();
 
   // Mutation for generating AI palette
-  const generatePaletteMutation = useMutation({
-    mutationFn: (data: { mood: string, description?: string }) => 
-      apiRequest({
+  interface GeneratePaletteResponse {
+    palette: {
+      colors: Color[];
+      moodName: string;
+      description?: string;
+    };
+  }
+  
+  const generatePaletteMutation = useMutation<
+    GeneratePaletteResponse,
+    Error,
+    { mood: string, description?: string }
+  >({
+    mutationFn: (data) => 
+      apiRequest<GeneratePaletteResponse>({
         url: '/api/color-palettes/generate', 
         method: 'POST',
         data,
       }),
-    onSuccess: (data: any) => {
+    onSuccess: (data) => {
       if (data.palette && data.palette.colors) {
         const newPalette = data.palette.colors.map((color: Color) => color.hex);
         

@@ -289,7 +289,7 @@ const ColorPaletteGenerator: React.FC = () => {
               ) : (
                 <>
                   {/* Preset palette display */}
-                  {presetPalettesQuery.data?.length > 0 ? (
+                  {presetPalettesQuery.data && presetPalettesQuery.data.length > 0 ? (
                     <div className="space-y-6">
                       {presetPalettesQuery.data.map((palette: SavedPalette) => (
                         <div key={palette.id} className="border rounded-lg p-4 hover:shadow-md card-transition theme-aware">

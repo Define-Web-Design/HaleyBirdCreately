@@ -9,6 +9,7 @@ import {
   suggestPostingTimes
 } from "./ai/content";
 import { generateMoodPalette, generateAIPalette } from "./services/paletteGenerator";
+import { MoodTone } from "../shared/schema";
 import { 
   apiLimiter, 
   addOwnershipHeaders, 
@@ -947,8 +948,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
           message: "Mood is required" 
         });
       }
-
-      const generatedPalette = await generateAIPalette(description || mood);
+      
+      console.log("Generating palette with mood:", mood, "description:", description || "N/A");
+      
+      let generatedPalette;
+      
+      // Optimize response time by using cached or predefined palettes when possible
+      if (mood.toUpperCase() in MoodTone && !description) {
+        // For standard moods without description, use predefined palettes
+        generatedPalette = await generateMoodPalette(mood.toUpperCase() as MoodTone);
+        console.log("Using predefined palette for mood:", mood);
+      } else {
+        // For custom descriptions or non-standard moods, use AI generation
+        generatedPalette = await generateAIPalette(description || mood);
+        console.log("Using AI generation for palette");
+      }
 
       res.json({
         success: true,
