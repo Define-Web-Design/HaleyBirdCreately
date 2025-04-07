@@ -319,7 +319,7 @@ const PaletteCard = ({
           })}
         </div>
         
-        <div className="relative">
+        <div className="relative group">
           <Button 
             variant="ghost" 
             size="sm" 

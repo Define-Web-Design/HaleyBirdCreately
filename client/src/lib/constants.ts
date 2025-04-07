@@ -86,6 +86,12 @@ export const SMART_TOOLS = [
     icon: "fas fa-lightbulb",
   },
   {
+    name: "Features Showcase",
+    path: "/features-showcase",
+    icon: "fas fa-stars",
+    isNew: true,
+  },
+  {
     name: "Cross-Platform Tools",
     path: "/cross-platform-tools",
     icon: "fas fa-sync",

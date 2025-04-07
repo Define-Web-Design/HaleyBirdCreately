@@ -1,0 +1,63 @@
+# Directive: Integrate Google PageSpeed Insights into Workflow
+
+## **Objective**
+Leverage Google’s [PageSpeed Insights](https://pagespeed.web.dev/) to analyze and optimize the app’s performance metrics, ensuring an efficient and responsive user experience across all devices and browsers.
+
+---
+
+## **1. Accessing PageSpeed Insights**
+- Navigate to [PageSpeed Insights](https://pagespeed.web.dev/).
+- Submit the application’s URL to generate a detailed performance report.
+
+---
+
+## **2. Analyze Core Metrics**
+Review the following key performance indicators provided by PageSpeed Insights:
+- **First Contentful Paint (FCP)**: Measure the time taken for the first visible element to load.
+- **Largest Contentful Paint (LCP)**: Evaluate the time taken for the largest visible element to render.
+- **Cumulative Layout Shift (CLS)**: Assess the visual stability of the page during loading.
+- **Total Blocking Time (TBT)**: Analyze how long the page remains non-interactive due to heavy scripts.
+
+---
+
+## **3. Implement Recommendations**
+Based on the insights from the report, apply the following improvements:
+- **Image Optimization**:
+   - Compress and resize images to reduce load times.
+   - Enable lazy loading for off-screen images.
+- **Resource Management**:
+   - Minimize render-blocking CSS and JavaScript.
+   - Utilize asynchronous loading for heavy scripts.
+   - Optimize caching strategies to improve page load speed.
+- **Server and Network Enhancements**:
+   - Reduce server response times (TTFB - Time to First Byte).
+   - Integrate a Content Delivery Network (CDN) to serve static assets efficiently.
+- **Other Fixes**:
+   - Eliminate unused CSS and JavaScript.
+   - Address inefficient DOM structures.
+
+---
+
+## **4. Validate Changes**
+- Re-run the app’s URL through PageSpeed Insights after applying optimizations.
+- Compare results to confirm improved metrics, such as faster load times and better visual stability.
+- Test responsiveness and performance across devices and browsers to ensure consistent improvements.
+
+---
+
+## **5. Document Results**
+Provide detailed documentation for:
+- Original PageSpeed Insights report and identified issues.
+- Actions taken to address recommendations.
+- Improvements achieved (e.g., updated performance scores and metrics).
+- Remaining areas for further optimization, if applicable.
+
+---
+
+## **6. Integration into Workflow**
+- Schedule periodic evaluations using PageSpeed Insights to ensure continued performance optimization as updates are made to the app.
+- Automate key checks by integrating performance testing tools into the development workflow.
+
+---
+
+This directive ensures seamless integration of Google PageSpeed Insights into your workflow while providing actionable steps for improvement and validation. Let me know if further refinements are needed! 🚀✨
