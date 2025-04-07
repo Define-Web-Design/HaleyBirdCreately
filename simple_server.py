@@ -1,17 +1,3 @@
-#!/bin/bash
-
-echo "Starting simple HTTP server..."
-
-# Ensure log directory exists
-mkdir -p logs/pagespeed
-
-# Alternative approach: Use python to run a simple HTTP server
-# This does not require Node.js or npm
-echo "Using Python's built-in HTTP server as a fallback..."
-echo "Starting server at http://0.0.0.0:3000..."
-
-# Create a simple Python HTTP server script
-cat > simple_server.py << 'EOF'
 import http.server
 import socketserver
 import json
@@ -84,11 +70,11 @@ try:
 except Exception as e:
     print(f"Error loading .env file: {e}")
 
-Handler = SimpleHTTPRequestHandler
-httpd = socketserver.TCPServer(("0.0.0.0", PORT), Handler)
-print(f"Server running at http://0.0.0.0:{PORT}")
-httpd.serve_forever()
-EOF
+def run_server():
+    Handler = SimpleHTTPRequestHandler
+    httpd = socketserver.TCPServer(("0.0.0.0", PORT), Handler)
+    print(f"Server running at http://0.0.0.0:{PORT}")
+    httpd.serve_forever()
 
-# Run the Python server
-python simple_server.py
+if __name__ == "__main__":
+    run_server()

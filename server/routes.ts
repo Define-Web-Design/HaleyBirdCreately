@@ -9,7 +9,7 @@ import {
   suggestPostingTimes
 } from "./ai/content";
 import { generateMoodPalette, generateAIPalette } from "./services/paletteGenerator";
-import { runPageSpeedAnalysis, saveResults, formatAnalysisForResponse, validateApiKey, analyzeUrl } from "./services/pageSpeedService";
+import { pageSpeedService } from "./services/pageSpeedService";
 import { MoodTone } from "../shared/schema";
 import { 
   apiLimiter, 
@@ -247,35 +247,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Validate API key before proceeding
-      const apiKeyValidation = await validateApiKey();
-
-      if (!apiKeyValidation.valid) {
-        console.error(`PageSpeed API key validation failed: ${apiKeyValidation.message}`);
+      // Validate API key availability
+      if (!process.env.PAGESPEED_INSIGHTS_API_KEY) {
+        console.error('PageSpeed API key not configured');
         return res.status(500).json({
           success: false,
-          message: `API Error: API key not valid. ${apiKeyValidation.message}`
+          message: 'API Error: PageSpeed Insights API key not configured'
         });
       }
 
       console.log(`Running PageSpeed analysis for ${url} on ${device}`);
 
       // Run the analysis
-      const results = await runPageSpeedAnalysis(url, device as 'mobile' | 'desktop');
-
-      // Save the results to files
-      const fileInfo = saveResults(results as any, url, device);
+      const isMobile = device === 'mobile';
+      const results = await pageSpeedService.analyzeUrl(url, isMobile);
 
       // Format the results for API response
-      const formattedResults = formatAnalysisForResponse(results as any);
+      const formattedResults = {
+        score: results.score,
+        loadingSpeed: results.loadingSpeed,
+        recommendations: results.recommendations,
+        timestamp: results.timestamp
+      };
 
       res.json({
         success: true,
-        results: formattedResults,
-        files: fileInfo ? {
-          jsonFilename: fileInfo.jsonFilename,
-          summaryFilename: fileInfo.summaryFilename
-        } : null
+        results: formattedResults
       });
     } catch (error: any) {
       console.error(`PageSpeed analysis error: ${error.message}`);
@@ -301,7 +298,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'URL parameter is required' });
       }
 
-      const result = await analyzeUrl(url, isMobile);
+      const result = await pageSpeedService.analyzeUrl(url, isMobile);
       res.json(result);
     } catch (error) {
       console.error('PageSpeed API error:', error);
