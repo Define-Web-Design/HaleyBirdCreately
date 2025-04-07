@@ -1,291 +1,349 @@
+/**
+ * Creately - Color Palette Generator
+ * Simple server implementation for the Creately application.
+ * This server provides endpoints for color palette generation and image analysis.
+ */
+
+// Import built-in Node.js modules
 const http = require('http');
-const https = require('https');
-const url = require('url');
 const fs = require('fs');
 const path = require('path');
-const querystring = require('querystring');
+const { URL } = require('url');
+const crypto = require('crypto');
+const https = require('https');
 
+// Environment variables
 const PORT = process.env.PORT || 3000;
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY || '';
 
-// Default colors to use when OpenAI API is not available
-const DEFAULT_COLORS = ["#FFD166", "#06D6A0", "#118AB2", "#EF476F", "#073B4C"];
+// MIME types for static file serving
+const MIME_TYPES = {
+  '.html': 'text/html',
+  '.css': 'text/css',
+  '.js': 'application/javascript',
+  '.json': 'application/json',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.gif': 'image/gif',
+  '.svg': 'image/svg+xml'
+};
 
-// Load environment variables from .env file
-try {
-  const envContent = fs.readFileSync('.env', 'utf8');
-  envContent.split('\n').forEach(line => {
-    const trimmedLine = line.trim();
-    if (trimmedLine && !trimmedLine.startsWith('#')) {
-      const [key, value] = trimmedLine.split('=', 2);
-      process.env[key] = value;
-    }
-  });
-  console.log("Environment variables loaded from .env file");
-} catch (error) {
-  console.log(`Error loading .env file: ${error.message}`);
-}
+// Color palettes for common moods when OpenAI API is not available
+const DEFAULT_PALETTES = {
+  'happy': ['#FFD166', '#06D6A0', '#118AB2', '#EF476F', '#073B4C'],
+  'calm': ['#A8DADC', '#E0FBFC', '#457B9D', '#1D3557', '#F1FAEE'],
+  'energetic': ['#FF595E', '#FFCA3A', '#8AC926', '#1982C4', '#6A4C93'],
+  'professional': ['#0A192F', '#112240', '#233554', '#8892B0', '#CCD6F6'],
+  'romantic': ['#FF8CC6', '#F7B2BD', '#FFDBE5', '#D291BC', '#957DAD'],
+  'mysterious': ['#2D3142', '#4F5D75', '#BFC0C0', '#FFFFFF', '#EF8354'],
+  'playful': ['#FF9F1C', '#FFBF69', '#CBF3F0', '#2EC4B6', '#FDFFFC'],
+  'elegant': ['#331832', '#694E52', '#886F68', '#9A8F97', '#DCE3F4'],
+  'bold': ['#D7263D', '#F46036', '#2E294E', '#1B998B', '#C5D86D'],
+  'serene': ['#5F7481', '#A2B6B4', '#DBD3C9', '#FAF9F9', '#E1BB80']
+};
 
-const server = http.createServer(async (req, res) => {
-  // CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  
-  const parsedUrl = url.parse(req.url, true);
-  const pathname = parsedUrl.pathname;
-  
-  // Handle OPTIONS requests for CORS preflight
+// Create HTTP server
+const server = http.createServer((req, res) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    res.statusCode = 204;
+    setCorsHeaders(res);
+    res.writeHead(204);
     res.end();
     return;
   }
-  
-  // Handle POST requests
-  if (req.method === 'POST') {
+
+  // Set CORS headers for all responses
+  setCorsHeaders(res);
+
+  // Parse URL
+  const parsedUrl = new URL(req.url, `http://${req.headers.host}`);
+  const pathname = parsedUrl.pathname;
+
+  // API Endpoints
+  if (pathname === '/api/generate-palette' && req.method === 'POST') {
+    handleGeneratePalette(req, res);
+    return;
+  }
+
+  if (pathname === '/api/analyze-image' && req.method === 'POST') {
+    handleAnalyzeImage(req, res);
+    return;
+  }
+
+  if (pathname === '/api/status' && req.method === 'GET') {
+    const status = {
+      server: 'online',
+      openai_api: OPENAI_API_KEY ? 'connected' : 'not_connected',
+      version: '1.0.0'
+    };
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(status));
+    return;
+  }
+
+  // Serve the static HTML file
+  if (pathname === '/' || pathname === '') {
+    serveStaticFile(res, './static_version.html');
+    return;
+  }
+
+  // Serve other static files
+  serveStaticFile(res, `.${pathname}`);
+});
+
+/**
+ * Set CORS headers for cross-origin requests
+ */
+function setCorsHeaders(res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+}
+
+/**
+ * Serve a static file with appropriate content type
+ */
+function serveStaticFile(res, filePath) {
+  const extname = path.extname(filePath);
+  const contentType = MIME_TYPES[extname] || 'text/plain';
+
+  fs.readFile(filePath, (err, content) => {
+    if (err) {
+      if (err.code === 'ENOENT') {
+        // File not found
+        res.writeHead(404);
+        res.end('404 - File Not Found');
+      } else {
+        // Server error
+        res.writeHead(500);
+        res.end(`Server Error: ${err.code}`);
+      }
+      return;
+    }
+
+    // Successful response
+    res.writeHead(200, { 'Content-Type': contentType });
+    res.end(content, 'utf-8');
+  });
+}
+
+/**
+ * Parse JSON from request body
+ */
+function parseRequestBody(req) {
+  return new Promise((resolve, reject) => {
     let body = '';
-    
     req.on('data', chunk => {
       body += chunk.toString();
     });
-    
-    req.on('end', async () => {
-      let requestData = {};
+    req.on('end', () => {
       try {
-        requestData = JSON.parse(body);
+        const data = body ? JSON.parse(body) : {};
+        resolve(data);
       } catch (error) {
-        res.statusCode = 400;
-        res.setHeader('Content-Type', 'application/json');
-        res.end(JSON.stringify({ error: 'Invalid JSON' }));
-        return;
-      }
-      
-      if (pathname === '/api/palette/generate') {
-        await handleGeneratePalette(req, res, requestData);
-      } else if (pathname === '/api/palette/analyze') {
-        await handleAnalyzeImage(req, res, requestData);
-      } else {
-        res.statusCode = 404;
-        res.setHeader('Content-Type', 'application/json');
-        res.end(JSON.stringify({
-          error: 'Not Found',
-          message: `The POST endpoint ${pathname} is not supported`,
-          timestamp: new Date().toISOString()
-        }));
+        reject(error);
       }
     });
-    
-    return;
-  }
-  
-  // Handle GET requests
-  if (req.method === 'GET') {
-    if (pathname === '/' || pathname === '/api') {
-      // Serve the HTML front-end
-      res.statusCode = 200;
-      res.setHeader('Content-Type', 'text/html');
-      res.end(generateHtml());
-    } else if (pathname === '/api/status') {
-      // Return API status
-      res.statusCode = 200;
-      res.setHeader('Content-Type', 'application/json');
-      res.end(JSON.stringify({
-        status: 'online',
-        version: '1.0.0',
-        timestamp: new Date().toISOString(),
-        database: process.env.DATABASE_URL ? 'connected' : 'not configured',
-        apiKeys: {
-          openai: process.env.OPENAI_API_KEY ? 'configured' : 'not configured'
-        }
-      }));
-    } else {
-      res.statusCode = 404;
-      res.setHeader('Content-Type', 'application/json');
-      res.end(JSON.stringify({
-        error: 'Not Found',
-        message: `The requested path ${pathname} was not found`,
-        timestamp: new Date().toISOString()
-      }));
-    }
-  }
-});
+    req.on('error', reject);
+  });
+}
 
-async function handleGeneratePalette(req, res, data) {
-  // Extract parameters
-  const mood = data.mood || 'happy';
-  const description = data.description || '';
-  const count = data.count || 5;
-  
-  // Get OpenAI API key
-  const apiKey = process.env.OPENAI_API_KEY;
-  
-  if (!apiKey) {
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'application/json');
-    res.end(JSON.stringify({
-      colors: DEFAULT_COLORS,
-      explanation: 'A default color palette (OpenAI API key not provided)',
-      generated: false
-    }));
-    return;
-  }
-  
+/**
+ * Handle palette generation requests
+ */
+async function handleGeneratePalette(req, res) {
   try {
-    // Format the request for OpenAI
-    const moodDesc = description ? `${mood} mood and this description: '${description}'` : `${mood} mood`;
-    const prompt = `Generate a cohesive color palette of ${count} colors that represents a ${moodDesc}. The colors should work well together and convey the right emotional tone.`;
-    
-    const systemPrompt = `You are a professional color theory expert and designer who creates perfect color palettes based on moods and emotions. 
-    Return a JSON object with these keys: 
-    "colors" (array of exactly ${count} hex color codes like "#RRGGBB"), and 
-    "explanation" (a brief description of the palette and how it relates to the requested mood).
-    Ensure all colors work well together, have good contrast ratios when appropriate, and truly capture the essence of the requested mood.`;
-    
-    // Call OpenAI API
-    const response = await callOpenAI(apiKey, prompt, systemPrompt);
-    
-    // Process the OpenAI response
-    if (response && response.choices && response.choices.length > 0) {
-      const content = response.choices[0].message.content;
-      const palette = JSON.parse(content);
-      
-      // Ensure we have the right number of colors
-      if (palette.colors && palette.colors.length !== count) {
-        palette.colors = palette.colors.slice(0, count);
-        
-        // If we still don't have enough, add some default colors
-        while (palette.colors.length < count) {
-          palette.colors.push(DEFAULT_COLORS[palette.colors.length % DEFAULT_COLORS.length]);
-        }
-      }
-      
-      // Add generated flag
-      palette.generated = true;
-      
-      res.statusCode = 200;
-      res.setHeader('Content-Type', 'application/json');
-      res.end(JSON.stringify(palette));
-    } else {
-      // Return default if there's an issue with the OpenAI response
-      res.statusCode = 200;
-      res.setHeader('Content-Type', 'application/json');
-      res.end(JSON.stringify({
-        colors: DEFAULT_COLORS,
-        explanation: `A default palette for '${mood}' mood (OpenAI API provided an invalid response)`,
-        generated: false
-      }));
+    const data = await parseRequestBody(req);
+    const mood = data.mood || 'happy';
+    const description = data.description || '';
+
+    // If OpenAI API key is not available, return default palette
+    if (!OPENAI_API_KEY) {
+      const defaultPalette = DEFAULT_PALETTES[mood] || DEFAULT_PALETTES.happy;
+      const response = {
+        status: 'success',
+        message: 'Generated using default palette (OpenAI API not configured)',
+        palette: defaultPalette,
+        explanation: `A pre-defined palette for the mood "${mood}". To get AI-generated palettes, add your OpenAI API key.`
+      };
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(response));
+      return;
     }
-  } catch (error) {
-    console.error(`Error generating palette: ${error.message}`);
-    res.statusCode = 500;
-    res.setHeader('Content-Type', 'application/json');
+
+    // Use OpenAI to generate a palette
+    const prompt = `Generate a color palette of 5 hex codes for the mood: ${mood}. ${description ? 'Additional description: ' + description : ''}`;
+    const systemPrompt = `You are a professional color designer. Generate a harmonious color palette of exactly 5 colors as hex codes for the given mood. Respond with a JSON object containing two properties: 'palette' as an array of 5 hex color codes, and 'explanation' as a short description of the palette.`;
+
+    const openaiResponse = await callOpenAI(OPENAI_API_KEY, prompt, systemPrompt);
+    
+    res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({
-      error: `Failed to generate color palette: ${error.message}`,
-      colors: DEFAULT_COLORS,
-      explanation: `A default palette (error occurred during generation)`,
-      generated: false
+      status: 'success',
+      ...openaiResponse
+    }));
+  } catch (error) {
+    console.error('Error generating palette:', error);
+    res.writeHead(500, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      status: 'error',
+      message: 'Failed to generate palette',
+      error: error.message
     }));
   }
 }
 
-async function handleAnalyzeImage(req, res, data) {
-  // Extract parameters
-  const imageBase64 = data.image || '';
-  const prompt = data.prompt || 'What colors are prominent in this image?';
-  
-  // Get OpenAI API key
-  const apiKey = process.env.OPENAI_API_KEY;
-  
-  if (!apiKey || !imageBase64) {
-    res.statusCode = 400;
-    res.setHeader('Content-Type', 'application/json');
-    res.end(JSON.stringify({
-      error: 'Missing API key or image data',
-      analysis: 'Unable to analyze image'
-    }));
-    return;
-  }
-  
+/**
+ * Handle image analysis requests
+ */
+async function handleAnalyzeImage(req, res) {
   try {
-    // Prepare the request for OpenAI vision API
-    const requestBody = {
-      model: "gpt-4o",
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: prompt
-            },
-            {
-              type: "image_url",
-              image_url: {
-                url: `data:image/jpeg;base64,${imageBase64}`
-              }
-            }
-          ]
-        }
-      ],
-      max_tokens: 500
-    };
+    const data = await parseRequestBody(req);
+    const imageUrl = data.imageUrl;
     
-    // Call OpenAI API
+    if (!imageUrl) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        status: 'error',
+        message: 'Image URL is required'
+      }));
+      return;
+    }
+
+    // If OpenAI API key is not available, return error
+    if (!OPENAI_API_KEY) {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        status: 'error',
+        message: 'OpenAI API key is required for image analysis',
+        error: 'API key not configured'
+      }));
+      return;
+    }
+
+    // Use OpenAI Vision API to analyze the image
+    const prompt = "Extract a color palette from this image. Identify the 5 most prominent or harmonious colors and provide their hex codes.";
+    const systemPrompt = "You are a color palette extraction expert. Analyze the image and extract exactly 5 colors that form a harmonious palette. Return a JSON with 'palette' (array of 5 hex codes) and 'explanation' (brief description of the palette).";
+    
+    const openaiResponse = await callOpenAI(OPENAI_API_KEY, prompt, systemPrompt, imageUrl);
+    
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      status: 'success',
+      ...openaiResponse
+    }));
+  } catch (error) {
+    console.error('Error analyzing image:', error);
+    res.writeHead(500, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      status: 'error',
+      message: 'Failed to analyze image',
+      error: error.message
+    }));
+  }
+}
+
+/**
+ * Call OpenAI API for palette generation or image analysis
+ */
+async function callOpenAI(apiKey, prompt, systemPrompt, imageUrl = null) {
+  return new Promise((resolve, reject) => {
+    // Create message array based on whether we're using vision or not
+    let messages = [
+      { role: 'system', content: systemPrompt },
+    ];
+    
+    if (imageUrl) {
+      // For image analysis, add image URL to the content
+      messages.push({
+        role: 'user',
+        content: [
+          { type: 'text', text: prompt },
+          { type: 'image_url', image_url: { url: imageUrl } }
+        ]
+      });
+    } else {
+      // For text-based generation
+      messages.push({ role: 'user', content: prompt });
+    }
+    
+    // Determine which model to use based on whether we have an image
+    const model = imageUrl ? 'gpt-4-vision-preview' : 'gpt-3.5-turbo';
+    
+    // Prepare the request data
+    const data = JSON.stringify({
+      model: model,
+      messages: messages,
+      max_tokens: 500,
+      temperature: 0.7
+    });
+    
+    // Set up the request options
     const options = {
       hostname: 'api.openai.com',
       path: '/v1/chat/completions',
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Length': data.length
       }
     };
     
-    const response = await httpRequest(options, JSON.stringify(requestBody));
-    const responseData = JSON.parse(response);
-    
-    // Process the OpenAI response
-    if (responseData.choices && responseData.choices.length > 0) {
-      const analysis = responseData.choices[0].message.content;
-      
-      res.statusCode = 200;
-      res.setHeader('Content-Type', 'application/json');
-      res.end(JSON.stringify({
-        analysis: analysis,
-        success: true
-      }));
-    } else {
-      // Return error if there's an issue with the OpenAI response
-      res.statusCode = 200;
-      res.setHeader('Content-Type', 'application/json');
-      res.end(JSON.stringify({
-        error: 'Failed to analyze image',
-        analysis: 'OpenAI API provided an invalid response',
-        success: false
-      }));
-    }
-  } catch (error) {
-    console.error(`Error analyzing image: ${error.message}`);
-    res.statusCode = 500;
-    res.setHeader('Content-Type', 'application/json');
-    res.end(JSON.stringify({
-      error: `Failed to analyze image: ${error.message}`,
-      analysis: 'An error occurred during analysis',
-      success: false
-    }));
-  }
-}
-
-// Helper function for HTTP requests
-function httpRequest(options, data) {
-  return new Promise((resolve, reject) => {
+    // Make the request
     const req = https.request(options, (res) => {
       let responseData = '';
+      
       res.on('data', (chunk) => {
         responseData += chunk;
       });
+      
       res.on('end', () => {
-        resolve(responseData);
+        try {
+          const parsedResponse = JSON.parse(responseData);
+          
+          if (res.statusCode !== 200) {
+            console.error('OpenAI API error:', parsedResponse);
+            reject(new Error(parsedResponse.error ? parsedResponse.error.message : 'Unknown API error'));
+            return;
+          }
+          
+          // Extract the content from the response
+          if (parsedResponse.choices && parsedResponse.choices.length > 0) {
+            const content = parsedResponse.choices[0].message.content;
+            
+            try {
+              // Parse the JSON from the content
+              const result = JSON.parse(content);
+              resolve(result);
+            } catch (error) {
+              // If we can't parse JSON, try to extract palette from the text
+              console.warn('Failed to parse JSON response, attempting to extract palette from text');
+              console.log('Content received:', content);
+              
+              // Fallback extraction using regex to find hex codes
+              const hexCodes = content.match(/#[0-9A-Fa-f]{6}/g) || [];
+              const palette = hexCodes.slice(0, 5);
+              
+              while (palette.length < 5) {
+                // Add default colors if we don't have enough
+                palette.push(DEFAULT_PALETTES.professional[palette.length]);
+              }
+              
+              resolve({
+                palette: palette,
+                explanation: "Palette extracted from OpenAI response (non-JSON format)."
+              });
+            }
+          } else {
+            reject(new Error('No response choices returned from OpenAI'));
+          }
+        } catch (error) {
+          reject(error);
+        }
       });
     });
     
@@ -293,261 +351,33 @@ function httpRequest(options, data) {
       reject(error);
     });
     
-    if (data) {
-      req.write(data);
-    }
+    req.write(data);
     req.end();
   });
 }
 
-// Helper function for OpenAI API calls
-async function callOpenAI(apiKey, prompt, systemPrompt) {
-  const requestBody = {
-    model: "gpt-4o",
-    messages: [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: prompt }
-    ],
-    temperature: 0.7,
-    max_tokens: 1000,
-    response_format: { type: "json_object" }
-  };
-  
-  const options = {
-    hostname: 'api.openai.com',
-    path: '/v1/chat/completions',
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
-    }
-  };
-  
-  const response = await httpRequest(options, JSON.stringify(requestBody));
-  return JSON.parse(response);
-}
-
-// Generate HTML for frontend
-function generateHtml() {
-  return `
-  <!DOCTYPE html>
-  <html lang="en">
-  <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Creately - Color Palette Generator</title>
-      <style>
-          body {
-              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-              line-height: 1.6;
-              color: #333;
-              max-width: 800px;
-              margin: 0 auto;
-              padding: 20px;
-          }
-          h1 {
-              color: #2563EB;
-              margin-bottom: 10px;
-          }
-          h2 {
-              color: #4B5563;
-              margin-top: 30px;
-          }
-          .status {
-              background-color: #F3F4F6;
-              padding: 15px;
-              border-radius: 6px;
-              margin-bottom: 30px;
-          }
-          .palette-form {
-              background-color: #F9FAFB;
-              padding: 20px;
-              border-radius: 6px;
-              margin-bottom: 30px;
-          }
-          label {
-              display: block;
-              margin-bottom: 5px;
-              font-weight: 500;
-          }
-          input, select, textarea {
-              width: 100%;
-              padding: 8px;
-              margin-bottom: 15px;
-              border: 1px solid #D1D5DB;
-              border-radius: 4px;
-          }
-          button {
-              background-color: #2563EB;
-              color: white;
-              border: none;
-              padding: 10px 15px;
-              border-radius: 4px;
-              cursor: pointer;
-          }
-          button:hover {
-              background-color: #1D4ED8;
-          }
-          .palette-display {
-              display: flex;
-              margin-top: 20px;
-              height: 100px;
-          }
-          .color-box {
-              flex: 1;
-              margin-right: 2px;
-          }
-          .explanation {
-              margin-top: 15px;
-              padding: 10px;
-              background-color: #F3F4F6;
-              border-radius: 4px;
-          }
-          .color-code {
-              text-align: center;
-              margin-top: 5px;
-              font-family: monospace;
-          }
-      </style>
-  </head>
-  <body>
-      <h1>Creately - Color Palette Generator</h1>
-      <p>An AI-powered creative platform that revolutionizes color palette generation through emotion-driven design solutions.</p>
-      
-      <div class="status">
-          <h3>API Status</h3>
-          <p>Database: <span id="db-status">Checking...</span></p>
-          <p>OpenAI API: <span id="openai-status">Checking...</span></p>
-      </div>
-      
-      <div class="palette-form">
-          <h2>Generate Mood-Based Color Palette</h2>
-          <form id="palette-form">
-              <label for="mood">Mood:</label>
-              <select id="mood" name="mood" required>
-                  <option value="happy">Happy</option>
-                  <option value="calm">Calm</option>
-                  <option value="energetic">Energetic</option>
-                  <option value="professional">Professional</option>
-                  <option value="romantic">Romantic</option>
-                  <option value="mysterious">Mysterious</option>
-                  <option value="playful">Playful</option>
-                  <option value="elegant">Elegant</option>
-                  <option value="bold">Bold</option>
-                  <option value="serene">Serene</option>
-              </select>
-              
-              <label for="description">Additional Description (optional):</label>
-              <textarea id="description" name="description" rows="3" placeholder="Describe the feeling or context for more precise results..."></textarea>
-              
-              <button type="submit">Generate Palette</button>
-          </form>
-          
-          <div id="results" style="display: none;">
-              <h3>Your Palette</h3>
-              <div class="palette-display" id="palette-display"></div>
-              <div class="color-codes" id="color-codes"></div>
-              <div class="explanation" id="explanation"></div>
-          </div>
-      </div>
-      
-      <script>
-          // Check API status on page load
-          fetch('/api/status')
-              .then(response => response.json())
-              .then(data => {
-                  document.getElementById('db-status').textContent = data.database;
-                  document.getElementById('openai-status').textContent = data.apiKeys.openai;
-              })
-              .catch(error => {
-                  document.getElementById('db-status').textContent = 'Error checking status';
-                  document.getElementById('openai-status').textContent = 'Error checking status';
-              });
-          
-          // Handle form submission
-          document.getElementById('palette-form').addEventListener('submit', function(e) {
-              e.preventDefault();
-              
-              const mood = document.getElementById('mood').value;
-              const description = document.getElementById('description').value;
-              
-              // Show loading state
-              const submitButton = this.querySelector('button[type="submit"]');
-              const originalButtonText = submitButton.textContent;
-              submitButton.textContent = 'Generating...';
-              submitButton.disabled = true;
-              
-              // Make API request
-              fetch('/api/palette/generate', {
-                  method: 'POST',
-                  headers: {
-                      'Content-Type': 'application/json'
-                  },
-                  body: JSON.stringify({
-                      mood: mood,
-                      description: description,
-                      count: 5
-                  })
-              })
-              .then(response => response.json())
-              .then(data => {
-                  // Reset button
-                  submitButton.textContent = originalButtonText;
-                  submitButton.disabled = false;
-                  
-                  // Display results
-                  const paletteDisplay = document.getElementById('palette-display');
-                  const colorCodes = document.getElementById('color-codes');
-                  const explanation = document.getElementById('explanation');
-                  
-                  // Clear previous results
-                  paletteDisplay.innerHTML = '';
-                  colorCodes.innerHTML = '';
-                  
-                  // Display new palette
-                  data.colors.forEach(color => {
-                      const colorBox = document.createElement('div');
-                      colorBox.className = 'color-box';
-                      colorBox.style.backgroundColor = color;
-                      paletteDisplay.appendChild(colorBox);
-                      
-                      const colorCode = document.createElement('div');
-                      colorCode.className = 'color-code';
-                      colorCode.textContent = color;
-                      colorCodes.appendChild(colorCode);
-                  });
-                  
-                  // Set explanation
-                  explanation.textContent = data.explanation;
-                  
-                  // Show results
-                  document.getElementById('results').style.display = 'block';
-              })
-              .catch(error => {
-                  console.error('Error:', error);
-                  submitButton.textContent = originalButtonText;
-                  submitButton.disabled = false;
-                  alert('An error occurred while generating the palette. Please try again.');
-              });
-          });
-      </script>
-  </body>
-  </html>
-  `;
-}
-
+// Start the server
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running at http://0.0.0.0:${PORT}`);
+  console.log(`Server is running on http://0.0.0.0:${PORT}`);
+  console.log(`OpenAI API: ${OPENAI_API_KEY ? 'Configured' : 'Not configured'}`);
+  console.log(`Environment: NODE_ENV=${process.env.NODE_ENV || 'development'}`);
+  console.log(`Server start time: ${new Date().toISOString()}`);
 });
 
-console.log(`
-====================================
-Creately - Color Palette Generator
-====================================
-- Database Status: ${process.env.DATABASE_URL ? 'Connected' : 'Not configured'}
-- OpenAI API: ${process.env.OPENAI_API_KEY ? 'Configured' : 'Not configured (will use default colors)'}
-- PORT: ${PORT}
+// Handle server errors
+server.on('error', (error) => {
+  console.error('Server error:', error);
+});
 
-Server is now running! 🚀
-====================================
-`);
+// Handle process termination
+process.on('SIGINT', () => {
+  console.log('Server shutting down...');
+  server.close(() => {
+    console.log('Server terminated');
+    process.exit(0);
+  });
+});
+
+// Generate a random ID for server instance
+const serverId = crypto.randomBytes(4).toString('hex');
+console.log(`Server instance ID: ${serverId}`);

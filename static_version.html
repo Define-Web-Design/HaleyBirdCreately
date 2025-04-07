@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Creately - Color Palette Generator</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #2563EB;
+            margin-bottom: 10px;
+        }
+        h2 {
+            color: #4B5563;
+            margin-top: 30px;
+        }
+        .status {
+            background-color: #F3F4F6;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 30px;
+        }
+        .palette-form {
+            background-color: #F9FAFB;
+            padding: 20px;
+            border-radius: 6px;
+            margin-bottom: 30px;
+        }
+        .alert {
+            background-color: #FEF2F2;
+            color: #B91C1C;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 30px;
+            border-left: 4px solid #B91C1C;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #D1D5DB;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #2563EB;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #1D4ED8;
+        }
+        button:disabled {
+            background-color: #9CA3AF;
+            cursor: not-allowed;
+        }
+        .palette-display {
+            display: flex;
+            margin-top: 20px;
+            height: 100px;
+        }
+        .color-box {
+            flex: 1;
+            margin-right: 2px;
+        }
+        .explanation {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #F3F4F6;
+            border-radius: 4px;
+        }
+        .color-code {
+            text-align: center;
+            margin-top: 5px;
+            font-family: monospace;
+        }
+        .static-palette {
+            margin-top: 20px;
+        }
+        .step {
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: #F9FAFB;
+            border-radius: 6px;
+        }
+        .step h3 {
+            margin-top: 0;
+            color: #4B5563;
+        }
+        code {
+            background-color: #E5E7EB;
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>Creately - Color Palette Generator</h1>
+    <p>An AI-powered creative platform that revolutionizes color palette generation through emotion-driven design solutions for creative professionals and enthusiasts.</p>
+    
+    <div class="alert">
+        <h3>⚠️ Static Mode Activated</h3>
+        <p>This is a static version of the application due to environment limitations. The full dynamic features are not available in this mode.</p>
+        <p>To use the full application, you need to resolve the runtime environment issues:</p>
+        <ol>
+            <li>Fix the syntax error in the .replit file (line 1026) - extra quote in <code>mode = ""sequential"</code></li>
+            <li>Install Node.js and/or Python runtime</li>
+            <li>Restart the application workflow</li>
+        </ol>
+    </div>
+    
+    <div class="status">
+        <h3>API Status</h3>
+        <p>Dynamic API Status: <span style="color: #B91C1C; font-weight: bold;">Offline</span></p>
+        <p>Database: <span style="color: #B91C1C; font-weight: bold;">Not Connected</span></p>
+        <p>OpenAI API: <span style="color: #B91C1C; font-weight: bold;">Not Connected</span></p>
+    </div>
+    
+    <div class="palette-form">
+        <h2>Generate Mood-Based Color Palette</h2>
+        <form id="palette-form">
+            <label for="mood">Mood:</label>
+            <select id="mood" name="mood" required>
+                <option value="happy">Happy</option>
+                <option value="calm">Calm</option>
+                <option value="energetic">Energetic</option>
+                <option value="professional">Professional</option>
+                <option value="romantic">Romantic</option>
+                <option value="mysterious">Mysterious</option>
+                <option value="playful">Playful</option>
+                <option value="elegant">Elegant</option>
+                <option value="bold">Bold</option>
+                <option value="serene">Serene</option>
+            </select>
+            
+            <label for="description">Additional Description (optional):</label>
+            <textarea id="description" name="description" rows="3" placeholder="Describe the feeling or context for more precise results..."></textarea>
+            
+            <button type="submit" disabled>Generate Palette (Offline)</button>
+        </form>
+        
+        <div id="static-results">
+            <h3>Sample Static Palettes</h3>
+            <p>These are sample static palettes since the API is offline:</p>
+            
+            <div class="step">
+                <h3>Happy Palette</h3>
+                <div class="palette-display">
+                    <div class="color-box" style="background-color: #FFD166;"></div>
+                    <div class="color-box" style="background-color: #06D6A0;"></div>
+                    <div class="color-box" style="background-color: #118AB2;"></div>
+                    <div class="color-box" style="background-color: #EF476F;"></div>
+                    <div class="color-box" style="background-color: #073B4C;"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 5px;">
+                    <div class="color-code">#FFD166</div>
+                    <div class="color-code">#06D6A0</div>
+                    <div class="color-code">#118AB2</div>
+                    <div class="color-code">#EF476F</div>
+                    <div class="color-code">#073B4C</div>
+                </div>
+                <div class="explanation">A vibrant and joyful palette that combines warm yellows with cool blues and energetic pinks to create a sense of happiness and optimism.</div>
+            </div>
+            
+            <div class="step">
+                <h3>Calm Palette</h3>
+                <div class="palette-display">
+                    <div class="color-box" style="background-color: #A8DADC;"></div>
+                    <div class="color-box" style="background-color: #E0FBFC;"></div>
+                    <div class="color-box" style="background-color: #457B9D;"></div>
+                    <div class="color-box" style="background-color: #1D3557;"></div>
+                    <div class="color-box" style="background-color: #F1FAEE;"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 5px;">
+                    <div class="color-code">#A8DADC</div>
+                    <div class="color-code">#E0FBFC</div>
+                    <div class="color-code">#457B9D</div>
+                    <div class="color-code">#1D3557</div>
+                    <div class="color-code">#F1FAEE</div>
+                </div>
+                <div class="explanation">A soothing palette featuring soft blues and gentle whites, creating a peaceful and tranquil atmosphere perfect for relaxation.</div>
+            </div>
+            
+            <div class="step">
+                <h3>Professional Palette</h3>
+                <div class="palette-display">
+                    <div class="color-box" style="background-color: #0A192F;"></div>
+                    <div class="color-box" style="background-color: #112240;"></div>
+                    <div class="color-box" style="background-color: #233554;"></div>
+                    <div class="color-box" style="background-color: #8892B0;"></div>
+                    <div class="color-box" style="background-color: #CCD6F6;"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 5px;">
+                    <div class="color-code">#0A192F</div>
+                    <div class="color-code">#112240</div>
+                    <div class="color-code">#233554</div>
+                    <div class="color-code">#8892B0</div>
+                    <div class="color-code">#CCD6F6</div>
+                </div>
+                <div class="explanation">A sophisticated and corporate palette with deep navy blues and subtle silver accents, projecting confidence and reliability.</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="step">
+        <h2>Troubleshooting Steps</h2>
+        <ol>
+            <li>
+                <strong>Fix the .replit file syntax error</strong>
+                <p>The issue is in line 1026 where there's an extra quote in <code>mode = ""sequential"</code>. It should be <code>mode = "sequential"</code>.</p>
+            </li>
+            <li>
+                <strong>Install required runtimes</strong>
+                <p>After fixing the .replit file, you can install Node.js or Python:</p>
+                <pre><code>programming_language_install_tool(["nodejs-20"])</code></pre>
+                <p>or</p>
+                <pre><code>programming_language_install_tool(["python-3.11"])</code></pre>
+            </li>
+            <li>
+                <strong>Add OpenAI API key</strong>
+                <p>For AI-powered color palette generation, add your OpenAI API key to the environment.</p>
+            </li>
+            <li>
+                <strong>Restart the application</strong>
+                <p>Once the environment is properly set up, restart the application workflow.</p>
+            </li>
+        </ol>
+    </div>
+</body>
+</html>
