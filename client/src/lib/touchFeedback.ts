@@ -5,7 +5,7 @@
  * including touch trails, finger tracking, and touch ripple effects.
  */
 
-import hapticFeedback from './hapticFeedback';
+import { hapticFeedback as hapticFeedbackFunc } from '../hooks/use-mobile';
 
 // Configuration options
 const TOUCH_TRAIL_ENABLED = true;
@@ -141,7 +141,7 @@ function resizeTrailCanvas(): void {
  */
 function handleTouchStart(e: TouchEvent): void {
   // Haptic feedback for touch start
-  hapticFeedback.light();
+  hapticFeedbackFunc('light');
 }
 
 /**
@@ -250,11 +250,11 @@ function addTouchEffectsToElements(): void {
         
         // Add haptic feedback based on element type
         if (element.tagName === 'BUTTON' || element.getAttribute('role') === 'button') {
-          hapticFeedback.buttonPress();
+          hapticFeedbackFunc('medium');
         } else if (element.tagName === 'A') {
-          hapticFeedback.light();
+          hapticFeedbackFunc('light');
         } else if (element.classList.contains('card')) {
-          hapticFeedback.medium();
+          hapticFeedbackFunc('medium');
         }
       }, { passive: true });
       

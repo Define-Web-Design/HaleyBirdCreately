@@ -194,4 +194,4 @@ export function useTouchPosition() {
   return { touchPosition, isActive };
 }
 
-export default useMobile;
+// We export useMobile as the named export, so no default export is needed
