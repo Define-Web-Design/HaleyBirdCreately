@@ -812,10 +812,15 @@ export default function CreativeSymbiosisSection() {
 
   const queryClient = useQueryClient();
   const handleSymbiosisAction = async (actionType: string) => {
+    // Early return if already loading
+    if (loading) return;
+    
     setLoading(true);
     setError(null);
 
     try {
+      console.log(`Starting ${actionType} action`);
+      
       // Verify content integrity first for security
       const securityVerification = await verifyContentIntegrity({
         actionType,
@@ -823,10 +828,21 @@ export default function CreativeSymbiosisSection() {
         timestamp: new Date().toISOString()
       });
       
+      console.log('Security verification result:', securityVerification);
+      
       if (!securityVerification.valid) {
         throw new Error(securityVerification.message || "Security verification failed");
       }
 
+      // For demo purposes, show additional information based on action type
+      let actionMessage = "";
+      
+      if (actionType === 'How It Works') {
+        actionMessage = "The Creative Symbiosis Framework works by tracking your creative engagement and unlocking AI capabilities as you progress through tiers. Each tier grants new features that enhance your creative workflow.";
+      } else if (actionType === 'View Benefits') {
+        actionMessage = "Benefits include enhanced AI capabilities, personalized creative suggestions, increased creative energy regeneration, and access to premium features as you progress through tiers.";
+      }
+      
       // Track user engagement with the symbiosis framework
       await apiRequest({
         url: '/api/user-engagement',
@@ -855,19 +871,22 @@ export default function CreativeSymbiosisSection() {
         
         // Refresh evolution points data
         await queryClient.invalidateQueries({ queryKey: ['/api/evolution-points'] });
+        actionMessage = "You've earned 10 evolution points for exploring the platform!";
       }
       
       // If the action is refreshing energy, refresh the points
       if (actionType === 'Refresh Energy') {
         await queryClient.invalidateQueries({ queryKey: ['/api/evolution-points'] });
+        actionMessage = "Your creative energy has been refreshed.";
       }
 
       toast({
         title: "Success",
-        description: `${actionType} action completed successfully`,
+        description: actionMessage || `${actionType} action completed successfully`,
         variant: "default",
       });
     } catch (err) {
+      console.error('Error in handleSymbiosisAction:', err);
       const errorMessage = err instanceof Error ? err.message : "An unknown error occurred";
       setError(errorMessage);
 
@@ -910,21 +929,31 @@ export default function CreativeSymbiosisSection() {
                 As you create more content, you unlock enhanced AI capabilities tailored to your creative style.
               </p>
               <div className="flex flex-wrap gap-4">
-                <Button variant="default" className="flex items-center" onClick={() => handleSymbiosisAction('How It Works')}>
+                <Button 
+                  variant="default" 
+                  className="flex items-center shadow-md hover:shadow-lg transition-all duration-200" 
+                  onClick={() => handleSymbiosisAction('How It Works')}
+                  disabled={loading}
+                >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" className="w-4 h-4 mr-2" strokeWidth="2">
                     <circle cx="12" cy="12" r="10"/>
                     <line x1="12" y1="16" x2="12" y2="12"/>
                     <line x1="12" y1="8" x2="12.01" y2="8"/>
                   </svg>
-                  How It Works
+                  {loading ? 'Processing...' : 'How It Works'}
                 </Button>
-                <Button variant="outline" className="flex items-center" onClick={() => handleSymbiosisAction('View Benefits')}>
+                <Button 
+                  variant="outline" 
+                  className="flex items-center border-primary/40 hover:border-primary transition-all duration-200" 
+                  onClick={() => handleSymbiosisAction('View Benefits')}
+                  disabled={loading}
+                >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" className="w-4 h-4 mr-2" strokeWidth="2">
                     <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
                   </svg>
-                  View Benefits
+                  {loading ? 'Processing...' : 'View Benefits'}
                 </Button>
               </div>
             </div>

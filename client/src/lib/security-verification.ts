@@ -122,6 +122,16 @@ function generateSecurityToken(payload: VerificationPayload): string {
   // For demo purposes, we'll create a simple hash-like string
   const dataString = JSON.stringify(payload);
   const timestamp = new Date().getTime();
-
-  return `sec_${Buffer.from(`${dataString}_${timestamp}`).toString('base64').substring(0, 32)}`;
+  const combinedData = `${dataString}_${timestamp}`;
+  
+  // Using a browser-compatible approach to create a hash-like token
+  let hash = 0;
+  for (let i = 0; i < combinedData.length; i++) {
+    const char = combinedData.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  
+  // Create a more robust token with random component and hash
+  return `sec_${Math.abs(hash).toString(16)}_${Math.random().toString(36).substring(2, 10)}`;
 }
