@@ -1670,7 +1670,7 @@ args = "echo \"Starting optimized server for mobile development...\" "
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "NODE_ENV=development npm run dev"
+args = "NODE_ENV=development MOBILE_OPTIMIZED=true npm run dev"
 
 [[workflows.workflow]]
 name = "Test Mobile Responsiveness"
@@ -1713,3 +1713,60 @@ args = "echo \"Running mobile responsiveness tests...\""
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "node -e \"const { testAppResponsiveness } = require('./client/src/utils/responsive-tester.js'); testAppResponsiveness().then(result => { console.log(JSON.stringify(result.summary, null, 2)); console.log(result.success ? '✅ Mobile responsiveness tests passed' : '❌ Some mobile responsiveness tests failed'); });\""
+
+[[workflows.workflow]]
+name = "Complete Mobile Optimization"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Kill any running processes"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pkill -f node || true"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run basic code quality checks"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run lint"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npx tsc --noEmit"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run mobile-specific optimization tests"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"Testing mobile responsiveness...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node -e \"const { testAppResponsiveness } = require('./client/src/utils/responsive-tester.js'); testAppResponsiveness().then(result => { if(result.success) { console.log('✅ Mobile tests passed, starting optimized server...'); } else { console.log('⚠️ Some mobile tests failed, but continuing...'); } })\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Start the mobile-optimized server"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "NODE_ENV=development MOBILE_OPTIMIZED=true npm run dev"
