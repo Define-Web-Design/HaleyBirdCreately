@@ -173,24 +173,15 @@ const Sidebar = ({
       role="navigation"
       aria-label="Main Navigation"
     >
-      {/* Logo Section - Refined */}
+      {/* Simple Top Section */}
       <div className="pt-4 pb-3 px-3 flex items-center justify-center md:justify-start border-b border-border/30">
         <Link
           href="/"
-          className={`flex items-center cursor-pointer hover:opacity-90 transition-all duration-300 ease-in-out group ${expanded ? '' : 'justify-center w-full'}`}
+          className={`flex items-center cursor-pointer hover:opacity-90 transition-all duration-300 ease-in-out ${expanded ? '' : 'justify-center w-full'}`}
         >
-          <div className="bg-gradient-to-r from-[#F2994A] to-[#FF9DAE] h-8 w-8 rounded-lg flex items-center justify-center text-white font-bold text-lg shrink-0
-          shadow-sm transition-transform duration-300 ease-out hover:scale-110 group-hover:shadow-md">
-            C
+          <div className="w-8 h-5 opacity-0">
+            {/* Empty spacer for consistent layout */}
           </div>
-          {expanded && (
-            <div className="ml-3 overflow-hidden">
-              <h1 className="text-lg font-medium transition-all duration-300 ease-in-out">
-                Creately
-              </h1>
-              <p className="text-xs text-muted-foreground -mt-0.5">Creative Intelligence</p>
-            </div>
-          )}
         </Link>
       </div>
 
@@ -351,32 +342,21 @@ const Sidebar = ({
         </ul>
       </nav>
 
-      {/* Compact User Profile and Settings Section */}
+      {/* Minimal Settings Section */}
       <div className="border-t border-border mt-auto">
-        {/* Compact User Profile with Settings Dropdown */}
+        {/* Simple Settings Button */}
         <div className="p-2 flex items-center justify-between">
           <DropdownMenu>
             <DropdownMenuTrigger className={`flex items-center rounded-md p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800/30 transition-colors duration-200 w-full
-              ${expanded ? 'justify-start space-x-2' : 'justify-center'}`}>
-              <img
-                src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=120&h=120&q=80"
-                alt="User avatar"
-                className="h-7 w-7 rounded-full object-cover shrink-0 border-2 border-primary/20 shadow-sm"
-              />
+              ${expanded ? 'justify-start' : 'justify-center'}`}>
+              <Settings className="h-4 w-4 text-muted-foreground" />
               {expanded && (
-                <div className="flex flex-row items-center gap-2 transition-all duration-300 ease-in-out">
-                  <span className="text-sm font-medium truncate">Sophia</span>
-                  <Settings className="h-3.5 w-3.5 text-muted-foreground" />
-                </div>
+                <span className="ml-2 text-xs font-medium">Settings</span>
               )}
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel className="flex items-center gap-2">
-                <User className="h-4 w-4" />
-                My Account
-              </DropdownMenuLabel>
+            <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuItem asChild className="cursor-pointer">
-                <Link href="/profile">Profile</Link>
+                <Link href="/profile">Account</Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild className="cursor-pointer">
                 <Link href="/profile/accessibility">Accessibility</Link>
