@@ -9,7 +9,7 @@ import {
   suggestPostingTimes
 } from "./ai/content";
 import { generateMoodPalette, generateAIPalette } from "./services/paletteGenerator";
-import { runPageSpeedAnalysis, saveResults, formatAnalysisForResponse, validateApiKey } from "./services/pageSpeedService";
+import pageSpeedService from "./services/pageSpeedService";
 import { MoodTone } from "../shared/schema";
 import { 
   apiLimiter, 
@@ -248,7 +248,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Validate API key before proceeding
-      const apiKeyValidation = await validateApiKey();
+      const apiKeyValidation = await pageSpeedService.validateApiKey();
 
       if (!apiKeyValidation.valid) {
         console.error(`PageSpeed API key validation failed: ${apiKeyValidation.message}`);
@@ -261,13 +261,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`Running PageSpeed analysis for ${url} on ${device}`);
 
       // Run the analysis
-      const results = await runPageSpeedAnalysis(url, device as 'mobile' | 'desktop');
+      const results = await pageSpeedService.runPageSpeedAnalysis(url, device as 'mobile' | 'desktop');
 
       // Save the results to files
-      const fileInfo = saveResults(results as any, url, device);
+      const fileInfo = pageSpeedService.saveResults(results as any, url, device);
 
       // Format the results for API response
-      const formattedResults = formatAnalysisForResponse(results as any);
+      const formattedResults = pageSpeedService.formatAnalysisForResponse(results as any);
 
       res.json({
         success: true,

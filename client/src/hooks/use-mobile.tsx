@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
 export function useIsMobile() {
   const [isMobile, setIsMobile] = useState(false);
@@ -31,8 +31,6 @@ export function useIsMobile() {
 
   return isMobile;
 }
-
-export default useIsMobile;
 
 export interface DeviceInfo {
   isMobile: boolean;
@@ -168,4 +166,10 @@ export function useTouchPosition() {
   return { touchPosition, isActive };
 }
 
-export default useMobile;
+// Export a default object with all hooks for easier imports
+export default {
+  useIsMobile,
+  useMobile,
+  useTouchPosition,
+  checkIsMobile
+};
