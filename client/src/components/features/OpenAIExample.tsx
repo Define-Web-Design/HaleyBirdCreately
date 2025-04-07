@@ -263,3 +263,130 @@ const OpenAIExample: React.FC = () => {
 };
 
 export default OpenAIExample;
+import React, { useState } from 'react';
+import { generateText, generateColorPalette } from '../../utils/openai-client';
+import { Button } from '../ui/button';
+import { Textarea } from '../ui/textarea';
+import { Input } from '../ui/input';
+import { Card } from '../ui/card';
+import { toast } from '../ui/toaster';
+
+const OpenAIExample = () => {
+  const [prompt, setPrompt] = useState('');
+  const [paletteDescription, setPaletteDescription] = useState('');
+  const [result, setResult] = useState('');
+  const [colors, setColors] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isPaletteLoading, setIsPaletteLoading] = useState(false);
+
+  const handleGenerateText = async () => {
+    if (!prompt.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a prompt",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const generatedText = await generateText(prompt);
+      setResult(generatedText);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to generate text",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGeneratePalette = async () => {
+    if (!paletteDescription.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a description for your color palette",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsPaletteLoading(true);
+    try {
+      const palette = await generateColorPalette(paletteDescription);
+      setColors(palette);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to generate color palette",
+        variant: "destructive"
+      });
+    } finally {
+      setIsPaletteLoading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-8 p-4">
+      <div className="space-y-4">
+        <h2 className="text-2xl font-bold">OpenAI Text Generation</h2>
+        <Textarea
+          placeholder="Enter your prompt here..."
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
+          className="min-h-[120px]"
+        />
+        <Button 
+          onClick={handleGenerateText} 
+          disabled={isLoading}
+        >
+          {isLoading ? 'Generating...' : 'Generate Text'}
+        </Button>
+        
+        {result && (
+          <Card className="p-4 mt-4">
+            <h3 className="font-semibold mb-2">Generated Result:</h3>
+            <div className="whitespace-pre-wrap">{result}</div>
+          </Card>
+        )}
+      </div>
+
+      <div className="space-y-4">
+        <h2 className="text-2xl font-bold">OpenAI Color Palette Generator</h2>
+        <Input
+          placeholder="Describe your color palette (e.g., 'sunset on the beach')"
+          value={paletteDescription}
+          onChange={(e) => setPaletteDescription(e.target.value)}
+        />
+        <Button 
+          onClick={handleGeneratePalette} 
+          disabled={isPaletteLoading}
+        >
+          {isPaletteLoading ? 'Generating...' : 'Generate Palette'}
+        </Button>
+        
+        {colors.length > 0 && (
+          <div className="mt-4">
+            <h3 className="font-semibold mb-2">Generated Palette:</h3>
+            <div className="flex space-x-2">
+              {colors.map((color, index) => (
+                <div key={index} className="flex flex-col items-center">
+                  <div 
+                    className="w-16 h-16 rounded-md border border-gray-200" 
+                    style={{ backgroundColor: color }}
+                  />
+                  <span className="text-sm mt-1">{color}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default OpenAIExample;

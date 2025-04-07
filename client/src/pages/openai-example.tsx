@@ -30,3 +30,35 @@ export default function OpenAIExamplePage() {
     </div>
   );
 }
+import React from 'react';
+import OpenAIExample from '../components/features/OpenAIExample';
+import AppLayout from '../components/layout/AppLayout';
+
+const OpenAIExamplePage = () => {
+  return (
+    <AppLayout>
+      <div className="container mx-auto py-8">
+        <h1 className="text-3xl font-bold mb-6">OpenAI Integration Example</h1>
+        <p className="mb-6 text-gray-600">
+          This page demonstrates how to use OpenAI's API to generate text and color palettes.
+          Make sure you have set the VITE_OPENAI_API_KEY environment variable in your .env file.
+        </p>
+        
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <OpenAIExample />
+        </div>
+        
+        <div className="mt-8 p-4 bg-blue-50 rounded-md">
+          <h2 className="text-xl font-semibold mb-2">Important Notes:</h2>
+          <ul className="list-disc pl-5 space-y-2">
+            <li>For security reasons, API keys should be managed server-side in production.</li>
+            <li>The current implementation uses the client-side approach for demonstration purposes.</li>
+            <li>OpenAI API calls count toward your API usage and may incur costs.</li>
+          </ul>
+        </div>
+      </div>
+    </AppLayout>
+  );
+};
+
+export default OpenAIExamplePage;

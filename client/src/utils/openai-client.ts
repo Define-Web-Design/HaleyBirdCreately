@@ -181,3 +181,87 @@ class OpenAIClient {
 // Create and export a default instance
 const openai = new OpenAIClient();
 export default openai;
+import { OpenAI } from 'openai';
+
+// OpenAI client configuration
+const createOpenAIClient = () => {
+  // Check for API key in environment
+  const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+  
+  if (!apiKey) {
+    console.warn('OpenAI API key is not set. Set VITE_OPENAI_API_KEY in your environment.');
+    return null;
+  }
+
+  return new OpenAI({
+    apiKey,
+    dangerouslyAllowBrowser: true // Note: For production, API requests should go through your backend
+  });
+};
+
+// Singleton instance
+let openaiClient: OpenAI | null = null;
+
+export const getOpenAIClient = (): OpenAI | null => {
+  if (!openaiClient) {
+    openaiClient = createOpenAIClient();
+  }
+  return openaiClient;
+};
+
+// Example function to generate text with OpenAI
+export const generateText = async (prompt: string): Promise<string> => {
+  const client = getOpenAIClient();
+  
+  if (!client) {
+    throw new Error('OpenAI client is not initialized. Check your API key.');
+  }
+  
+  try {
+    const response = await client.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [
+        { role: "system", content: "You are a helpful assistant." },
+        { role: "user", content: prompt }
+      ],
+      max_tokens: 500,
+    });
+    
+    return response.choices[0]?.message?.content || 'No response generated';
+  } catch (error) {
+    console.error('Error generating text with OpenAI:', error);
+    throw error;
+  }
+};
+
+// Function to generate color palette from description
+export const generateColorPalette = async (description: string): Promise<string[]> => {
+  const client = getOpenAIClient();
+  
+  if (!client) {
+    throw new Error('OpenAI client is not initialized. Check your API key.');
+  }
+  
+  try {
+    const response = await client.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [
+        { 
+          role: "system", 
+          content: "You are a color palette generator. Respond only with an array of 5 hex color codes based on the given description." 
+        },
+        { role: "user", content: `Generate a color palette for: ${description}` }
+      ],
+      max_tokens: 100,
+    });
+    
+    const content = response.choices[0]?.message?.content || '[]';
+    // Parse the hex color codes from the response
+    const hexCodes = content.match(/#[0-9A-Fa-f]{6}/g) || [];
+    
+    return hexCodes.slice(0, 5); // Return up to 5 colors
+  } catch (error) {
+    console.error('Error generating color palette with OpenAI:', error);
+    throw error;
+  }
+};
