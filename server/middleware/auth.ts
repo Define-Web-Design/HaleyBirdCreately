@@ -1,8 +1,19 @@
 import { Request, Response, NextFunction } from 'express';
+import jwt from 'jsonwebtoken';
+import { config } from '../config';
+import { StorageInterface } from '../storage';
 import { ServiceRegistry } from '../services/registry';
-import { AuthService } from '../services/auth';
 
-// Extend Express Request type to include user information 
+// Define AuthenticatedRequest interface for type safety
+export interface AuthenticatedRequest extends Request {
+  user?: {
+    id: string;
+    email: string;
+    role?: string;
+  };
+}
+
+// Extend Express Request type to include user information (Keeping this from original)
 declare global {
   namespace Express {
     interface Request {
@@ -20,84 +31,64 @@ declare global {
   }
 }
 
+
 /**
- * Authentication middleware to verify JWT tokens and session-based authentication
+ * Middleware to verify JWT authentication token
  */
-export const authenticate = (required: boolean = true) => {
-  return (req: Request, res: Response, next: NextFunction) => {
-    try {
-      // Development mode bypass - allows authentication in development
-      const isDev = process.env.NODE_ENV !== 'production';
-      if (isDev) {
-        // Create a development user if in development mode
-        req.user = {
-          id: 1,
-          userId: 1, // For backward compatibility
-          username: 'dev_user',
-          email: 'dev@example.com',
-          displayName: 'Development User',
-          role: 'admin'
-        };
-        req.token = 'dev-token';
-        return next();
-      }
-
-      // Get the AuthService from the ServiceRegistry
-      const authService = ServiceRegistry.getInstance().getService<AuthService>('auth');
-
-      // Check Authorization header for JWT token
-      const authHeader = req.headers.authorization;
-      const token = authHeader && authHeader.startsWith('Bearer ') 
-        ? authHeader.substring(7) 
-        : null;
-
-      // If token exists, verify it
-      if (token) {
-        const payload = authService.verifyToken(token);
-        if (payload) {
-          // Map payload to the user object expected by the client
-          req.user = {
-            id: payload.userId,
-            userId: payload.userId, // For backward compatibility
-            username: payload.username,
-            role: payload.role
-          };
-          req.token = token;
-          return next();
-        }
-      }
-
-      // If no token or invalid token, check for session-based authentication
-      if (req.session && req.session.userId) {
-        // Get user from session
-        req.user = {
-          id: req.session.userId,
-          userId: req.session.userId, // For backward compatibility
-          username: req.session.username || 'user',
-          role: req.session.role || 'user'
-        };
-        return next();
-      }
-
-      // If authentication is required and no valid auth method was found
-      if (required) {
-        return res.status(401).json({ 
-          success: false, 
-          message: 'Authentication required' 
-        });
-      }
-
-      // If authentication is optional, continue
-      next();
-    } catch (error) {
-      console.error('Authentication error:', error);
-      if (required) {
-        return res.status(401).json({ 
-          success: false, 
-          message: 'Authentication failed' 
-        });
-      }
-      next();
+export const authenticate = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    // Get the token from the Authorization header
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Authentication required' });
     }
-  };
+
+    const token = authHeader.split(' ')[1];
+
+    // Verify the token
+    const decoded = jwt.verify(token, config.jwt.secret) as {
+      id: string;
+      email: string;
+      role?: string;
+    };
+
+    // Add the user info to the request
+    req.user = {
+      id: decoded.id,
+      email: decoded.email,
+      role: decoded.role
+    };
+
+    // If we need to validate the user exists in storage
+    const storage = ServiceRegistry.getInstance().getService<StorageInterface>('storage');
+    if (storage) {
+      const user = await storage.getUserById(decoded.id);
+      if (!user) {
+        return res.status(401).json({ error: 'User not found' });
+      }
+    }
+
+    next();
+  } catch (error) {
+    console.error('Authentication error:', error);
+    return res.status(401).json({ error: 'Invalid or expired token' });
+  }
+};
+
+/**
+ * Middleware to check if user has admin role
+ */
+export const requireAdmin = (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  if (!req.user || req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
+  next();
 };

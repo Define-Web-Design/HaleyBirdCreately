@@ -46,10 +46,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Apply rate limiting to all API routes
   app.use("/api", apiLimiter);
-  
+
   // Register auth routes - these need to be registered before authentication middleware
   app.use("/api/auth", authRoutes);
-  
+
   // Create a list of public routes that don't require authentication
   const publicRoutes = [
     '/api/auth/login',
@@ -61,7 +61,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     '/api/public/legal/accept',
     '/api/public/theme'
   ];
-  
+
   // Add authentication middleware (except for public routes)
   app.use((req, res, next) => {
     // Skip authentication for public routes
@@ -1946,8 +1946,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(400).json({
         success: false,
         message: 'Content ID and report type are required'
-      });
-    }
+      });}
 
     try {
       // Log the security incident
@@ -2032,6 +2031,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Create the HTTP server
   const httpServer = createServer(app);
-  
+
   return httpServer;
 }

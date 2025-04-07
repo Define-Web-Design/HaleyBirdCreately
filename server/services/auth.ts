@@ -1,251 +1,208 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { IStorage } from '../storage';
 import { config } from '../config';
-import { InsertUser, User, InsertRefreshToken } from '../../shared/schema';
-import crypto from 'crypto';
+import { StorageInterface, User } from '../storage';
 
-// Define types for the service
-interface AuthResult {
-  success: boolean;
-  message?: string;
-  user?: {
-    id: number;
-    username: string;
-    email: string;
-    displayName?: string;
-    role: string;
-  };
-  token?: string;
-  refreshToken?: string;
+export interface AuthTokens {
+  accessToken: string;
+  refreshToken: string;
 }
 
-interface TokenPayload {
-  userId: number;
-  username: string;
-  role: string;
+export interface LoginResult {
+  success: boolean;
+  message: string;
+  user?: Omit<User, 'password'>;
+  tokens?: AuthTokens;
+}
+
+export interface RegisterResult {
+  success: boolean;
+  message: string;
+  userId?: string;
+  tokens?: AuthTokens;
 }
 
 export class AuthService {
-  private storage: IStorage;
-  private readonly saltRounds = 10;
-  private readonly accessTokenExpiry = '15m'; // 15 minutes
-  private readonly refreshTokenExpiry = '7d'; // 7 days
+  private storage: StorageInterface;
 
-  constructor(storage: IStorage) {
+  constructor(storage: StorageInterface) {
     this.storage = storage;
   }
 
-  // Register a new user
-  async register(userData: InsertUser): Promise<AuthResult> {
+  /**
+   * Register a new user
+   */
+  async register(email: string, password: string, name: string): Promise<RegisterResult> {
     try {
-      // Check if username already exists
-      const existingUser = await this.storage.getUserByUsername(userData.username);
+      // Validate inputs
+      if (!email || !password) {
+        return { success: false, message: 'Email and password are required' };
+      }
+
+      if (password.length < config.password.minLength) {
+        return { 
+          success: false, 
+          message: `Password must be at least ${config.password.minLength} characters long` 
+        };
+      }
+
+      // Check if user already exists
+      const existingUser = await this.storage.getUserByEmail(email);
       if (existingUser) {
-        return { success: false, message: 'Username already exists' };
+        return { success: false, message: 'User already exists with this email' };
       }
 
-      // Check if email already exists
-      const existingEmail = await this.storage.getUserByEmail(userData.email);
-      if (existingEmail) {
-        return { success: false, message: 'Email already exists' };
-      }
-
-      // Hash the password
-      const passwordHash = await bcrypt.hash(userData.password, this.saltRounds);
-
-      // Create the user with hashed password
-      const user = await this.storage.createUser({
-        ...userData,
-        passwordHash
+      // Hash password and create user
+      const hashedPassword = await bcrypt.hash(password, config.password.saltRounds);
+      const userId = await this.storage.createUser({
+        email,
+        password: hashedPassword,
+        name: name || '',
+        role: 'user'
       });
 
       // Generate tokens
-      const { accessToken, refreshToken } = this.generateTokens(user);
+      const tokens = this.generateTokens(userId, email);
 
-      // Store refresh token in database
-      await this.storeRefreshToken(user.id, refreshToken);
+      // Store refresh token
+      await this.storage.storeRefreshToken(userId, tokens.refreshToken);
 
       return {
         success: true,
-        user: {
-          id: user.id,
-          username: user.username,
-          email: user.email,
-          displayName: user.displayName || undefined,
-          role: user.role
-        },
-        token: accessToken,
-        refreshToken
+        message: 'User registered successfully',
+        userId,
+        tokens
       };
     } catch (error) {
       console.error('Registration error:', error);
-      return { success: false, message: 'An error occurred during registration' };
+      return { success: false, message: 'Registration failed due to an internal error' };
     }
   }
 
-  // Login a user
-  async login(username: string, password: string, ipAddress?: string, userAgent?: string): Promise<AuthResult> {
+  /**
+   * Login a user
+   */
+  async login(email: string, password: string): Promise<LoginResult> {
     try {
-      // Find user by username
-      const user = await this.storage.getUserByUsername(username);
-      if (!user) {
-        return { success: false, message: 'Invalid username or password' };
+      // Validate inputs
+      if (!email || !password) {
+        return { success: false, message: 'Email and password are required' };
       }
 
-      // Check if the user is active
-      if (!user.isActive) {
-        return { success: false, message: 'Account is disabled' };
+      // Get user by email
+      const user = await this.storage.getUserByEmail(email);
+      if (!user) {
+        return { success: false, message: 'Invalid credentials' };
       }
 
       // Verify password
-      const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
+      const isPasswordValid = await bcrypt.compare(password, user.password);
       if (!isPasswordValid) {
-        return { success: false, message: 'Invalid username or password' };
+        return { success: false, message: 'Invalid credentials' };
       }
 
       // Generate tokens
-      const { accessToken, refreshToken } = this.generateTokens(user);
+      const tokens = this.generateTokens(user.id, user.email, user.role);
 
-      // Store refresh token in database
-      await this.storeRefreshToken(user.id, refreshToken, ipAddress, userAgent);
+      // Store refresh token
+      await this.storage.storeRefreshToken(user.id, tokens.refreshToken);
 
-      // Update last login time
-      await this.storage.updateUserLastLogin(user.id);
+      // Remove password from user object
+      const { password: _, ...userWithoutPassword } = user;
 
       return {
         success: true,
-        user: {
-          id: user.id,
-          username: user.username,
-          email: user.email,
-          displayName: user.displayName || undefined,
-          role: user.role
-        },
-        token: accessToken,
-        refreshToken
+        message: 'Login successful',
+        user: userWithoutPassword,
+        tokens
       };
     } catch (error) {
       console.error('Login error:', error);
-      return { success: false, message: 'An error occurred during login' };
+      return { success: false, message: 'Login failed due to an internal error' };
     }
   }
 
-  // Refresh access token
-  async refreshToken(refreshToken: string): Promise<AuthResult> {
+  /**
+   * Refresh access token using refresh token
+   */
+  async refreshToken(refreshToken: string): Promise<{ success: boolean; accessToken?: string; message: string }> {
     try {
-      // Verify the refresh token exists and is valid
-      const storedToken = await this.storage.getRefreshToken(refreshToken);
+      // Verify refresh token
+      const decoded = jwt.verify(refreshToken, config.jwt.secret) as { id: string; email: string };
+
+      // Check if refresh token exists in the database
+      const storedToken = await this.storage.getRefreshToken(decoded.id, refreshToken);
       if (!storedToken) {
         return { success: false, message: 'Invalid refresh token' };
       }
 
-      // Check if token is expired or revoked
-      if (storedToken.isRevoked || new Date() > storedToken.expiresAt) {
-        return { success: false, message: 'Refresh token expired or revoked' };
+      // Get user data
+      const user = await this.storage.getUserById(decoded.id);
+      if (!user) {
+        return { success: false, message: 'User not found' };
       }
 
-      // Get the user
-      const user = await this.storage.getUserById(storedToken.userId);
-      if (!user || !user.isActive) {
-        return { success: false, message: 'User not found or inactive' };
-      }
-
-      // Generate new tokens
-      const tokens = this.generateTokens(user);
-
-      // Revoke the old refresh token
-      await this.storage.revokeRefreshToken(refreshToken);
-
-      // Store the new refresh token
-      await this.storeRefreshToken(
-        user.id, 
-        tokens.refreshToken, 
-        storedToken.ipAddress, 
-        storedToken.userAgent
+      // Generate new access token
+      const accessToken = jwt.sign(
+        { id: user.id, email: user.email, role: user.role },
+        config.jwt.secret,
+        { expiresIn: `${config.jwt.accessExpiryMinutes}m` }
       );
 
       return {
         success: true,
-        user: {
-          id: user.id,
-          username: user.username,
-          email: user.email,
-          displayName: user.displayName || undefined,
-          role: user.role
-        },
-        token: tokens.accessToken,
-        refreshToken: tokens.refreshToken
+        accessToken,
+        message: 'Token refreshed successfully'
       };
     } catch (error) {
       console.error('Token refresh error:', error);
-      return { success: false, message: 'An error occurred refreshing the token' };
+      return { success: false, message: 'Invalid or expired refresh token' };
     }
   }
 
-  // Logout a user
-  async logout(refreshToken: string): Promise<boolean> {
+  /**
+   * Logout user by invalidating refresh token
+   */
+  async logout(userId: string, refreshToken: string): Promise<boolean> {
     try {
-      if (!refreshToken) return false;
-      
-      // Revoke the refresh token
-      await this.storage.revokeRefreshToken(refreshToken);
-      return true;
+      return await this.storage.removeRefreshToken(userId, refreshToken);
     } catch (error) {
       console.error('Logout error:', error);
       return false;
     }
   }
 
-  // Verify an access token
-  verifyToken(token: string): TokenPayload | null {
+  /**
+   * Generate JWT tokens (access and refresh)
+   */
+  private generateTokens(userId: string, email: string, role?: string): AuthTokens {
+    const accessToken = jwt.sign(
+      { id: userId, email, role },
+      config.jwt.secret,
+      { expiresIn: `${config.jwt.accessExpiryMinutes}m` }
+    );
+
+    const refreshToken = jwt.sign(
+      { id: userId, email },
+      config.jwt.secret,
+      { expiresIn: `${config.jwt.refreshExpiryDays}d` }
+    );
+
+    return {
+      accessToken,
+      refreshToken
+    };
+  }
+
+  /**
+   * Verify if a token is valid
+   */
+  verifyToken(token: string): { valid: boolean; payload?: any } {
     try {
-      const decoded = jwt.verify(token, config.jwt.secret) as TokenPayload;
-      return decoded;
+      const decoded = jwt.verify(token, config.jwt.secret);
+      return { valid: true, payload: decoded };
     } catch (error) {
-      return null;
+      return { valid: false };
     }
-  }
-
-  // Generate access and refresh tokens
-  private generateTokens(user: User): { accessToken: string; refreshToken: string } {
-    // Create token payload
-    const payload: TokenPayload = {
-      userId: user.id,
-      username: user.username,
-      role: user.role
-    };
-
-    // Generate access token
-    const accessToken = jwt.sign(payload, config.jwt.secret, {
-      expiresIn: this.accessTokenExpiry
-    });
-
-    // Generate refresh token (cryptographically secure random string)
-    const refreshToken = crypto.randomBytes(40).toString('hex');
-
-    return { accessToken, refreshToken };
-  }
-
-  // Store refresh token in the database
-  private async storeRefreshToken(
-    userId: number, 
-    token: string, 
-    ipAddress?: string, 
-    userAgent?: string
-  ): Promise<void> {
-    // Calculate expiry date
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7); // 7 days from now
-
-    const refreshTokenData: InsertRefreshToken = {
-      userId,
-      token,
-      expiresAt,
-      ipAddress,
-      userAgent
-    };
-
-    await this.storage.createRefreshToken(refreshTokenData);
   }
 }
