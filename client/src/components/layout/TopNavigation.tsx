@@ -59,7 +59,7 @@ export default function TopNavigation({ toggleSidebar, isMobile }: { toggleSideb
             <div className="flex-1 relative">
               <input
                 type="text"
-                placeholder="Search..."
+                placeholder="Search Creately..."
                 className="w-full pl-10 pr-8 py-2.5 rounded-md bg-muted/80 hover:bg-muted focus:bg-muted text-base focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -111,7 +111,8 @@ export default function TopNavigation({ toggleSidebar, isMobile }: { toggleSideb
             </svg>
           </button>
           <Link href="/" className="font-semibold text-lg tracking-tight flex items-center focus:outline-none focus:ring-2 focus:ring-primary rounded-lg px-1 py-0.5">
-            <span className="font-medium">Menu</span>
+            <div className="bg-gradient-to-r from-[#F2994A] to-[#FF9DAE] h-9 w-9 rounded-lg flex items-center justify-center text-white font-bold text-lg mr-1.5 shadow-sm">C</div>
+            <span className="font-medium">Creately</span>
           </Link>
         </div>
 
@@ -248,7 +249,8 @@ export default function TopNavigation({ toggleSidebar, isMobile }: { toggleSideb
           </svg>
         </button>
         <Link href="/" className="font-semibold text-lg tracking-tight flex items-center focus:outline-none focus:ring-2 focus:ring-primary rounded-lg px-1 py-0.5">
-          <span className="font-medium">Menu</span>
+          <div className="bg-gradient-to-r from-[#F2994A] to-[#FF9DAE] h-9 w-9 rounded-lg flex items-center justify-center text-white font-bold text-lg mr-2.5 shadow-sm">C</div>
+          <span className="font-medium">Creately</span>
         </Link>
       </div>
 
@@ -257,7 +259,7 @@ export default function TopNavigation({ toggleSidebar, isMobile }: { toggleSideb
         <div className="relative">
           <input
             type="text"
-            placeholder="Search..."
+            placeholder="Search Creately..."
             className="w-full pl-10 pr-10 py-2.5 rounded-md bg-muted/80 hover:bg-muted focus:bg-muted text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-200 shadow-sm"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
