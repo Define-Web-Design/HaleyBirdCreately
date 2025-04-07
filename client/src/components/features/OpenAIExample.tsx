@@ -1,34 +1,55 @@
-
 import React, { useState } from 'react';
+import openAIClient from '@/utils/openai-client';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
-import openai from '@/utils/openai-client';
+import { Loader } from 'lucide-react';
 
-interface OpenAIResponse {
-  title: string;
-  description: string;
-  keywords: string[];
-}
-
-const OpenAIExample: React.FC = () => {
-  const [prompt, setPrompt] = useState('');
-  const [response, setResponse] = useState('');
-  const [structuredResponse, setStructuredResponse] = useState<OpenAIResponse | null>(null);
-  const [imageUrl, setImageUrl] = useState('');
-  const [imageAnalysis, setImageAnalysis] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+export default function OpenAIExample() {
+  const [apiKey, setApiKey] = useState<string>('');
+  const [prompt, setPrompt] = useState<string>('');
+  const [colorPrompt, setColorPrompt] = useState<string>('');
+  const [response, setResponse] = useState<string>('');
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [colors, setColors] = useState<string[]>([]);
+  const [activeTab, setActiveTab] = useState<string>('text');
   const { toast } = useToast();
 
-  // Handle text generation
+  const handleSaveApiKey = () => {
+    if (!apiKey.trim()) {
+      toast({
+        title: 'API Key Required',
+        description: 'Please enter your OpenAI API key',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    openAIClient.setApiKey(apiKey);
+    toast({
+      title: 'API Key Saved',
+      description: 'Your OpenAI API key has been saved for this session',
+    });
+  };
+
   const handleGenerateText = async () => {
+    if (!openAIClient.hasApiKey()) {
+      toast({
+        title: 'API Key Required',
+        description: 'Please set your OpenAI API key first',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     if (!prompt.trim()) {
       toast({
-        title: 'Empty prompt',
-        description: 'Please enter a prompt to generate text',
+        title: 'Prompt Required',
+        description: 'Please enter a prompt for text generation',
         variant: 'destructive',
       });
       return;
@@ -36,29 +57,44 @@ const OpenAIExample: React.FC = () => {
 
     setIsLoading(true);
     try {
-      const result = await openai.generateText(prompt);
-      setResponse(result);
-      toast({
-        title: 'Text generated',
-        description: 'OpenAI has generated a response',
+      const result = await openAIClient.createChatCompletion({
+        model: 'gpt-3.5-turbo',
+        messages: [
+          { role: 'system', content: 'You are a helpful assistant.' },
+          { role: 'user', content: prompt }
+        ],
+        max_tokens: 500,
+        temperature: 0.7
       });
+
+      setResponse(result.choices[0]?.message?.content || 'No response generated');
     } catch (error) {
+      console.error('Text generation error:', error);
       toast({
-        title: 'Generation failed',
-        description: `Error: ${(error as Error).message}`,
+        title: 'Generation Failed',
+        description: error instanceof Error ? error.message : 'Failed to generate text',
         variant: 'destructive',
       });
+      setResponse('Error generating response. Please check the console for details.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Handle structured data generation
-  const handleGenerateStructuredData = async () => {
-    if (!prompt.trim()) {
+  const handleGenerateColors = async () => {
+    if (!openAIClient.hasApiKey()) {
       toast({
-        title: 'Empty prompt',
-        description: 'Please enter a prompt to generate data',
+        title: 'API Key Required',
+        description: 'Please set your OpenAI API key first',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!colorPrompt.trim()) {
+      toast({
+        title: 'Description Required',
+        description: 'Please enter a description for the color palette',
         variant: 'destructive',
       });
       return;
@@ -66,59 +102,13 @@ const OpenAIExample: React.FC = () => {
 
     setIsLoading(true);
     try {
-      const systemPrompt = `
-        You are a content metadata generator. 
-        Create a JSON object with the following structure:
-        {
-          "title": "A catchy title for the content",
-          "description": "A brief description",
-          "keywords": ["array", "of", "relevant", "keywords"]
-        }
-      `;
-      
-      const result = await openai.generateStructuredData<OpenAIResponse>(prompt, systemPrompt);
-      setStructuredResponse(result);
-      toast({
-        title: 'Data generated',
-        description: 'OpenAI has generated structured data',
-      });
+      const colorPalette = await openAIClient.generateColorPalette(colorPrompt, 5);
+      setColors(colorPalette);
     } catch (error) {
+      console.error('Color generation error:', error);
       toast({
-        title: 'Generation failed',
-        description: `Error: ${(error as Error).message}`,
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Handle image analysis
-  const handleAnalyzeImage = async () => {
-    if (!imageUrl.trim()) {
-      toast({
-        title: 'Missing image URL',
-        description: 'Please enter an image URL to analyze',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const result = await openai.analyzeImage(
-        imageUrl,
-        'Analyze this image and describe what you see in detail.'
-      );
-      setImageAnalysis(result);
-      toast({
-        title: 'Image analyzed',
-        description: 'OpenAI has analyzed the image',
-      });
-    } catch (error) {
-      toast({
-        title: 'Analysis failed',
-        description: `Error: ${(error as Error).message}`,
+        title: 'Generation Failed',
+        description: error instanceof Error ? error.message : 'Failed to generate colors',
         variant: 'destructive',
       });
     } finally {
@@ -127,266 +117,143 @@ const OpenAIExample: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8">
-      {/* Text Generation Section */}
+    <div className="container mx-auto py-8 space-y-8">
       <Card>
         <CardHeader>
-          <CardTitle>Text Generation</CardTitle>
+          <CardTitle>OpenAI Integration Demo</CardTitle>
           <CardDescription>
-            Generate text using OpenAI GPT models
+            Test OpenAI's capabilities with text generation and color palette creation
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="prompt">Prompt</Label>
-              <Textarea
-                id="prompt"
-                placeholder="Enter your prompt here..."
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                className="min-h-[100px]"
-              />
-            </div>
-            {response && (
-              <div className="space-y-2">
-                <Label>Response</Label>
-                <div className="p-4 bg-muted rounded-md whitespace-pre-wrap">
-                  {response}
-                </div>
+            <div>
+              <label htmlFor="api-key" className="block text-sm font-medium mb-1">
+                OpenAI API Key
+              </label>
+              <div className="flex gap-2">
+                <Input
+                  id="api-key"
+                  type="password"
+                  placeholder="Enter your OpenAI API key"
+                  value={apiKey}
+                  onChange={e => setApiKey(e.target.value)}
+                />
+                <Button onClick={handleSaveApiKey}>Save Key</Button>
               </div>
-            )}
-          </div>
-        </CardContent>
-        <CardFooter>
-          <Button onClick={handleGenerateText} disabled={isLoading}>
-            {isLoading ? 'Generating...' : 'Generate Text'}
-          </Button>
-        </CardFooter>
-      </Card>
-
-      {/* Structured Data Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Structured Data Generation</CardTitle>
-          <CardDescription>
-            Generate JSON data using OpenAI
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="structuredPrompt">Prompt</Label>
-              <Textarea
-                id="structuredPrompt"
-                placeholder="Describe the content to generate metadata for..."
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                className="min-h-[100px]"
-              />
+              <p className="text-sm text-muted-foreground mt-1">
+                Your API key is stored only in this browser session and is not saved to the server.
+              </p>
             </div>
-            {structuredResponse && (
-              <div className="space-y-2">
-                <Label>Generated Data</Label>
-                <div className="p-4 bg-muted rounded-md">
-                  <p><strong>Title:</strong> {structuredResponse.title}</p>
-                  <p><strong>Description:</strong> {structuredResponse.description}</p>
-                  <p><strong>Keywords:</strong> {structuredResponse.keywords.join(', ')}</p>
-                </div>
-              </div>
-            )}
-          </div>
-        </CardContent>
-        <CardFooter>
-          <Button onClick={handleGenerateStructuredData} disabled={isLoading}>
-            {isLoading ? 'Generating...' : 'Generate Structured Data'}
-          </Button>
-        </CardFooter>
-      </Card>
 
-      {/* Image Analysis Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Image Analysis</CardTitle>
-          <CardDescription>
-            Analyze images using OpenAI Vision
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="imageUrl">Image URL</Label>
-              <Input
-                id="imageUrl"
-                placeholder="Enter image URL..."
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-              />
-            </div>
-            {imageUrl && (
-              <div className="space-y-2">
-                <Label>Image Preview</Label>
-                <div className="overflow-hidden rounded-md border border-input">
-                  <img 
-                    src={imageUrl} 
-                    alt="Preview" 
-                    className="max-h-[300px] w-full object-contain"
-                    onError={() => {
-                      toast({
-                        title: 'Image load error',
-                        description: 'Could not load image from URL',
-                        variant: 'destructive',
-                      });
-                    }} 
+            {!openAIClient.hasApiKey() && (
+              <Alert variant="warning" className="mt-4">
+                <AlertTitle>API Key Required</AlertTitle>
+                <AlertDescription>
+                  Please set your OpenAI API key to use this feature. You can get an API key from the OpenAI dashboard.
+                </AlertDescription>
+              </Alert>
+            )}
+
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="text">Text Generation</TabsTrigger>
+                <TabsTrigger value="colors">Color Palette</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="text" className="space-y-4 mt-4">
+                <div>
+                  <label htmlFor="prompt" className="block text-sm font-medium mb-1">
+                    Prompt
+                  </label>
+                  <Textarea
+                    id="prompt"
+                    placeholder="Enter your prompt here..."
+                    value={prompt}
+                    onChange={e => setPrompt(e.target.value)}
+                    rows={4}
                   />
                 </div>
-              </div>
-            )}
-            {imageAnalysis && (
-              <div className="space-y-2">
-                <Label>Analysis</Label>
-                <div className="p-4 bg-muted rounded-md whitespace-pre-wrap">
-                  {imageAnalysis}
+
+                <Button
+                  onClick={handleGenerateText}
+                  disabled={isLoading || !openAIClient.hasApiKey()}
+                  className="w-full"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader className="mr-2 h-4 w-4 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    'Generate Text'
+                  )}
+                </Button>
+
+                {response && (
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium mb-1">Response</label>
+                    <div className="border rounded-md p-4 bg-muted/30 whitespace-pre-wrap">
+                      {response}
+                    </div>
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="colors" className="space-y-4 mt-4">
+                <div>
+                  <label htmlFor="color-prompt" className="block text-sm font-medium mb-1">
+                    Color Palette Description
+                  </label>
+                  <Input
+                    id="color-prompt"
+                    placeholder="e.g., Sunset over the ocean"
+                    value={colorPrompt}
+                    onChange={e => setColorPrompt(e.target.value)}
+                  />
                 </div>
-              </div>
-            )}
+
+                <Button
+                  onClick={handleGenerateColors}
+                  disabled={isLoading || !openAIClient.hasApiKey()}
+                  className="w-full"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader className="mr-2 h-4 w-4 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    'Generate Color Palette'
+                  )}
+                </Button>
+
+                {colors.length > 0 && (
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium mb-2">Generated Palette</label>
+                    <div className="flex flex-wrap gap-2">
+                      {colors.map((color, index) => (
+                        <div key={index} className="flex flex-col items-center">
+                          <div
+                            className="w-16 h-16 rounded-md border"
+                            style={{ backgroundColor: color }}
+                          />
+                          <span className="text-xs mt-1">{color}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
           </div>
         </CardContent>
-        <CardFooter>
-          <Button onClick={handleAnalyzeImage} disabled={isLoading}>
-            {isLoading ? 'Analyzing...' : 'Analyze Image'}
-          </Button>
+        <CardFooter className="flex justify-between">
+          <p className="text-sm text-muted-foreground">
+            Powered by OpenAI API
+          </p>
         </CardFooter>
       </Card>
     </div>
   );
-};
-
-export default OpenAIExample;
-import React, { useState } from 'react';
-import { generateText, generateColorPalette } from '../../utils/openai-client';
-import { Button } from '../ui/button';
-import { Textarea } from '../ui/textarea';
-import { Input } from '../ui/input';
-import { Card } from '../ui/card';
-import { toast } from '../ui/toaster';
-
-const OpenAIExample = () => {
-  const [prompt, setPrompt] = useState('');
-  const [paletteDescription, setPaletteDescription] = useState('');
-  const [result, setResult] = useState('');
-  const [colors, setColors] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isPaletteLoading, setIsPaletteLoading] = useState(false);
-
-  const handleGenerateText = async () => {
-    if (!prompt.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter a prompt",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const generatedText = await generateText(prompt);
-      setResult(generatedText);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to generate text",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleGeneratePalette = async () => {
-    if (!paletteDescription.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter a description for your color palette",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsPaletteLoading(true);
-    try {
-      const palette = await generateColorPalette(paletteDescription);
-      setColors(palette);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to generate color palette",
-        variant: "destructive"
-      });
-    } finally {
-      setIsPaletteLoading(false);
-    }
-  };
-
-  return (
-    <div className="space-y-8 p-4">
-      <div className="space-y-4">
-        <h2 className="text-2xl font-bold">OpenAI Text Generation</h2>
-        <Textarea
-          placeholder="Enter your prompt here..."
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-          className="min-h-[120px]"
-        />
-        <Button 
-          onClick={handleGenerateText} 
-          disabled={isLoading}
-        >
-          {isLoading ? 'Generating...' : 'Generate Text'}
-        </Button>
-        
-        {result && (
-          <Card className="p-4 mt-4">
-            <h3 className="font-semibold mb-2">Generated Result:</h3>
-            <div className="whitespace-pre-wrap">{result}</div>
-          </Card>
-        )}
-      </div>
-
-      <div className="space-y-4">
-        <h2 className="text-2xl font-bold">OpenAI Color Palette Generator</h2>
-        <Input
-          placeholder="Describe your color palette (e.g., 'sunset on the beach')"
-          value={paletteDescription}
-          onChange={(e) => setPaletteDescription(e.target.value)}
-        />
-        <Button 
-          onClick={handleGeneratePalette} 
-          disabled={isPaletteLoading}
-        >
-          {isPaletteLoading ? 'Generating...' : 'Generate Palette'}
-        </Button>
-        
-        {colors.length > 0 && (
-          <div className="mt-4">
-            <h3 className="font-semibold mb-2">Generated Palette:</h3>
-            <div className="flex space-x-2">
-              {colors.map((color, index) => (
-                <div key={index} className="flex flex-col items-center">
-                  <div 
-                    className="w-16 h-16 rounded-md border border-gray-200" 
-                    style={{ backgroundColor: color }}
-                  />
-                  <span className="text-sm mt-1">{color}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-export default OpenAIExample;
+}
