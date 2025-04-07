@@ -5,7 +5,7 @@
  * including touch trails, finger tracking, and touch ripple effects.
  */
 
-import { hapticFeedback } from './hapticFeedback';
+import hapticFeedback from './hapticFeedback';
 
 // Configuration options
 const TOUCH_TRAIL_ENABLED = true;
