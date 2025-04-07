@@ -75,9 +75,9 @@ const ColorPaletteGenerator: React.FC = () => {
   });
 
   // Query preset palettes by mood
-  const presetPalettesQuery = useQuery({
+  const presetPalettesQuery = useQuery<SavedPalette[]>({
     queryKey: ['/api/color-palettes/by-mood', selectedMood],
-    queryFn: () => apiRequest({
+    queryFn: () => apiRequest<SavedPalette[]>({
       url: `/api/color-palettes/by-mood/${selectedMood}`,
       method: 'GET'
     }),
@@ -85,9 +85,9 @@ const ColorPaletteGenerator: React.FC = () => {
   });
 
   // Query saved palettes
-  const savedPalettesQuery = useQuery({
+  const savedPalettesQuery = useQuery<SavedPalette[]>({
     queryKey: ['/api/color-palettes'],
-    queryFn: () => apiRequest({
+    queryFn: () => apiRequest<SavedPalette[]>({
       url: '/api/color-palettes',
       method: 'GET'
     }),
@@ -95,9 +95,17 @@ const ColorPaletteGenerator: React.FC = () => {
   });
 
   // Mutation for generating AI palette
-  const generatePaletteMutation = useMutation({
-    mutationFn: (data: { mood: string, description?: string }) => 
-      apiRequest({
+  interface GeneratePaletteResponse {
+    palette: Palette;
+  }
+  
+  const generatePaletteMutation = useMutation<
+    GeneratePaletteResponse, 
+    Error,
+    { mood: string, description?: string }
+  >({
+    mutationFn: (data) => 
+      apiRequest<GeneratePaletteResponse>({
         url: '/api/color-palettes/generate',
         method: 'POST',
         data
@@ -121,9 +129,18 @@ const ColorPaletteGenerator: React.FC = () => {
   });
 
   // Mutation for saving palette
-  const savePaletteMutation = useMutation({
-    mutationFn: (data: { name: string, mood: string, colors: string[], tags: string[] }) => 
-      apiRequest({
+  interface SavePaletteResponse {
+    success: boolean;
+    id: number;
+  }
+  
+  const savePaletteMutation = useMutation<
+    SavePaletteResponse,
+    Error,
+    { name: string, mood: string, colors: string[], tags: string[] }
+  >({
+    mutationFn: (data) => 
+      apiRequest<SavePaletteResponse>({
         url: '/api/color-palettes',
         method: 'POST',
         data
