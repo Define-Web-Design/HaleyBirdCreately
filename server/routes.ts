@@ -4,6 +4,7 @@ import storage from "./storage";
 import path from "path";
 import fs from "fs";
 import taskVerificationRoutes from './routes/task-verification';
+import webCrawlerRoutes from './routes/webCrawler';
 
 // Helper function to get active integrations
 async function getActiveIntegrations(userId: number) {
@@ -616,6 +617,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Task Verification Routes
   app.use(`${apiPrefix}/task-verification`, taskVerificationRoutes);
+  
+  // Register web crawler routes
+  app.use(`${apiPrefix}/web-crawler`, webCrawlerRoutes);
 
   // Creative Symbiosis Framework Routes
 

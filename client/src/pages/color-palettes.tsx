@@ -5,7 +5,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import ColorPaletteGenerator from '@/components/color/ColorPaletteGenerator';
 import VoiceColorSelector from '@/components/color-palettes/VoiceColorSelector';
 import AdaptiveThemeGenerator from '@/components/color-palettes/AdaptiveThemeGenerator';
-import { Info, HelpCircle, Palette, Mic, Zap } from 'lucide-react';
+import { WebsiteColorExtractor } from '@/components/color/WebsiteColorExtractor';
+import { Info, HelpCircle, Palette, Mic, Zap, Globe } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import {
   Accordion,
@@ -24,10 +25,12 @@ const ColorPalettesPage: React.FC = () => {
   const { swipeHandlers } = useSwipe({
     onSwipeLeft: () => {
       if (selectedTab === 'standard') setSelectedTab('voice');
-      else if (selectedTab === 'voice') setSelectedTab('adaptive');
+      else if (selectedTab === 'voice') setSelectedTab('website');
+      else if (selectedTab === 'website') setSelectedTab('adaptive');
     },
     onSwipeRight: () => {
-      if (selectedTab === 'adaptive') setSelectedTab('voice');
+      if (selectedTab === 'adaptive') setSelectedTab('website');
+      else if (selectedTab === 'website') setSelectedTab('voice');
       else if (selectedTab === 'voice') setSelectedTab('standard');
     }
   });
@@ -65,7 +68,7 @@ const ColorPalettesPage: React.FC = () => {
 
       <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
         {/* Tab Buttons */}
-        <TabsList className="grid grid-cols-3 mb-4">
+        <TabsList className="grid grid-cols-4 mb-4">
           <TabsTrigger value="standard" className="flex items-center gap-2">
             <Palette className="h-4 w-4" />
             <span className="hidden sm:inline">Standard</span>
@@ -73,6 +76,10 @@ const ColorPalettesPage: React.FC = () => {
           <TabsTrigger value="voice" className="flex items-center gap-2">
             <Mic className="h-4 w-4" />
             <span className="hidden sm:inline">Voice</span>
+          </TabsTrigger>
+          <TabsTrigger value="website" className="flex items-center gap-2">
+            <Globe className="h-4 w-4" />
+            <span className="hidden sm:inline">Website</span>
           </TabsTrigger>
           <TabsTrigger value="adaptive" className="flex items-center gap-2">
             <Zap className="h-4 w-4" />
@@ -214,6 +221,11 @@ const ColorPalettesPage: React.FC = () => {
               </Card>
             </div>
           </div>
+        </TabsContent>
+
+        {/* Website Color Extractor Tab */}
+        <TabsContent value="website" className="space-y-6 animate-fadeIn">
+          <WebsiteColorExtractor />
         </TabsContent>
 
         {/* Adaptive Theme Generator Tab */}
