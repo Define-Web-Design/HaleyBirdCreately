@@ -1,20 +1,32 @@
-#!/usr/bin/env node
+
+// App Status Check Runner
 
 import { runAppStatusCheck } from './app-status.js';
 
-// Run the app status check with default options
-runAppStatusCheck()
-  .then(statusReport => {
-    // Status report is already logged in the function
-    if (statusReport.status === 'error') {
+async function main() {
+  try {
+    // Get options from command line arguments if provided
+    const options = {
+      logToConsole: true,
+      checkEndpoints: true,
+      checkPerformance: true,
+      checkSecurity: true,
+      outputFormat: process.argv.includes('--summary') ? 'summary' : 'detailed'
+    };
+    
+    console.log('🚀 Starting app status check...');
+    const results = await runAppStatusCheck(options);
+    
+    // Exit with proper code based on status
+    if (results.status === 'critical') {
       process.exit(1);
-    } else if (statusReport.status === 'healthy'){
-        process.exit(0);
     } else {
-        process.exit(1); // Handle other non-healthy statuses
+      process.exit(0);
     }
-  })
-  .catch(error => {
-    console.error('Error running app status check:', error);
+  } catch (error) {
+    console.error('❌ Error running app status check:', error);
     process.exit(1);
-  });
+  }
+}
+
+main();

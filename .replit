@@ -63,7 +63,7 @@ localPort = 8425
 externalPort = 3002
 
 [workflows]
-runButton = "Optimized Development"
+runButton = "Core Development"
 
 [[workflows.workflow]]
 name = "Project"
@@ -179,11 +179,23 @@ args = ""
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
+args = "# Run app status check"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node scripts/run-app-status-check.js"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
 args = "# Run the consolidated validation system"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "node -e \"require('./client/src/utils/consolidated-validation.js').runFullSystemValidation().then(report => { require('./client/src/utils/consolidated-validation.js').displayFullValidationResults(report); process.exit(report.overallSuccess ? 0 : 1); })\""
+args = "node -e \"const { runFullSystemValidation, displayFullValidationResults } = require('./client/src/utils/consolidated-validation.js'); runFullSystemValidation().then(report => { displayFullValidationResults(report); process.exit(report.overallSuccess ? 0 : 1); })\""
 
 [[workflows.workflow]]
 name = "Accessibility Audit"
@@ -1661,7 +1673,19 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
+args = "# Kill any running processes first"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
 args = "pkill -f node || true"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Start the development server in background"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
@@ -1669,7 +1693,23 @@ args = "npm run dev & "
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "sleep 5 && node -e \"const { testAppResponsiveness } = require('./client/src/utils/responsive-tester.js'); testAppResponsiveness().then(result => console.log(result.summary));\""
+args = "sleep 5"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run responsive design testing"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"Running mobile responsiveness tests...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node -e \"const { testAppResponsiveness } = require('./client/src/utils/responsive-tester.js'); testAppResponsiveness().then(result => { console.log(JSON.stringify(result.summary, null, 2)); console.log(result.success ? '✅ Mobile tests passed' : '❌ Some mobile tests failed'); });\""
 
 [[workflows.workflow]]
 name = "Mobile Optimized Start"
@@ -2899,40 +2939,16 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "# Kill any running processes first"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "pkill -f node || true"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = ""
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
 args = "# Run the comprehensive app status check"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "node -e \"require('./client/src/utils/app-status-cli.ts').runAppStatusCheck()\""
+args = "node scripts/run-app-status-check.js"
 
 [[workflows.workflow]]
 name = "Monitor App Status"
 author = 40896524
 mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "# Kill any running processes first"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "pkill -f node || true"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = ""
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
@@ -2948,11 +2964,11 @@ args = ""
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "# Run the app status monitor with a 15-minute interval"
+args = "# Run the app status monitor with a 10-minute interval"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "node scripts/monitor-app-status.js 15"
+args = "node scripts/monitor-app-status.js 10"
 
 [[workflows.workflow]]
 name = "App Status Monitor"
@@ -4059,6 +4075,47 @@ args = "# Run the comprehensive validation system"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "node -e \"require('./client/src/utils/consolidated-validation.js').runFullSystemValidation().then(report => { require('./client/src/utils/consolidated-validation.js').displayFullValidationResults(report); process.exit(report.overallSuccess ? 0 : 1); })\""
+
+[[workflows.workflow]]
+name = "Core Development"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Kill any running processes first"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pkill -f node || true"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run code quality checks"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run lint"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npx tsc --noEmit"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Start the development server"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
 
 [objectStorage]
 defaultBucketID = "replit-objstore-0f505a20-ca44-41fd-a1d9-978b798832cc"

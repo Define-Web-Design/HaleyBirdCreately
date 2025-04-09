@@ -1,105 +1,75 @@
-
-#!/usr/bin/env node
+// App Status Monitor
+// Runs periodic checks and logs results
 
 import { runAppStatusCheck } from './app-status.js';
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const DEFAULT_INTERVAL_MINUTES = 10;
+const LOG_DIR = path.join(process.cwd(), 'logs', 'app-status');
 
-// Default monitoring interval in minutes
-const DEFAULT_INTERVAL = 15;
+async function monitorAppStatus(intervalMinutes = DEFAULT_INTERVAL_MINUTES) {
+  // Create log directory if it doesn't exist
+  if (!fs.existsSync(LOG_DIR)) {
+    fs.mkdirSync(LOG_DIR, { recursive: true });
+  }
 
-// Get monitoring interval from command line args or use default
-const intervalMinutes = process.argv[2] ? parseInt(process.argv[2], 10) : DEFAULT_INTERVAL;
+  console.log(`🔄 Starting app status monitoring (interval: ${intervalMinutes} minutes)`);
 
-if (isNaN(intervalMinutes) || intervalMinutes < 1) {
-  console.error('Error: Interval must be a positive number (in minutes)');
-  process.exit(1);
+  // Initial check
+  await runAndLogCheck();
+
+  // Schedule periodic checks
+  setInterval(runAndLogCheck, intervalMinutes * 60 * 1000);
 }
 
-// Configure logging
-const LOG_DIR = path.join(__dirname, '../logs/app-status');
-if (!fs.existsSync(LOG_DIR)) {
-  fs.mkdirSync(LOG_DIR, { recursive: true });
-}
-
-// Log file for this monitoring session
-const LOG_FILE = path.join(LOG_DIR, `monitor-${new Date().toISOString().replace(/:/g, '-')}.log`);
-
-/**
- * Log message to console and log file
- */
-function log(message) {
-  const timestamp = new Date().toISOString();
-  const logMessage = `[${timestamp}] ${message}`;
-  console.log(logMessage);
-  fs.appendFileSync(LOG_FILE, logMessage + '\n');
-}
-
-/**
- * Run a single monitoring cycle
- */
-async function runMonitoringCycle() {
+async function runAndLogCheck() {
   try {
-    log('🔄 Running app status check...');
-    const statusReport = await runAppStatusCheck({ silent: true });
-    
-    log(`📊 Health Score: ${statusReport.healthScore}/100 (${statusReport.status.toUpperCase()})`);
-    
-    // Log any recommendations
-    if (statusReport.recommendations && statusReport.recommendations.length > 0) {
-      log('🔧 Recommendations:');
-      statusReport.recommendations.forEach((rec, i) => {
-        log(`   ${i + 1}. ${rec}`);
-      });
-    }
-    
-    // Alert on critical issues
-    if (statusReport.status === 'critical') {
-      log('⚠️ CRITICAL ALERT: Application is in a critical state!');
-      // In a real system, you might send an email, SMS, or other alert here
-    }
-    
-    return statusReport;
+    const timestamp = new Date();
+    const formattedDate = timestamp.toISOString().replace(/:/g, '-').split('.')[0];
+    const logFile = path.join(LOG_DIR, `status-${formattedDate}.json`);
+
+    console.log(`\n📊 Running app status check at ${timestamp.toLocaleString()}`);
+
+    // Run the status check
+    const results = await runAppStatusCheck({ 
+      outputFormat: 'summary', 
+      logToConsole: true 
+    });
+
+    // Log results to file
+    fs.writeFileSync(logFile, JSON.stringify(results, null, 2));
+    console.log(`✅ Status check complete. Results saved to ${logFile}`);
+
+    // Also append to summary log
+    appendToSummaryLog(results);
+
+    return results;
   } catch (error) {
-    log(`❌ Error during monitoring cycle: ${error.message}`);
-    return { status: 'error', error: error.message };
+    console.error('❌ Error during app status check:', error);
+
+    // Log the error
+    const errorLog = path.join(LOG_DIR, 'errors.log');
+    fs.appendFileSync(
+      errorLog,
+      `[${new Date().toISOString()}] Error during status check: ${error.message}\n${error.stack}\n\n`
+    );
   }
 }
 
-/**
- * Start the monitoring process
- */
-function startMonitoring() {
-  const intervalMs = intervalMinutes * 60 * 1000;
-  
-  log(`🚀 Starting app status monitoring (interval: ${intervalMinutes} minutes)`);
-  log(`📝 Logging to: ${LOG_FILE}`);
-  
-  // Run immediate check
-  runMonitoringCycle().then(() => {
-    // Set up periodic monitoring
-    const monitoringInterval = setInterval(async () => {
-      await runMonitoringCycle();
-    }, intervalMs);
-    
-    // Handle process termination
-    process.on('SIGINT', () => {
-      clearInterval(monitoringInterval);
-      log('👋 Monitoring stopped by user');
-      process.exit(0);
-    });
-    
-    process.on('SIGTERM', () => {
-      clearInterval(monitoringInterval);
-      log('👋 Monitoring terminated');
-      process.exit(0);
-    });
-  });
+function appendToSummaryLog(results) {
+  const summaryLog = path.join(LOG_DIR, 'status-summary.log');
+  const summaryLine = `[${results.timestamp}] Status: ${results.status.toUpperCase()} | ` +
+    `Healthy: ${results.summary.healthy} | ` +
+    `Warnings: ${results.summary.warnings} | ` +
+    `Critical: ${results.summary.critical}\n`;
+
+  fs.appendFileSync(summaryLog, summaryLine);
 }
 
+// Get interval from command line arguments, default to 10 minutes
+const intervalArg = process.argv[2];
+const interval = intervalArg ? parseInt(intervalArg, 10) : DEFAULT_INTERVAL_MINUTES;
+
 // Start monitoring
-startMonitoring();
+monitorAppStatus(interval);
