@@ -65,19 +65,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         }
       } else if (token) {
         // If we have a token, try to get user data
-        fetchCurrentUser();
+        await refetchUser();
       }
     };
     
     initializeAuth();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Empty dependency array - only run once on mount
-  
-  // Update user when token changes
-  useEffect(() => {
-    if (token) {
-      fetchCurrentUser();
-    }
-  }, [token]);
 
   // Authentication status
   const isAuthenticated = !!user;
@@ -133,7 +127,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ username, password })
+          body: JSON.stringify({ email: username, password })
         });
         
         return response;

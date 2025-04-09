@@ -57,7 +57,10 @@ router.post('/register', async (req, res) => {
       passwordHash: hashedPassword, // Use the correct property name based on your schema
       username: name || email.split('@')[0], // Fallback to email username part
       displayName: name || null,
-      role: 'user'
+      role: 'user',
+      avatar: null,
+      isActive: true,
+      lastLogin: null
     });
 
     if (!userId) {
@@ -81,9 +84,10 @@ router.post('/register', async (req, res) => {
     await currentStorage.storeRefreshToken(String(userId), refreshToken);
 
     res.status(201).json({
+      success: true,
       message: 'User registered successfully',
-      user: { id: userId, email, name },
-      accessToken,
+      user: { id: userId, email, username: name || email.split('@')[0], displayName: name || null, role: 'user' },
+      token: accessToken,
       refreshToken
     });
   } catch (error) {
@@ -147,14 +151,16 @@ router.post('/login', async (req, res) => {
     await currentStorage.storeRefreshToken(String(user.id), refreshToken);
 
     res.status(200).json({
+      success: true,
       message: 'Login successful',
       user: { 
         id: user.id, 
         email: user.email, 
-        name: user.displayName || user.username, 
+        username: user.username,
+        displayName: user.displayName || user.username, 
         role: user.role 
       },
-      accessToken,
+      token: accessToken,
       refreshToken
     });
   } catch (error) {
@@ -164,11 +170,11 @@ router.post('/login', async (req, res) => {
 });
 
 /**
- * @route POST /api/auth/refresh
+ * @route POST /api/auth/refresh-token
  * @desc Refresh access token using refresh token
  * @access Public
  */
-router.post('/refresh', async (req, res) => {
+router.post('/refresh-token', async (req, res) => {
   try {
     const { refreshToken } = req.body;
 
@@ -212,7 +218,15 @@ router.post('/refresh', async (req, res) => {
     );
 
     res.json({
-      accessToken
+      success: true,
+      token: accessToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        displayName: user.displayName || user.username,
+        role: user.role
+      }
     });
   } catch (error) {
     console.error('Token refresh error:', error);
@@ -301,7 +315,10 @@ router.get('/me', authenticate(), async (req: AuthenticatedRequest, res) => {
     // Don't send the password hash
     const { passwordHash, ...userInfo } = user;
 
-    res.json(userInfo);
+    res.json({
+      success: true,
+      user: userInfo
+    });
   } catch (error) {
     console.error('Get user info error:', error);
     res.status(500).json({ error: 'Failed to get user information' });

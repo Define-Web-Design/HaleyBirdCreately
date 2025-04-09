@@ -46,8 +46,7 @@ export const ProtectedRoute = ({
           // Mark as attempted to prevent infinite loops
           setAutoLoginAttempted(true);
           
-          // Force a page reload to apply the new tokens
-          window.location.reload();
+          // Don't force page reload, let the auth context handle it
         } else {
           // Already auto-logged in, just mark as attempted
           setAutoLoginAttempted(true);

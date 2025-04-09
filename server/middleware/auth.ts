@@ -64,13 +64,16 @@ export const authenticate = (options?: { bypassAuth?: boolean }) => {
       // For the /api/auth/me endpoint specifically, return more detailed user object
       if (req.path === '/me' && isDevelopmentToken) {
         res.json({
-          id: 1,
-          email: 'dev@example.com',
-          username: 'devuser',
-          displayName: 'Development User', 
-          role: 'admin',
-          avatar: null,
-          createdAt: new Date().toISOString()
+          success: true,
+          user: {
+            id: 1,
+            email: 'dev@example.com',
+            username: 'devuser',
+            displayName: 'Development User', 
+            role: 'admin',
+            avatar: null,
+            createdAt: new Date().toISOString()
+          }
         });
         return; // Stop execution here
       }
@@ -102,7 +105,10 @@ export const authenticate = (options?: { bypassAuth?: boolean }) => {
       // Get the token from the Authorization header
       const authHeader = req.headers.authorization;
       if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ error: 'Authentication required' });
+        return res.status(401).json({ 
+          success: false, 
+          message: 'Authentication required' 
+        });
       }
 
       const token = authHeader.split(' ')[1];
@@ -129,7 +135,10 @@ export const authenticate = (options?: { bypassAuth?: boolean }) => {
         if (storage) {
           const user = await storage.getUserById(String(decoded.id)); // Convert to string for compatibility
           if (!user) {
-            return res.status(401).json({ error: 'User not found' });
+            return res.status(401).json({ 
+              success: false,
+              message: 'User not found' 
+            });
           }
         }
       } catch (error) {
@@ -140,7 +149,10 @@ export const authenticate = (options?: { bypassAuth?: boolean }) => {
       next();
     } catch (error) {
       console.error('Authentication error:', error);
-      return res.status(401).json({ error: 'Invalid or expired token' });
+      return res.status(401).json({ 
+        success: false,
+        message: 'Invalid or expired token'
+      });
     }
   };
 };
@@ -154,7 +166,10 @@ export const requireAdmin = (
   next: NextFunction
 ) => {
   if (!req.user || req.user.role !== 'admin') {
-    return res.status(403).json({ error: 'Admin access required' });
+    return res.status(403).json({ 
+      success: false,
+      message: 'Admin access required' 
+    });
   }
   next();
 };

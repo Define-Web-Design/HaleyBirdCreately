@@ -110,8 +110,14 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
 
   // Handle theme updates via API - debounced to prevent too many requests
   useEffect(() => {
+    // Skip API call on initial mount
+    if (theme === defaultThemeContext.theme) {
+      return;
+    }
+    
     const updateTimeout = setTimeout(async () => {
       try {
+        // Only make API call if we have a non-default theme to update
         const response = await fetch('/api/theme', {
           method: 'POST',
           headers: {
