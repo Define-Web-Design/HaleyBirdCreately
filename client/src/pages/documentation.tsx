@@ -1,381 +1,348 @@
 import React from 'react';
-import { Link } from 'wouter';
+import { Helmet } from 'react-helmet-async';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
-} from '@/components/ui/tabs';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { 
-  BookOpen, 
+  Blocks, 
+  Book, 
   Code, 
-  Compass, 
   FileText, 
-  Grid, 
-  RefreshCw, 
-  Zap 
+  GitBranch, 
+  HelpCircle, 
+  MessageSquare, 
+  Palette, 
+  Sparkles, 
+  Terminal, 
+  Video 
 } from 'lucide-react';
 
-const Documentation = () => {
+const DocumentationPage = () => {
   return (
-    <div className="container max-w-5xl mx-auto px-4 py-10">
-      <header className="mb-12 text-center">
-        <h1 className="text-4xl font-bold mb-4">Creately Documentation</h1>
-        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          A complete guide to Creately's features, APIs, and best practices for
-          unlocking your creative potential.
+    <div className="container mx-auto py-8 max-w-6xl">
+      <Helmet>
+        <title>Documentation | Creately</title>
+        <meta name="description" content="Learn how to use Creately's features and tools" />
+      </Helmet>
+
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-2">Documentation</h1>
+        <p className="text-muted-foreground max-w-3xl">
+          Learn how to use Creately's tools, features, and creative workflows to enhance your creative process.
         </p>
-      </header>
+      </div>
 
-      <Tabs defaultValue="guides" className="space-y-8">
-        <div className="flex justify-center">
-          <TabsList className="grid grid-cols-3 w-full max-w-md">
-            <TabsTrigger value="guides">Guides</TabsTrigger>
-            <TabsTrigger value="api">API</TabsTrigger>
-            <TabsTrigger value="examples">Examples</TabsTrigger>
-          </TabsList>
-        </div>
+      <Tabs defaultValue="getting-started" className="space-y-6">
+        <TabsList className="grid w-full md:w-auto md:inline-flex grid-cols-2 sm:grid-cols-3 md:grid-cols-none gap-2 md:gap-0">
+          <TabsTrigger value="getting-started" className="flex items-center gap-2">
+            <Book className="h-4 w-4" />
+            <span>Getting Started</span>
+          </TabsTrigger>
+          <TabsTrigger value="tools" className="flex items-center gap-2">
+            <Palette className="h-4 w-4" />
+            <span>Creative Tools</span>
+          </TabsTrigger>
+          <TabsTrigger value="ai" className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4" />
+            <span>AI Enhancement</span>
+          </TabsTrigger>
+          <TabsTrigger value="api" className="flex items-center gap-2">
+            <Code className="h-4 w-4" />
+            <span>API Documentation</span>
+          </TabsTrigger>
+          <TabsTrigger value="guides" className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            <span>Guides</span>
+          </TabsTrigger>
+        </TabsList>
 
-        <TabsContent value="guides" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <BookOpen className="h-5 w-5 text-primary" />
-                  <CardTitle>Getting Started</CardTitle>
-                </div>
-                <CardDescription>
-                  Everything you need to know to begin your creative journey
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2">
-                  <li className="text-sm">
-                    <Link href="/docs/introduction" className="text-primary hover:underline">
-                      Introduction to Creately
-                    </Link>
-                  </li>
-                  <li className="text-sm">
-                    <Link href="/docs/quickstart" className="text-primary hover:underline">
-                      Quick Start Guide
-                    </Link>
-                  </li>
-                  <li className="text-sm">
-                    <Link href="/docs/core-concepts" className="text-primary hover:underline">
-                      Core Concepts
-                    </Link>
-                  </li>
-                </ul>
-                <Button variant="ghost" size="sm" className="mt-4 w-full">
-                  View All Guides
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <Zap className="h-5 w-5 text-primary" />
-                  <CardTitle>AI Features</CardTitle>
-                </div>
-                <CardDescription>
-                  Learn how to leverage our AI-powered creative tools
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2">
-                  <li className="text-sm">
-                    <Link href="/docs/ai-enhancement" className="text-primary hover:underline">
-                      AI Enhancement Studio
-                    </Link>
-                  </li>
-                  <li className="text-sm">
-                    <Link href="/docs/color-extraction" className="text-primary hover:underline">
-                      Color Extraction Technology
-                    </Link>
-                  </li>
-                  <li className="text-sm">
-                    <Link href="/docs/creative-symbiosis" className="text-primary hover:underline">
-                      Creative Symbiosis
-                    </Link>
-                  </li>
-                </ul>
-                <Button variant="ghost" size="sm" className="mt-4 w-full">
-                  Explore AI Features
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <Grid className="h-5 w-5 text-primary" />
-                  <CardTitle>Content Management</CardTitle>
-                </div>
-                <CardDescription>
-                  Organize and optimize your creative assets
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2">
-                  <li className="text-sm">
-                    <Link href="/docs/content-library" className="text-primary hover:underline">
-                      Content Library
-                    </Link>
-                  </li>
-                  <li className="text-sm">
-                    <Link href="/docs/content-vault" className="text-primary hover:underline">
-                      Content Vault Security
-                    </Link>
-                  </li>
-                  <li className="text-sm">
-                    <Link href="/docs/analytics" className="text-primary hover:underline">
-                      Content Analytics
-                    </Link>
-                  </li>
-                </ul>
-                <Button variant="ghost" size="sm" className="mt-4 w-full">
-                  Content Management Guides
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <Compass className="h-5 w-5 text-primary" />
-                  <CardTitle>Creative Exploration</CardTitle>
-                </div>
-                <CardDescription>
-                  Discover techniques for expanding your creative horizons
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2">
-                  <li className="text-sm">
-                    <Link href="/docs/mood-capsules" className="text-primary hover:underline">
-                      Mood Capsules
-                    </Link>
-                  </li>
-                  <li className="text-sm">
-                    <Link href="/docs/creative-prompts" className="text-primary hover:underline">
-                      Creative Prompts
-                    </Link>
-                  </li>
-                  <li className="text-sm">
-                    <Link href="/docs/mood-boards" className="text-primary hover:underline">
-                      Advanced Mood Boards
-                    </Link>
-                  </li>
-                </ul>
-                <Button variant="ghost" size="sm" className="mt-4 w-full">
-                  Creative Techniques
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="api" className="space-y-6">
-          <Card className="mb-6">
+        <TabsContent value="getting-started" className="space-y-6">
+          <Card>
             <CardHeader>
-              <div className="flex items-center gap-2">
-                <Code className="h-5 w-5 text-primary" />
-                <CardTitle>API Reference</CardTitle>
-              </div>
-              <CardDescription>
-                Complete documentation for integrating with Creately's powerful APIs
-              </CardDescription>
+              <CardTitle>Welcome to Creately</CardTitle>
+              <CardDescription>Get to know the basics and start your creative journey</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <p>
-                  Our comprehensive API allows you to integrate Creately's powerful creative tools
-                  into your own applications and workflows.
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="border rounded-md p-4">
-                    <h3 className="font-semibold mb-2">REST API</h3>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      Core API for content management and analysis
-                    </p>
-                    <Button variant="outline" size="sm">View Documentation</Button>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="bg-primary/10 p-2 rounded-full">
+                      <Blocks className="h-5 w-5 text-primary" />
+                    </div>
+                    <h3 className="font-semibold">Understanding the Interface</h3>
                   </div>
-                  <div className="border rounded-md p-4">
-                    <h3 className="font-semibold mb-2">Color Extraction API</h3>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      Extract color palettes from images and websites
-                    </p>
-                    <Button variant="outline" size="sm">View Documentation</Button>
+                  <p className="text-muted-foreground text-sm">
+                    Learn about the main sections of Creately's interface and how to navigate between features.
+                  </p>
+                  <a href="#" className="text-primary text-sm hover:underline">Read More →</a>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="bg-primary/10 p-2 rounded-full">
+                      <GitBranch className="h-5 w-5 text-primary" />
+                    </div>
+                    <h3 className="font-semibold">Creative Workflows</h3>
                   </div>
+                  <p className="text-muted-foreground text-sm">
+                    Explore common creative workflows and how Creately enhances each step of your process.
+                  </p>
+                  <a href="#" className="text-primary text-sm hover:underline">Read More →</a>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="bg-primary/10 p-2 rounded-full">
+                      <HelpCircle className="h-5 w-5 text-primary" />
+                    </div>
+                    <h3 className="font-semibold">Frequently Asked Questions</h3>
+                  </div>
+                  <p className="text-muted-foreground text-sm">
+                    Find answers to common questions about account setup, features, and troubleshooting.
+                  </p>
+                  <a href="#" className="text-primary text-sm hover:underline">Read More →</a>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="bg-primary/10 p-2 rounded-full">
+                      <Video className="h-5 w-5 text-primary" />
+                    </div>
+                    <h3 className="font-semibold">Video Tutorials</h3>
+                  </div>
+                  <p className="text-muted-foreground text-sm">
+                    Watch step-by-step video guides to get the most out of Creately's features.
+                  </p>
+                  <a href="#" className="text-primary text-sm hover:underline">View Tutorials →</a>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Authentication</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-2">
-                  Learn how to authenticate with our API
-                </p>
-                <Link href="/docs/api/authentication" className="text-primary text-sm hover:underline">
-                  View Documentation →
-                </Link>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Rate Limits</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-2">
-                  Understand API rate limits and quotas
-                </p>
-                <Link href="/docs/api/rate-limits" className="text-primary text-sm hover:underline">
-                  View Documentation →
-                </Link>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Webhooks</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-2">
-                  Setting up and handling webhook events
-                </p>
-                <Link href="/docs/api/webhooks" className="text-primary text-sm hover:underline">
-                  View Documentation →
-                </Link>
-              </CardContent>
-            </Card>
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Quick Start Guide</CardTitle>
+              <CardDescription>Follow these steps to get up and running with Creately</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ol className="space-y-4 list-decimal list-inside">
+                <li className="pl-2">
+                  <span className="font-medium">Create your account</span>
+                  <p className="text-muted-foreground text-sm ml-6 mt-1">
+                    Sign up with your email or connect through Google, Apple, or social accounts.
+                  </p>
+                </li>
+                <li className="pl-2">
+                  <span className="font-medium">Set up your profile</span>
+                  <p className="text-muted-foreground text-sm ml-6 mt-1">
+                    Add your creative preferences, interests, and connect your content sources.
+                  </p>
+                </li>
+                <li className="pl-2">
+                  <span className="font-medium">Explore creative tools</span>
+                  <p className="text-muted-foreground text-sm ml-6 mt-1">
+                    Try the color palette generator, mood boards, and content vault features.
+                  </p>
+                </li>
+                <li className="pl-2">
+                  <span className="font-medium">Discover AI enhancement</span>
+                  <p className="text-muted-foreground text-sm ml-6 mt-1">
+                    Learn how Creately's AI can help enhance your content while preserving your unique style.
+                  </p>
+                </li>
+                <li className="pl-2">
+                  <span className="font-medium">Create your first project</span>
+                  <p className="text-muted-foreground text-sm ml-6 mt-1">
+                    Start a new creative project using Creately's intelligent tools and your own content.
+                  </p>
+                </li>
+              </ol>
+            </CardContent>
+          </Card>
         </TabsContent>
 
-        <TabsContent value="examples" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-primary" />
-                  <CardTitle className="text-base">Color Extraction</CardTitle>
+        <TabsContent value="tools" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Creative Tools Documentation</CardTitle>
+              <CardDescription>Learn how to use Creately's powerful creative tools</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <h3 className="font-semibold">Color Palette Generator</h3>
+                  <p className="text-muted-foreground text-sm">
+                    Extract colors from images, websites, or generate palettes based on mood and themes.
+                  </p>
+                  <a href="/color-palettes" className="text-primary text-sm hover:underline">Explore Tool →</a>
                 </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Extract a color palette from any image or website URL.
-                </p>
-                <div className="bg-muted p-3 rounded-md">
-                  <code className="text-xs">
-                    <pre className="whitespace-pre-wrap">
-                      {`const response = await fetch('/api/extract-colors', {
-  method: 'POST',
-  body: JSON.stringify({ url: 'https://example.com' })
-});
 
-const { colors, palette } = await response.json();`}
-                    </pre>
-                  </code>
+                <div className="space-y-3">
+                  <h3 className="font-semibold">Mood Boards</h3>
+                  <p className="text-muted-foreground text-sm">
+                    Create visual collections that capture the essence of your creative vision.
+                  </p>
+                  <a href="/mood-boards" className="text-primary text-sm hover:underline">Explore Tool →</a>
                 </div>
-                <Button variant="ghost" size="sm" className="mt-4 w-full">
-                  Try It Out →
-                </Button>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <RefreshCw className="h-5 w-5 text-primary" />
-                  <CardTitle className="text-base">Content Pipeline</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Create an automated content processing pipeline.
-                </p>
-                <div className="bg-muted p-3 rounded-md">
-                  <code className="text-xs">
-                    <pre className="whitespace-pre-wrap">
-                      {`// Create content processing pipeline
-const pipeline = new ContentPipeline();
 
-pipeline
-  .addStep('analyze')
-  .addStep('enhance')
-  .addStep('distribute')
-  .start();`}
-                    </pre>
-                  </code>
+                <div className="space-y-3">
+                  <h3 className="font-semibold">Content Vault</h3>
+                  <p className="text-muted-foreground text-sm">
+                    Store and organize your creative assets for easy access and inspiration.
+                  </p>
+                  <a href="/content-vault" className="text-primary text-sm hover:underline">Explore Tool →</a>
                 </div>
-                <Button variant="ghost" size="sm" className="mt-4 w-full">
-                  View Tutorial →
-                </Button>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <Zap className="h-5 w-5 text-primary" />
-                  <CardTitle className="text-base">AI Caption Generation</CardTitle>
+
+                <div className="space-y-3">
+                  <h3 className="font-semibold">Creative Prompts</h3>
+                  <p className="text-muted-foreground text-sm">
+                    Get personalized prompts to spark your creativity and overcome creative blocks.
+                  </p>
+                  <a href="/creative-prompts" className="text-primary text-sm hover:underline">Explore Tool →</a>
                 </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Generate engaging captions for your images.
-                </p>
-                <div className="bg-muted p-3 rounded-md">
-                  <code className="text-xs">
-                    <pre className="whitespace-pre-wrap">
-                      {`// Generate AI captions for an image
-const caption = await creately.ai.generateCaption({
-  imageUrl: 'https://example.com/image.jpg',
-  toneOfVoice: 'professional',
-  maxLength: 280
-});`}
-                    </pre>
-                  </code>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="ai" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>AI Enhancement</CardTitle>
+              <CardDescription>Understanding how AI works with your creative process</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                <div>
+                  <h3 className="font-semibold mb-2">Creative Symbiosis</h3>
+                  <p className="text-muted-foreground text-sm">
+                    Learn how Creately's AI works alongside your natural creativity, enhancing rather than replacing your unique voice.
+                  </p>
+                  <a href="/creative-symbiosis" className="text-primary text-sm hover:underline mt-2 inline-block">Explore Creative Symbiosis →</a>
                 </div>
-                <Button variant="ghost" size="sm" className="mt-4 w-full">
-                  Try AI Features →
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
+
+                <div>
+                  <h3 className="font-semibold mb-2">Adaptive Learning</h3>
+                  <p className="text-muted-foreground text-sm">
+                    Understand how the AI adapts to your skill level and creative preferences over time.
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold mb-2">Privacy and Your Data</h3>
+                  <p className="text-muted-foreground text-sm">
+                    How Creately handles your data while providing AI-enhanced features and tools.
+                  </p>
+                  <a href="/privacy" className="text-primary text-sm hover:underline mt-2 inline-block">Privacy Policy →</a>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="api" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>API Documentation</CardTitle>
+              <CardDescription>Integrate with Creately's powerful creative APIs</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="bg-muted rounded-md p-4">
+                  <div className="flex items-center mb-2">
+                    <Terminal className="h-5 w-5 mr-2" />
+                    <h3 className="font-mono text-sm font-semibold">Getting Started with the API</h3>
+                  </div>
+                  <p className="text-muted-foreground text-sm">
+                    Learn how to authenticate and make your first API request to Creately's services.
+                  </p>
+                </div>
+                
+                <div>
+                  <h3 className="font-semibold mb-2">Available Endpoints</h3>
+                  <ul className="space-y-2">
+                    <li className="text-sm">
+                      <code className="bg-muted px-1 py-0.5 rounded">/api/palettes</code> - Generate and manage color palettes
+                    </li>
+                    <li className="text-sm">
+                      <code className="bg-muted px-1 py-0.5 rounded">/api/content</code> - Content analysis and enhancement
+                    </li>
+                    <li className="text-sm">
+                      <code className="bg-muted px-1 py-0.5 rounded">/api/creative</code> - Creative prompt generation
+                    </li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold mb-2">API Keys</h3>
+                  <p className="text-muted-foreground text-sm">
+                    Manage your API keys and usage limits through your developer dashboard.
+                  </p>
+                  <a href="/settings" className="text-primary text-sm hover:underline mt-2 inline-block">Manage API Keys →</a>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="guides" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Guides & Tutorials</CardTitle>
+              <CardDescription>In-depth guides to help you master Creately</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="bg-primary/10 p-2 rounded-full">
+                      <MessageSquare className="h-5 w-5 text-primary" />
+                    </div>
+                    <h3 className="font-semibold">Community Guides</h3>
+                  </div>
+                  <p className="text-muted-foreground text-sm">
+                    Tutorials and guides created by the Creately community, sharing tips and workflows.
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="bg-primary/10 p-2 rounded-full">
+                      <FileText className="h-5 w-5 text-primary" />
+                    </div>
+                    <h3 className="font-semibold">Official Guides</h3>
+                  </div>
+                  <p className="text-muted-foreground text-sm">
+                    Step-by-step guides created by the Creately team to help you get the most out of the platform.
+                  </p>
+                </div>
+                
+                <div className="md:col-span-2">
+                  <h3 className="font-semibold mb-3">Featured Guides</h3>
+                  <div className="space-y-4">
+                    <div className="border rounded-md p-4">
+                      <h4 className="font-medium">Getting the Most from Your Camera Roll</h4>
+                      <p className="text-muted-foreground text-sm mt-1">
+                        Learn how to leverage your existing photos and turn them into creative assets with AI enhancement.
+                      </p>
+                      <a href="#" className="text-primary text-sm hover:underline mt-2 inline-block">Read Guide →</a>
+                    </div>
+                    
+                    <div className="border rounded-md p-4">
+                      <h4 className="font-medium">Creating Your First AI-Enhanced Project</h4>
+                      <p className="text-muted-foreground text-sm mt-1">
+                        A complete walkthrough of creating a project that blends your creativity with AI assistance.
+                      </p>
+                      <a href="#" className="text-primary text-sm hover:underline mt-2 inline-block">Read Guide →</a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
-
-      <section className="mt-16 text-center">
-        <h2 className="text-2xl font-bold mb-4">Need More Help?</h2>
-        <p className="text-muted-foreground mb-6">
-          Our team is here to help you get the most out of Creately.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button variant="default" size="lg">
-            Contact Support
-          </Button>
-          <Button variant="outline" size="lg">
-            Join Community
-          </Button>
-        </div>
-      </section>
     </div>
   );
 };
 
-export default Documentation;
+export default DocumentationPage;

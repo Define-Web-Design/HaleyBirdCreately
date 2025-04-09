@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import TopNavigation from './TopNavigation';
 import Sidebar from './Sidebar';
+import Footer from './Footer';
 import useGestureHelpers from '@/lib/useGestures';
 import { useMobile } from '@/hooks/use-mobile';
 import { MenuIcon, XIcon } from 'lucide-react';
@@ -246,37 +247,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               </button>
             )}
             {children}
-
-            {/* Condensed Footer with Original Elements */}
-            <footer className="mt-6 pt-3 border-t border-border">
-              <div className="container mx-auto px-2">
-                <div className="flex flex-wrap justify-between items-center gap-2 py-2">
-                  <div className="flex flex-col">
-                    <div className="flex items-center mb-1">
-                      <div className="bg-gradient-to-r from-[#F2994A] to-[#FF9DAE] h-6 w-6 rounded-lg flex items-center justify-center text-white font-bold text-sm mr-1.5">C</div>
-                      <span className="text-sm font-semibold">Creately</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      A creative intelligence platform for design and content creation
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      &copy; {new Date().getFullYear()} Creately. All rights reserved.
-                    </p>
-                  </div>
-                  <div className="flex flex-row gap-3 text-xs">
-                    <a href="/legal" className="text-muted-foreground hover:text-foreground transition-colors">
-                      Terms
-                    </a>
-                    <a href="/privacy" className="text-muted-foreground hover:text-foreground transition-colors">
-                      Privacy
-                    </a>
-                    <a href="mailto:support@creately.com" className="text-muted-foreground hover:text-foreground transition-colors">
-                      Support
-                    </a>
-                  </div>
-                </div>
-              </div>
-            </footer>
+            
+            {/* Full-featured Footer with comprehensive links */}
+            <Footer />
           </main>
           {mobile.isMobile && (
             <Button 

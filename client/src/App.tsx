@@ -28,6 +28,11 @@ import PerformanceAnalysis from "./pages/PerformanceAnalysis";
 import LegalPage from "./pages/legal";
 import PrivacyPage from "./pages/privacy";
 import SettingsPage from "./pages/settings";
+import DocumentationPage from "./pages/documentation";
+import FeaturePage from "./pages/features";
+import BlogPage from "./pages/blog";
+import PricingPage from "./pages/pricing";
+import AboutPage from "./pages/about";
 import CookieConsent from "./components/common/CookieConsent";
 import { ThemeProvider } from "./lib/ThemeContext";
 import { TaskVerificationProvider } from "./context/task-verification-context";
@@ -103,6 +108,11 @@ function Router() {
           <Route path="/legal" component={LegalPage} />
           <Route path="/privacy" component={PrivacyPage} />
           <Route path="/terms-of-service" component={LegalPage} />
+          <Route path="/documentation" component={DocumentationPage} />
+          <Route path="/features" component={FeaturePage} />
+          <Route path="/blog" component={BlogPage} />
+          <Route path="/pricing" component={PricingPage} />
+          <Route path="/about" component={AboutPage} />
           
           {/* Protected Routes - Authentication Required */}
           <Route path="/" component={LandingPage} />
