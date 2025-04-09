@@ -27,6 +27,32 @@ interface Task {
   progressPercentage?: number;
 }
 
+interface TaskVerificationResponse {
+  success: boolean;
+  status: {
+    allTasksComplete: boolean;
+    totalTasks: number;
+    completedTasks: Array<{
+      id: string;
+      name: string;
+      category: string;
+      details?: string;
+    }>;
+    pendingTasks: Array<{
+      id: string;
+      name: string;
+      category: string;
+      details?: string;
+    }>;
+    failedTasks: Array<{
+      id: string;
+      name: string;
+      category: string;
+      details?: string;
+    }>;
+  };
+}
+
 export default function TaskVerificationDashboard() {
   const { toast } = useToast();
   const { 
@@ -44,10 +70,50 @@ export default function TaskVerificationDashboard() {
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
-  const { data: tasks = [], isLoading: tasksLoading } = useQuery<Task[]>({
+  const { data: tasksResponse, isLoading: tasksLoading } = useQuery({
     queryKey: ['/api/task-verification/tasks'],
     enabled: true,
   });
+
+  // Transform API response to expected format or provide empty array
+  const tasks: Task[] = (tasksResponse?.success && tasksResponse?.status && 
+      Array.isArray(tasksResponse.status.completedTasks)) 
+    ? [
+        ...(tasksResponse.status.completedTasks || []).map((task: any) => ({
+          id: task.id,
+          title: task.name,
+          description: task.details || `${task.category} task`,
+          status: 'completed',
+          category: task.category,
+          priority: 'medium',
+          points: 10,
+          createdAt: new Date().toISOString(),
+          progressPercentage: 100
+        })),
+        ...(tasksResponse.status.pendingTasks || []).map((task: any) => ({
+          id: task.id,
+          title: task.name,
+          description: task.details || `${task.category} task`,
+          status: 'pending',
+          category: task.category,
+          priority: 'medium',
+          points: 10,
+          createdAt: new Date().toISOString(),
+          progressPercentage: 0
+        })),
+        ...(tasksResponse.status.failedTasks || []).map((task: any) => ({
+          id: task.id,
+          title: task.name,
+          description: task.details || `${task.category} task`,
+          status: 'in-progress',
+          category: task.category,
+          priority: 'high',
+          points: 10,
+          createdAt: new Date().toISOString(),
+          progressPercentage: 50
+        }))
+      ]
+    : [];
 
   // Handle opening progress dialog for a task
   const openProgressDialog = (task: Task) => {

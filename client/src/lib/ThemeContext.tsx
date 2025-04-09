@@ -37,9 +37,9 @@ interface ThemeProviderProps {
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const [theme, setTheme] = useState<string>(defaultThemeContext.theme);
+  // Always start in light mode regardless of system preferences
   const [isDarkMode, setIsDarkMode] = useState<boolean>(
-    () => localStorage.getItem('darkMode') === 'true' || 
-          window.matchMedia('(prefers-color-scheme: dark)').matches
+    () => localStorage.getItem('darkMode') === 'true' ? true : false
   );
   const [isColorBlindMode, setIsColorBlindMode] = useState<boolean>(
     localStorage.getItem('colorBlindMode') === 'true'

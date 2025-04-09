@@ -428,6 +428,24 @@ const Sidebar = ({
             </button>
           </div>
         )}
+        
+        {/* User Profile Section */}
+        <div className={`mt-2 px-2 pb-2 border-t border-border pt-2 ${expanded ? '' : 'text-center'}`}>
+          <Link 
+            href="/profile" 
+            className="flex items-center p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors duration-200"
+          >
+            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+              <User className="h-4 w-4" />
+            </div>
+            {expanded && (
+              <div className="ml-2 flex-1 overflow-hidden">
+                <p className="text-sm font-medium truncate">User Profile</p>
+                <p className="text-xs text-muted-foreground truncate">View your account</p>
+              </div>
+            )}
+          </Link>
+        </div>
       </div>
     </div>
   );

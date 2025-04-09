@@ -5,7 +5,7 @@ import { InfoModal } from '@/components/ui/info-modal';
 import { Modal, useModal } from '@/components/ui/modal';
 
 interface ContentAnalysisProps {
-  contentId?: string;
+  contentId?: string | number;
 }
 
 export function ContentAnalysis({ contentId }: ContentAnalysisProps) {
