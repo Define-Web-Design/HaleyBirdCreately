@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '../lib/queryClient';
 import { toast } from '@/hooks/use-toast';
+import { isDevelopmentAutoLogin } from '@/lib/devBypass';
 
 // User type definition
 export interface User {
@@ -54,6 +55,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // Initialize auth state from token in localStorage
   useEffect(() => {
     const initializeAuth = async () => {
+      if (isDevelopmentAutoLogin()) {
+        // If we're in dev mode with auto-login enabled, don't try to fetch user
+        // The dev bypass will handle authentication
+        return;
+      }
+      
       // Check if we have a refresh token but no valid access token
       if (refreshToken && !token) {
         try {
@@ -65,7 +72,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         }
       } else if (token) {
         // If we have a token, try to get user data
-        await refetchUser();
+        try {
+          await refetchUser();
+        } catch (error) {
+          console.error('Error during user fetch on init:', error);
+          // Just clear tokens on any error during initialization
+          localStorage.removeItem('auth_token');
+          localStorage.removeItem('refresh_token');
+          setToken(null);
+          setRefreshToken(null);
+        }
       }
     };
     
@@ -285,8 +301,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // Login function
   async function login(username: string, password: string): Promise<boolean> {
     try {
-      await loginMutation.mutateAsync({ username, password });
-      return !!user;
+      const response = await loginMutation.mutateAsync({ username, password });
+      // Return success based on response instead of user state which may not be updated yet
+      return response.success === true;
     } catch (error) {
       return false;
     }
@@ -295,8 +312,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // Register function
   async function register(userData: RegisterData): Promise<boolean> {
     try {
-      await registerMutation.mutateAsync(userData);
-      return !!user;
+      const response = await registerMutation.mutateAsync(userData);
+      // Return success based on response instead of user state which may not be updated yet
+      return response.success === true;
     } catch (error) {
       return false;
     }

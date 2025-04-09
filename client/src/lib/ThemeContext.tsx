@@ -108,38 +108,38 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     localStorage.setItem('transitionSpeed', transitionSpeed);
   }, [theme, isDarkMode, isColorBlindMode, isTactileFeedbackEnabled, transitionSpeed]);
 
-  // Handle theme updates via API - debounced to prevent too many requests
+  // Theme verification (not update) to make sure theme is valid
   useEffect(() => {
-    // Skip API call on initial mount
-    if (theme === defaultThemeContext.theme) {
-      return;
-    }
-    
-    const updateTimeout = setTimeout(async () => {
+    // We're not actually updating the theme here, just verifying it
+    // This version doesn't have an infinite loop because we don't trigger any state changes
+    const verifyTheme = async () => {
       try {
-        // Only make API call if we have a non-default theme to update
-        // Use the public theme endpoint for now, which doesn't require authentication
-        // This avoids the authentication issues until they're fully resolved
+        // Only verify non-default themes
+        if (theme === defaultThemeContext.theme) {
+          return;
+        }
+        
+        // Use GET request only to avoid state updates - don't try to modify the theme
         const response = await fetch('/api/public/theme', {
           method: 'GET',
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-cache'
           }
         });
         
-        if (!response.ok) {
-          console.log('Theme response not OK:', response.status);
-        } else {
-          // Just fetch the theme for now, don't try to update it until auth is fixed
+        if (response.ok) {
           console.log('Theme fetched successfully');
         }
       } catch (error) {
-        console.error('Failed to update theme:', error);
+        console.error('Failed to verify theme:', error);
       }
-    }, 500); // 500ms debounce
+    };
     
-    return () => clearTimeout(updateTimeout);
-  }, [theme, isDarkMode, isColorBlindMode]);
+    // Only run once when theme changes, not on every render
+    const verifyTimeout = setTimeout(verifyTheme, 1000);
+    return () => clearTimeout(verifyTimeout);
+  }, [theme]); // Only depend on theme, not other state variables
   
   // Handle dark mode and color blind mode changes
   useEffect(() => {

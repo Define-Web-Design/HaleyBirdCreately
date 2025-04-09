@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, Shield, Loader2 } from 'lucide-react';
-import { isDevelopmentAutoLogin, performDevAutoLogin, isAlreadyAutoLoggedIn } from '@/lib/devBypass';
+import { isDevelopmentAutoLogin, performDevAutoLogin } from '@/lib/devBypass';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -31,32 +31,33 @@ export const ProtectedRoute = ({
   // State to track if auto-login attempt has been made
   const [autoLoginAttempted, setAutoLoginAttempted] = useState(false);
 
-  // Check if development auto-login is explicitly enabled via environment variable
+  // Enhanced development auto-login
   useEffect(() => {
-    // Auto-login is now disabled by default and requires explicit opt-in
+    // Only attempt auto-login if it's enabled via the environment or localStorage
     if (isDevelopmentAutoLogin() && !isLoading && !isAuthenticated && !autoLoginAttempted) {
-      console.log('🔑 Testing auto-login explicitly enabled via environment variable...');
+      console.log('🔑 Development auto-login: Bypassing authentication with mock tokens');
       
       try {
-        // Check if already auto-logged in to prevent unnecessary reloads
-        if (!isAlreadyAutoLoggedIn()) {
-          // Set up mock authentication only if explicitly enabled
-          performDevAutoLogin();
-          
-          // Mark as attempted to prevent infinite loops
-          setAutoLoginAttempted(true);
-          
-          // Don't force page reload, let the auth context handle it
-        } else {
-          // Already auto-logged in, just mark as attempted
-          setAutoLoginAttempted(true);
+        // Always perform auto login in dev mode if enabled, regardless of current state
+        performDevAutoLogin();
+        
+        // Mark as attempted to prevent infinite loops
+        setAutoLoginAttempted(true);
+        
+        // Force the authentication state to recognize the dev tokens
+        // This would normally be handled by the auth context on its next render
+        if (login && typeof login === 'function') {
+          // Call login with any values - it will be intercepted by the dev mode
+          login('dev@example.com', 'password').catch(err => {
+            console.log('Dev mode login simulation completed');
+          });
         }
       } catch (error) {
-        console.error('Testing auto-login error:', error);
+        console.error('Development auto-login error:', error);
         setAutoLoginAttempted(true);
       }
     }
-  }, [isLoading, isAuthenticated, autoLoginAttempted]);
+  }, [isLoading, isAuthenticated, autoLoginAttempted, login]);
 
   // Regular authentication flow for redirecting unauthenticated users
   useEffect(() => {
