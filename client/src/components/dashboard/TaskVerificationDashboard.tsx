@@ -70,13 +70,13 @@ export default function TaskVerificationDashboard() {
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
-  const { data: tasksResponse, isLoading: tasksLoading } = useQuery({
+  const { data: tasksResponse, isLoading: tasksLoading } = useQuery<TaskVerificationResponse>({
     queryKey: ['/api/task-verification/tasks'],
     enabled: true,
   });
 
   // Transform API response to expected format or provide empty array
-  const tasks: Task[] = (tasksResponse?.success && tasksResponse?.status && 
+  const tasks: Task[] = (tasksResponse && tasksResponse.success && tasksResponse.status && 
       Array.isArray(tasksResponse.status.completedTasks)) 
     ? [
         ...(tasksResponse.status.completedTasks || []).map((task: any) => ({
