@@ -341,9 +341,29 @@ function Router() {
 function App() {
   // Try to register service worker and initialize touch feedback on mount
   useEffect(() => {
-    registerServiceWorker();
-    initTouchFeedback(); // Initialize the touch feedback system
+    try {
+      registerServiceWorker();
+      initTouchFeedback(); // Initialize the touch feedback system
+    } catch (error) {
+      console.error("Error initializing App:", error);
+    }
   }, []);
+
+  // Create a simplified app version with minimal components to debug rendering issues
+  if (window.location.search.includes('simple=true')) {
+    return (
+      <div style={{ padding: '20px', textAlign: 'center' }}>
+        <h1>Creately - Simple Mode</h1>
+        <p>Running in simplified mode for debugging</p>
+        <button 
+          onClick={() => window.location.href = '/'}
+          style={{ padding: '10px', background: '#F2994A', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+        >
+          Switch to Full Mode
+        </button>
+      </div>
+    );
+  }
 
   return (
     <QueryClientProvider client={queryClient}>
