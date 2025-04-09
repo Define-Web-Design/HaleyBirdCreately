@@ -211,54 +211,54 @@ const CollaborativeWorkspace = ({ workspace = mockWorkspace, userId = 1 }: Colla
   return (
     <section className="mb-8 space-y-6">
       {/* Workspace Header */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-4 sm:p-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
           <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">{workspace.name}</h2>
-              <Badge className="bg-primary/20 text-primary border-none">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">{workspace.name}</h2>
+              <Badge className="bg-primary/20 text-primary border-none text-xs sm:text-sm">
                 {workspace.teamSynergy}% Synergy
               </Badge>
             </div>
-            <p className="text-gray-600 dark:text-gray-300 mt-1 max-w-2xl">
+            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mt-1 max-w-2xl">
               {workspace.description}
             </p>
-            <div className="mt-4 flex flex-wrap gap-3">
-              <div className="flex items-center gap-2 bg-white/80 dark:bg-gray-800/80 px-3 py-1.5 rounded-lg">
-                <UsersIcon className="w-4 h-4 text-blue-500" />
-                <span className="text-sm text-gray-700 dark:text-gray-300">{workspace.members.length} Members</span>
+            <div className="mt-3 sm:mt-4 flex flex-wrap gap-2 sm:gap-3">
+              <div className="flex items-center gap-1.5 sm:gap-2 bg-white/80 dark:bg-gray-800/80 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg">
+                <UsersIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-500" />
+                <span className="text-xs sm:text-sm text-gray-700 dark:text-gray-300">{workspace.members.length} Members</span>
               </div>
-              <div className="flex items-center gap-2 bg-white/80 dark:bg-gray-800/80 px-3 py-1.5 rounded-lg">
-                <LayoutIcon className="w-4 h-4 text-indigo-500" />
-                <span className="text-sm text-gray-700 dark:text-gray-300">{workspace.projects.length} Projects</span>
+              <div className="flex items-center gap-1.5 sm:gap-2 bg-white/80 dark:bg-gray-800/80 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg">
+                <LayoutIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-indigo-500" />
+                <span className="text-xs sm:text-sm text-gray-700 dark:text-gray-300">{workspace.projects.length} Projects</span>
               </div>
-              <div className="flex items-center gap-2 bg-white/80 dark:bg-gray-800/80 px-3 py-1.5 rounded-lg">
-                <BarChart2Icon className="w-4 h-4 text-teal-500" />
-                <span className="text-sm text-gray-700 dark:text-gray-300">{workspace.activityMetrics?.totalContributions || 0} Contributions</span>
+              <div className="flex items-center gap-1.5 sm:gap-2 bg-white/80 dark:bg-gray-800/80 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg">
+                <BarChart2Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-teal-500" />
+                <span className="text-xs sm:text-sm text-gray-700 dark:text-gray-300">{workspace.activityMetrics?.totalContributions || 0} Contributions</span>
               </div>
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
-            <div className="flex -space-x-2">
+          <div className="flex items-center gap-2 mt-2 md:mt-0">
+            <div className="flex -space-x-1.5 sm:-space-x-2">
               {workspace.members.slice(0, 3).map((member) => (
-                <Avatar key={member.userId} className="border-2 border-white dark:border-gray-800">
+                <Avatar key={member.userId} className="w-8 h-8 sm:w-10 sm:h-10 border-2 border-white dark:border-gray-800">
                   <AvatarImage src={member.avatar} alt={member.displayName} />
-                  <AvatarFallback className="bg-primary text-white">
+                  <AvatarFallback className="bg-primary text-white text-xs sm:text-sm">
                     {member.displayName.split(' ').map(n => n[0]).join('')}
                   </AvatarFallback>
                 </Avatar>
               ))}
               {workspace.members.length > 3 && (
-                <div className="flex items-center justify-center w-10 h-10 rounded-full border-2 border-white dark:border-gray-800 bg-gray-200 dark:bg-gray-700 text-xs text-gray-600 dark:text-gray-300">
+                <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-white dark:border-gray-800 bg-gray-200 dark:bg-gray-700 text-xs text-gray-600 dark:text-gray-300">
                   +{workspace.members.length - 3}
                 </div>
               )}
             </div>
             
             {isOwnerOrAdmin && (
-              <Button variant="outline" size="sm" className="ml-2">
-                <UserPlusIcon className="w-4 h-4 mr-1" /> Invite
+              <Button variant="outline" size="sm" className="ml-2 h-8 text-xs sm:text-sm px-2 sm:px-3">
+                <UserPlusIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" /> Invite
               </Button>
             )}
           </div>
@@ -267,25 +267,25 @@ const CollaborativeWorkspace = ({ workspace = mockWorkspace, userId = 1 }: Colla
       
       {/* Workspace Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="w-full justify-start">
-          <TabsTrigger value="projects" className="flex items-center">
-            <CodeIcon className="w-4 h-4 mr-2" /> Projects
+        <TabsList className="w-full justify-start overflow-x-auto scrollbar-hide">
+          <TabsTrigger value="projects" className="flex items-center text-xs sm:text-sm">
+            <CodeIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-2" /> Projects
           </TabsTrigger>
-          <TabsTrigger value="members" className="flex items-center">
-            <UsersIcon className="w-4 h-4 mr-2" /> Team Members
+          <TabsTrigger value="members" className="flex items-center text-xs sm:text-sm">
+            <UsersIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-2" /> <span className="hidden xs:inline">Team </span>Members
           </TabsTrigger>
-          <TabsTrigger value="feedback" className="flex items-center">
-            <MessageSquareIcon className="w-4 h-4 mr-2" /> Feedback Loop
+          <TabsTrigger value="feedback" className="flex items-center text-xs sm:text-sm">
+            <MessageSquareIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-2" /> Feedback<span className="hidden sm:inline"> Loop</span>
           </TabsTrigger>
         </TabsList>
         
         {/* Projects Tab */}
         <TabsContent value="projects" className="space-y-4 mt-4">
           <div className="flex justify-between items-center">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white">Active Projects</h3>
+            <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-white">Active Projects</h3>
             {isOwnerOrAdmin && (
-              <Button size="sm">
-                <PlusIcon className="w-4 h-4 mr-1" /> New Project
+              <Button size="sm" className="h-8 text-xs sm:text-sm px-2.5 sm:px-3">
+                <PlusIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" /> New<span className="hidden xs:inline"> Project</span>
               </Button>
             )}
           </div>
@@ -293,17 +293,17 @@ const CollaborativeWorkspace = ({ workspace = mockWorkspace, userId = 1 }: Colla
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {workspace.projects.map((project) => (
               <Card key={project.id} className="overflow-hidden">
-                <CardHeader className="pb-2">
+                <CardHeader className="pb-2 px-4 sm:px-6 pt-4 sm:pt-6">
                   <div className="flex justify-between items-start">
-                    <CardTitle className="text-lg">{project.name}</CardTitle>
+                    <CardTitle className="text-base sm:text-lg">{project.name}</CardTitle>
                     {getStatusBadge(project.status)}
                   </div>
-                  <CardDescription>{project.description}</CardDescription>
+                  <CardDescription className="text-xs sm:text-sm">{project.description}</CardDescription>
                 </CardHeader>
                 
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-4 px-4 sm:px-6 pb-4 sm:pb-6">
                   {/* Project Details */}
-                  <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="grid grid-cols-2 gap-2 text-xs sm:text-sm">
                     <div>
                       <div className="text-gray-500 dark:text-gray-400">Created</div>
                       <div className="font-medium">{formatDate(project.createdAt)}</div>
@@ -324,7 +324,7 @@ const CollaborativeWorkspace = ({ workspace = mockWorkspace, userId = 1 }: Colla
                   {project.status !== 'completed' && (
                     <div>
                       <div className="flex justify-between items-center mb-1">
-                        <div className="text-sm font-medium">Progress</div>
+                        <div className="text-xs sm:text-sm font-medium">Progress</div>
                         <div className="text-xs text-gray-500">
                           {project.status === 'planning' ? '10%' : 
                            project.status === 'in-progress' ? '60%' : 
@@ -341,10 +341,10 @@ const CollaborativeWorkspace = ({ workspace = mockWorkspace, userId = 1 }: Colla
                   )}
                   
                   {/* Growth Value */}
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 gap-2 sm:gap-3">
                     <div>
                       <div className="text-xs text-gray-500 mb-1">Intellectual Value</div>
-                      <div className="h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                      <div className="h-1 sm:h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
                         <div 
                           className="h-full bg-indigo-500 rounded-full" 
                           style={{ width: `${project.intellectualValue}%` }}
@@ -353,7 +353,7 @@ const CollaborativeWorkspace = ({ workspace = mockWorkspace, userId = 1 }: Colla
                     </div>
                     <div>
                       <div className="text-xs text-gray-500 mb-1">Creative Value</div>
-                      <div className="h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                      <div className="h-1 sm:h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
                         <div 
                           className="h-full bg-fuchsia-500 rounded-full" 
                           style={{ width: `${project.creativeValue}%` }}
@@ -364,30 +364,30 @@ const CollaborativeWorkspace = ({ workspace = mockWorkspace, userId = 1 }: Colla
                   
                   {/* Team Members */}
                   <div>
-                    <div className="text-sm font-medium mb-2">Team</div>
+                    <div className="text-xs sm:text-sm font-medium mb-1.5 sm:mb-2">Team</div>
                     <div className="flex items-center gap-2">
-                      <div className="flex -space-x-2 mr-2">
+                      <div className="flex -space-x-1.5 sm:-space-x-2 mr-2">
                         {project.assignedMembers.map((memberId) => {
                           const member = workspace.members.find(m => m.userId === memberId);
                           if (!member) return null;
                           
                           return (
-                            <Avatar key={memberId} className="w-8 h-8 border-2 border-white dark:border-gray-800">
-                              <AvatarFallback className="text-xs bg-primary text-white">
+                            <Avatar key={memberId} className="w-6 h-6 sm:w-8 sm:h-8 border-2 border-white dark:border-gray-800">
+                              <AvatarFallback className="text-[10px] sm:text-xs bg-primary text-white">
                                 {member.displayName.split(' ').map(n => n[0]).join('')}
                               </AvatarFallback>
                             </Avatar>
                           );
                         })}
                       </div>
-                      <Badge variant="outline" className="bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200 dark:border-blue-800">
+                      <Badge variant="outline" className="text-[10px] sm:text-xs bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200 dark:border-blue-800">
                         {project.collaborationScore}% Synergy
                       </Badge>
                     </div>
                   </div>
                   
                   {/* Action Button */}
-                  <Button className="w-full" variant={project.status === 'completed' ? 'outline' : 'default'}>
+                  <Button className="w-full h-8 sm:h-9 text-xs sm:text-sm mt-1 sm:mt-0" variant={project.status === 'completed' ? 'outline' : 'default'}>
                     {project.status === 'completed' ? 'View Details' : 'Continue Working'}
                   </Button>
                 </CardContent>
@@ -399,10 +399,10 @@ const CollaborativeWorkspace = ({ workspace = mockWorkspace, userId = 1 }: Colla
         {/* Members Tab */}
         <TabsContent value="members" className="space-y-4 mt-4">
           <div className="flex justify-between items-center">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white">Team Members</h3>
+            <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-white">Team Members</h3>
             {isOwnerOrAdmin && (
-              <Button size="sm">
-                <UserPlusIcon className="w-4 h-4 mr-1" /> Invite Member
+              <Button size="sm" className="h-8 text-xs sm:text-sm px-2.5 sm:px-3">
+                <UserPlusIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" /> Invite<span className="hidden xs:inline"> Member</span>
               </Button>
             )}
           </div>
@@ -410,30 +410,30 @@ const CollaborativeWorkspace = ({ workspace = mockWorkspace, userId = 1 }: Colla
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {workspace.members.map((member) => (
               <Card key={member.userId} className="overflow-hidden">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-4">
-                    <Avatar className="w-12 h-12">
+                <CardContent className="p-3 sm:p-4">
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <Avatar className="w-10 h-10 sm:w-12 sm:h-12">
                       <AvatarImage src={member.avatar} alt={member.displayName} />
-                      <AvatarFallback className="bg-primary text-white">
+                      <AvatarFallback className="bg-primary text-white text-xs sm:text-sm">
                         {member.displayName.split(' ').map(n => n[0]).join('')}
                       </AvatarFallback>
                     </Avatar>
                     
                     <div className="flex-1">
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-wrap sm:flex-nowrap sm:items-center justify-between gap-y-1">
                         <div>
-                          <h4 className="font-medium">{member.displayName}</h4>
-                          <div className="flex items-center mt-1">
-                            <Badge variant="outline" className="text-xs capitalize">
+                          <h4 className="text-sm sm:text-base font-medium">{member.displayName}</h4>
+                          <div className="flex flex-wrap items-center mt-0.5 sm:mt-1 gap-y-1">
+                            <Badge variant="outline" className="text-[10px] sm:text-xs capitalize">
                               {member.role}
                             </Badge>
-                            <span className="text-xs text-gray-500 ml-2">
+                            <span className="text-[10px] sm:text-xs text-gray-500 ml-2">
                               Joined {formatDate(member.joinedAt)}
                             </span>
                           </div>
                         </div>
                         
-                        <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300">
+                        <Badge className="text-[10px] sm:text-xs bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300">
                           {member.contributionScore}% Contribution
                         </Badge>
                       </div>
@@ -441,12 +441,12 @@ const CollaborativeWorkspace = ({ workspace = mockWorkspace, userId = 1 }: Colla
                   </div>
                   
                   {member.insights && member.insights.length > 0 && (
-                    <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
-                      <h5 className="text-sm font-medium mb-2">AI Insights</h5>
+                    <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-100 dark:border-gray-800">
+                      <h5 className="text-xs sm:text-sm font-medium mb-1.5 sm:mb-2">AI Insights</h5>
                       <ul className="space-y-1">
                         {member.insights.map((insight, idx) => (
-                          <li key={idx} className="text-sm text-gray-600 dark:text-gray-400 flex items-start">
-                            <ArrowRightIcon className="w-3 h-3 mr-1.5 mt-1 text-primary flex-shrink-0" />
+                          <li key={idx} className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 flex items-start">
+                            <ArrowRightIcon className="w-3 h-3 mr-1.5 mt-0.5 text-primary flex-shrink-0" />
                             {insight}
                           </li>
                         ))}
@@ -462,9 +462,9 @@ const CollaborativeWorkspace = ({ workspace = mockWorkspace, userId = 1 }: Colla
         {/* Feedback Tab */}
         <TabsContent value="feedback" className="space-y-4 mt-4">
           <div className="flex justify-between items-center">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white">Team Feedback Loop</h3>
-            <Button size="sm">
-              <MessageSquareIcon className="w-4 h-4 mr-1" /> Add Feedback
+            <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-white">Team Feedback Loop</h3>
+            <Button size="sm" className="h-8 text-xs sm:text-sm px-2.5 sm:px-3">
+              <MessageSquareIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" /> Add<span className="hidden xs:inline"> Feedback</span>
             </Button>
           </div>
           
@@ -474,9 +474,9 @@ const CollaborativeWorkspace = ({ workspace = mockWorkspace, userId = 1 }: Colla
               
               return (
                 <Card key={feedback.id} className="overflow-hidden">
-                  <CardContent className="p-4">
-                    <div className="flex gap-3">
-                      <div className={`p-2 rounded-full mt-0.5 flex-shrink-0
+                  <CardContent className="p-3 sm:p-4">
+                    <div className="flex gap-2 sm:gap-3">
+                      <div className={`p-1.5 sm:p-2 rounded-full mt-0.5 flex-shrink-0
                         ${feedback.sentiment === 'positive' ? 'bg-green-100 dark:bg-green-900/40' : ''}
                         ${feedback.sentiment === 'neutral' ? 'bg-blue-100 dark:bg-blue-900/40' : ''}
                         ${feedback.sentiment === 'constructive' ? 'bg-amber-100 dark:bg-amber-900/40' : ''}
@@ -485,30 +485,30 @@ const CollaborativeWorkspace = ({ workspace = mockWorkspace, userId = 1 }: Colla
                       </div>
                       
                       <div className="flex-1">
-                        <div className="flex justify-between mb-1">
-                          <div className="flex items-center">
-                            <span className="font-medium">{fromMember?.displayName || 'Team Member'}</span>
-                            <span className="mx-2 text-gray-400">•</span>
-                            <span className="text-sm text-gray-500">
+                        <div className="flex flex-wrap sm:flex-nowrap justify-between items-start sm:items-center mb-1 gap-y-1">
+                          <div className="flex flex-wrap sm:flex-nowrap sm:items-center gap-x-1 sm:gap-x-0">
+                            <span className="text-xs sm:text-sm font-medium">{fromMember?.displayName || 'Team Member'}</span>
+                            <span className="mx-1 sm:mx-2 text-gray-400 hidden xs:inline-block">•</span>
+                            <span className="text-[10px] sm:text-xs text-gray-500">
                               {formatDate(feedback.createdAt)}
                             </span>
                           </div>
                           
-                          <Badge variant="outline" className="capitalize">
+                          <Badge variant="outline" className="text-[10px] sm:text-xs capitalize">
                             {feedback.targetType}
                           </Badge>
                         </div>
                         
-                        <p className="text-gray-700 dark:text-gray-300">
+                        <p className="text-xs sm:text-sm text-gray-700 dark:text-gray-300">
                           {feedback.message}
                         </p>
                         
-                        <div className="mt-2 flex items-center gap-3">
-                          <Button variant="ghost" size="sm" className="h-8 px-2">
-                            <ThumbsUpIcon className="w-4 h-4 mr-1" /> Helpful
+                        <div className="mt-2 flex items-center gap-2 sm:gap-3">
+                          <Button variant="ghost" size="sm" className="h-7 sm:h-8 px-1.5 sm:px-2 text-xs">
+                            <ThumbsUpIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" /> Helpful
                           </Button>
-                          <Button variant="ghost" size="sm" className="h-8 px-2">
-                            <MessageCircleIcon className="w-4 h-4 mr-1" /> Reply
+                          <Button variant="ghost" size="sm" className="h-7 sm:h-8 px-1.5 sm:px-2 text-xs">
+                            <MessageCircleIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" /> Reply
                           </Button>
                         </div>
                       </div>
