@@ -326,7 +326,7 @@ const ColorPalettesPage: React.FC = () => {
         )}
         
         {activeTab === 'website' && (
-          <div className="p-6 animate-fadeIn">
+          <div className="p-6 animate-fadeIn overflow-x-hidden max-w-full">
             <WebsiteColorExtractor />
           </div>
         )}

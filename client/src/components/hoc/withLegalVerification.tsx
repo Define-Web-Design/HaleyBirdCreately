@@ -1,125 +1,89 @@
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
-import { useSession } from 'next-auth/react';
 import LegalAcceptanceModal from '../legal/LegalAcceptanceModal';
+import { useToast } from '@/hooks/use-toast';
 
 /**
- * Higher Order Component that ensures users have accepted the required legal documents
- * before accessing the wrapped component
+ * Higher Order Component that informs users about legal documents
+ * but doesn't block access to features
  */
 const withLegalVerification = (WrappedComponent: React.ComponentType<any>) => {
   const WithLegalVerification = (props: any) => {
-    const { data: session, status } = useSession();
-    const router = useRouter();
+    const { toast } = useToast();
     const [showLegalModal, setShowLegalModal] = useState(false);
-    const [legalCheckComplete, setLegalCheckComplete] = useState(false);
-    const [acceptedDocs, setAcceptedDocs] = useState<{
-      terms: boolean;
-      privacy: boolean;
-    }>({
-      terms: false,
-      privacy: false,
+    const [hasSeenLegalInfo, setHasSeenLegalInfo] = useState(() => {
+      try {
+        return localStorage.getItem('hasSeenLegalInfo') === 'true';
+      } catch (e) {
+        return false;
+      }
     });
 
     useEffect(() => {
-      // Skip verification for public routes or when not logged in yet
-      const isPublicRoute = ['/login', '/register', '/'].includes(router.pathname);
-      if (isPublicRoute || status !== 'authenticated') {
-        setLegalCheckComplete(true);
-        return;
+      // Show legal info modal if user hasn't seen it yet
+      // In a real app, we'd check the current path to identify feature pages
+      // But for this simplified version, we'll just check if they've seen it
+      if (!hasSeenLegalInfo) {
+        setShowLegalModal(true);
       }
+    }, [hasSeenLegalInfo]);
 
-      // Check if user has accepted the latest terms and privacy policy
-      const checkLegalAcceptance = async () => {
-        try {
-          const response = await fetch('/api/legal/status');
-          const data = await response.json();
-
-          // If user has accepted all required documents
-          if (data.termsAccepted && data.privacyAccepted) {
-            setAcceptedDocs({
-              terms: true,
-              privacy: true,
-            });
-            setLegalCheckComplete(true);
-          } else {
-            // Show modal if any document hasn't been accepted
-            setAcceptedDocs({
-              terms: data.termsAccepted,
-              privacy: data.privacyAccepted,
-            });
-            setShowLegalModal(true);
-          }
-        } catch (error) {
-          console.error('Error checking legal acceptance status:', error);
-          // On error, proceed with caution (could be configured to block instead)
-          setLegalCheckComplete(true);
-        }
-      };
-
-      checkLegalAcceptance();
-    }, [router.pathname, status]);
-
-    const handleAcceptLegal = async (documents: { terms: boolean; privacy: boolean }) => {
+    // Handle legal modal close with skip option
+    const handleLegalModalClose = () => {
+      setShowLegalModal(false);
+      
+      // Remember that user has seen the legal info
       try {
-        // Record acceptance in the backend
-        const response = await fetch('/api/legal/accept', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(documents),
-        });
-
-        if (response.ok) {
-          setAcceptedDocs({
-            terms: acceptedDocs.terms || documents.terms,
-            privacy: acceptedDocs.privacy || documents.privacy,
-          });
-
-          // Only close modal and proceed if all documents are accepted
-          if (
-            (acceptedDocs.terms || documents.terms) &&
-            (acceptedDocs.privacy || documents.privacy)
-          ) {
-            setShowLegalModal(false);
-            setLegalCheckComplete(true);
-          }
-        } else {
-          console.error('Failed to record legal acceptance');
-        }
-      } catch (error) {
-        console.error('Error recording legal acceptance:', error);
+        localStorage.setItem('hasSeenLegalInfo', 'true');
+        setHasSeenLegalInfo(true);
+      } catch (e) {
+        console.error('Error saving legal info status:', e);
       }
     };
 
-    if (!legalCheckComplete) {
-      // Show loading state while checking
-      return (
-        <>
-          <div className="flex items-center justify-center min-h-screen">
-            <div className="text-center">
-              <div className="spinner animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
-              <p className="mt-4">Verifying legal requirements...</p>
-            </div>
-          </div>
+    // Listen for legal events
+    useEffect(() => {
+      const handleLegalEvent = (event: Event) => {
+        const customEvent = event as CustomEvent;
+        if (customEvent.detail?.action === 'accept' || customEvent.detail?.action === 'skip') {
+          handleLegalModalClose();
           
-          {showLegalModal && (
-            <LegalAcceptanceModal
-              isOpen={showLegalModal}
-              onClose={() => {}} // Prevent closing without acceptance
-              onAccept={handleAcceptLegal}
-              requiredDocuments={{
-                terms: !acceptedDocs.terms,
-                privacy: !acceptedDocs.privacy,
-              }}
-            />
-          )}
-        </>
-      );
-    }
+          if (customEvent.detail?.action === 'accept') {
+            toast({
+              title: "Terms Accepted",
+              description: "Thank you for accepting our terms.",
+            });
+          } else {
+            toast({
+              title: "Access Granted",
+              description: "You can review the terms later in account settings.",
+            });
+          }
+        }
+      };
+      
+      document.addEventListener('legalAction', handleLegalEvent as EventListener);
+      return () => {
+        document.removeEventListener('legalAction', handleLegalEvent as EventListener);
+      };
+    }, [toast]);
 
-    // Render the wrapped component once verification is complete
-    return <WrappedComponent {...props} />;
+    // Render legal modal if needed, but always render the component
+    return (
+      <>
+        <WrappedComponent {...props} />
+        
+        {showLegalModal && (
+          <LegalAcceptanceModal
+            isOpen={showLegalModal}
+            onClose={handleLegalModalClose}
+            documentType="terms"
+            version="1.0"
+            requiredForFeature="feature access"
+          />
+        )}
+      </>
+    );
   };
 
   // Set display name for the HOC

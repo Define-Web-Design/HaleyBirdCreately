@@ -40,10 +40,10 @@ const AIEnhancement = () => {
     setSelectedTool(toolTitle);
     setShowResults(false);
     
-    // Check if legal terms have been accepted before allowing tool use
+    // We still show legal terms but don't block access
     if (!hasAcceptedLegal) {
       setShowLegalModal(true);
-      return;
+      // Note: We continue with tool selection even without acceptance
     }
     
     toast({
@@ -82,10 +82,10 @@ const AIEnhancement = () => {
       return;
     }
     
-    // Check again for legal acceptance
+    // Remind about legal terms but don't block access
     if (!hasAcceptedLegal) {
       setShowLegalModal(true);
-      return;
+      // We continue with enhancement even without acceptance
     }
     
     setIsProcessing(true);

@@ -99,7 +99,7 @@ export function WebsiteColorExtractor() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-6">
+    <div className="mx-auto w-full max-w-4xl space-y-6 overflow-x-hidden">
       {/* Introduction Section */}
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-3">
@@ -391,12 +391,12 @@ export function WebsiteColorExtractor() {
                       </a>
                     </div>
                     
-                    <div className="border rounded-lg overflow-hidden shadow-sm">
+                    <div className="border rounded-lg overflow-hidden shadow-sm max-h-[500px]">
                       {result.screenshot ? (
                         <img
                           src={result.screenshot}
                           alt={`Screenshot of ${result.title}`}
-                          className="w-full h-auto"
+                          className="w-full max-w-full h-auto max-h-[500px] object-contain"
                         />
                       ) : (
                         <div className="flex flex-col items-center justify-center bg-muted/30 h-[300px] p-6 text-center">
