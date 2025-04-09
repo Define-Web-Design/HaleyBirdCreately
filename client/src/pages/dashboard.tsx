@@ -156,36 +156,36 @@ const Dashboard = () => {
       {/* Tabs for the different ecosystem sections */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="border-b border-gray-200 dark:border-gray-800">
-          <TabsList className="h-auto p-0 bg-transparent w-full justify-start overflow-x-auto">
+          <TabsList className="h-auto p-0 bg-transparent w-full justify-start overflow-x-auto scrollbar-hide">
             <TabsTrigger 
               value="overview" 
-              className="flex items-center gap-2 rounded-none border-b-2 border-transparent px-4 py-3 data-[state=active]:border-primary data-[state=active]:text-primary"
+              className="flex items-center gap-1.5 sm:gap-2 rounded-none border-b-2 border-transparent px-2.5 sm:px-4 py-3 data-[state=active]:border-primary data-[state=active]:text-primary text-xs sm:text-sm whitespace-nowrap"
             >
-              <LayoutGridIcon className="w-4 h-4" /> Overview
+              <LayoutGridIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> <span className="sm:inline">Overview</span>
             </TabsTrigger>
             <TabsTrigger 
               value="transformation" 
-              className="flex items-center gap-2 rounded-none border-b-2 border-transparent px-4 py-3 data-[state=active]:border-primary data-[state=active]:text-primary"
+              className="flex items-center gap-1.5 sm:gap-2 rounded-none border-b-2 border-transparent px-2.5 sm:px-4 py-3 data-[state=active]:border-primary data-[state=active]:text-primary text-xs sm:text-sm whitespace-nowrap"
             >
-              <RefreshCwIcon className="w-4 h-4" /> Content Transformation
+              <RefreshCwIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> <span className="sm:inline">Transform</span>
             </TabsTrigger>
             <TabsTrigger 
               value="growth" 
-              className="flex items-center gap-2 rounded-none border-b-2 border-transparent px-4 py-3 data-[state=active]:border-primary data-[state=active]:text-primary"
+              className="flex items-center gap-1.5 sm:gap-2 rounded-none border-b-2 border-transparent px-2.5 sm:px-4 py-3 data-[state=active]:border-primary data-[state=active]:text-primary text-xs sm:text-sm whitespace-nowrap"
             >
-              <BarChart3Icon className="w-4 h-4" /> Growth Metrics
+              <BarChart3Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> <span className="sm:inline">Growth</span>
             </TabsTrigger>
             <TabsTrigger 
               value="collaboration" 
-              className="flex items-center gap-2 rounded-none border-b-2 border-transparent px-4 py-3 data-[state=active]:border-primary data-[state=active]:text-primary"
+              className="flex items-center gap-1.5 sm:gap-2 rounded-none border-b-2 border-transparent px-2.5 sm:px-4 py-3 data-[state=active]:border-primary data-[state=active]:text-primary text-xs sm:text-sm whitespace-nowrap"
             >
-              <UsersIcon className="w-4 h-4" /> Collaborative Workspace
+              <UsersIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> <span className="sm:inline">Collaborate</span>
             </TabsTrigger>
             <TabsTrigger 
               value="ai-tools" 
-              className="flex items-center gap-2 rounded-none border-b-2 border-transparent px-4 py-3 data-[state=active]:border-primary data-[state=active]:text-primary"
+              className="flex items-center gap-1.5 sm:gap-2 rounded-none border-b-2 border-transparent px-2.5 sm:px-4 py-3 data-[state=active]:border-primary data-[state=active]:text-primary text-xs sm:text-sm whitespace-nowrap"
             >
-              <SparklesIcon className="w-4 h-4" /> AI Growth Ecosystem
+              <SparklesIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> <span className="sm:inline">AI Tools</span>
             </TabsTrigger>
           </TabsList>
         </div>
@@ -247,43 +247,43 @@ const Dashboard = () => {
           <AIEnhancementTools onToolSelect={handleToolSelect} />
           
           {/* Evolution Progress Panel */}
-          <div className="mt-8 bg-gradient-to-r from-indigo-50 to-amber-50 dark:from-indigo-950/20 dark:to-amber-950/20 rounded-xl p-6">
+          <div className="mt-8 bg-gradient-to-r from-indigo-50 to-amber-50 dark:from-indigo-950/20 dark:to-amber-950/20 rounded-xl p-4 sm:p-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white">Your Evolutionary AI</h3>
-                <p className="text-gray-600 dark:text-gray-300 mt-1 max-w-2xl">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">Your Evolutionary AI</h3>
+                <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 mt-1 max-w-2xl">
                   The AI is continuously learning from your interactions to better serve your creative and intellectual needs
                 </p>
                 
-                <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="bg-white/80 dark:bg-gray-800/80 rounded-lg p-3">
-                    <div className="text-sm font-medium">Personalization Level</div>
-                    <div className="text-2xl font-bold text-primary">68%</div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Based on 142 interactions
+                <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  <div className="bg-white/80 dark:bg-gray-800/80 rounded-lg p-2.5 sm:p-3">
+                    <div className="text-xs sm:text-sm font-medium">Personalization</div>
+                    <div className="text-xl sm:text-2xl font-bold text-primary">68%</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                      142 interactions
                     </div>
                   </div>
                   
-                  <div className="bg-white/80 dark:bg-gray-800/80 rounded-lg p-3">
-                    <div className="text-sm font-medium">Voice Matching</div>
-                    <div className="text-2xl font-bold text-primary">91%</div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Preserving your authentic style
+                  <div className="bg-white/80 dark:bg-gray-800/80 rounded-lg p-2.5 sm:p-3">
+                    <div className="text-xs sm:text-sm font-medium">Voice Match</div>
+                    <div className="text-xl sm:text-2xl font-bold text-primary">91%</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                      Authentic style
                     </div>
                   </div>
                   
-                  <div className="bg-white/80 dark:bg-gray-800/80 rounded-lg p-3">
-                    <div className="text-sm font-medium">Learning Progress</div>
-                    <div className="text-2xl font-bold text-primary">Level 3</div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Moving toward adaptive mastery
+                  <div className="bg-white/80 dark:bg-gray-800/80 rounded-lg p-2.5 sm:p-3 col-span-2 sm:col-span-1">
+                    <div className="text-xs sm:text-sm font-medium">Learning</div>
+                    <div className="text-xl sm:text-2xl font-bold text-primary">Level 3</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                      Adaptive mastery
                     </div>
                   </div>
                 </div>
               </div>
               
-              <Button className="whitespace-nowrap">
-                <RotateCwIcon className="w-4 h-4 mr-2" />
+              <Button className="whitespace-nowrap text-sm mt-3 md:mt-0">
+                <RotateCwIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
                 Train AI with New Content
               </Button>
             </div>

@@ -245,16 +245,16 @@ const ContentTransformationHub = ({ userContent = mockContent }: ContentTransfor
   
   return (
     <section className="mb-8 space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 sm:mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Content Transformation Hub</h2>
-          <p className="text-gray-600 dark:text-gray-300 mt-1">
-            Transform your existing content across platforms while preserving your authentic voice
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Content Transformation Hub</h2>
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 mt-1">
+            Transform your content across platforms while preserving your authentic voice
           </p>
         </div>
         
-        <Button className="flex items-center">
-          <PlusIcon className="w-4 h-4 mr-2" />
+        <Button size="sm" className="flex items-center self-start sm:self-center mt-2 sm:mt-0">
+          <PlusIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
           New Content
         </Button>
       </div>
@@ -263,18 +263,18 @@ const ContentTransformationHub = ({ userContent = mockContent }: ContentTransfor
       {!showTransformationPanel ? (
         <>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="w-full sm:w-auto justify-start">
-              <TabsTrigger value="allContent" className="flex items-center">
-                <LayoutGridIcon className="w-4 h-4 mr-2" /> All Content
+            <TabsList className="w-full sm:w-auto justify-start overflow-x-auto scrollbar-hide">
+              <TabsTrigger value="allContent" className="flex items-center text-xs sm:text-sm">
+                <LayoutGridIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" /> All
               </TabsTrigger>
-              <TabsTrigger value="transformed" className="flex items-center">
-                <RefreshCwIcon className="w-4 h-4 mr-2" /> Transformed
+              <TabsTrigger value="transformed" className="flex items-center text-xs sm:text-sm">
+                <RefreshCwIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" /> Transformed
               </TabsTrigger>
-              <TabsTrigger value="original" className="flex items-center">
-                <PenToolIcon className="w-4 h-4 mr-2" /> Original
+              <TabsTrigger value="original" className="flex items-center text-xs sm:text-sm">
+                <PenToolIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" /> Original
               </TabsTrigger>
-              <TabsTrigger value="drafts" className="flex items-center">
-                <MessageCircleIcon className="w-4 h-4 mr-2" /> Drafts
+              <TabsTrigger value="drafts" className="flex items-center text-xs sm:text-sm">
+                <MessageCircleIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" /> Drafts
               </TabsTrigger>
             </TabsList>
             
@@ -389,14 +389,17 @@ const ContentTransformationHub = ({ userContent = mockContent }: ContentTransfor
                       <div className="w-full flex flex-col sm:flex-row gap-2">
                         <Button 
                           variant="default" 
-                          className="w-full sm:flex-1"
+                          className="w-full sm:flex-1 text-xs sm:text-sm h-9 sm:h-10"
                           onClick={() => handleStartTransformation(content)}
                         >
-                          <RefreshCwIcon className="w-4 h-4 mr-1.5" />
+                          <RefreshCwIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5" />
                           Transform
                         </Button>
-                        <Button variant="outline" className="w-full sm:flex-1">
-                          <EyeIcon className="w-4 h-4 mr-1.5" />
+                        <Button 
+                          variant="outline" 
+                          className="w-full sm:flex-1 text-xs sm:text-sm h-9 sm:h-10"
+                        >
+                          <EyeIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5" />
                           View
                         </Button>
                       </div>
@@ -413,14 +416,14 @@ const ContentTransformationHub = ({ userContent = mockContent }: ContentTransfor
           <div className="flex justify-between items-center">
             <Button 
               variant="ghost" 
-              className="flex items-center"
+              className="flex items-center text-xs sm:text-sm h-9 sm:h-10 px-2 sm:px-3"
               onClick={() => setShowTransformationPanel(false)}
             >
-              <ArrowRightIcon className="w-4 h-4 mr-1.5 rotate-180" />
-              Back to content
+              <ArrowRightIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-1.5 rotate-180" />
+              Back
             </Button>
             
-            <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300">
+            <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 text-xs sm:text-sm">
               Content Transformation
             </Badge>
           </div>
@@ -652,9 +655,12 @@ const ContentTransformationHub = ({ userContent = mockContent }: ContentTransfor
                   </div>
                 </CardContent>
                 
-                <CardFooter className="flex flex-col sm:flex-row gap-3">
-                  <Button className="w-full" size="lg">
-                    <RefreshCwIcon className="w-4 h-4 mr-2" />
+                <CardFooter className="flex flex-col gap-3">
+                  <Button 
+                    className="w-full text-sm sm:text-base" 
+                    size="default"
+                  >
+                    <RefreshCwIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
                     Transform for {targetPlatform.charAt(0).toUpperCase() + targetPlatform.slice(1)}
                   </Button>
                 </CardFooter>
@@ -705,8 +711,11 @@ const ContentTransformationHub = ({ userContent = mockContent }: ContentTransfor
                     </CardContent>
                     
                     <CardFooter>
-                      <Button variant="outline" className="w-full" size="sm">
-                        <EyeIcon className="w-4 h-4 mr-1.5" />
+                      <Button 
+                        variant="outline" 
+                        className="w-full text-xs sm:text-sm h-8 sm:h-9"
+                      >
+                        <EyeIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-1.5" />
                         View Transformation
                       </Button>
                     </CardFooter>

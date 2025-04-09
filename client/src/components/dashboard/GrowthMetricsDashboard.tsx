@@ -118,44 +118,44 @@ const GrowthMetricsDashboard = ({ user }: GrowthMetricsDashboardProps) => {
   
   return (
     <section className="mb-8">
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0 mb-4">
         <div>
-          <h2 className="text-xl font-medium text-gray-900 dark:text-white">Growth Metrics</h2>
-          <p className="text-sm text-muted-foreground">
+          <h2 className="text-lg sm:text-xl font-medium text-gray-900 dark:text-white">Growth Metrics</h2>
+          <p className="text-xs sm:text-sm text-muted-foreground">
             Track your personal and professional development
           </p>
         </div>
-        <Badge variant="outline" className="bg-primary/5 text-primary border-primary/30">
-          Last Updated: {new Date(growthMetrics.lastUpdated).toLocaleDateString()}
+        <Badge variant="outline" className="bg-primary/5 text-primary border-primary/30 text-xs sm:text-sm self-start sm:self-center mt-1 sm:mt-0">
+          Updated: {new Date(growthMetrics.lastUpdated).toLocaleDateString()}
         </Badge>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
         {/* Intellectual Growth Card */}
         <Card className={`${activeTab === 'intellectual' ? 'ring-1 ring-indigo-400' : ''}`}>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-md font-medium flex justify-between items-center">
+          <CardHeader className="pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+            <CardTitle className="text-sm sm:text-md font-medium flex justify-between items-center">
               <div className="flex items-center">
-                <BrainIcon className="w-4 h-4 mr-2 text-indigo-500" />
-                Intellectual Growth
+                <BrainIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 text-indigo-500" />
+                <span className="hidden xs:inline">Intellectual</span><span className="xs:hidden">Intel.</span> Growth
               </div>
               {getTrendIcon(growthMetrics.trend.intellectual)}
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
             <div className="flex items-end justify-between mb-2">
-              <div className="text-2xl font-bold">{growthMetrics.intellectual}%</div>
+              <div className="text-xl sm:text-2xl font-bold">{growthMetrics.intellectual}%</div>
               <div className="text-xs text-gray-500 flex items-center">
                 <TrendingUpIcon className="w-3 h-3 mr-1" />
                 +{historicalData.intellectual[historicalData.intellectual.length - 1] - 
-                  historicalData.intellectual[historicalData.intellectual.length - 2]}% this month
+                  historicalData.intellectual[historicalData.intellectual.length - 2]}% <span className="hidden xs:inline">this month</span>
               </div>
             </div>
-            <Progress value={growthMetrics.intellectual} className="h-2 mb-3" />
+            <Progress value={growthMetrics.intellectual} className="h-1.5 sm:h-2 mb-2 sm:mb-3" />
             <div className="flex justify-between">
               <div className="grid grid-cols-7 gap-1 flex-1">
                 {historicalData.intellectual.map((value, i) => (
-                  <div key={i} className="bg-indigo-100 dark:bg-indigo-900/40 rounded-sm relative">
+                  <div key={i} className="bg-indigo-100 dark:bg-indigo-900/40 rounded-sm relative h-8 sm:h-10">
                     <div 
                       className="absolute bottom-0 w-full bg-indigo-500 rounded-sm" 
                       style={{ height: `${value}%` }}
@@ -169,29 +169,29 @@ const GrowthMetricsDashboard = ({ user }: GrowthMetricsDashboardProps) => {
         
         {/* Creative Growth Card */}
         <Card className={`${activeTab === 'creative' ? 'ring-1 ring-fuchsia-400' : ''}`}>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-md font-medium flex justify-between items-center">
+          <CardHeader className="pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+            <CardTitle className="text-sm sm:text-md font-medium flex justify-between items-center">
               <div className="flex items-center">
-                <SparklesIcon className="w-4 h-4 mr-2 text-fuchsia-500" />
+                <SparklesIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 text-fuchsia-500" />
                 Creative Growth
               </div>
               {getTrendIcon(growthMetrics.trend.creative)}
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
             <div className="flex items-end justify-between mb-2">
-              <div className="text-2xl font-bold">{growthMetrics.creative}%</div>
+              <div className="text-xl sm:text-2xl font-bold">{growthMetrics.creative}%</div>
               <div className="text-xs text-gray-500 flex items-center">
                 <TrendingUpIcon className="w-3 h-3 mr-1" />
                 +{historicalData.creative[historicalData.creative.length - 1] - 
-                  historicalData.creative[historicalData.creative.length - 2]}% this month
+                  historicalData.creative[historicalData.creative.length - 2]}% <span className="hidden xs:inline">this month</span>
               </div>
             </div>
-            <Progress value={growthMetrics.creative} className="h-2 mb-3" />
+            <Progress value={growthMetrics.creative} className="h-1.5 sm:h-2 mb-2 sm:mb-3" />
             <div className="flex justify-between">
               <div className="grid grid-cols-7 gap-1 flex-1">
                 {historicalData.creative.map((value, i) => (
-                  <div key={i} className="bg-fuchsia-100 dark:bg-fuchsia-900/40 rounded-sm relative">
+                  <div key={i} className="bg-fuchsia-100 dark:bg-fuchsia-900/40 rounded-sm relative h-8 sm:h-10">
                     <div 
                       className="absolute bottom-0 w-full bg-fuchsia-500 rounded-sm" 
                       style={{ height: `${value}%` }}
@@ -205,29 +205,29 @@ const GrowthMetricsDashboard = ({ user }: GrowthMetricsDashboardProps) => {
         
         {/* Impact Growth Card */}
         <Card className={`${activeTab === 'impact' ? 'ring-1 ring-amber-400' : ''}`}>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-md font-medium flex justify-between items-center">
+          <CardHeader className="pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+            <CardTitle className="text-sm sm:text-md font-medium flex justify-between items-center">
               <div className="flex items-center">
-                <ZapIcon className="w-4 h-4 mr-2 text-amber-500" />
-                Practical Impact
+                <ZapIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 text-amber-500" />
+                <span className="hidden xs:inline">Practical</span><span className="xs:hidden">Pract.</span> Impact
               </div>
               {getTrendIcon(growthMetrics.trend.impact)}
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
             <div className="flex items-end justify-between mb-2">
-              <div className="text-2xl font-bold">{growthMetrics.impact}%</div>
+              <div className="text-xl sm:text-2xl font-bold">{growthMetrics.impact}%</div>
               <div className="text-xs text-gray-500 flex items-center">
                 <TrendingUpIcon className="w-3 h-3 mr-1" />
                 +{historicalData.impact[historicalData.impact.length - 1] - 
-                  historicalData.impact[historicalData.impact.length - 2]}% this month
+                  historicalData.impact[historicalData.impact.length - 2]}% <span className="hidden xs:inline">this month</span>
               </div>
             </div>
-            <Progress value={growthMetrics.impact} className="h-2 mb-3" />
+            <Progress value={growthMetrics.impact} className="h-1.5 sm:h-2 mb-2 sm:mb-3" />
             <div className="flex justify-between">
               <div className="grid grid-cols-7 gap-1 flex-1">
                 {historicalData.impact.map((value, i) => (
-                  <div key={i} className="bg-amber-100 dark:bg-amber-900/40 rounded-sm relative">
+                  <div key={i} className="bg-amber-100 dark:bg-amber-900/40 rounded-sm relative h-8 sm:h-10">
                     <div 
                       className="absolute bottom-0 w-full bg-amber-500 rounded-sm" 
                       style={{ height: `${value}%` }}
@@ -242,26 +242,26 @@ const GrowthMetricsDashboard = ({ user }: GrowthMetricsDashboardProps) => {
       
       {/* Growth Insights */}
       <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-md font-medium">Growth Insights</CardTitle>
+        <CardHeader className="pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+          <CardTitle className="text-sm sm:text-md font-medium">Growth Insights</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="mb-4 w-full justify-start">
-              <TabsTrigger value="all" className="flex items-center">
-                <BarChart3Icon className="w-4 h-4 mr-1.5" /> All Insights
+            <TabsList className="mb-4 w-full justify-start overflow-x-auto scrollbar-hide">
+              <TabsTrigger value="all" className="flex items-center text-xs sm:text-sm">
+                <BarChart3Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-1.5" /> All
               </TabsTrigger>
-              <TabsTrigger value="intellectual" className="flex items-center">
-                <BrainIcon className="w-4 h-4 mr-1.5 text-indigo-500" /> Intellectual
+              <TabsTrigger value="intellectual" className="flex items-center text-xs sm:text-sm">
+                <BrainIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-1.5 text-indigo-500" /> Intellectual
               </TabsTrigger>
-              <TabsTrigger value="creative" className="flex items-center">
-                <SparklesIcon className="w-4 h-4 mr-1.5 text-fuchsia-500" /> Creative
+              <TabsTrigger value="creative" className="flex items-center text-xs sm:text-sm">
+                <SparklesIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-1.5 text-fuchsia-500" /> Creative
               </TabsTrigger>
-              <TabsTrigger value="impact" className="flex items-center">
-                <ZapIcon className="w-4 h-4 mr-1.5 text-amber-500" /> Impact
+              <TabsTrigger value="impact" className="flex items-center text-xs sm:text-sm">
+                <ZapIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-1.5 text-amber-500" /> Impact
               </TabsTrigger>
-              <TabsTrigger value="collaboration" className="flex items-center">
-                <UsersIcon className="w-4 h-4 mr-1.5 text-blue-500" /> Collaboration
+              <TabsTrigger value="collaboration" className="flex items-center text-xs sm:text-sm">
+                <UsersIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-1.5 text-blue-500" /> Collaborate
               </TabsTrigger>
             </TabsList>
             
@@ -270,40 +270,40 @@ const GrowthMetricsDashboard = ({ user }: GrowthMetricsDashboardProps) => {
                 {filteredInsights.length > 0 ? (
                   filteredInsights.map(insight => (
                     <Card key={insight.id} className="bg-gray-50 dark:bg-gray-800/50 border-gray-100 dark:border-gray-700">
-                      <CardContent className="p-4">
-                        <div className="flex items-start gap-3">
-                          <div className={`mt-1 p-2 rounded-full 
+                      <CardContent className="p-3 sm:p-4">
+                        <div className="flex items-start gap-2 sm:gap-3">
+                          <div className={`mt-0.5 sm:mt-1 p-1.5 sm:p-2 rounded-full 
                             ${insight.insightType === 'intellectual' ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-300' : ''}
                             ${insight.insightType === 'creative' ? 'bg-fuchsia-100 text-fuchsia-600 dark:bg-fuchsia-900/40 dark:text-fuchsia-300' : ''}
                             ${insight.insightType === 'impact' ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-300' : ''}
                             ${insight.insightType === 'collaboration' ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-300' : ''}
                           `}>
-                            {insight.insightType === 'intellectual' && <BrainIcon className="w-4 h-4" />}
-                            {insight.insightType === 'creative' && <SparklesIcon className="w-4 h-4" />}
-                            {insight.insightType === 'impact' && <ZapIcon className="w-4 h-4" />}
-                            {insight.insightType === 'collaboration' && <UsersIcon className="w-4 h-4" />}
+                            {insight.insightType === 'intellectual' && <BrainIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
+                            {insight.insightType === 'creative' && <SparklesIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
+                            {insight.insightType === 'impact' && <ZapIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
+                            {insight.insightType === 'collaboration' && <UsersIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
                           </div>
                           
                           <div className="flex-1">
                             <div className="flex justify-between items-start">
-                              <h3 className="font-medium">{insight.title}</h3>
+                              <h3 className="text-sm sm:text-base font-medium">{insight.title}</h3>
                               <Badge 
                                 variant="outline" 
-                                className="ml-2 text-xs bg-white dark:bg-gray-900 whitespace-nowrap"
+                                className="ml-1.5 sm:ml-2 text-xs bg-white dark:bg-gray-900 whitespace-nowrap"
                               >
                                 Impact: {insight.impact}%
                               </Badge>
                             </div>
                             
-                            <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{insight.description}</p>
+                            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mt-1">{insight.description}</p>
                             
                             {insight.suggestedActions && insight.suggestedActions.length > 0 && (
-                              <div className="mt-3">
-                                <h4 className="text-xs font-medium mb-1.5 text-gray-700 dark:text-gray-300">Suggested Actions:</h4>
-                                <ul className="space-y-1">
+                              <div className="mt-2 sm:mt-3">
+                                <h4 className="text-xs font-medium mb-1 sm:mb-1.5 text-gray-700 dark:text-gray-300">Suggested Actions:</h4>
+                                <ul className="space-y-0.5 sm:space-y-1">
                                   {insight.suggestedActions.map((action, idx) => (
                                     <li key={idx} className="text-xs text-gray-600 dark:text-gray-400 flex items-start">
-                                      <ArrowRightIcon className="w-3 h-3 mr-1.5 mt-0.5 text-primary" />
+                                      <ArrowRightIcon className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-1 sm:mr-1.5 mt-0.5 text-primary" />
                                       {action}
                                     </li>
                                   ))}
@@ -316,10 +316,10 @@ const GrowthMetricsDashboard = ({ user }: GrowthMetricsDashboardProps) => {
                     </Card>
                   ))
                 ) : (
-                  <div className="text-center py-8">
-                    <GraduationCapIcon className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-3" />
-                    <h3 className="text-lg font-medium text-gray-700 dark:text-gray-300">No insights yet</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 max-w-md mx-auto mt-1">
+                  <div className="text-center py-6 sm:py-8">
+                    <GraduationCapIcon className="w-10 h-10 sm:w-12 sm:h-12 mx-auto text-gray-300 dark:text-gray-600 mb-2 sm:mb-3" />
+                    <h3 className="text-base sm:text-lg font-medium text-gray-700 dark:text-gray-300">No insights yet</h3>
+                    <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 max-w-md mx-auto mt-1">
                       Continue creating and collaborating to generate new growth insights in this area.
                     </p>
                   </div>
