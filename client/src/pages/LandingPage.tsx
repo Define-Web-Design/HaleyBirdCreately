@@ -4,7 +4,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Helmet } from 'react-helmet-async';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/lib/ThemeContext';
-import { ArrowRight, Palette, Sparkles, Brush, Layers, Globe, Zap, Lock } from 'lucide-react';
+import { 
+  ArrowRight, Sparkles, Lock, 
+  Shapes, Recycle, Users, Palette, 
+  Zap, HeartHandshake, Brain, 
+  Layers, PersonStanding
+} from 'lucide-react';
 import '../styles/landing-animations.css';
 
 /**
@@ -49,14 +54,14 @@ export const LandingPage = () => {
                 </div>
                 
                 <h1 className="text-4xl md:text-6xl font-bold text-white leading-tight">
-                  Elevate Your <span className="relative">
-                    <span className="relative z-10">Designs</span>
+                  Transform Your <span className="relative">
+                    <span className="relative z-10">Content</span>
                     <span className="absolute bottom-2 left-0 w-full h-3 bg-white/20 -z-0 rounded-sm"></span>
-                  </span> with AI-Powered Colors
+                  </span> With Adaptive AI
                 </h1>
                 
                 <p className="text-xl text-white/80 leading-relaxed">
-                  Generate stunning, emotion-driven color palettes using advanced AI to perfectly match your creative vision.
+                  Optimize and repurpose your media with AI-powered tools that learn from you, collaborate seamlessly, and deliver emotionally engaging content.
                 </p>
                 
                 <div className="flex flex-wrap gap-4 pt-2">
@@ -110,38 +115,61 @@ export const LandingPage = () => {
                         <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
                         <div className="w-3 h-3 rounded-full bg-green-400"></div>
                       </div>
-                      <div className="text-xs text-white/70">Creately Color Generator</div>
+                      <div className="text-xs text-white/70">Creately Content Transformation</div>
                       <div></div>
                     </div>
                     <div className="p-6">
-                      <div className="grid grid-cols-5 gap-3">
-                        {[
-                          'bg-[#FF5E5B]',
-                          'bg-[#D8D8D8]',
-                          'bg-[#FFFFEA]',
-                          'bg-[#00CECB]',
-                          'bg-[#FFED66]',
-                        ].map((color, i) => (
-                          <div key={i} className={`aspect-square rounded-md ${color}`}></div>
-                        ))}
+                      {/* Content transformation visualization */}
+                      <div className="flex justify-between mb-4">
+                        <div className="w-1/3 h-24 rounded-md bg-gray-800 flex items-center justify-center p-2">
+                          <div className="w-full h-20 bg-blue-500/20 rounded-md flex items-center justify-center text-xs text-white/70">
+                            Original Content
+                          </div>
+                        </div>
+                        <div className="flex flex-col justify-center items-center mx-2">
+                          <div className="w-8 h-8 rounded-full bg-primary/30 flex items-center justify-center">
+                            <Zap className="w-4 h-4 text-white" />
+                          </div>
+                          <div className="h-4 w-16 border-t border-dashed border-white/20 mt-1"></div>
+                        </div>
+                        <div className="w-1/2 flex flex-col space-y-2">
+                          <div className="h-11 rounded-md bg-gray-800 flex items-center justify-center text-xs text-white/70">
+                            Instagram
+                          </div>
+                          <div className="h-11 rounded-md bg-gray-800 flex items-center justify-center text-xs text-white/70">
+                            Twitter/X
+                          </div>
+                        </div>
                       </div>
-                      <div className="mt-4 w-full h-12 bg-gray-800 rounded-md flex items-center px-4">
-                        <div className="w-4 h-4 rounded-full bg-primary mr-3"></div>
-                        <div className="h-4 w-1/2 bg-gray-700 rounded-sm"></div>
+                      
+                      {/* Interactive metrics bar */}
+                      <div className="w-full h-12 bg-gray-800 rounded-md flex items-center justify-between px-4">
+                        <div className="flex items-center">
+                          <div className="w-4 h-4 rounded-full bg-primary mr-2"></div>
+                          <div className="text-xs text-white/70">Engagement</div>
+                        </div>
+                        <div className="h-3 w-32 bg-gray-700 rounded-full overflow-hidden">
+                          <div className="h-full w-3/4 bg-gradient-to-r from-primary to-primary/70"></div>
+                        </div>
                       </div>
+                      
+                      {/* AI adjustment panels */}
                       <div className="mt-4 grid grid-cols-2 gap-3">
                         <div className="h-20 bg-gray-800 rounded-md p-3">
-                          <div className="text-xs text-white/70 mb-2">Color Harmony</div>
-                          <div className="flex space-x-1">
-                            <div className="w-5 h-5 rounded-sm bg-[#FF5E5B]"></div>
-                            <div className="w-5 h-5 rounded-sm bg-[#00CECB]"></div>
-                            <div className="w-5 h-5 rounded-sm bg-white/20"></div>
+                          <div className="text-xs text-white/70 mb-2">Adaptive Learning</div>
+                          <div className="mt-1 grid grid-cols-4 gap-1">
+                            <div className="h-3 bg-primary/30 rounded-full"></div>
+                            <div className="h-3 bg-primary/50 rounded-full"></div>
+                            <div className="h-3 bg-primary/70 rounded-full"></div>
+                            <div className="h-3 bg-primary rounded-full"></div>
                           </div>
                         </div>
                         <div className="h-20 bg-gray-800 rounded-md p-3">
-                          <div className="text-xs text-white/70 mb-2">Accessibility</div>
-                          <div className="mt-1 w-full h-3 bg-green-500/30 rounded-full">
-                            <div className="h-3 w-4/5 bg-green-500 rounded-full"></div>
+                          <div className="text-xs text-white/70 mb-2">Team Collaboration</div>
+                          <div className="flex -space-x-2 mt-2">
+                            {['bg-blue-500', 'bg-green-500', 'bg-purple-500'].map((color, i) => (
+                              <div key={i} className={`w-6 h-6 rounded-full ${color} border border-gray-800`}></div>
+                            ))}
                           </div>
                         </div>
                       </div>
@@ -169,34 +197,34 @@ export const LandingPage = () => {
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               <FeatureCard 
-                icon={<Palette />}
-                title="AI-Driven Color Generation" 
-                description="Create intelligent, emotion-driven color palettes with advanced machine learning algorithms."
+                icon={<Recycle />}
+                title="Adaptive Content Recycling" 
+                description="Analyze and optimize your media for platform-specific enhancements tailored to audience engagement."
               />
               <FeatureCard 
-                icon={<Sparkles />}
-                title="Mood-Based Palette Creation" 
-                description="Generate palettes that perfectly match specific moods and emotions for targeted designs."
+                icon={<Users />}
+                title="Seamless Collaboration Tools" 
+                description="Work together in real-time with intuitive team features that make creative collaboration effortless."
               />
               <FeatureCard 
-                icon={<Brush />}
-                title="Color Theory Integration" 
-                description="Incorporates principles of color theory for professionally balanced results."
+                icon={<HeartHandshake />}
+                title="Emotional Connection" 
+                description="Foster deeper engagement through personalized dashboards and accessibility features that resonate with users."
               />
               <FeatureCard 
-                icon={<Layers />}
-                title="Website Color Extraction" 
-                description="Extract color schemes from any website to analyze successful designs."
+                icon={<Brain />}
+                title="Evolutionary AI Learning" 
+                description="Our AI adapts to your creative style and preferences over time, becoming more helpful with each interaction."
               />
               <FeatureCard 
                 icon={<Zap />}
-                title="Instant Inspiration" 
-                description="Access thousands of curated color combinations when you need a creative boost."
+                title="Smart Content Transformation" 
+                description="Instantly repurpose your content across multiple platforms while preserving your authentic voice and style."
               />
               <FeatureCard 
-                icon={<Globe />}
-                title="Apple Photos Integration" 
-                description="Analyze and repurpose content from your photo library with intelligent grouping."
+                icon={<Shapes />}
+                title="Integrated Design Tools" 
+                description="Access powerful color and design utilities that complement your creative workflow and enhance your content."
               />
             </div>
           </div>
@@ -225,24 +253,24 @@ export const LandingPage = () => {
           <div className="container mx-auto px-4 relative z-10">
             <div className="max-w-3xl mx-auto bg-card rounded-2xl p-8 md:p-12 shadow-lg border border-border/50">
               <div className="text-center mb-8">
-                <h2 className="text-3xl font-bold mb-4">Ready to transform your creative process?</h2>
+                <h2 className="text-3xl font-bold mb-4">Ready to transform your content creation?</h2>
                 <p className="text-muted-foreground">
-                  Join thousands of designers who use Creately to streamline their workflow and create stunning designs.
+                  Join thousands of creators who use Creately to optimize their content, collaborate effectively, and build deeper emotional connections with their audience.
                 </p>
               </div>
               
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 {isAuthenticated ? (
-                  <Link href="/color-palettes">
+                  <Link href="/dashboard">
                     <Button size="lg" className="rounded-full px-8 w-full sm:w-auto">
-                      Start Creating Palettes
+                      Explore Your Dashboard
                     </Button>
                   </Link>
                 ) : (
                   <>
                     <Link href="/register">
                       <Button size="lg" className="rounded-full px-8 w-full sm:w-auto">
-                        Create Free Account
+                        Start Your Creative Journey
                       </Button>
                     </Link>
                     <Link href="/login">
@@ -278,17 +306,17 @@ export const LandingPage = () => {
               </div>
               
               <div className="flex flex-wrap gap-x-8 gap-y-2 justify-center md:justify-end">
-                <Link href="/color-palettes" className="hover:text-primary transition-colors">
-                  Color Palettes
-                </Link>
                 <Link href="/features" className="hover:text-primary transition-colors">
                   Features
                 </Link>
-                <Link href="/docs" className="hover:text-primary transition-colors">
-                  Documentation
-                </Link>
                 <Link href="/pricing" className="hover:text-primary transition-colors">
                   Pricing
+                </Link>
+                <Link href="/documentation" className="hover:text-primary transition-colors">
+                  Documentation
+                </Link>
+                <Link href="/about" className="hover:text-primary transition-colors">
+                  About
                 </Link>
                 <Link href="/blog" className="hover:text-primary transition-colors">
                   Blog
