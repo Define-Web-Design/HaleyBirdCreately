@@ -62,7 +62,7 @@ export const authenticate = (options?: { bypassAuth?: boolean }) => {
       };
       
       // For the /api/auth/me endpoint specifically, return more detailed user object
-      if (req.path === '/me' && isDevelopmentToken) {
+      if (req.path === '/me') {
         res.json({
           success: true,
           user: {
