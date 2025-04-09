@@ -5,6 +5,8 @@
 @import url('./styles/touchFeedback.css');
 @import url('./styles/scroll-fix.css');
 @import "./styles/responsive.css";
+@import "./styles/apple-theme.css";
+@import "./styles/landing-animations.css";
 
 @tailwind base;
 @tailwind components;

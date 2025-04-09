@@ -1,0 +1,32 @@
+# Apple Developer Tools, Resources, and Guidelines
+
+## Tools
+- **[Xcode](https://developer.apple.com/xcode/)**: An integrated development environment (IDE) for building apps for Apple platforms.
+- **[Swift](https://developer.apple.com/swift/)**: A powerful programming language for iOS, macOS, watchOS, and tvOS development.
+- **[SwiftUI](https://developer.apple.com/xcode/swiftui/)**: A framework for building user interfaces across all Apple platforms with declarative Swift code.
+- **[TestFlight](https://developer.apple.com/testflight/)**: A tool for beta testing apps by inviting users to test pre-release versions.
+- **[SF Symbols](https://developer.apple.com/sf-symbols/)**: A library of over 4,400 configurable symbols for use in your apps.
+- **[Reality Composer Pro](https://developer.apple.com/augmented-reality/)**: A tool for creating augmented reality experiences.
+- **[Game Porting Toolkit](https://developer.apple.com/games/)**: A toolkit for bringing advanced games to Apple platforms.
+
+## Design Tools
+- **[Apple Design Resources](https://developer.apple.com/design/resources/)**: Templates, icon production tools, and color guides for designing apps quickly and accurately.
+- **[Human Interface Guidelines](https://developer.apple.com/design/human-interface-guidelines/)**: Best practices for designing exceptional user experiences across all Apple platforms.
+- **[UI Design Dos and Don’ts](https://developer.apple.com/design/tips/)**: Fundamental design concepts for building clean, efficient interfaces.
+- **[Color Guidelines](https://developer.apple.com/design/human-interface-guidelines/color/)**: Guidance on using color effectively to enhance communication and evoke your brand.
+- **[Standard Colors](https://developer.apple.com/documentation/uikit/standard-colors/)**: Predefined adaptable colors for UI elements.
+- **[Color Creation](https://developer.apple.com/documentation/uikit/color-creation/)**: Tools for creating custom colors dynamically.
+
+## Resources
+- **[Apple Developer Documentation](https://developer.apple.com/documentation/)**: Comprehensive API references, articles, and sample code.
+- **[Tutorials](https://developer.apple.com/tutorials/)**: Step-by-step guides for learning app development.
+- **[Videos](https://developer.apple.com/videos/)**: Presentations by Apple engineers on various development topics.
+- **[Forums](https://developer.apple.com/forums/)**: A community for discussions with developers and Apple engineers.
+- **[Downloads](https://developer.apple.com/download/)**: Access to the latest SDKs and beta operating systems.
+
+## Guidelines
+- **[App Store Review Guidelines](https://developer.apple.com/app-store/review/guidelines/)**: Criteria for submitting apps to the App Store.
+- **[App Store Marketing Resources](https://developer.apple.com/app-store/marketing/)**: Guidance for promoting apps effectively.
+- **[Apple Wallet Guidelines](https://developer.apple.com/wallet/)**: Instructions for integrating Apple Wallet features.
+- **[Apple Pay Marketing Guidelines](https://developer.apple.com/apple-pay/)**: Guidelines for promoting Apple Pay in your apps.
+- **[Planning Your iOS App](https://developer.apple.com/ios/planning/)**: Tools and technologies for getting started with iOS app development.

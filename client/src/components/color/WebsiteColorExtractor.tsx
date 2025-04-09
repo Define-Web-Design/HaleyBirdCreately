@@ -98,10 +98,10 @@ export function WebsiteColorExtractor() {
   };
 
   return (
-    <Card className="w-full max-w-3xl mx-auto">
+    <Card className="w-full max-w-3xl mx-auto apple-rounded shadow-elevation-medium ios-card">
       <CardHeader>
-        <CardTitle>Website Color Extractor</CardTitle>
-        <CardDescription>
+        <CardTitle className="sf-pro-display">Website Color Extractor</CardTitle>
+        <CardDescription className="sf-pro-text">
           Extract color palettes from any website by entering its URL
         </CardDescription>
       </CardHeader>
@@ -117,7 +117,10 @@ export function WebsiteColorExtractor() {
                 onChange={handleUrlChange}
                 disabled={isLoading}
               />
-              <Button onClick={extractColors} disabled={isLoading}>
+              <Button 
+                onClick={extractColors} 
+                disabled={isLoading}
+                className="ios-button ios-button-filled">
                 {isLoading ? 'Extracting...' : 'Extract Colors'}
               </Button>
             </div>
@@ -159,7 +162,7 @@ export function WebsiteColorExtractor() {
                     {result.palette.map((color, index) => (
                       <div key={index} className="flex flex-col items-center">
                         <div
-                          className="w-16 h-16 rounded-md border shadow-sm transition-transform hover:scale-110 cursor-pointer"
+                          className="w-16 h-16 rounded-md border shadow-sm transition-transform hover:scale-110 cursor-pointer siri-glow"
                           style={{ backgroundColor: color }}
                           title={color}
                         />
@@ -175,7 +178,7 @@ export function WebsiteColorExtractor() {
                     {result.colors.slice(0, 20).map((color, index) => (
                       <div
                         key={index}
-                        className="w-8 h-8 rounded-sm border shadow-sm"
+                        className="w-8 h-8 rounded-sm border shadow-sm apple-rounded apple-glow"
                         style={{ backgroundColor: color.normalized }}
                         title={color.original}
                       />
@@ -250,8 +253,17 @@ export function WebsiteColorExtractor() {
       
       {result && (
         <CardFooter className="flex justify-between">
-          <Button variant="outline" onClick={() => setResult(null)}>New Extraction</Button>
-          <Button onClick={savePalette}>Save Palette</Button>
+          <Button 
+            variant="outline" 
+            onClick={() => setResult(null)}
+            className="ios-button ios-button-tinted">
+            New Extraction
+          </Button>
+          <Button 
+            onClick={savePalette}
+            className="ios-button ios-button-filled siri-glow">
+            Save Palette
+          </Button>
         </CardFooter>
       )}
     </Card>
