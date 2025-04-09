@@ -4,6 +4,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Helmet } from 'react-helmet-async';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/lib/ThemeContext';
+import { ArrowRight, Palette, Sparkles, Brush, Layers, Globe, Zap, Lock } from 'lucide-react';
+import '../styles/landing-animations.css';
 
 /**
  * Landing page displayed for non-authenticated users
@@ -27,126 +29,308 @@ export const LandingPage = () => {
       
       <div className="min-h-screen flex flex-col">
         {/* Hero Section */}
-        <div 
-          className="relative flex flex-col items-center justify-center px-4 py-16 md:py-32"
-          style={{ backgroundColor: theme || '#F2994A' }}
-        >
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/40 pointer-events-none" />
+        <div className="relative overflow-hidden">
+          {/* Gradient background with animated effect */}
+          <div 
+            className="absolute inset-0 bg-gradient-to-br from-primary to-primary/70 gradient-bg"
+          />
           
-          <div className="relative z-10 max-w-4xl mx-auto text-center">
-            <h1 className="text-4xl md:text-6xl font-bold text-white mb-4">
-              Welcome to Creately
-            </h1>
-            <p className="text-xl md:text-2xl text-white/90 mb-8 max-w-2xl mx-auto">
-              AI-powered creative platform generating intelligent, emotion-driven color palettes for design professionals
-            </p>
-            
-            <div className="flex flex-col sm:flex-row justify-center gap-4">
-              {isAuthenticated ? (
-                <Link href="/dashboard">
-                  <Button size="lg" className="bg-white text-black hover:bg-white/90">
-                    Go to Dashboard
-                  </Button>
-                </Link>
-              ) : (
-                <>
-                  <Link href="/login">
-                    <Button size="lg" className="bg-white text-black hover:bg-white/90">
-                      Log In
-                    </Button>
-                  </Link>
-                  <Link href="/register">
-                    <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/20">
-                      Create Account
-                    </Button>
-                  </Link>
-                </>
-              )}
+          {/* Decorative circles */}
+          <div className="absolute top-10 right-10 w-64 h-64 rounded-full bg-white/10 blur-3xl"></div>
+          <div className="absolute bottom-40 left-10 w-32 h-32 rounded-full bg-white/5 blur-xl"></div>
+          <div className="absolute bottom-10 right-1/4 w-40 h-40 rounded-full bg-black/10 blur-xl"></div>
+          
+          {/* Content */}
+          <div className="relative px-4 py-20 md:py-32 max-w-7xl mx-auto">
+            <div className="flex flex-col md:flex-row items-center gap-12">
+              <div className="md:w-1/2 space-y-6">
+                <div className="inline-block rounded-full bg-white/10 backdrop-blur-sm px-4 py-1.5 text-sm font-medium text-white mb-2">
+                  <span className="mr-1">✨</span> Intelligent Design Tools
+                </div>
+                
+                <h1 className="text-4xl md:text-6xl font-bold text-white leading-tight">
+                  Elevate Your <span className="relative">
+                    <span className="relative z-10">Designs</span>
+                    <span className="absolute bottom-2 left-0 w-full h-3 bg-white/20 -z-0 rounded-sm"></span>
+                  </span> with AI-Powered Colors
+                </h1>
+                
+                <p className="text-xl text-white/80 leading-relaxed">
+                  Generate stunning, emotion-driven color palettes using advanced AI to perfectly match your creative vision.
+                </p>
+                
+                <div className="flex flex-wrap gap-4 pt-2">
+                  {isAuthenticated ? (
+                    <Link href="/dashboard">
+                      <Button size="lg" className="bg-white text-primary hover:bg-white/90 rounded-full px-6 font-medium flex items-center gap-2">
+                        Go to Dashboard
+                        <ArrowRight className="w-4 h-4" />
+                      </Button>
+                    </Link>
+                  ) : (
+                    <>
+                      <Link href="/login">
+                        <Button size="lg" className="bg-white text-primary hover:bg-white/90 rounded-full px-6 font-medium">
+                          Get Started
+                        </Button>
+                      </Link>
+                      <Link href="/color-palettes">
+                        <Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10 rounded-full px-6">
+                          Explore Features
+                        </Button>
+                      </Link>
+                    </>
+                  )}
+                </div>
+                
+                <div className="flex items-center gap-4 pt-6">
+                  <div className="flex -space-x-2">
+                    {[
+                      'bg-blue-500',
+                      'bg-green-500',
+                      'bg-amber-500',
+                      'bg-purple-500'
+                    ].map((color, i) => (
+                      <div key={i} className={`w-8 h-8 rounded-full border-2 border-white ${color}`}></div>
+                    ))}
+                  </div>
+                  <p className="text-sm text-white/70">
+                    Trusted by 2,000+ designers worldwide
+                  </p>
+                </div>
+              </div>
+              
+              {/* Hero image/mockup */}
+              <div className="md:w-1/2 rounded-xl overflow-hidden shadow-2xl">
+                <div className="p-2 bg-black/30 backdrop-blur-sm rounded-xl">
+                  <div className="bg-black/80 rounded-lg overflow-hidden relative">
+                    <div className="px-4 py-2 flex justify-between items-center border-b border-gray-800">
+                      <div className="flex space-x-2">
+                        <div className="w-3 h-3 rounded-full bg-red-400"></div>
+                        <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
+                        <div className="w-3 h-3 rounded-full bg-green-400"></div>
+                      </div>
+                      <div className="text-xs text-white/70">Creately Color Generator</div>
+                      <div></div>
+                    </div>
+                    <div className="p-6">
+                      <div className="grid grid-cols-5 gap-3">
+                        {[
+                          'bg-[#FF5E5B]',
+                          'bg-[#D8D8D8]',
+                          'bg-[#FFFFEA]',
+                          'bg-[#00CECB]',
+                          'bg-[#FFED66]',
+                        ].map((color, i) => (
+                          <div key={i} className={`aspect-square rounded-md ${color}`}></div>
+                        ))}
+                      </div>
+                      <div className="mt-4 w-full h-12 bg-gray-800 rounded-md flex items-center px-4">
+                        <div className="w-4 h-4 rounded-full bg-primary mr-3"></div>
+                        <div className="h-4 w-1/2 bg-gray-700 rounded-sm"></div>
+                      </div>
+                      <div className="mt-4 grid grid-cols-2 gap-3">
+                        <div className="h-20 bg-gray-800 rounded-md p-3">
+                          <div className="text-xs text-white/70 mb-2">Color Harmony</div>
+                          <div className="flex space-x-1">
+                            <div className="w-5 h-5 rounded-sm bg-[#FF5E5B]"></div>
+                            <div className="w-5 h-5 rounded-sm bg-[#00CECB]"></div>
+                            <div className="w-5 h-5 rounded-sm bg-white/20"></div>
+                          </div>
+                        </div>
+                        <div className="h-20 bg-gray-800 rounded-md p-3">
+                          <div className="text-xs text-white/70 mb-2">Accessibility</div>
+                          <div className="mt-1 w-full h-3 bg-green-500/30 rounded-full">
+                            <div className="h-3 w-4/5 bg-green-500 rounded-full"></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
         
         {/* Features Section */}
-        <div className="py-16 bg-background">
-          <div className="container mx-auto px-4">
-            <h2 className="text-3xl font-bold text-center mb-12">Key Features</h2>
+        <div className="py-20 bg-background relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-muted/30 pointer-events-none"></div>
+          <div className="container mx-auto px-4 relative z-10">
+            <div className="text-center mb-16">
+              <div className="inline-flex items-center justify-center bg-primary/10 text-primary rounded-full px-3 py-1 text-sm font-medium mb-3">
+                <Sparkles className="w-4 h-4 mr-1" /> Powerful Features
+              </div>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">Designed for Creatives</h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                Our intelligent tools streamline your workflow and inspire your creative process
+              </p>
+            </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               <FeatureCard 
+                icon={<Palette />}
                 title="AI-Driven Color Generation" 
-                description="Create intelligent, emotion-driven color palettes with our advanced algorithms."
+                description="Create intelligent, emotion-driven color palettes with advanced machine learning algorithms."
               />
               <FeatureCard 
+                icon={<Sparkles />}
                 title="Mood-Based Palette Creation" 
-                description="Generate palettes that perfectly match specific moods and emotions."
+                description="Generate palettes that perfectly match specific moods and emotions for targeted designs."
               />
               <FeatureCard 
-                title="Enhanced Authentication" 
-                description="Secure and streamlined user authentication system."
-              />
-              <FeatureCard 
-                title="Responsive Design" 
-                description="Beautiful interface that works on all devices and screen sizes."
-              />
-              <FeatureCard 
+                icon={<Brush />}
                 title="Color Theory Integration" 
-                description="Incorporates principles of color theory for professional results."
+                description="Incorporates principles of color theory for professionally balanced results."
               />
               <FeatureCard 
-                title="Accessibility Features" 
-                description="Designed with accessibility in mind for all users."
+                icon={<Layers />}
+                title="Website Color Extraction" 
+                description="Extract color schemes from any website to analyze successful designs."
+              />
+              <FeatureCard 
+                icon={<Zap />}
+                title="Instant Inspiration" 
+                description="Access thousands of curated color combinations when you need a creative boost."
+              />
+              <FeatureCard 
+                icon={<Globe />}
+                title="Apple Photos Integration" 
+                description="Analyze and repurpose content from your photo library with intelligent grouping."
               />
             </div>
           </div>
         </div>
         
         {/* Call to Action */}
-        <div className="py-16 bg-muted">
-          <div className="container mx-auto px-4 text-center">
-            <h2 className="text-3xl font-bold mb-6">Ready to get started?</h2>
-            <p className="text-lg mb-8 max-w-2xl mx-auto">
-              Join Creately today and unlock the power of AI-driven color palettes for your design projects.
-            </p>
-            
-            {isAuthenticated ? (
-              <Link href="/color-palettes">
-                <Button size="lg">
-                  Start Creating Palettes
-                </Button>
-              </Link>
-            ) : (
-              <Link href="/register">
-                <Button size="lg">
-                  Create Your Free Account
-                </Button>
-              </Link>
-            )}
+        <div className="py-20 bg-muted relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-t from-background/50 to-transparent pointer-events-none"></div>
+          
+          {/* Decorative elements */}
+          <div className="absolute top-20 right-10 opacity-10">
+            <div className="flex gap-2">
+              {['bg-blue-500', 'bg-green-500', 'bg-red-500', 'bg-yellow-500'].map((color, i) => (
+                <div key={i} className={`w-12 h-12 rounded-md ${color}`}></div>
+              ))}
+            </div>
+          </div>
+          <div className="absolute bottom-10 left-10 opacity-10">
+            <div className="flex gap-2">
+              {['bg-purple-500', 'bg-pink-500', 'bg-indigo-500'].map((color, i) => (
+                <div key={i} className={`w-8 h-8 rounded-full ${color}`}></div>
+              ))}
+            </div>
+          </div>
+          
+          <div className="container mx-auto px-4 relative z-10">
+            <div className="max-w-3xl mx-auto bg-card rounded-2xl p-8 md:p-12 shadow-lg border border-border/50">
+              <div className="text-center mb-8">
+                <h2 className="text-3xl font-bold mb-4">Ready to transform your creative process?</h2>
+                <p className="text-muted-foreground">
+                  Join thousands of designers who use Creately to streamline their workflow and create stunning designs.
+                </p>
+              </div>
+              
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                {isAuthenticated ? (
+                  <Link href="/color-palettes">
+                    <Button size="lg" className="rounded-full px-8 w-full sm:w-auto">
+                      Start Creating Palettes
+                    </Button>
+                  </Link>
+                ) : (
+                  <>
+                    <Link href="/register">
+                      <Button size="lg" className="rounded-full px-8 w-full sm:w-auto">
+                        Create Free Account
+                      </Button>
+                    </Link>
+                    <Link href="/login">
+                      <Button size="lg" variant="outline" className="rounded-full px-8 w-full sm:w-auto">
+                        Sign In
+                      </Button>
+                    </Link>
+                  </>
+                )}
+              </div>
+              
+              <div className="mt-8 pt-6 border-t border-border/50 flex items-center justify-center gap-4 text-sm text-muted-foreground">
+                <div className="flex items-center">
+                  <Lock className="w-4 h-4 mr-1" />
+                  <span>Secure authentication</span>
+                </div>
+                <div className="hidden sm:block bg-border/50 w-1 h-1 rounded-full"></div>
+                <div>No credit card required</div>
+                <div className="hidden sm:block bg-border/50 w-1 h-1 rounded-full"></div>
+                <div>Cancel anytime</div>
+              </div>
+            </div>
           </div>
         </div>
         
-        {/* Simple Footer */}
-        <footer className="py-8 bg-background border-t">
-          <div className="container mx-auto px-4 text-center">
-            <p className="text-sm text-muted-foreground">
-              &copy; {new Date().getFullYear()} Creately. All rights reserved.
-            </p>
-            <div className="flex justify-center gap-4 mt-4">
-              <Link href="/privacy">Privacy Policy</Link>
-              <Link href="/terms-of-service">Terms of Service</Link>
+        {/* Footer */}
+        <footer className="py-12 bg-background border-t">
+          <div className="container mx-auto px-4">
+            <div className="flex flex-col md:flex-row justify-between items-center mb-8">
+              <div className="flex items-center mb-4 md:mb-0">
+                <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-medium text-lg mr-3">C</div>
+                <span className="text-xl font-semibold">Creately</span>
+              </div>
+              
+              <div className="flex flex-wrap gap-x-8 gap-y-2 justify-center md:justify-end">
+                <Link href="/color-palettes" className="hover:text-primary transition-colors">
+                  Color Palettes
+                </Link>
+                <Link href="/features" className="hover:text-primary transition-colors">
+                  Features
+                </Link>
+                <Link href="/docs" className="hover:text-primary transition-colors">
+                  Documentation
+                </Link>
+                <Link href="/pricing" className="hover:text-primary transition-colors">
+                  Pricing
+                </Link>
+                <Link href="/blog" className="hover:text-primary transition-colors">
+                  Blog
+                </Link>
+              </div>
+            </div>
+            
+            <div className="border-t border-border/50 pt-8 flex flex-col md:flex-row justify-between items-center">
+              <p className="text-sm text-muted-foreground order-2 md:order-1 mt-4 md:mt-0">
+                &copy; {new Date().getFullYear()} Creately. All rights reserved.
+              </p>
+              
+              <div className="flex gap-6 order-1 md:order-2">
+                <Link href="/privacy" className="text-sm text-muted-foreground hover:text-foreground">
+                  Privacy Policy
+                </Link>
+                <Link href="/terms" className="text-sm text-muted-foreground hover:text-foreground">
+                  Terms of Service
+                </Link>
+                <Link href="/accessibility" className="text-sm text-muted-foreground hover:text-foreground">
+                  Accessibility
+                </Link>
+              </div>
             </div>
           </div>
         </footer>
       </div>
+      
+      {/* Animation defined in landing-animations.css */}
     </>
   );
 };
 
 /**
- * Feature card component for the landing page
+ * Enhanced feature card component for the landing page
  */
-const FeatureCard = ({ title, description }: { title: string; description: string }) => {
+const FeatureCard = ({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) => {
   return (
-    <div className="bg-card rounded-lg p-6 shadow-sm">
+    <div className="bg-card border border-border/50 rounded-xl p-6 transition-all duration-300 hover:shadow-md hover:border-primary/20 hover:-translate-y-1">
+      <div className="w-12 h-12 bg-primary/10 text-primary rounded-lg flex items-center justify-center mb-4">
+        {icon}
+      </div>
       <h3 className="text-xl font-semibold mb-3">{title}</h3>
       <p className="text-muted-foreground">{description}</p>
     </div>
