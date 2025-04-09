@@ -282,9 +282,9 @@ const Dashboard = () => {
                 </div>
               </div>
               
-              <Button className="whitespace-nowrap text-sm mt-3 md:mt-0">
-                <RotateCwIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
-                Train AI with New Content
+              <Button className="whitespace-nowrap text-xs sm:text-sm h-8 sm:h-10 px-2.5 sm:px-4 mt-3 md:mt-0">
+                <RotateCwIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                Train AI<span className="hidden xs:inline"> with New Content</span>
               </Button>
             </div>
           </div>
