@@ -41,6 +41,16 @@ rm -f ./.config/workflows/*.lock 2>/dev/null || true
 # Start the server
 echo "🌐 Starting server on port ${PORT}..."
 
+# Check if we have the enhanced node starter script
+if [ -f "start-app.js" ]; then
+  echo "🚀 Using enhanced application starter..."
+  node start-app.js
+  exit $?
+fi
+
+# If we don't have the enhanced starter, fall back to the original approach
+echo "⚠️ Enhanced starter not found, using legacy startup method"
+
 # Try to use npm script if package.json contains dev script
 if grep -q '"dev"' package.json; then
   echo "📡 Using npm run dev to start the application"
@@ -66,6 +76,9 @@ if [ "$FALLBACK" = "true" ]; then
   if [ -f "server/simple-server.ts" ]; then
     echo "🔄 Starting fallback server..."
     npx ts-node server/simple-server.ts
+  elif [ -f "simple_server.py" ]; then
+    echo "🔄 Starting Python fallback server..."
+    python simple_server.py
   else
     echo "❌ Error: Could not find fallback server. Please check your installation."
     exit 1
