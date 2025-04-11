@@ -3,103 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Creately - AI-Powered Content Management</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.cdnfonts.com/css/sf-pro-display" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-      :root {
-        --primary: 28 87% 62%;
-        --secondary: 352 100% 81%;
-        --accent: 151 61% 62%;
-        
-        /* Apple-inspired colors */
-        --apple-blue: 210 100% 50%;
-        --apple-green: 142 76% 36%;
-        --apple-pink: 355 100% 72%;
-        --apple-purple: 288 59% 58%;
-        --apple-yellow: 48 100% 47%;
-        --apple-orange: 28 87% 62%;
-        
-        /* Animation variables */
-        --transition-fast: 0.15s;
-        --transition-medium: 0.3s;
-        --transition-slow: 0.5s;
-        --bezier-bounce: cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        --bezier-smooth: cubic-bezier(0.42, 0, 0.58, 1);
-      }
-      
-      /* Refined transitions */
-      * {
-        transition: background-color var(--transition-medium) var(--bezier-smooth),
-                    color var(--transition-medium) var(--bezier-smooth),
-                    border-color var(--transition-medium) var(--bezier-smooth),
-                    box-shadow var(--transition-medium) var(--bezier-smooth),
-                    transform var(--transition-medium) var(--bezier-smooth),
-                    opacity var(--transition-medium) var(--bezier-smooth);
-      }
-      
-      /* Button and interactive element enhancements */
-      button, 
-      [role="button"],
-      .interactive {
-        transition: all var(--transition-medium) var(--bezier-smooth);
-        transform-origin: center;
-      }
-      
-      button:active, 
-      [role="button"]:active,
-      .interactive:active {
-        transform: scale(0.97);
-        transition-duration: var(--transition-fast);
-      }
-      
-      /* Subtle hover effects */
-      .card, .interactive-card {
-        transition: transform var(--transition-medium) var(--bezier-smooth),
-                    box-shadow var(--transition-medium) var(--bezier-smooth);
-      }
-      
-      .card:hover, .interactive-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-      }
-      
-      /* Focus states with subtle glow */
-      button:focus-visible,
-      input:focus-visible,
-      select:focus-visible,
-      textarea:focus-visible {
-        outline: none;
-        box-shadow: 0 0 0 2px hsla(var(--primary), 0.35);
-      }
-      
-      /* Custom scrollbar */
-      ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-      }
-      ::-webkit-scrollbar-track {
-        background: transparent;
-      }
-      ::-webkit-scrollbar-thumb {
-        background: #ccc;
-        border-radius: 4px;
-        transition: background-color var(--transition-medium);
-      }
-      ::-webkit-scrollbar-thumb:hover {
-        background: #aaa;
-      }
-      .dark ::-webkit-scrollbar-thumb {
-        background: #555;
-      }
-      .dark ::-webkit-scrollbar-thumb:hover {
-        background: #666;
-      }
-    </style>
+    <title>Your Clean App</title>
+    <meta name="description" content="A clean, optimized web application" />
   </head>
-  <body class="font-sans antialiased bg-background text-foreground">
+  <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <script type="module" src="/client/src/main.tsx"></script>
   </body>
 </html>

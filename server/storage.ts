@@ -2,7 +2,6 @@ import { drizzle } from 'drizzle-orm/neon-serverless';
 import { neon } from '@neondatabase/serverless';
 import { eq, and, sql } from 'drizzle-orm';
 import * as schema from '../shared/schema';
-import { User, Session, RefreshToken } from '../shared/schema';
 import { randomUUID } from 'crypto';
 
 /**
@@ -21,39 +20,139 @@ export interface User {
 }
 
 /**
- * MoodCapsule model interface
+ * Storage interface
  */
-export interface MoodCapsule {
-  id: string | number;
-  userId: string | number;
-  name: string;
-  description?: string;
-  emotionalTone: string;
-  captionTone?: string;
-  aiGeneratedCaption?: string;
-  contentIds?: number[];
-  thumbnailUrl?: string;
-  isArchived?: boolean;
-  colorPalette?: string[];
-  tags?: string[];
-  createdAt: Date;
-  updatedAt?: Date;
+export interface IStorage {
+  // User methods
+  createUser(user: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<User>;
+  findUserById(id: string | number): Promise<User | null>;
+  findUserByEmail(email: string): Promise<User | null>;
+  findUserByUsername(username: string): Promise<User | null>;
+  updateUser(id: string | number, data: Partial<User>): Promise<User>;
+  deleteUser(id: string | number): Promise<boolean>;
 }
 
 /**
- * Color Palette interface
+ * In-memory storage implementation for development
  */
-export interface ColorPalette {
-  id: string | number;
-  userId: string | number;
-  name: string;
-  colors: string[];
-  mood?: string;
-  usageCount?: number;
-  isFavorite?: boolean;
-  createdAt: Date;
-  updatedAt?: Date;
+class MemStorage implements IStorage {
+  private users: User[] = [];
+  private userId = 1;
+
+  // User methods
+  async createUser(user: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<User> {
+    const newUser = {
+      ...user,
+      id: this.userId++,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.users.push(newUser);
+    return newUser;
+  }
+
+  async findUserById(id: string | number): Promise<User | null> {
+    return this.users.find(user => user.id === id) || null;
+  }
+
+  async findUserByEmail(email: string): Promise<User | null> {
+    return this.users.find(user => user.email === email) || null;
+  }
+
+  async findUserByUsername(username: string): Promise<User | null> {
+    return this.users.find(user => user.username === username) || null;
+  }
+
+  async updateUser(id: string | number, data: Partial<User>): Promise<User> {
+    const index = this.users.findIndex(user => user.id === id);
+    if (index === -1) {
+      throw new Error('User not found');
+    }
+    
+    this.users[index] = {
+      ...this.users[index],
+      ...data,
+      updatedAt: new Date()
+    };
+    
+    return this.users[index];
+  }
+
+  async deleteUser(id: string | number): Promise<boolean> {
+    const index = this.users.findIndex(user => user.id === id);
+    if (index === -1) {
+      return false;
+    }
+    
+    this.users.splice(index, 1);
+    return true;
+  }
 }
+
+/**
+ * Database storage implementation for production
+ */
+class DbStorage implements IStorage {
+  private db: any;
+  
+  constructor() {
+    const sql = neon(process.env.DATABASE_URL!);
+    this.db = drizzle(sql, { schema });
+  }
+
+  // User methods
+  async createUser(user: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<User> {
+    const result = await this.db.insert(schema.users).values(user).returning();
+    return result[0];
+  }
+
+  async findUserById(id: string | number): Promise<User | null> {
+    const users = await this.db.select().from(schema.users).where(eq(schema.users.id, id));
+    return users.length > 0 ? users[0] : null;
+  }
+
+  async findUserByEmail(email: string): Promise<User | null> {
+    const users = await this.db.select().from(schema.users).where(eq(schema.users.email, email));
+    return users.length > 0 ? users[0] : null;
+  }
+
+  async findUserByUsername(username: string): Promise<User | null> {
+    const users = await this.db.select().from(schema.users).where(eq(schema.users.username, username));
+    return users.length > 0 ? users[0] : null;
+  }
+
+  async updateUser(id: string | number, data: Partial<User>): Promise<User> {
+    const result = await this.db
+      .update(schema.users)
+      .set({
+        ...data,
+        updatedAt: new Date()
+      })
+      .where(eq(schema.users.id, id))
+      .returning();
+    
+    if (result.length === 0) {
+      throw new Error('User not found');
+    }
+    
+    return result[0];
+  }
+
+  async deleteUser(id: string | number): Promise<boolean> {
+    const result = await this.db
+      .delete(schema.users)
+      .where(eq(schema.users.id, id))
+      .returning({ id: schema.users.id });
+    
+    return result.length > 0;
+  }
+}
+
+// Create and export the appropriate storage implementation based on environment
+const useInMemoryDb = process.env.USE_IN_MEMORY_DB === 'true';
+const storage: IStorage = useInMemoryDb ? new MemStorage() : new DbStorage();
+
+export default storage;
 
 /**
  * Storage interface for database operations
