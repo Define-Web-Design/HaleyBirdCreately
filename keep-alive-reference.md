@@ -33,6 +33,14 @@ The keep-alive system was designed to prevent the Replit environment from going 
 | `scripts/app-status.js` | Comprehensive application status monitoring utility |
 | `scripts/monitor-app-status.cjs` | Enterprise-grade monitoring and automatic recovery script |
 | `scripts/run-app-status-check.js` | Script to check if the application is running |
+| `client/src/pages/app-status.tsx` | App status dashboard React component |
+| `client/src/utils/app-status-monitor.ts` | Client-side app status monitoring utility |
+| `client/src/utils/app-status-cli.ts` | Command-line interface for app status monitoring |
+| `client/src/utils/api-validator.ts` | API endpoint validation utility for status monitoring |
+| `client/src/utils/navigation-tester.ts` | Navigation and accessibility testing utility |
+| `client/src/utils/responsive-tester.ts` | Responsive design testing utility |
+| `client/src/utils/responsive-tester.js` | JavaScript version of the responsive design testing utility |
+| `client/src/utils/performance-profiler.ts` | Performance monitoring and profiling utility |
 | `ensure-running.js` | Script to ensure the application stays running with auto-restart capability |
 | `fallback_run.sh` | Script to start the server using whatever runtime is available (Node.js, Python) |
 | `static_version.html` | Static HTML version of the application for when the main app can't be started |
