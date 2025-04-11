@@ -12,7 +12,7 @@ const path = require('path');
 
 // Configuration
 const CONFIG = {
-  APP_PORT: 3001, // Vite's default port is 3001 in Replit
+  APP_PORT: 5173, // Vite's default port is 5173
   CHECK_INTERVAL: 55 * 1000, // 55 seconds
   DASHBOARD_PORT: 3334, // Use a different port to avoid conflicts
   LOG_FILE: path.join(process.cwd(), 'logs', 'never-sleep.log'),

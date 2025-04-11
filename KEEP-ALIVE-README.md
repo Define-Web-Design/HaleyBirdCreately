@@ -86,7 +86,7 @@ Advanced users can modify the configuration in `replit-ping.cjs`:
 ```js
 // Configuration
 const CONFIG = {
-  APP_PORT: 3001,                       // Vite's default port in Replit
+  APP_PORT: 5173,                       // Vite's default port
   CHECK_INTERVAL: 55 * 1000,            // Ping interval (milliseconds)
   DASHBOARD_PORT: 3334,                 // Dashboard port
   LOG_FILE: path.join(process.cwd(), 'logs', 'never-sleep.log'),
