@@ -53,7 +53,11 @@ start_system() {
   if ps -p $PID > /dev/null 2>&1; then
     echo -e "${GREEN}Never-Sleep system started successfully (PID: $PID).${NC}"
     echo -e "${BLUE}Your dev URL will now stay active 24/7.${NC}"
-    echo -e "${YELLOW}Access dashboard:${NC} http://localhost:3333/"
+    
+    # Check for actual port being used (may change if 3333 is occupied)
+    local DASHBOARD_PORT
+    DASHBOARD_PORT=$(grep -o "Dashboard available at: http://localhost:[0-9]*" logs/never-sleep.log | tail -1 | grep -o "[0-9]*$" || echo "3333")
+    echo -e "${YELLOW}Access dashboard:${NC} http://localhost:${DASHBOARD_PORT}/"
   else
     echo -e "${RED}Failed to start Never-Sleep system. Check logs for details.${NC}"
     exit 1
@@ -95,7 +99,11 @@ check_status() {
     if ps -p $PID > /dev/null 2>&1; then
       echo -e "${GREEN}Never-Sleep system is RUNNING (PID: $PID)${NC}"
       echo -e "${BLUE}Your dev URL is being kept alive.${NC}"
-      echo -e "${YELLOW}Access dashboard:${NC} http://localhost:3333/"
+      
+      # Check for actual port being used (may change if 3333 is occupied)
+      local DASHBOARD_PORT
+      DASHBOARD_PORT=$(grep -o "Dashboard available at: http://localhost:[0-9]*" logs/never-sleep.log | tail -1 | grep -o "[0-9]*$" || echo "3333")
+      echo -e "${YELLOW}Access dashboard:${NC} http://localhost:${DASHBOARD_PORT}/"
       return 0
     else
       echo -e "${RED}Never-Sleep system is NOT RUNNING (stale PID file exists)${NC}"
@@ -119,15 +127,19 @@ open_dashboard() {
     sleep 2
   fi
   
+  # Check for actual port being used
+  local DASHBOARD_PORT
+  DASHBOARD_PORT=$(grep -o "Dashboard available at: http://localhost:[0-9]*" logs/never-sleep.log | tail -1 | grep -o "[0-9]*$" || echo "3333")
+  
   # Print URL and instructions
-  echo -e "${GREEN}Dashboard URL:${NC} http://localhost:3333/"
+  echo -e "${GREEN}Dashboard URL:${NC} http://localhost:${DASHBOARD_PORT}/"
   echo -e "${BLUE}The dashboard shows stats and allows manual control.${NC}"
   
   # Try to open the URL automatically (works in some environments)
   if command -v open &> /dev/null; then
-    open "http://localhost:3333/"
+    open "http://localhost:${DASHBOARD_PORT}/"
   elif command -v xdg-open &> /dev/null; then
-    xdg-open "http://localhost:3333/"
+    xdg-open "http://localhost:${DASHBOARD_PORT}/"
   else
     echo -e "${YELLOW}Please open the URL manually in your browser.${NC}"
   fi
