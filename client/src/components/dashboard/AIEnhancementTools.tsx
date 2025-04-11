@@ -285,30 +285,30 @@ const AIEnhancementTools = ({ onToolSelect }: AIEnhancementToolsProps) => {
   const categories = Object.keys(ENHANCEMENT_TOOLS);
   
   return (
-    <section className="mb-8 space-y-3 sm:space-y-4">
+    <section className="mb-8 space-y-4">
       <div>
-        <h3 className="text-lg sm:text-xl font-medium text-gray-900 dark:text-white">AI Growth Ecosystem</h3>
-        <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+        <h3 className="text-xl font-medium text-gray-900 dark:text-white">AI Growth Ecosystem</h3>
+        <p className="text-sm text-muted-foreground mt-1">
           Tools designed to nurture your creative, intellectual, and collaborative growth
         </p>
       </div>
       
       {error && (
-        <div className="p-2 sm:p-3 bg-destructive/10 text-destructive rounded-lg text-xs sm:text-sm">
+        <div className="p-3 bg-destructive/10 text-destructive rounded-lg text-sm">
           <div className="flex items-center">
-            <i className="fas fa-exclamation-circle mr-1.5 sm:mr-2"></i>
+            <i className="fas fa-exclamation-circle mr-2"></i>
             {error}
           </div>
         </div>
       )}
       
       {/* Category Selection */}
-      <div className="flex overflow-x-auto scrollbar-hide gap-1.5 sm:gap-2 pb-1 sm:pb-2">
+      <div className="flex overflow-x-auto scrollbar-hide gap-2 pb-2">
         {categories.map((category) => (
           <button
             key={category}
             onClick={() => setSelectedCategory(category)}
-            className={`px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium flex items-center gap-1.5 sm:gap-2 whitespace-nowrap transition-colors flex-shrink-0
+            className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-2 whitespace-nowrap transition-colors flex-shrink-0
               ${selectedCategory === category 
                 ? 'bg-primary/10 text-primary border border-primary/30' 
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 border border-transparent'}`}
@@ -320,12 +320,12 @@ const AIEnhancementTools = ({ onToolSelect }: AIEnhancementToolsProps) => {
       </div>
       
       {/* Category Description */}
-      <div className="bg-gray-50 dark:bg-gray-800/50 p-2 sm:p-3 rounded-lg text-xs sm:text-sm text-gray-600 dark:text-gray-300 border border-gray-100 dark:border-gray-700">
+      <div className="bg-gray-50 dark:bg-gray-800/50 p-3 rounded-lg text-sm text-gray-600 dark:text-gray-300 border border-gray-100 dark:border-gray-700">
         {getCategoryDescription(selectedCategory)}
       </div>
       
       {/* Tools Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {ENHANCEMENT_TOOLS[selectedCategory as keyof typeof ENHANCEMENT_TOOLS].map((tool) => (
           <Card 
             key={tool.title}
@@ -334,29 +334,29 @@ const AIEnhancementTools = ({ onToolSelect }: AIEnhancementToolsProps) => {
             } ${selectedTool === tool.title ? 'ring-1 ring-primary' : 'hover:bg-accent/50'} overflow-hidden`}
             onClick={() => !isLoading && handleSelectTool(tool.title, tool.intellectualGrowth, tool.creativeGrowth)}
           >
-            <CardContent className="p-2.5 sm:p-3">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <div className={`p-1.5 sm:p-2 rounded-md ${tool.iconGradient} text-white flex-shrink-0`}>
-                  <i className={`${tool.icon} text-xs sm:text-sm`}></i>
+            <CardContent className="p-3">
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-md ${tool.iconGradient} text-white flex-shrink-0`}>
+                  <i className={`${tool.icon}`}></i>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-medium flex flex-wrap items-center text-xs sm:text-sm">
+                  <h3 className="font-medium flex items-center text-sm">
                     {tool.title}
                     {tool.isNew && (
-                      <Badge className="ml-1 sm:ml-1.5 bg-primary text-white text-[10px] sm:text-xs py-0 px-1">New</Badge>
+                      <Badge className="ml-1.5 bg-primary text-white text-xs py-0 px-1">New</Badge>
                     )}
                   </h3>
-                  <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 sm:mt-1 line-clamp-2">{tool.description}</p>
+                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{tool.description}</p>
                 </div>
               </div>
               
               {/* Growth Contribution */}
-              <div className="mt-1.5 sm:mt-2 pt-1.5 sm:pt-2 border-t border-gray-100 dark:border-gray-800 grid grid-cols-2 gap-2">
+              <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-800 grid grid-cols-2 gap-2">
                 <div>
-                  <div className="text-[10px] sm:text-xs text-gray-500 mb-0.5 sm:mb-1 flex items-center">
-                    <i className="fas fa-brain mr-1 text-indigo-400 text-[10px] sm:text-xs"></i> Intellectual
+                  <div className="text-xs text-gray-500 mb-1 flex items-center">
+                    <i className="fas fa-brain mr-1 text-indigo-400"></i> Intellectual
                   </div>
-                  <div className="h-1 sm:h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                  <div className="h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-indigo-500 rounded-full" 
                       style={{ width: `${tool.intellectualGrowth}%` }}
@@ -365,10 +365,10 @@ const AIEnhancementTools = ({ onToolSelect }: AIEnhancementToolsProps) => {
                 </div>
                 
                 <div>
-                  <div className="text-[10px] sm:text-xs text-gray-500 mb-0.5 sm:mb-1 flex items-center">
-                    <i className="fas fa-sparkles mr-1 text-fuchsia-400 text-[10px] sm:text-xs"></i> Creative
+                  <div className="text-xs text-gray-500 mb-1 flex items-center">
+                    <i className="fas fa-sparkles mr-1 text-fuchsia-400"></i> Creative
                   </div>
-                  <div className="h-1 sm:h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                  <div className="h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-fuchsia-500 rounded-full" 
                       style={{ width: `${tool.creativeGrowth}%` }}
@@ -382,14 +382,14 @@ const AIEnhancementTools = ({ onToolSelect }: AIEnhancementToolsProps) => {
       </div>
       
       {selectedTool && (
-        <div className="p-2.5 sm:p-3 bg-primary/5 border border-primary/20 rounded-lg text-xs sm:text-sm">
-          <div className="flex gap-1.5 sm:gap-2 items-start">
-            <div className="rounded-full p-1 sm:p-1.5 bg-primary/10 text-primary mt-0.5">
-              <i className="fas fa-lightbulb text-xs sm:text-sm"></i>
+        <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg text-sm">
+          <div className="flex gap-2 items-start">
+            <div className="rounded-full p-1.5 bg-primary/10 text-primary mt-0.5">
+              <i className="fas fa-lightbulb"></i>
             </div>
             <div>
-              <h4 className="font-medium text-primary text-xs sm:text-sm">{selectedTool}</h4>
-              <p className="text-[10px] sm:text-sm text-gray-600 dark:text-gray-300 mt-0.5 sm:mt-1">
+              <h4 className="font-medium text-primary">{selectedTool}</h4>
+              <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
                 This tool preserves your authentic voice while enhancing your content. All transformations include embedded ownership protection.
               </p>
             </div>
@@ -399,9 +399,9 @@ const AIEnhancementTools = ({ onToolSelect }: AIEnhancementToolsProps) => {
       
       {/* Tool loading state */}
       {isLoading && (
-        <div className="flex items-center justify-center p-2.5 sm:p-3 bg-background rounded-lg border border-gray-100 dark:border-gray-800">
-          <div className="animate-spin h-3 w-3 sm:h-4 sm:w-4 border-2 border-primary border-t-transparent rounded-full mr-1.5 sm:mr-2" />
-          <span className="text-xs sm:text-sm">Initializing growth-aware AI systems...</span>
+        <div className="flex items-center justify-center p-3 bg-background rounded-lg border border-gray-100 dark:border-gray-800">
+          <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full mr-2" />
+          <span className="text-sm">Initializing growth-aware AI systems...</span>
         </div>
       )}
     </section>
