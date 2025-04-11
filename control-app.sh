@@ -28,7 +28,7 @@ check_keep_alive() {
     echo $PID > .never-sleep.pid
     
     # Get dashboard port
-    local PORT=$(grep -o "Dashboard available at: http://localhost:[0-9]*" logs/never-sleep.log | tail -1 | grep -o "[0-9]*$" || echo "3333")
+    local PORT=$(grep -o "Dashboard available at: http://localhost:[0-9]*" logs/never-sleep.log | tail -1 | grep -o "[0-9]*$" || echo "3334")
     echo -e "${YELLOW}Dashboard URL:${NC} http://localhost:${PORT}/"
     return 0
   else
@@ -76,7 +76,7 @@ start_keep_alive() {
     echo -e "${BLUE}Your dev URL will now stay active 24/7${NC}"
     
     # Get dashboard port from logs
-    local PORT=$(grep -o "Dashboard available at: http://localhost:[0-9]*" logs/never-sleep.log | tail -1 | grep -o "[0-9]*$" || echo "3333")
+    local PORT=$(grep -o "Dashboard available at: http://localhost:[0-9]*" logs/never-sleep.log | tail -1 | grep -o "[0-9]*$" || echo "3334")
     echo -e "${YELLOW}Dashboard:${NC} http://localhost:${PORT}/"
     return 0
   else

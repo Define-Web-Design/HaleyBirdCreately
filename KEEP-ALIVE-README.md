@@ -1,92 +1,103 @@
 # Creately Keep-Alive System
 
-This document provides instructions for managing the Creately keep-alive system, which prevents your Replit development URL from going to sleep due to inactivity.
+This document provides instructions for using and managing the Keep-Alive system that prevents your Replit dev URL from going to sleep.
 
-## Overview
+## Why is this needed?
 
-The keep-alive system is a dedicated process that runs in the background and periodically pings your application to keep it active, ensuring it remains accessible 24/7 without sleeping.
+By default, Replit will put your dev URL to sleep after a period of inactivity. The Keep-Alive system ensures your application stays active 24/7, even when you're not actively using the workspace.
 
 ## Features
 
-- **Continuous Availability**: Keeps your Replit development URL active 24/7
-- **Low Resource Usage**: Minimal impact on system resources
-- **Dashboard Interface**: Monitor the status of the keep-alive system
-- **Simple Control Commands**: Easy-to-use commands to start, stop, and check status
+- **Reliable Pinging**: Regularly pings your application to keep it active
+- **Dashboard**: Visual status monitoring at http://localhost:3333
+- **Self-Recovery**: Attempts to recover from failures automatically
+- **Compatibility**: Works with Replit's ESM/CommonJS environment
+- **Low Resource Usage**: Minimal CPU and memory footprint
 
-## Managing the Keep-Alive System
+## How to Use
 
-The keep-alive system can be managed using the included `control-app.sh` script.
+### Control Script
 
-### Starting the Keep-Alive System
-
-To start the keep-alive system, run:
-
-```bash
-./control-app.sh start-keep-alive
-```
-
-This will launch the keep-alive process in the background and provide a URL for the dashboard interface.
-
-### Checking the Status
-
-To check if the keep-alive system is running:
+We've provided a simple control script to manage the Keep-Alive system:
 
 ```bash
-./control-app.sh status
+# Check status
+bash control-app.sh status
+
+# Start the Keep-Alive system
+bash control-app.sh start-keep-alive
+
+# Stop the Keep-Alive system
+bash control-app.sh stop-keep-alive
+
+# Show help
+bash control-app.sh help
 ```
 
-This will display whether the system is active, its process ID, and the dashboard URL.
+### Dashboard
 
-### Stopping the Keep-Alive System
+Once started, you can access the Keep-Alive dashboard at:
+http://localhost:3334
 
-To stop the keep-alive system:
-
-```bash
-./control-app.sh stop-keep-alive
-```
-
-This will terminate the keep-alive process.
-
-## Dashboard
-
-The keep-alive system includes a web dashboard that provides real-time information about its status. The dashboard URL is displayed when you start the system or check its status.
-
-The dashboard shows:
-
-- System uptime
+The dashboard provides:
+- System status
+- Uptime information
 - Ping statistics
-- Configuration details
-
-## Automatic Startup
-
-To ensure the keep-alive system starts automatically when your Replit workspace is opened, you can add the following line to your `.replit` file:
-
-```
-onBoot = "./control-app.sh start-keep-alive"
-```
+- Success/failure rates
 
 ## Troubleshooting
 
-If you encounter issues with the keep-alive system:
+### Keep-Alive Not Starting
 
-1. Check the logs in the `logs/never-sleep.log` file
-2. Ensure there are no conflicting processes using the same ports
-3. Try stopping and restarting the system
-
-## Deployment Support
-
-The control script also includes support for preparing your application for deployment:
+If the Keep-Alive system fails to start, check the logs:
 
 ```bash
-./control-app.sh deploy
+cat logs/never-sleep.log
 ```
 
-This will build your application for production and guide you through the deployment process using Replit's deployment features.
+Common issues:
+1. **Permission Issues**: Make sure the control script is executable with `chmod +x control-app.sh`
+2. **Port Conflicts**: If another service is using port 3334, the dashboard may fail to start
+3. **Node.js Version**: The system requires Node.js to be installed
 
-## Additional Help
+### Keep-Alive Stops Working
 
-To see all available commands:
+If the Keep-Alive system stops working:
 
-```bash
-./control-app.sh help
+1. Check current status: `bash control-app.sh status`
+2. Stop any existing processes: `bash control-app.sh stop-keep-alive`
+3. Restart the system: `bash control-app.sh start-keep-alive`
+4. Check the logs: `cat logs/never-sleep.log`
+
+## Advanced Information
+
+### Technical Implementation
+
+The Keep-Alive system consists of:
+
+1. **replit-ping.cjs** - Core CommonJS-compatible script that pings your application
+2. **control-app.sh** - Shell script for managing the keep-alive process
+3. **Dashboard** - Web interface for monitoring status
+
+### Custom Configuration
+
+Advanced users can modify the configuration in `replit-ping.cjs`:
+
+```js
+// Configuration
+const CONFIG = {
+  APP_PORT: 3001,                       // Vite's default port in Replit
+  CHECK_INTERVAL: 55 * 1000,            // Ping interval (milliseconds)
+  DASHBOARD_PORT: 3334,                 // Dashboard port
+  LOG_FILE: path.join(process.cwd(), 'logs', 'never-sleep.log'),
+  LOG_LEVEL: 'info'                     // debug, info, warn, error
+};
 ```
+
+## Support
+
+If you encounter issues with the Keep-Alive system:
+
+1. Check the logs in `logs/never-sleep.log`
+2. Try restarting the system using the control script
+3. If persistent issues occur, you may need to modify the ping interval or other settings
