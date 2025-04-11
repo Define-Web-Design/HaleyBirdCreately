@@ -103,7 +103,39 @@ router.post('/register', async (req, res) => {
  */
 router.post('/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, username } = req.body;
+
+    // Special DEV mode login - username "dev" with password "4321"
+    if ((username === 'dev' || email === 'dev') && password === '4321') {
+      console.log('DEV login detected - using special credentials');
+      
+      // Generate dev tokens
+      const accessToken = jwt.sign(
+        { id: 999, email: 'dev@example.com', username: 'dev', role: 'admin' },
+        config.jwt.secret,
+        { expiresIn: '7d' }
+      );
+
+      const refreshToken = jwt.sign(
+        { id: 999, email: 'dev@example.com' },
+        config.jwt.secret,
+        { expiresIn: '30d' }
+      );
+
+      return res.status(200).json({
+        success: true,
+        message: 'Development login successful',
+        user: { 
+          id: 999, 
+          email: 'dev@example.com', 
+          username: 'dev',
+          displayName: 'Development Account', 
+          role: 'admin' 
+        },
+        token: accessToken,
+        refreshToken
+      });
+    }
 
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required' });
@@ -292,6 +324,22 @@ router.get('/me', authenticate(), async (req: AuthenticatedRequest, res) => {
     if (isDevelopmentToken) {
       // The response was already sent in the middleware
       return;
+    }
+    
+    // Special handling for dev user with ID 999
+    if (userId === 999) {
+      return res.json({
+        success: true,
+        user: { 
+          id: 999, 
+          email: 'dev@example.com', 
+          username: 'dev',
+          displayName: 'Development Account', 
+          role: 'admin',
+          avatar: null,
+          createdAt: new Date().toISOString()
+        }
+      });
     }
 
     // Get fresh reference to storage service
