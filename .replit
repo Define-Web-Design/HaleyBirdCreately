@@ -18,7 +18,7 @@ channel = "stable-23_11"
 
 [deployment]
 run = ["sh", "-c", "npm run dev"]
-deploymentTarget = "cloudrun"
+deploymentTarget = "gce"
 
 [packager]
 language = "nodejs"

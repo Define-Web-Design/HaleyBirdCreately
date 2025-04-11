@@ -4,7 +4,12 @@
  * This file loads environment variables from .env and provides
  * a unified configuration object for the application.
  */
-require('dotenv').config();
+try {
+  // Try to load dotenv if available
+  require('dotenv').config();
+} catch (error) {
+  console.log('dotenv package not available, using environment variables as is');
+}
 
 // Default values for required environment variables
 const defaults = {
@@ -42,6 +47,7 @@ const config = {
   apiKeys: {
     openai: process.env.OPENAI_API_KEY,
     mistral: process.env.MISTRAL_API_KEY,
+    codestral: process.env.CODESTRAL_API_KEY,
   },
 };
 
@@ -55,6 +61,7 @@ if (config.server.isDevelopment) {
   console.log('- Database Type:', config.database.useInMemory ? 'In-Memory' : 'PostgreSQL');
   console.log('- OpenAI API Key:', config.apiKeys.openai ? 'Set' : 'Not Set');
   console.log('- Mistral API Key:', config.apiKeys.mistral ? 'Set' : 'Not Set');
+  console.log('- Codestral API Key:', config.apiKeys.codestral ? 'Set' : 'Not Set');
 }
 
 module.exports = config;

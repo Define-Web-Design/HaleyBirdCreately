@@ -41,6 +41,12 @@ else
   echo -e "${GREEN}✅ Mistral API key found.${NC}"
 fi
 
+if [ -z "$CODESTRAL_API_KEY" ]; then
+  echo -e "${YELLOW}⚠️  No CODESTRAL_API_KEY found. Code completion features may be limited.${NC}"
+else
+  echo -e "${GREEN}✅ Codestral API key found.${NC}"
+fi
+
 # Ensure the script is executable
 if [ ! -x "./start.sh" ]; then
   echo -e "${YELLOW}📝 Making start.sh executable...${NC}"
