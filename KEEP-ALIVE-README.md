@@ -1,90 +1,92 @@
-# Never-Sleep System for Replit
+# Creately Keep-Alive System
 
-This guide explains how to use the Never-Sleep system to prevent your Replit dev URL from going to sleep when you leave the workspace.
+This document provides instructions for managing the Creately keep-alive system, which prevents your Replit development URL from going to sleep due to inactivity.
 
-## What It Does
+## Overview
 
-The Never-Sleep system is a sophisticated monitoring solution that keeps your application running 24/7 by:
+The keep-alive system is a dedicated process that runs in the background and periodically pings your application to keep it active, ensuring it remains accessible 24/7 without sleeping.
 
-1. Continuously monitoring your application health
-2. Automatically restarting it if any issues are detected
-3. Implementing smart retry logic with exponential backoff
-4. Providing a dashboard to view statistics and manually control the system
-5. Preventing Replit's automatic sleep functionality
+## Features
 
-## How to Use
+- **Continuous Availability**: Keeps your Replit development URL active 24/7
+- **Low Resource Usage**: Minimal impact on system resources
+- **Dashboard Interface**: Monitor the status of the keep-alive system
+- **Simple Control Commands**: Easy-to-use commands to start, stop, and check status
 
-### Quick Start
+## Managing the Keep-Alive System
 
-The easiest way to start the system is by running:
+The keep-alive system can be managed using the included `control-app.sh` script.
+
+### Starting the Keep-Alive System
+
+To start the keep-alive system, run:
 
 ```bash
-./keep-url-alive.sh start
+./control-app.sh start-keep-alive
 ```
 
-This command starts the Never-Sleep system in the background. Once started, your application will stay running even when you close the Replit tab.
+This will launch the keep-alive process in the background and provide a URL for the dashboard interface.
 
-### Available Commands
+### Checking the Status
 
-- **Start**: `./keep-url-alive.sh start`
-  - Starts the Never-Sleep system in the background
+To check if the keep-alive system is running:
 
-- **Stop**: `./keep-url-alive.sh stop`
-  - Stops the Never-Sleep system
+```bash
+./control-app.sh status
+```
 
-- **Status**: `./keep-url-alive.sh status`
-  - Checks if the Never-Sleep system is running
+This will display whether the system is active, its process ID, and the dashboard URL.
 
-- **Restart**: `./keep-url-alive.sh restart`
-  - Restarts the Never-Sleep system
+### Stopping the Keep-Alive System
 
-- **Logs**: `./keep-url-alive.sh logs`
-  - Shows the most recent logs from the Never-Sleep system
+To stop the keep-alive system:
 
-- **Dashboard**: `./keep-url-alive.sh dashboard`
-  - Opens the monitoring dashboard in your browser
+```bash
+./control-app.sh stop-keep-alive
+```
 
-### Monitoring Dashboard
+This will terminate the keep-alive process.
 
-The system provides a dashboard at `http://localhost:3333/` where you can:
+## Dashboard
 
-- View system status and statistics
-- Manually restart your application
-- See uptime and performance metrics
+The keep-alive system includes a web dashboard that provides real-time information about its status. The dashboard URL is displayed when you start the system or check its status.
 
-## Auto-Start on Replit Boot
+The dashboard shows:
 
-The system is configured to auto-start whenever your Replit environment boots up. This configuration is in the `.replit.nix` file.
+- System uptime
+- Ping statistics
+- Configuration details
 
-If you want to disable auto-start, you can edit the `.replit.nix` file and remove the `onBoot` section.
+## Automatic Startup
 
-## Advanced Configuration
+To ensure the keep-alive system starts automatically when your Replit workspace is opened, you can add the following line to your `.replit` file:
 
-To customize the Never-Sleep system, you can edit the `never-sleep.js` file:
-
-- Change monitoring intervals
-- Configure which routes to check for health status
-- Adjust timeout and retry settings
-- Modify other performance parameters
-
-## Files
-
-- `never-sleep.js` - The main monitoring system
-- `keep-url-alive.sh` - Easy control script
-- `startup.sh` - Used for auto-starting on Replit boot
-- `control-app.sh` - Alternative control script with more options
-- `logs/never-sleep.log` - Log file for the Never-Sleep system
+```
+onBoot = "./control-app.sh start-keep-alive"
+```
 
 ## Troubleshooting
 
-If you encounter any issues:
+If you encounter issues with the keep-alive system:
 
-1. Check the logs with `./keep-url-alive.sh logs`
-2. Restart the system with `./keep-url-alive.sh restart`
-3. Make sure port 3333 is available for the monitoring dashboard
+1. Check the logs in the `logs/never-sleep.log` file
+2. Ensure there are no conflicting processes using the same ports
+3. Try stopping and restarting the system
 
-## Notes
+## Deployment Support
 
-- The Never-Sleep system uses minimal resources to prevent impacting your application's performance
-- It's designed specifically for the Replit environment
-- All logs are stored in the `logs/` directory
+The control script also includes support for preparing your application for deployment:
+
+```bash
+./control-app.sh deploy
+```
+
+This will build your application for production and guide you through the deployment process using Replit's deployment features.
+
+## Additional Help
+
+To see all available commands:
+
+```bash
+./control-app.sh help
+```

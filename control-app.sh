@@ -18,9 +18,9 @@ print_header() {
 check_keep_alive() {
   echo -e "${YELLOW}Checking Keep-Alive Status:${NC}"
   
-  # More reliable check using ps grep for both possible script names
-  if ps aux | grep -E "[n]ode.*keep-alive\.js|[n]ode.*never-sleep\.js" > /dev/null; then
-    local PID=$(ps aux | grep -E "[n]ode.*keep-alive\.js|[n]ode.*never-sleep\.js" | awk '{print $2}')
+  # More reliable check using ps grep for all possible script names
+  if ps aux | grep -E "[n]ode.*keep-alive|[n]ode.*never-sleep|[n]ode.*replit-keep-alive" > /dev/null; then
+    local PID=$(ps aux | grep -E "[n]ode.*keep-alive|[n]ode.*never-sleep|[n]ode.*replit-keep-alive" | awk '{print $2}')
     echo -e "${GREEN}Keep-Alive is RUNNING (PID: $PID)${NC}"
     echo -e "${BLUE}Your dev URL will stay active 24/7${NC}"
     
@@ -57,16 +57,12 @@ start_keep_alive() {
   
   # Start the keep-alive process using a more reliable method
   
-  # First check if node is available using npx
-  if command -v npx &> /dev/null; then
-    echo -e "${BLUE}Using npx to run keep-alive...${NC}"
-    nohup npx -y tsx keep-alive.js > logs/never-sleep.log 2>&1 &
-  else
-    # Fallback to direct node if npx is not available
-    echo -e "${BLUE}Using node directly to run keep-alive...${NC}"
-    NODE_PATH=$(which node)
-    nohup $NODE_PATH keep-alive.js > logs/never-sleep.log 2>&1 &
-  fi
+  # Start our simplified keep-alive script
+  echo -e "${BLUE}Starting keep-alive process...${NC}"
+  
+  # Use the simplified and more compatible version
+  NODE_PATH=$(which node)
+  nohup $NODE_PATH replit-keep-alive.js > logs/never-sleep.log 2>&1 &
   
   local PID=$!
   echo $PID > .never-sleep.pid
@@ -94,7 +90,7 @@ stop_keep_alive() {
   echo -e "${YELLOW}Stopping Keep-Alive System...${NC}"
   
   # Find and kill keep-alive processes
-  local PIDS=$(ps aux | grep -E "[n]ode.*keep-alive\.js|[n]ode.*never-sleep\.js" | awk '{print $2}')
+  local PIDS=$(ps aux | grep -E "[n]ode.*keep-alive|[n]ode.*never-sleep|[n]ode.*replit-keep-alive" | awk '{print $2}')
   
   if [ -z "$PIDS" ]; then
     echo -e "${YELLOW}No Keep-Alive processes found to stop.${NC}"
