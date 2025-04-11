@@ -41,6 +41,19 @@ The keep-alive system was designed to prevent the Replit environment from going 
 | `client/src/utils/responsive-tester.ts` | Responsive design testing utility |
 | `client/src/utils/responsive-tester.js` | JavaScript version of the responsive design testing utility |
 | `client/src/utils/performance-profiler.ts` | Performance monitoring and profiling utility |
+| `client/src/pages/nav-test.tsx` | Navigation testing page |
+| `client/src/utils/validate-implementation.ts` | Comprehensive validation orchestrator |
+| `client/src/utils/comprehensive-validation.ts` | Comprehensive validation utility |
+| `client/src/utils/validation-coordinator.ts` | Validation coordination utility |
+| `client/src/utils/task-validation-orchestrator.ts` | Task validation orchestration utility |
+| `client/src/utils/task-verification.ts` | Task verification utility |
+| `client/src/utils/task-verification-system.ts` | Task verification system |
+| `client/src/utils/consolidated-validation.ts` | Consolidated validation utility |
+| `client/src/utils/websocket-tester.ts` | WebSocket testing utility |
+| `client/src/utils/task-verification-implementation.ts` | Task verification implementation utility |
+| `client/src/utils/task-verification-api.ts` | Task verification API utility |
+| `client/src/utils/task-verification-cli.ts` | Task verification CLI utility |
+| `client/src/utils/consolidated-validation.js` | JavaScript version of the consolidated validation utility |
 | `ensure-running.js` | Script to ensure the application stays running with auto-restart capability |
 | `fallback_run.sh` | Script to start the server using whatever runtime is available (Node.js, Python) |
 | `static_version.html` | Static HTML version of the application for when the main app can't be started |
