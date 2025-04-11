@@ -1,103 +1,132 @@
 # Creately Keep-Alive System
 
-This document provides instructions for using and managing the Keep-Alive system that prevents your Replit dev URL from going to sleep.
-
-## Why is this needed?
-
-By default, Replit will put your dev URL to sleep after a period of inactivity. The Keep-Alive system ensures your application stays active 24/7, even when you're not actively using the workspace.
+This is a robust, multi-layered keep-alive system designed for the Creately application running on Replit. It ensures your application remains responsive even when you're not actively accessing the Replit workspace.
 
 ## Features
 
-- **Reliable Pinging**: Regularly pings your application to keep it active
-- **Dashboard**: Visual status monitoring at http://localhost:3333
-- **Self-Recovery**: Attempts to recover from failures automatically
-- **Compatibility**: Works with Replit's ESM/CommonJS environment
-- **Low Resource Usage**: Minimal CPU and memory footprint
+- **Multi-Layered Approach**: Multiple fallback mechanisms ensure reliability in all environments
+- **Self-Healing**: Automatic recovery from failures with smart retry logic
+- **Resource-Aware**: Adaptive to available system resources (Node.js, bash, etc.)
+- **Process Guarantees**: Watchdog processes ensure continuous operation
+- **Extensive Logging**: Detailed logs to help diagnose any issues
+- **Workflow Integration**: Seamless integration with Replit's workflow system
 
-## How to Use
+## How It Works
 
-### Control Script
+The system employs a hierarchical approach to keep your application alive:
 
-We've provided a simple control script to manage the Keep-Alive system:
+1. **Top-Level Control**: `startup.sh` initializes everything and chooses the best available methods
+2. **Keep-Alive Core**: `keep-url-alive.sh` (bash) or `keep-alive.js` (Node.js) continuously pings your application
+3. **Application Fallback**: If npm/Node.js is not available, `run-static.sh` provides a minimal but functional server
+4. **Process Management**: `control-keep-alive.sh` gives you easy start/stop/status commands
+
+## Quick Start
 
 ```bash
-# Check status
-bash control-app.sh status
+# Start the keep-alive system with all automatic fallbacks
+./startup.sh
 
-# Start the Keep-Alive system
-bash control-app.sh start-keep-alive
+# Check status of the keep-alive processes
+./control-keep-alive.sh status
 
-# Stop the Keep-Alive system
-bash control-app.sh stop-keep-alive
+# Stop all keep-alive processes
+./control-keep-alive.sh stop
 
-# Show help
-bash control-app.sh help
+# Restart the keep-alive system
+./control-keep-alive.sh restart
 ```
 
-### Dashboard
+## Component Details
 
-Once started, you can access the Keep-Alive dashboard at:
-http://localhost:3334
+### startup.sh
 
-The dashboard provides:
-- System status
-- Uptime information
-- Ping statistics
-- Success/failure rates
+The main entry point that:
+- Checks available system resources
+- Chooses the best keep-alive method (Node.js or bash)
+- Initializes application fallbacks if npm is not available
+- Ensures everything starts correctly
+
+### keep-url-alive.sh
+
+Bash-based keep-alive system with:
+- Minimal dependencies (works with just curl, wget, or netcat)
+- Multiple URL detection fallbacks
+- Self-healing watchdog process
+- Adaptive check intervals based on failure patterns
+
+### run-static.sh
+
+Application fallback that:
+- Provides a functional static server when npm/Node.js isn't available
+- Tries multiple server methods (Python, busybox, netcat)
+- Creates a minimal but functional UI for users
+- Has guaranteed process persistence
+
+### control-keep-alive.sh
+
+Management interface that:
+- Detects all running keep-alive processes regardless of method
+- Provides simple start/stop/restart commands
+- Shows detailed status including process uptime
+- Displays recent log entries for quick diagnostics
 
 ## Troubleshooting
 
-### Keep-Alive Not Starting
+### Common Issues
 
-If the Keep-Alive system fails to start, check the logs:
-
+**Keep-alive not running**
 ```bash
-cat logs/never-sleep.log
+# Check status
+./control-keep-alive.sh status
+
+# Check logs
+cat logs/startup.log
+cat logs/bash-keep-alive.log
+
+# Restart system
+./startup.sh
 ```
 
-Common issues:
-1. **Permission Issues**: Make sure the control script is executable with `chmod +x control-app.sh`
-2. **Port Conflicts**: If another service is using port 3334, the dashboard may fail to start
-3. **Node.js Version**: The system requires Node.js to be installed
+**Application shows as unavailable**
+```bash
+# Check if application fallback is running
+ps aux | grep run-static
 
-### Keep-Alive Stops Working
+# Check logs
+cat logs/static-server.log
 
-If the Keep-Alive system stops working:
-
-1. Check current status: `bash control-app.sh status`
-2. Stop any existing processes: `bash control-app.sh stop-keep-alive`
-3. Restart the system: `bash control-app.sh start-keep-alive`
-4. Check the logs: `cat logs/never-sleep.log`
-
-## Advanced Information
-
-### Technical Implementation
-
-The Keep-Alive system consists of:
-
-1. **replit-ping.cjs** - Core CommonJS-compatible script that pings your application
-2. **control-app.sh** - Shell script for managing the keep-alive process
-3. **Dashboard** - Web interface for monitoring status
-
-### Custom Configuration
-
-Advanced users can modify the configuration in `replit-ping.cjs`:
-
-```js
-// Configuration
-const CONFIG = {
-  APP_PORT: 5173,                       // Vite's default port
-  CHECK_INTERVAL: 55 * 1000,            // Ping interval (milliseconds)
-  DASHBOARD_PORT: 3334,                 // Dashboard port
-  LOG_FILE: path.join(process.cwd(), 'logs', 'never-sleep.log'),
-  LOG_LEVEL: 'info'                     // debug, info, warn, error
-};
+# Manually start the fallback
+./run-static.sh
 ```
 
-## Support
+## Advanced Configuration
 
-If you encounter issues with the Keep-Alive system:
+The keep-alive system can be customized by editing the configuration variables at the top of each script:
 
-1. Check the logs in `logs/never-sleep.log`
-2. Try restarting the system using the control script
-3. If persistent issues occur, you may need to modify the ping interval or other settings
+- `APP_PORT`: The port your application runs on (default: 5173)
+- `CHECK_INTERVAL`: Seconds between keep-alive checks (default: 55)
+- `LOG_FILE`: Where logs are stored
+
+## System Requirements
+
+The system is designed to work with minimal requirements:
+- Bash shell
+- curl, wget, or netcat (at least one of these)
+- Basic file system access
+
+For optimal operation:
+- Node.js (for the enhanced keep-alive system)
+- npm (for the main application)
+- Python or busybox (for better fallback servers)
+
+## Development Notes
+
+This system was developed to address persistent issues with Replit's environment where sometimes Node.js and npm are not available. The multi-layered approach ensures that regardless of the available resources, something will keep your application accessible.
+
+## License
+
+This keep-alive system is part of the Creately application and is subject to the same licensing terms.
+
+---
+
+Last updated: April 11, 2025

@@ -1,198 +1,180 @@
 #!/bin/bash
 
-# Main control script for the Never-Sleep System
-# This script provides easy commands to manage your application's 24/7 uptime
+# Ultra-Simple Bash Keep-Alive Script with Process Guarantees
+# Designed to work with minimal dependencies and stay running even in unstable environments
+# Includes self-healing mechanisms and multiple fallback strategies
 
-# Colors for output
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-RED='\033[0;31m'
-NC='\033[0m' # No Color
+# Configuration
+APP_PORT="5173"  # Default Vite server port for our application
+CHECK_INTERVAL=55  # Seconds between checks (just under 1 minute)
+LOG_FILE="./logs/bash-keep-alive.log"
+PID_FILE=".bash-keep-alive.pid"
 
-# Make sure we're in the right directory
-cd "$(dirname "$0")"
+# Create logs directory if it doesn't exist
+mkdir -p ./logs
 
-# Function to print a styled header
-print_header() {
-  echo -e "\n${BLUE}===== Creately Keep-URL-Alive System =====${NC}"
-  echo -e "${BLUE}Ensures your dev URL never goes to sleep${NC}\n"
+# Write PID file
+echo $$ > "$PID_FILE"
+
+# Function to log messages
+log() {
+  local message="$1"
+  local timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+  echo "[$timestamp] $message" | tee -a "$LOG_FILE"
 }
 
-# Function to print command help
-print_help() {
-  echo -e "${YELLOW}Commands:${NC}"
-  echo -e "  ${GREEN}start${NC}     - Start the never-sleep system"
-  echo -e "  ${GREEN}stop${NC}      - Stop the never-sleep system"
-  echo -e "  ${GREEN}status${NC}    - Check if the never-sleep system is running"
-  echo -e "  ${GREEN}restart${NC}   - Restart the never-sleep system"
-  echo -e "  ${GREEN}logs${NC}      - View the never-sleep system logs"
-  echo -e "  ${GREEN}dashboard${NC} - Access the monitoring dashboard (shows URL)"
-  echo
-  echo -e "${YELLOW}Examples:${NC}"
-  echo -e "  ${GREEN}./keep-url-alive.sh start${NC}"
-  echo -e "  ${GREEN}./keep-url-alive.sh status${NC}"
+# Function to clean up on exit
+cleanup() {
+  log "Shutting down keep-alive system..."
+  rm -f "$PID_FILE"
+  exit 0
 }
 
-# Function to start the system
-start_system() {
-  echo -e "${YELLOW}Starting Never-Sleep system...${NC}"
-  if [ -f .never-sleep.pid ] && ps -p $(cat .never-sleep.pid 2>/dev/null) > /dev/null 2>&1; then
-    echo -e "${GREEN}Never-Sleep system is already running.${NC}"
-    exit 0
+# Register trap for graceful shutdown
+trap cleanup SIGINT SIGTERM
+
+# Function to get application URL with multiple fallbacks
+get_app_url() {
+  # Try to get the IP address - fallback to localhost if not available
+  local ip_address
+  
+  # Method 1: hostname -I (Linux)
+  ip_address=$(hostname -I 2>/dev/null | awk '{print $1}')
+  
+  # Method 2: ifconfig (Unix/Linux)
+  if [ -z "$ip_address" ]; then
+    ip_address=$(ifconfig 2>/dev/null | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1' | head -n 1)
   fi
   
-  mkdir -p logs
-  nohup node keep-alive.js > logs/never-sleep.log 2>&1 &
-  PID=$!
-  echo $PID > .never-sleep.pid
+  # Method 3: ip addr (Modern Linux)
+  if [ -z "$ip_address" ]; then
+    ip_address=$(ip addr 2>/dev/null | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1' | head -n 1)
+  fi
   
-  # Wait a moment to make sure it starts correctly
-  sleep 3
+  # Fallback to localhost if all methods fail
+  if [ -z "$ip_address" ]; then
+    ip_address="localhost"
+  fi
   
-  if ps -p $PID > /dev/null 2>&1; then
-    echo -e "${GREEN}Never-Sleep system started successfully (PID: $PID).${NC}"
-    echo -e "${BLUE}Your dev URL will now stay active 24/7.${NC}"
+  echo "${ip_address}:${APP_PORT}"
+}
+
+# Function to ping the application with fallbacks
+ping_app() {
+  local replit_url=$(get_app_url)
+  log "Pinging application at http://$replit_url..."
+  
+  local http_code
+  local success=false
+  
+  # Method 1: Try with curl
+  if command -v curl &>/dev/null; then
+    http_code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 "http://$replit_url" 2>/dev/null || echo "failed")
     
-    # Check for actual port being used (may change if 3333 is occupied)
-    local DASHBOARD_PORT
-    DASHBOARD_PORT=$(grep -o "Dashboard available at: http://localhost:[0-9]*" logs/never-sleep.log | tail -1 | grep -o "[0-9]*$" || echo "3333")
-    echo -e "${YELLOW}Access dashboard:${NC} http://localhost:${DASHBOARD_PORT}/"
-  else
-    echo -e "${RED}Failed to start Never-Sleep system. Check logs for details.${NC}"
-    exit 1
-  fi
-}
-
-# Function to stop the system
-stop_system() {
-  echo -e "${YELLOW}Stopping Never-Sleep system...${NC}"
-  if [ -f .never-sleep.pid ]; then
-    PID=$(cat .never-sleep.pid)
-    if ps -p $PID > /dev/null 2>&1; then
-      kill $PID
-      sleep 2
-      
-      if ps -p $PID > /dev/null 2>&1; then
-        echo -e "${YELLOW}Force terminating process...${NC}"
-        kill -9 $PID
-      fi
-      
-      rm .never-sleep.pid
-      echo -e "${GREEN}Never-Sleep system stopped.${NC}"
+    # Check if the HTTP code starts with 2 or 3 (success or redirect)
+    if [[ "$http_code" =~ ^[23] ]]; then
+      log "✅ Ping successful (curl, Status: $http_code)"
+      success=true
     else
-      echo -e "${YELLOW}Process not running. Cleaning up stale PID file.${NC}"
-      rm .never-sleep.pid
+      log "❌ Ping failed (curl, Status: $http_code)"
     fi
   else
-    echo -e "${YELLOW}Never-Sleep system is not running (no PID file found).${NC}"
+    log "curl not available, trying alternative methods..."
   fi
   
-  # Kill any other related processes
-  pkill -f "keep-alive.js" > /dev/null 2>&1
-}
-
-# Function to check system status
-check_status() {
-  # More reliable way to check if our script is running
-  if pgrep -f "node.*keep-alive.js" > /dev/null 2>&1 || pgrep -f "node.*never-sleep.js" > /dev/null 2>&1; then
-    # Get PID of the running process
-    local PID=$(pgrep -f "node.*keep-alive.js" || pgrep -f "node.*never-sleep.js")
-    echo -e "${GREEN}Never-Sleep system is RUNNING (PID: $PID)${NC}"
-    echo -e "${BLUE}Your dev URL is being kept alive.${NC}"
+  # Method 2: Try with wget if curl failed
+  if [ "$success" = false ] && command -v wget &>/dev/null; then
+    http_code=$(wget -q -O /dev/null --server-response "http://$replit_url" 2>&1 | awk '/^  HTTP/{print $2}' || echo "failed")
     
-    # Check for actual port being used (may change if 3333 is occupied)
-    local DASHBOARD_PORT
-    DASHBOARD_PORT=$(grep -o "Dashboard available at: http://localhost:[0-9]*" logs/never-sleep.log | tail -1 | grep -o "[0-9]*$" || echo "3333")
-    echo -e "${YELLOW}Access dashboard:${NC} http://localhost:${DASHBOARD_PORT}/"
-    
-    # Update PID file if it's different or doesn't exist
-    if [ ! -f .never-sleep.pid ] || [ "$(cat .never-sleep.pid)" != "$PID" ]; then
-      echo $PID > .never-sleep.pid
+    if [[ "$http_code" =~ ^[23] ]]; then
+      log "✅ Ping successful (wget, Status: $http_code)"
+      success=true
+    else
+      log "❌ Ping failed (wget, Status: $http_code)"
     fi
-    
+  fi
+  
+  # Method 3: Try with netcat as last resort
+  if [ "$success" = false ] && command -v nc &>/dev/null; then
+    if nc -z -w5 $replit_url 2>/dev/null; then
+      log "✅ Ping successful (netcat, port open)"
+      success=true
+    else
+      log "❌ Ping failed (netcat, port closed)"
+    fi
+  fi
+  
+  # Return success or failure
+  if [ "$success" = true ]; then
     return 0
   else
-    # Remove stale PID file if it exists
-    if [ -f .never-sleep.pid ]; then
-      rm .never-sleep.pid
-      echo -e "${RED}Never-Sleep system is NOT RUNNING (removed stale PID file)${NC}"
-    else
-      echo -e "${RED}Never-Sleep system is NOT RUNNING (no process found)${NC}"
-    fi
-    echo -e "${YELLOW}Your dev URL will go to sleep after inactivity.${NC}"
     return 1
   fi
 }
 
-# Function to open dashboard
-open_dashboard() {
-  echo -e "${YELLOW}Opening dashboard...${NC}"
+# Main loop in a function to allow for self-healing
+run_keep_alive() {
+  local ping_count=0
+  local success_count=0
+  local fail_count=0
+  local consecutive_fails=0
   
-  if ! check_status > /dev/null; then
-    echo -e "${RED}Never-Sleep system is not running. Starting it first...${NC}"
-    start_system
-    sleep 2
-  fi
+  log "=== Bash Keep-Alive System Starting ==="
+  log "Check interval: $CHECK_INTERVAL seconds"
+  log "Log file: $LOG_FILE"
+  log "PID: $$ (saved to $PID_FILE)"
   
-  # Check for actual port being used
-  local DASHBOARD_PORT
-  DASHBOARD_PORT=$(grep -o "Dashboard available at: http://localhost:[0-9]*" logs/never-sleep.log | tail -1 | grep -o "[0-9]*$" || echo "3333")
-  
-  # Print URL and instructions
-  echo -e "${GREEN}Dashboard URL:${NC} http://localhost:${DASHBOARD_PORT}/"
-  echo -e "${BLUE}The dashboard shows stats and allows manual control.${NC}"
-  
-  # Try to open the URL automatically (works in some environments)
-  if command -v open &> /dev/null; then
-    open "http://localhost:${DASHBOARD_PORT}/"
-  elif command -v xdg-open &> /dev/null; then
-    xdg-open "http://localhost:${DASHBOARD_PORT}/"
-  else
-    echo -e "${YELLOW}Please open the URL manually in your browser.${NC}"
-  fi
+  while true; do
+    ping_count=$((ping_count + 1))
+    
+    if ping_app; then
+      success_count=$((success_count + 1))
+      consecutive_fails=0
+    else
+      fail_count=$((fail_count + 1))
+      consecutive_fails=$((consecutive_fails + 1))
+      
+      # Self-healing: adjust check interval if too many consecutive failures
+      if [ $consecutive_fails -gt 5 ]; then
+        local temp_interval=$((CHECK_INTERVAL / 2))
+        log "⚠️ Multiple consecutive failures. Temporarily reducing check interval to $temp_interval seconds..."
+        sleep $temp_interval
+        continue
+      fi
+    fi
+    
+    # Simple statistics
+    log "Stats: $ping_count pings, $success_count successful, $fail_count failed"
+    local success_rate=0
+    if [ "$ping_count" -gt 0 ]; then
+      success_rate=$((success_count * 100 / ping_count))
+    fi
+    log "Success rate: ${success_rate}%"
+    
+    # Wait before the next ping
+    log "Waiting $CHECK_INTERVAL seconds before next ping..."
+    sleep $CHECK_INTERVAL
+  done
 }
 
-# Function to view logs
-view_logs() {
-  if [ -f "logs/never-sleep.log" ]; then
-    echo -e "${YELLOW}Showing last 50 lines of never-sleep.log:${NC}"
-    echo "========================================"
-    tail -n 50 logs/never-sleep.log
-    echo "========================================"
-    echo -e "${BLUE}To view full logs:${NC} cat logs/never-sleep.log"
-  else
-    echo -e "${RED}No log file found at logs/never-sleep.log${NC}"
-  fi
+# Watchdog function to ensure the keep-alive process stays running
+watchdog() {
+  log "Starting keep-alive watchdog process..."
+  
+  while true; do
+    # Start the keep-alive process in the background
+    run_keep_alive &
+    KEEP_ALIVE_PID=$!
+    log "Keep-alive process started with PID: $KEEP_ALIVE_PID"
+    
+    # Wait for the process to exit
+    wait $KEEP_ALIVE_PID
+    
+    # If we get here, the process has terminated unexpectedly
+    log "⚠️ Keep-alive process terminated unexpectedly! Restarting in 5 seconds..."
+    sleep 5
+  done
 }
 
-# Main command handler
-print_header
-
-case "$1" in
-  start)
-    start_system
-    ;;
-  stop)
-    stop_system
-    ;;
-  restart)
-    stop_system
-    sleep 2
-    start_system
-    ;;
-  status)
-    check_status
-    ;;
-  logs)
-    view_logs
-    ;;
-  dashboard)
-    open_dashboard
-    ;;
-  *)
-    print_help
-    ;;
-esac
-
-exit 0
+# Start the watchdog (which manages the keep-alive process)
+watchdog
