@@ -1,0 +1,117 @@
+## **Next Action Steps for Mistral AI Integration**
+
+Hello Replit Agent,
+
+You’ve done an incredible job implementing the guidance and improving Creately’s functionality! With the groundwork established—such as enhanced startup scripts, robust fallback mechanisms, and centralized environment configuration—let’s now focus on implementing Mistral AI features to unlock Creately’s full potential.
+
+---
+
+### **1. Validate Environment Configuration**
+- **Action**: Ensure environment variables are properly configured to support the Mistral AI and Codestral API integrations. 
+- **Checklist**:
+  - Verify that the `MISTRAL_API_KEY`, `CODESTRAL_API_KEY`, and any other AI-related keys are securely stored in `config/environment.js`.
+  - Enhance error handling in the environment configuration to provide user-friendly messages for missing keys.
+
+**Example Code for Environment Configuration**:
+```javascript
+const dotenv = require('dotenv');
+dotenv.config();
+
+const environmentConfig = {
+  MISTRAL_API_KEY: process.env.MISTRAL_API_KEY || 'MISTRAL_API_KEY_NOT_SET',
+  CODESTRAL_API_KEY: process.env.CODESTRAL_API_KEY || 'CODESTRAL_API_KEY_NOT_SET',
+};
+
+if (!process.env.MISTRAL_API_KEY || !process.env.CODESTRAL_API_KEY) {
+  console.error("⚠️ One or more API keys are missing!");
+}
+
+module.exports = environmentConfig;
+```
+
+---
+
+### **2. Integrate Mistral AI Endpoints**
+Now that environment keys are configured, begin integrating Mistral AI endpoints into the backend.
+
+#### **Endpoints to Implement**:
+1. **Completion API**:
+   - URL: `https://codestral.mistral.ai/v1/fim/completions`
+   - Use this for assisting users with intelligent code generation and completion.
+2. **Chat API**:
+   - URL: `https://codestral.mistral.ai/v1/chat/completions`
+   - Enable conversational AI for dynamic interactions, suggestions, and responses.
+
+#### **Integration Example**:
+```javascript
+const axios = require('axios');
+const { MISTRAL_API_KEY } = require('./config/environment.js');
+
+async function getMistralCompletion(prompt) {
+  try {
+    const response = await axios.post(
+      'https://codestral.mistral.ai/v1/chat/completions',
+      { prompt, max_tokens: 100, temperature: 0.7 },
+      { headers: { Authorization: `Bearer ${MISTRAL_API_KEY}` } }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error with Mistral API:', error.message);
+    throw new Error('Mistral AI integration error.');
+  }
+}
+```
+---
+
+### **3. Test Mistral API Integration**
+Develop tests to ensure the endpoints work as expected.
+
+#### **Testing Tasks**:
+1. **Code Suggestions**:
+   - Use the Completion API to generate code snippets based on user inputs.
+2. **Creative Suggestions**:
+   - Test the Chat API by prompting adaptive responses tailored to project-related queries.
+
+**Example Test Case**:
+```python
+import requests
+
+API_KEY = "your-mistral-api-key"
+url = "https://codestral.mistral.ai/v1/chat/completions"
+headers = {"Authorization": f"Bearer {API_KEY}"}
+data = {"prompt": "Suggest a creative workflow for my project", "max_tokens": 100}
+
+response = requests.post(url, headers=headers, json=data)
+print(response.json())
+```
+
+---
+
+### **4. Enhance User-Facing Features**
+Focus on leveraging the APIs for Creately’s unique capabilities.
+
+#### **Feature Ideas**:
+1. **Dynamic Suggestions**: Use the Chat API to offer creative ideas and actionable recommendations for user projects.
+2. **Code Completion**: Assist users by generating adaptive code snippets via the Completion API.
+3. **Personalization**: Integrate features to adapt suggestions based on user behaviors and preferences.
+
+---
+
+### **5. Document Workflow Improvements**
+Update the workflow configuration and README to reflect the added AI functionalities.
+- Include a section on how the Mistral API enhances Creately’s features.
+- Provide sample code and guidance for testing and troubleshooting Mistral integration.
+
+---
+
+### **6. Monitor and Optimize**
+Use the Mistral Console to monitor usage and ensure optimal performance within the limits of the free plan.
+
+---
+
+## **Conclusion**
+Let’s move forward by integrating Mistral AI into Creately with these steps. Once the features are implemented and tested, we’ll refine and expand based on user feedback and app performance. Keep up the fantastic work—Creately is evolving into a truly dynamic and impactful platform!
+
+Thank you for your dedication and expertise.
+
+— Haley

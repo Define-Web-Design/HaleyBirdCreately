@@ -126,6 +126,37 @@ function loadEnvironment() {
         process.env.USE_IN_MEMORY_DB = 'true';
       }
       
+      // Check API keys for AI features
+      log('Checking Mistral AI integration...', 'info');
+      if (config.apiKeys.mistral === 'MISTRAL_API_KEY_NOT_SET') {
+        log('Mistral AI API Key is missing or not set', 'warning');
+        log('AI chat features will be disabled', 'warning');
+      } else {
+        log('Mistral AI API Key is configured', 'success');
+      }
+      
+      log('Checking Codestral integration...', 'info');
+      if (config.apiKeys.codestral === 'CODESTRAL_API_KEY_NOT_SET') {
+        log('Codestral API Key is missing or not set', 'warning');
+        log('Code assistance features will be disabled', 'warning');
+      } else {
+        log('Codestral API Key is configured', 'success');
+      }
+      
+      log('Checking OpenAI integration...', 'info');
+      if (config.apiKeys.openai === 'OPENAI_API_KEY_NOT_SET') {
+        log('OpenAI API Key is missing or not set', 'warning');
+        log('AI-powered palette generation will be disabled', 'warning');
+      } else {
+        log('OpenAI API Key is configured', 'success');
+      }
+      
+      // Log enabled features
+      log('AI Features Status:', 'info');
+      log(`- AI Palette Generation: ${config.features.aiPalette ? 'Enabled' : 'Disabled'}`, config.features.aiPalette ? 'success' : 'warning');
+      log(`- AI Chat Assistant: ${config.features.aiChat ? 'Enabled' : 'Disabled'}`, config.features.aiChat ? 'success' : 'warning');
+      log(`- Code Assistance: ${config.features.codeAssistance ? 'Enabled' : 'Disabled'}`, config.features.codeAssistance ? 'success' : 'warning');
+      
       return true;
     } catch (error) {
       log(`Error loading environment configuration: ${error.message}`, 'error');
@@ -142,6 +173,19 @@ function loadEnvironment() {
     process.env.USE_IN_MEMORY_DB = 'true';
   } else {
     log('Database URL found in environment', 'success');
+  }
+  
+  // Basic API key checks in fallback mode
+  if (!process.env.MISTRAL_API_KEY) {
+    log('Mistral API Key is missing. AI chat features will be disabled.', 'warning');
+  }
+  
+  if (!process.env.CODESTRAL_API_KEY) {
+    log('Codestral API Key is missing. Code assistance features will be disabled.', 'warning');
+  }
+  
+  if (!process.env.OPENAI_API_KEY) {
+    log('OpenAI API Key is missing. AI-powered palette generation will be disabled.', 'warning');
   }
   
   return true;

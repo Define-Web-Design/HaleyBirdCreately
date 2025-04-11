@@ -43,13 +43,31 @@ const config = {
     useInMemory: process.env.USE_IN_MEMORY_DB === 'true' || defaults.USE_IN_MEMORY_DB,
   },
   
-  // API keys for external services
+  // API keys for external services with fallbacks for missing keys
   apiKeys: {
-    openai: process.env.OPENAI_API_KEY,
-    mistral: process.env.MISTRAL_API_KEY,
-    codestral: process.env.CODESTRAL_API_KEY,
+    openai: process.env.OPENAI_API_KEY || 'OPENAI_API_KEY_NOT_SET',
+    mistral: process.env.MISTRAL_API_KEY || 'MISTRAL_API_KEY_NOT_SET',
+    codestral: process.env.CODESTRAL_API_KEY || 'CODESTRAL_API_KEY_NOT_SET',
   },
+  
+  // Feature flags based on available API keys
+  features: {
+    aiPalette: process.env.OPENAI_API_KEY ? true : false,
+    aiChat: process.env.MISTRAL_API_KEY ? true : false,
+    codeAssistance: process.env.CODESTRAL_API_KEY ? true : false
+  }
 };
+
+// Check for missing API keys and log warnings
+const missingKeys = [];
+if (!process.env.OPENAI_API_KEY) missingKeys.push('OPENAI_API_KEY');
+if (!process.env.MISTRAL_API_KEY) missingKeys.push('MISTRAL_API_KEY');
+if (!process.env.CODESTRAL_API_KEY) missingKeys.push('CODESTRAL_API_KEY');
+
+if (missingKeys.length > 0) {
+  console.warn(`⚠️  Warning: The following API keys are missing: ${missingKeys.join(', ')}`);
+  console.warn('Some AI features will be limited or unavailable.');
+}
 
 // Log configuration (sanitized to avoid exposing secrets)
 if (config.server.isDevelopment) {
@@ -59,9 +77,13 @@ if (config.server.isDevelopment) {
   console.log('- Auth Bypass:', config.auth.bypassAuth);
   console.log('- Auto Login:', config.auth.autoLogin);
   console.log('- Database Type:', config.database.useInMemory ? 'In-Memory' : 'PostgreSQL');
-  console.log('- OpenAI API Key:', config.apiKeys.openai ? 'Set' : 'Not Set');
-  console.log('- Mistral API Key:', config.apiKeys.mistral ? 'Set' : 'Not Set');
-  console.log('- Codestral API Key:', config.apiKeys.codestral ? 'Set' : 'Not Set');
+  console.log('- OpenAI API Key:', config.apiKeys.openai !== 'OPENAI_API_KEY_NOT_SET' ? 'Set' : 'Not Set');
+  console.log('- Mistral API Key:', config.apiKeys.mistral !== 'MISTRAL_API_KEY_NOT_SET' ? 'Set' : 'Not Set');
+  console.log('- Codestral API Key:', config.apiKeys.codestral !== 'CODESTRAL_API_KEY_NOT_SET' ? 'Set' : 'Not Set');
+  console.log('- Enabled Features:');
+  console.log('  ├─ AI Palette Generation:', config.features.aiPalette ? 'Enabled' : 'Disabled');
+  console.log('  ├─ AI Chat Assistant:', config.features.aiChat ? 'Enabled' : 'Disabled');
+  console.log('  └─ Code Assistance:', config.features.codeAssistance ? 'Enabled' : 'Disabled');
 }
 
 module.exports = config;

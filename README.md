@@ -12,6 +12,19 @@ To run the application, use the following command:
 
 This script will automatically determine the best way to start the application in your environment.
 
+### Setting Up a Replit Workflow
+
+For the best experience in Replit, you can set up a workflow:
+
+1. Run the setup utility:
+   ```bash
+   node setup-workflow.js
+   ```
+
+2. Follow the instructions to manually configure a workflow in the Replit interface.
+
+3. Once configured, you can start the application with a single click using the workflow button.
+
 ## Manual Start Options
 
 If you prefer to start the application manually, you have several options:
@@ -48,6 +61,8 @@ This runs the JavaScript starter directly.
 - Real-time collaborative workspace
 - Adaptive UI with personalized interactions
 - PostgreSQL database for persistent storage
+- Mistral AI integration for smart conversations
+- Codestral code assistance for developers
 
 ## Environment Variables
 
@@ -84,6 +99,61 @@ If you encounter issues starting the application:
    ```
 
 4. If the main server fails, the application will automatically try to use the fallback server.
+
+## Mistral AI Integration
+
+Creately integrates with Mistral AI to provide advanced AI features:
+
+### Features
+
+- **Smart Conversations**: Use Mistral's advanced language model for natural conversations.
+- **Code Assistance**: Leverage Codestral for code generation and programming help.
+- **Creative Content**: Generate ideas, text content, and creative suggestions.
+
+### Setup
+
+1. Obtain API keys:
+   - Mistral AI: Sign up at [https://console.mistral.ai/](https://console.mistral.ai/)
+   - Codestral: Available in the Mistral AI console
+
+2. Add the keys to your `.env` file:
+   ```
+   MISTRAL_API_KEY=your_mistral_api_key
+   CODESTRAL_API_KEY=your_codestral_api_key
+   ```
+
+3. Test your configuration:
+   ```bash
+   node test-mistral.js
+   ```
+
+### API Usage
+
+Endpoints available at `/api/ai/`:
+
+- **POST /api/ai/chat**: Generate chat completions
+  ```json
+  {
+    "prompt": "Your question here",
+    "options": {
+      "temperature": 0.7,
+      "maxTokens": 100
+    }
+  }
+  ```
+
+- **POST /api/ai/code**: Generate code completions
+  ```json
+  {
+    "prompt": "Write a function to sort an array",
+    "options": {
+      "temperature": 0.2,
+      "maxTokens": 300
+    }
+  }
+  ```
+
+- **GET /api/ai/health**: Check AI services status
 
 ## License
 

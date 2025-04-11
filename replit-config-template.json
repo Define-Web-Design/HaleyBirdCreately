@@ -1,0 +1,23 @@
+{
+  "run": "./run-creately.sh",
+  "language": "nodejs",
+  "onBoot": "echo 'Creately application is ready to start. Click the Run button or run ./run-creately.sh'",
+  "environmentVariables": {
+    "NODE_ENV": "development"
+  },
+  "ports": {
+    "3000": {
+      "name": "Creately Application",
+      "description": "Main application server"
+    },
+    "5000": {
+      "name": "Fallback Server",
+      "description": "Fallback server when main server is unavailable"
+    }
+  },
+  "hints": [
+    "Make sure all API keys are set in the .env file for full functionality",
+    "The application will automatically use fallback mechanisms if needed",
+    "Use run-creately.sh for the most reliable startup experience"
+  ]
+}

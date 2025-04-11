@@ -1,51 +1,93 @@
 #!/bin/bash
-# Creately Application Runner Script
-# This script checks if we can use Replit workflows, otherwise uses direct execution
 
-# Set terminal colors
+# Creately Application Runner
+# This script checks the environment and starts the application using the best method
+
+# ANSI color codes
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
 BLUE='\033[0;34m'
+MAGENTA='\033[0;35m'
+CYAN='\033[0;36m'
 BOLD='\033[1m'
 NC='\033[0m' # No Color
 
-# Display banner
-echo -e "${BLUE}${BOLD}"
-echo "=================================================="
-echo "   Creately Application - Runner Script"
-echo "=================================================="
-echo -e "${NC}"
+# Print banner
+echo -e "${BLUE}${BOLD}================================================${NC}"
+echo -e "${BLUE}${BOLD}             Creately Application              ${NC}"
+echo -e "${BLUE}${BOLD}================================================${NC}"
+echo ""
 
-# Make sure our startup scripts are executable
-chmod +x start.sh start-app.sh 2>/dev/null
-
-# Check if we can use Replit workflows
-HAS_WORKFLOW=false
-if [ -f ".replit" ]; then
-  if grep -q "run" .replit; then
-    HAS_WORKFLOW=true
-    echo -e "${GREEN}Replit configuration detected.${NC}"
-  fi
-fi
-
-# Check if we're in a Replit environment
-IN_REPLIT=false
-if [ -n "$REPL_ID" ] || [ -n "$REPL_OWNER" ]; then
-  IN_REPLIT=true
-  echo -e "${GREEN}Running in Replit environment.${NC}"
-fi
-
-# Determine the best way to run the application
-if [ "$IN_REPLIT" = true ] && [ "$HAS_WORKFLOW" = true ]; then
-  echo -e "${YELLOW}Starting application using Replit workflow...${NC}"
-  # This should trigger the workflow defined in .replit
-  echo -e "${GREEN}Application started. You should see it running in the Replit interface.${NC}"
-  echo -e "${YELLOW}If application doesn't start automatically, please run ./start-app.sh manually.${NC}"
+# Load environment variables from .env if it exists
+if [ -f .env ]; then
+  echo -e "${GREEN}Loading environment from .env file...${NC}"
+  export $(cat .env | grep -v '^#' | xargs)
 else
-  echo -e "${YELLOW}Starting application directly...${NC}"
-  # Run directly using our custom start script
-  ./start-app.sh
+  echo -e "${YELLOW}No .env file found. Using system environment variables.${NC}"
 fi
 
-exit $?
+# Check API keys
+echo -e "${CYAN}Checking API keys...${NC}"
+
+# Check Mistral API Key
+if [ -z "$MISTRAL_API_KEY" ]; then
+  echo -e "${YELLOW}⚠️  Warning: MISTRAL_API_KEY is not set.${NC}"
+  echo -e "${YELLOW}    AI chat features will be disabled.${NC}"
+  echo -e "${YELLOW}    Set this key in your .env file to enable Mistral AI features.${NC}"
+else
+  echo -e "${GREEN}✅ MISTRAL_API_KEY is configured${NC}"
+fi
+
+# Check Codestral API Key
+if [ -z "$CODESTRAL_API_KEY" ]; then
+  echo -e "${YELLOW}⚠️  Warning: CODESTRAL_API_KEY is not set.${NC}"
+  echo -e "${YELLOW}    Code assistance features will be disabled.${NC}"
+  echo -e "${YELLOW}    Set this key in your .env file to enable Codestral features.${NC}"
+else
+  echo -e "${GREEN}✅ CODESTRAL_API_KEY is configured${NC}"
+fi
+
+# Check OpenAI API Key
+if [ -z "$OPENAI_API_KEY" ]; then
+  echo -e "${YELLOW}⚠️  Warning: OPENAI_API_KEY is not set.${NC}"
+  echo -e "${YELLOW}    AI palette generation will be disabled.${NC}"
+  echo -e "${YELLOW}    Set this key in your .env file to enable OpenAI-powered features.${NC}"
+else
+  echo -e "${GREEN}✅ OPENAI_API_KEY is configured${NC}"
+fi
+
+echo ""
+echo -e "${CYAN}Starting Creately application...${NC}"
+
+# Check if the enhanced starter script exists and is executable
+if [ -x "./start-app.js" ]; then
+  echo -e "${GREEN}Using enhanced JavaScript starter...${NC}"
+  node start-app.js
+  exit $?
+elif [ -x "./start-app.sh" ]; then
+  echo -e "${GREEN}Using enhanced shell starter...${NC}"
+  ./start-app.sh
+  exit $?
+elif [ -x "./start.sh" ]; then
+  echo -e "${YELLOW}Using basic shell starter...${NC}"
+  ./start.sh
+  exit $?
+elif [ -f "./server.js" ]; then
+  echo -e "${YELLOW}Using simple node starter...${NC}"
+  node server.js
+  exit $?
+elif [ -f "./simple_server.py" ]; then
+  echo -e "${YELLOW}Using Python fallback server...${NC}"
+  python3 simple_server.py
+  exit $?
+else
+  echo -e "${RED}${BOLD}Error: No suitable starter script found!${NC}"
+  echo -e "${RED}Please make sure one of the following files exists:${NC}"
+  echo -e "${RED}- start-app.js${NC}"
+  echo -e "${RED}- start-app.sh${NC}"
+  echo -e "${RED}- start.sh${NC}"
+  echo -e "${RED}- server.js${NC}"
+  echo -e "${RED}- simple_server.py${NC}"
+  exit 1
+fi
