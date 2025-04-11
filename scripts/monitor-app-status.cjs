@@ -51,8 +51,8 @@ if (!fs.existsSync(path.dirname(CONFIG.MONITOR.LOG_FILE))) {
 }
 
 // Setup logging
-const logStream = fs.createWriteStream(CONFIG.MONITOR.LOG_FILE, { flags: 'a' });
-const errorLogStream = fs.createWriteStream(CONFIG.MONITOR.ERROR_LOG_FILE, { flags: 'a' });
+let logStream = fs.createWriteStream(CONFIG.MONITOR.LOG_FILE, { flags: 'a' });
+let errorLogStream = fs.createWriteStream(CONFIG.MONITOR.ERROR_LOG_FILE, { flags: 'a' });
 
 // Utility functions
 const execPromise = promisify(exec);
