@@ -58,6 +58,10 @@ The keep-alive system was designed to prevent the Replit environment from going 
 | `client/src/utils/validation-runner.ts` | Validation workflow runner utility |
 | `client/src/utils/task-completion-validator.ts` | Utility to verify task completion in workflows |
 | `client/src/utils/workflow-validator.ts` | Workflow validation utility for checkpoint creation |
+| `scripts/verify-tasks.js` | CLI utility for task verification |
+| `scripts/verify-all-tasks.js` | Script for comprehensive task validation |
+| `scripts/pagespeed-insights.js` | Google PageSpeed Insights integration script |
+| `scripts/pagespeed.sh` | Shell script wrapper for PageSpeed Insights |
 | `scripts/keep-app-running.js` | Script to monitor and auto-restart the server process |
 | `test-color-extraction.js` | Script to test color extraction from websites using Puppeteer |
 | `test-db-connection.js` | Script to test the PostgreSQL database connection |
