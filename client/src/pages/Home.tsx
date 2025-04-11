@@ -1,32 +1,41 @@
 import React from 'react';
 
-const Home: React.FC = () => {
+function Home() {
   return (
-    <div className="container mx-auto px-4 py-8">
-      <header className="mb-8 text-center">
-        <h1 className="text-3xl font-bold mb-2">Welcome to Your Application</h1>
-        <p className="text-gray-600">A clean, fast, and optimized experience</p>
-      </header>
-      
-      <main className="max-w-3xl mx-auto bg-white p-6 rounded-lg shadow-md">
-        <h2 className="text-xl font-semibold mb-4">Getting Started</h2>
-        <p className="mb-4">
-          This is a clean version of your app with only the essential dependencies.
-          You can now build on this foundation without performance issues.
+    <div className="max-w-4xl mx-auto">
+      <section className="text-center py-12">
+        <h1 className="text-4xl font-bold mb-4">Welcome to Clean App</h1>
+        <p className="text-xl text-gray-600 mb-8">
+          A high-performance, optimized application built with modern web technologies.
         </p>
-        
-        <div className="mt-6 p-4 bg-blue-50 rounded border border-blue-100">
-          <h3 className="font-medium text-blue-800 mb-2">Next Steps</h3>
-          <ul className="list-disc pl-5 text-blue-700">
-            <li>Add your database models and connections</li>
-            <li>Create your UI components as needed</li>
-            <li>Set up additional routes</li>
-            <li>Connect to your APIs</li>
-          </ul>
+        <div className="flex justify-center space-x-4">
+          <a href="/register" className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg">
+            Get Started
+          </a>
+          <a href="/login" className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-6 rounded-lg">
+            Sign In
+          </a>
         </div>
-      </main>
+      </section>
+      
+      <section className="py-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="bg-white p-6 rounded-lg shadow">
+            <h3 className="text-xl font-semibold mb-2">Fast Performance</h3>
+            <p className="text-gray-600">Optimized for speed with minimal dependencies.</p>
+          </div>
+          <div className="bg-white p-6 rounded-lg shadow">
+            <h3 className="text-xl font-semibold mb-2">Secure Authentication</h3>
+            <p className="text-gray-600">Built with industry-standard security practices.</p>
+          </div>
+          <div className="bg-white p-6 rounded-lg shadow">
+            <h3 className="text-xl font-semibold mb-2">Modern Architecture</h3>
+            <p className="text-gray-600">Built with React, TypeScript, and Express.</p>
+          </div>
+        </div>
+      </section>
     </div>
   );
-};
+}
 
 export default Home;
