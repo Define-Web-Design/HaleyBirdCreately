@@ -43,7 +43,7 @@ start_system() {
   fi
   
   mkdir -p logs
-  nohup node never-sleep.js > logs/never-sleep.log 2>&1 &
+  nohup node keep-alive.js > logs/never-sleep.log 2>&1 &
   PID=$!
   echo $PID > .never-sleep.pid
   
@@ -85,7 +85,7 @@ stop_system() {
   fi
   
   # Kill any other related processes
-  pkill -f "never-sleep.js" > /dev/null 2>&1
+  pkill -f "keep-alive.js" > /dev/null 2>&1
 }
 
 # Function to check system status
