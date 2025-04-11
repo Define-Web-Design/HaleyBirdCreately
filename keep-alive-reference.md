@@ -23,6 +23,13 @@ The keep-alive system was designed to prevent the Replit environment from going 
 | `keep_alive_flask.py` | Python implementation of keep-alive functionality |
 | `static-server.js` | Node.js static server implementation |
 | `replit-keep-alive.js` | Replit-specific keep-alive script |
+| `run.sh` | Script to start the application with keep-alive functionality |
+| `robust-start.sh` | Script ensuring the application keeps running with auto-restart capability |
+| `start-with-monitor.sh` | Script to start the application with reliability monitor |
+| `update-workflow.sh` | Script to update Replit workflow configuration with fallback mechanisms |
+| `scripts/ci-workflow.js` | Continuous Integration workflow script for automated testing and validation |
+| `scripts/performance-monitor.js` | Performance monitoring utility for web and iOS applications |
+| `scripts/monitor-app-status.js` | Advanced application monitoring system with automatic recovery capabilities |
 
 ### Additional Files
 
@@ -32,6 +39,8 @@ The keep-alive system was designed to prevent the Replit environment from going 
 | `QUICK-START.md` | Quick reference guide |
 | `.forever-alive.pid` | PID file for the forever-alive script |
 | `.static-server.pid` | PID file for the static server |
+| `.replit.bak` | Backup of the .replit configuration file |
+| `.workflow-update.sh` | Script to update Replit workflow when run |
 
 ## Key Features
 
