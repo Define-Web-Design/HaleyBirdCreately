@@ -56,6 +56,8 @@ The keep-alive system was designed to prevent the Replit environment from going 
 | `client/src/utils/consolidated-validation.js` | JavaScript version of the consolidated validation utility |
 | `client/src/utils/testing-plan.ts` | Comprehensive testing plan definition |
 | `client/src/utils/validation-runner.ts` | Validation workflow runner utility |
+| `client/src/utils/task-completion-validator.ts` | Utility to verify task completion in workflows |
+| `client/src/utils/workflow-validator.ts` | Workflow validation utility for checkpoint creation |
 | `scripts/keep-app-running.js` | Script to monitor and auto-restart the server process |
 | `test-color-extraction.js` | Script to test color extraction from websites using Puppeteer |
 | `test-db-connection.js` | Script to test the PostgreSQL database connection |
