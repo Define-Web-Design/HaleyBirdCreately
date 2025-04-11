@@ -94,24 +94,32 @@ stop_system() {
 
 # Function to check system status
 check_status() {
-  if [ -f .never-sleep.pid ]; then
-    PID=$(cat .never-sleep.pid)
-    if ps -p $PID > /dev/null 2>&1; then
-      echo -e "${GREEN}Never-Sleep system is RUNNING (PID: $PID)${NC}"
-      echo -e "${BLUE}Your dev URL is being kept alive.${NC}"
-      
-      # Check for actual port being used (may change if 3333 is occupied)
-      local DASHBOARD_PORT
-      DASHBOARD_PORT=$(grep -o "Dashboard available at: http://localhost:[0-9]*" logs/never-sleep.log | tail -1 | grep -o "[0-9]*$" || echo "3333")
-      echo -e "${YELLOW}Access dashboard:${NC} http://localhost:${DASHBOARD_PORT}/"
-      return 0
-    else
-      echo -e "${RED}Never-Sleep system is NOT RUNNING (stale PID file exists)${NC}"
-      echo -e "${YELLOW}Your dev URL may go to sleep after inactivity.${NC}"
-      return 1
+  # More reliable way to check if our script is running
+  if pgrep -f "node.*keep-alive.js" > /dev/null 2>&1 || pgrep -f "node.*never-sleep.js" > /dev/null 2>&1; then
+    # Get PID of the running process
+    local PID=$(pgrep -f "node.*keep-alive.js" || pgrep -f "node.*never-sleep.js")
+    echo -e "${GREEN}Never-Sleep system is RUNNING (PID: $PID)${NC}"
+    echo -e "${BLUE}Your dev URL is being kept alive.${NC}"
+    
+    # Check for actual port being used (may change if 3333 is occupied)
+    local DASHBOARD_PORT
+    DASHBOARD_PORT=$(grep -o "Dashboard available at: http://localhost:[0-9]*" logs/never-sleep.log | tail -1 | grep -o "[0-9]*$" || echo "3333")
+    echo -e "${YELLOW}Access dashboard:${NC} http://localhost:${DASHBOARD_PORT}/"
+    
+    # Update PID file if it's different or doesn't exist
+    if [ ! -f .never-sleep.pid ] || [ "$(cat .never-sleep.pid)" != "$PID" ]; then
+      echo $PID > .never-sleep.pid
     fi
+    
+    return 0
   else
-    echo -e "${RED}Never-Sleep system is NOT RUNNING (no PID file)${NC}"
+    # Remove stale PID file if it exists
+    if [ -f .never-sleep.pid ]; then
+      rm .never-sleep.pid
+      echo -e "${RED}Never-Sleep system is NOT RUNNING (removed stale PID file)${NC}"
+    else
+      echo -e "${RED}Never-Sleep system is NOT RUNNING (no process found)${NC}"
+    fi
     echo -e "${YELLOW}Your dev URL will go to sleep after inactivity.${NC}"
     return 1
   fi

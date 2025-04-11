@@ -15,7 +15,7 @@
 
 import http from 'http';
 import https from 'https';
-import { spawn, exec } from 'child_process';
+import { spawn, exec, execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { URL } from 'url';
