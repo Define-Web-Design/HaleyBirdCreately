@@ -97,7 +97,7 @@ async function generateCodeCompletion(prompt, options = {}) {
   
   try {
     const response = await axios.post(
-      CODESTRAL_ENDPOINT,
+      CODESTRAL_CHAT_ENDPOINT,
       {
         messages: [
           { role: 'user', content: prompt }
@@ -121,6 +121,59 @@ async function generateCodeCompletion(prompt, options = {}) {
     console.error('Error calling Codestral:', error.message);
     return {
       error: 'Failed to generate code',
+      message: error.message,
+      status: error.response?.status
+    };
+  }
+}
+
+/**
+ * Generate code completion using Codestral Fill-in-the-Middle (FIM)
+ * This is ideal for completing partial code snippets or filling gaps in existing code
+ * 
+ * @param {string} prefix - The code before the gap to complete
+ * @param {string} suffix - The code after the gap to complete (optional)
+ * @param {Object} options - Additional options
+ * @returns {Promise<Object>} - The response from Codestral FIM
+ */
+async function generateFimCompletion(prefix, suffix = "", options = {}) {
+  // Check if Codestral is configured
+  if (!config.features.codeAssistance) {
+    return {
+      error: 'Codestral not configured',
+      message: 'The Codestral API key is not set. Please configure it to use code assistance features.'
+    };
+  }
+  
+  try {
+    const response = await axios.post(
+      CODESTRAL_FIM_ENDPOINT,
+      {
+        prompt: {
+          prefix: prefix,
+          suffix: suffix
+        },
+        max_tokens: options.maxTokens || 500,
+        temperature: options.temperature || 0.1, // Even lower temperature for more precise code completion
+        response_format: { type: options.responseFormat || "text" }
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${config.apiKeys.codestral}`
+        }
+      }
+    );
+    
+    return {
+      completion: response.data.choices[0].text,
+      usage: response.data.usage,
+      model: response.data.model
+    };
+  } catch (error) {
+    console.error('Error calling Codestral FIM:', error.message);
+    return {
+      error: 'Failed to generate code completion',
       message: error.message,
       status: error.response?.status
     };
@@ -155,7 +208,12 @@ function getServiceStatus() {
     },
     codeAssistance: {
       available: config.features.codeAssistance,
-      endpoint: CODESTRAL_ENDPOINT,
+      endpoint: CODESTRAL_CHAT_ENDPOINT,
+      keyConfigured: config.apiKeys.codestral !== 'CODESTRAL_API_KEY_NOT_SET'
+    },
+    codeFim: {
+      available: config.features.codeAssistance,
+      endpoint: CODESTRAL_FIM_ENDPOINT,
       keyConfigured: config.apiKeys.codestral !== 'CODESTRAL_API_KEY_NOT_SET'
     }
   };
@@ -164,6 +222,7 @@ function getServiceStatus() {
 module.exports = {
   generateChatCompletion,
   generateCodeCompletion,
+  generateFimCompletion,
   testMistralConnection,
   getServiceStatus
 };

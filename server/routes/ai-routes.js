@@ -91,6 +91,38 @@ router.post('/code', checkMistralAvailability, async (req, res) => {
   }
 });
 
+// Generate code completion with Fill-in-the-Middle (FIM)
+router.post('/fim', checkMistralAvailability, async (req, res) => {
+  const { prefix, suffix, options } = req.body;
+  
+  if (!prefix) {
+    return res.status(400).json({
+      error: 'Missing prefix',
+      message: 'The prefix parameter is required for Fill-in-the-Middle completion'
+    });
+  }
+  
+  try {
+    const result = await mistralAI.generateFimCompletion(
+      prefix, 
+      suffix || "", 
+      options || {}
+    );
+    
+    if (result.error) {
+      return res.status(400).json(result);
+    }
+    
+    res.json(result);
+  } catch (error) {
+    console.error('Error in FIM completion endpoint:', error.message);
+    res.status(500).json({
+      error: 'Internal server error',
+      message: error.message
+    });
+  }
+});
+
 // Test AI connection
 router.get('/test-connection', async (req, res) => {
   try {

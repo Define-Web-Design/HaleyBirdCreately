@@ -158,6 +158,64 @@ async function testCodestralAPI() {
   }
 }
 
+// Test Codestral FIM API if key is available
+async function testCodestralFimAPI() {
+  if (!CODESTRAL_API_KEY) {
+    console.log(`${colors.yellow}Skipping Codestral FIM API test as the API key is not set${colors.reset}`);
+    return false;
+  }
+  
+  console.log(`${colors.cyan}Testing Codestral Fill-in-the-Middle API...${colors.reset}`);
+  
+  try {
+    const response = await axios.post(
+      'https://codestral.mistral.ai/v1/fim/completions',
+      {
+        prompt: {
+          prefix: "function calculateArea(radius) {\n  // Calculate the area of a circle\n  ",
+          suffix: "\n  return area;\n}"
+        },
+        max_tokens: 100,
+        temperature: 0.1,
+        response_format: { type: "text" }
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${CODESTRAL_API_KEY}`
+        }
+      }
+    );
+    
+    if (response.data && response.data.choices && response.data.choices.length > 0) {
+      console.log(`${colors.green}✅ Codestral FIM API test successful${colors.reset}`);
+      console.log(`${colors.green}Response:${colors.reset}`);
+      console.log(`${colors.green}Code completion: ${colors.reset}`);
+      
+      // Build the complete code with the infilled part
+      const prefix = "function calculateArea(radius) {\n  // Calculate the area of a circle\n  ";
+      const completion = response.data.choices[0].text;
+      const suffix = "\n  return area;\n}";
+      const fullCode = prefix + completion + suffix;
+      
+      console.log(fullCode);
+      console.log(`${colors.cyan}Usage: ${JSON.stringify(response.data.usage)}${colors.reset}`);
+      return true;
+    } else {
+      console.log(`${colors.red}❌ Codestral FIM API test failed: Unexpected response format${colors.reset}`);
+      console.log(`${colors.yellow}Response: ${JSON.stringify(response.data)}${colors.reset}`);
+      return false;
+    }
+  } catch (error) {
+    console.log(`${colors.red}❌ Codestral FIM API test failed: ${error.message}${colors.reset}`);
+    if (error.response) {
+      console.log(`${colors.yellow}Status: ${error.response.status}${colors.reset}`);
+      console.log(`${colors.yellow}Response: ${JSON.stringify(error.response.data)}${colors.reset}`);
+    }
+    return false;
+  }
+}
+
 // Run all tests
 async function runTests() {
   console.log('');
@@ -167,16 +225,20 @@ async function runTests() {
   const codestralResult = await testCodestralAPI();
   
   console.log('');
+  const fimResult = await testCodestralFimAPI();
+  
+  console.log('');
   console.log(`${colors.blue}${colors.bold}==============================================${colors.reset}`);
   console.log(`${colors.blue}${colors.bold}                 Test Results                ${colors.reset}`);
   console.log(`${colors.blue}${colors.bold}==============================================${colors.reset}`);
   console.log('');
   
-  console.log(`Mistral AI Chat API: ${mistralResult ? colors.green + 'PASS' : colors.red + 'FAIL'}${colors.reset}`);
-  console.log(`Codestral Code API:  ${codestralResult ? colors.green + 'PASS' : colors.red + 'FAIL'}${colors.reset}`);
+  console.log(`Mistral AI Chat API:  ${mistralResult ? colors.green + 'PASS' : colors.red + 'FAIL'}${colors.reset}`);
+  console.log(`Codestral Code API:   ${codestralResult ? colors.green + 'PASS' : colors.red + 'FAIL'}${colors.reset}`);
+  console.log(`Codestral FIM API:    ${fimResult ? colors.green + 'PASS' : colors.red + 'FAIL'}${colors.reset}`);
   
   console.log('');
-  if (mistralResult && codestralResult) {
+  if (mistralResult && codestralResult && fimResult) {
     console.log(`${colors.green}${colors.bold}All tests passed! Mistral AI integration is working correctly.${colors.reset}`);
   } else if (!MISTRAL_API_KEY && !CODESTRAL_API_KEY) {
     console.log(`${colors.red}${colors.bold}No API keys are set. Please configure your environment variables.${colors.reset}`);
@@ -188,6 +250,7 @@ async function runTests() {
   console.log(`${colors.cyan}For more information, visit:${colors.reset}`);
   console.log(`${colors.cyan}- Mistral AI documentation: https://docs.mistral.ai/api/`);
   console.log(`${colors.cyan}- Codestral documentation: https://console.mistral.ai/codestral/`);
+  console.log(`${colors.cyan}- FIM API documentation: https://docs.mistral.ai/api/#fill-in-the-middle`);
 }
 
 // Run all tests

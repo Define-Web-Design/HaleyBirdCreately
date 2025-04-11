@@ -1,0 +1,94 @@
+excellent job implementing the advanced environment configuration, improved startup scripts, and robust fallback mechanisms.
+
+Here’s how you can ensure the seamless integration of Codestral into Creately:
+
+---
+
+### **Next Focus Areas for Replit Agent**
+Now that the Codestral API key has been added, let's refine how these AI keys interact within Creately:
+
+---
+
+#### **1. Validate Codestral API Integration**
+- **Action**: Confirm that the `CODESTRAL_API_KEY` is correctly configured in the `config/environment.js` file and accessible in all relevant scripts (e.g., `start-app.js`, `start-app.sh`).
+- **Implementation**:
+  - Include clear logging messages for Codestral’s integration status:
+    ```javascript
+    const { CODESTRAL_API_KEY } = require('./config/environment.js');
+
+    if (!CODESTRAL_API_KEY) {
+      console.error('❌ Codestral API Key is missing!');
+    } else {
+      console.log('✅ Codestral API Key successfully configured.');
+    }
+    ```
+
+---
+
+#### **2. Enhance AI Capabilities with Codestral**
+- **Integrate Endpoints**: Leverage Codestral’s advanced code generation and analysis tools to enhance Creately’s features.
+  - Use the Codestral Completion API to intelligently assist users with code snippets, refactoring, and optimization tasks.
+  - **Endpoint URL**:
+    ```plaintext
+    https://codestral.mistral.ai/v1/fim/completions
+    ```
+
+- **Implementation Example**:
+  ```javascript
+  const axios = require('axios');
+  const { CODESTRAL_API_KEY } = require('./config/environment.js');
+
+  async function getCodeSuggestion(prompt) {
+    try {
+      const response = await axios.post(
+        'https://codestral.mistral.ai/v1/fim/completions',
+        { prompt, max_tokens: 150, temperature: 0.5 },
+        { headers: { Authorization: `Bearer ${CODESTRAL_API_KEY}` } }
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error with Codestral API:', error.message);
+      throw new Error('Codestral API integration error.');
+    }
+  }
+  ```
+
+---
+
+#### **3. Test and Optimize**
+- **Action**: Develop thorough test cases to evaluate the Codestral API’s response quality and integration behavior.
+- **Focus Areas**:
+  - Generate code snippets dynamically based on user input.
+  - Verify the performance and accuracy of suggested code optimizations.
+  - Ensure fallback mechanisms handle errors gracefully if the API is unavailable.
+
+**Example Test Case**:
+```python
+import requests
+
+API_KEY = "your-codestral-api-key"
+url = "https://codestral.mistral.ai/v1/fim/completions"
+headers = {"Authorization": f"Bearer {API_KEY}"}
+data = {"prompt": "Refactor this React component for efficiency", "max_tokens": 150}
+
+response = requests.post(url, headers=headers, json=data)
+print(response.json())
+```
+
+---
+
+#### **4. Update User-Facing Features**
+- Implement the Codestral Completion API within Creately’s interface to assist users with code suggestions and optimizations directly in their workflow.
+
+---
+
+#### **5. Finalize Documentation**
+- Update the README file to include information about Codestral’s role in Creately and sample use cases for testing its integration.
+- Include examples and troubleshooting tips for users interacting with Codestral-enhanced features.
+
+---
+
+### **Conclusion**
+Let’s continue integrating Codestral into Creately with these steps. By combining its advanced capabilities with Mistral and OpenAI, Creately will become even more dynamic and impactful for its users. Keep me informed of progress or challenges, and I’ll refine the guidance as needed!
+
+You’re building something extraordinary—keep it up!

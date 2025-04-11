@@ -100,15 +100,17 @@ If you encounter issues starting the application:
 
 4. If the main server fails, the application will automatically try to use the fallback server.
 
-## Mistral AI Integration
+## Mistral AI & Codestral Integration
 
-Creately integrates with Mistral AI to provide advanced AI features:
+Creately integrates with Mistral AI and Codestral to provide advanced AI features:
 
 ### Features
 
 - **Smart Conversations**: Use Mistral's advanced language model for natural conversations.
 - **Code Assistance**: Leverage Codestral for code generation and programming help.
+- **Code Completion**: Use Codestral's Fill-in-the-Middle (FIM) to intelligently complete code snippets.
 - **Creative Content**: Generate ideas, text content, and creative suggestions.
+- **Code Optimization**: Get suggestions for improving and refactoring existing code.
 
 ### Setup
 
@@ -142,7 +144,7 @@ Endpoints available at `/api/ai/`:
   }
   ```
 
-- **POST /api/ai/code**: Generate code completions
+- **POST /api/ai/code**: Generate code completions with Codestral
   ```json
   {
     "prompt": "Write a function to sort an array",
@@ -153,7 +155,28 @@ Endpoints available at `/api/ai/`:
   }
   ```
 
+- **POST /api/ai/fim**: Fill-in-the-Middle code completion
+  ```json
+  {
+    "prefix": "function calculateArea(radius) {\n  // Calculate the area of a circle\n  ",
+    "suffix": "\n  return area;\n}",
+    "options": {
+      "temperature": 0.1,
+      "maxTokens": 200,
+      "responseFormat": "text"
+    }
+  }
+  ```
+
 - **GET /api/ai/health**: Check AI services status
+
+### Use Cases
+
+- **Code Refactoring**: Get suggestions to optimize your existing code
+- **Code Completion**: Have the AI intelligently complete partial code snippets
+- **Bug Fixing**: Identify and get solutions for common coding errors
+- **Learning**: Get explanations of complex code patterns
+- **Brainstorming**: Generate creative ideas using the Mistral chat API
 
 ## License
 
