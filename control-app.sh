@@ -19,8 +19,8 @@ check_keep_alive() {
   echo -e "${YELLOW}Checking Keep-Alive Status:${NC}"
   
   # More reliable check using ps grep for all possible script names
-  if ps aux | grep -E "[n]ode.*keep-alive|[n]ode.*never-sleep|[n]ode.*replit-keep-alive" > /dev/null; then
-    local PID=$(ps aux | grep -E "[n]ode.*keep-alive|[n]ode.*never-sleep|[n]ode.*replit-keep-alive" | awk '{print $2}')
+  if ps aux | grep -E "[n]ode.*keep-alive|[n]ode.*never-sleep|[n]ode.*replit-keep-alive|[n]ode.*replit-ping" > /dev/null; then
+    local PID=$(ps aux | grep -E "[n]ode.*keep-alive|[n]ode.*never-sleep|[n]ode.*replit-keep-alive|[n]ode.*replit-ping" | awk '{print $2}')
     echo -e "${GREEN}Keep-Alive is RUNNING (PID: $PID)${NC}"
     echo -e "${BLUE}Your dev URL will stay active 24/7${NC}"
     
@@ -57,12 +57,12 @@ start_keep_alive() {
   
   # Start the keep-alive process using a more reliable method
   
-  # Start our simplified keep-alive script
+  # Start our reliable CommonJS keep-alive script
   echo -e "${BLUE}Starting keep-alive process...${NC}"
   
-  # Use the simplified and more compatible version
+  # Use the simplified CommonJS version for maximum compatibility
   NODE_PATH=$(which node)
-  nohup $NODE_PATH replit-keep-alive.js > logs/never-sleep.log 2>&1 &
+  nohup $NODE_PATH replit-ping.js > logs/never-sleep.log 2>&1 &
   
   local PID=$!
   echo $PID > .never-sleep.pid
@@ -90,7 +90,7 @@ stop_keep_alive() {
   echo -e "${YELLOW}Stopping Keep-Alive System...${NC}"
   
   # Find and kill keep-alive processes
-  local PIDS=$(ps aux | grep -E "[n]ode.*keep-alive|[n]ode.*never-sleep|[n]ode.*replit-keep-alive" | awk '{print $2}')
+  local PIDS=$(ps aux | grep -E "[n]ode.*keep-alive|[n]ode.*never-sleep|[n]ode.*replit-keep-alive|[n]ode.*replit-ping" | awk '{print $2}')
   
   if [ -z "$PIDS" ]; then
     echo -e "${YELLOW}No Keep-Alive processes found to stop.${NC}"
