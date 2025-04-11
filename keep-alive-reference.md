@@ -58,6 +58,8 @@ The keep-alive system was designed to prevent the Replit environment from going 
 | `client/src/utils/validation-runner.ts` | Validation workflow runner utility |
 | `client/src/utils/task-completion-validator.ts` | Utility to verify task completion in workflows |
 | `client/src/utils/workflow-validator.ts` | Workflow validation utility for checkpoint creation |
+| `client/src/utils/run-verification.ts` | Command-line script to run task verification system |
+| `client/src/utils/verify-all-tasks.ts` | Utility that verifies all tasks are complete before allowing checkpoint creation |
 | `scripts/verify-tasks.js` | CLI utility for task verification |
 | `scripts/verify-all-tasks.js` | Script for comprehensive task validation |
 | `scripts/pagespeed-insights.js` | Google PageSpeed Insights integration script |
