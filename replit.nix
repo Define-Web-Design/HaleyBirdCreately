@@ -1,5 +1,34 @@
 {pkgs}: {
   deps = [
+    pkgs.rPackages.mosum
+    pkgs.rPackages.Mu15v1_db
+    pkgs.rubyPackages_3_2.activejob
+    pkgs.python310Packages.webthing
+    pkgs.haskellPackages.data-r-tree
+    pkgs.perlPackages.iCalParser
+    pkgs.sbclPackages.coleslaw
+    pkgs.wordpress6_4
+    pkgs.rPackages.ympes
+    pkgs.rPackages.scorecardModelUtils
+    pkgs.gnomeExtensions.kimpanel
+    pkgs.purenix
+    pkgs.libsForQt5.qtwebkit
+    pkgs.rubyPackages_3_2.rack-test
+    pkgs.sbclPackages.cl-memcached
+    pkgs.libsForQt5.kblocks
+    pkgs.rPackages.opendotaR
+    pkgs.sbclPackages.qvm-examples
+    pkgs.vcmi
+    pkgs.haskellPackages.haskell-dap
+    pkgs.haskellPackages.solve
+    pkgs.rPackages.frailtyEM
+    pkgs.vimPlugins.neotest
+    pkgs.vimPlugins.vim-svelte
+    pkgs.rPackages.mda
+    pkgs.vimPlugins.vim-visual-multi
+    pkgs.python311Packages.pylibmc
+    pkgs.perlPackages.Testmysqld
+    pkgs.python311Packages.stestr
     pkgs.rPackages.neatR
     pkgs.deepin.dwayland
     pkgs.miniball
