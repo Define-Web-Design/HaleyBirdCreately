@@ -138,12 +138,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     mutationFn: async ({ username, password }: { username: string; password: string }) => {
       setError(null);
       try {
+        // If username contains @, treat it as email, otherwise use as username
+        const isEmail = username.includes('@');
+        const payload = isEmail 
+          ? { email: username, password } 
+          : { username, password };
+        
         const response = await apiRequest('/api/auth/login', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ email: username, password })
+          body: JSON.stringify(payload)
         });
         
         return response;
