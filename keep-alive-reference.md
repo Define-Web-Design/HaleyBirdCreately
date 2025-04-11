@@ -54,6 +54,13 @@ The keep-alive system was designed to prevent the Replit environment from going 
 | `client/src/utils/task-verification-api.ts` | Task verification API utility |
 | `client/src/utils/task-verification-cli.ts` | Task verification CLI utility |
 | `client/src/utils/consolidated-validation.js` | JavaScript version of the consolidated validation utility |
+| `client/src/utils/testing-plan.ts` | Comprehensive testing plan definition |
+| `client/src/utils/validation-runner.ts` | Validation workflow runner utility |
+| `scripts/keep-app-running.js` | Script to monitor and auto-restart the server process |
+| `test-color-extraction.js` | Script to test color extraction from websites using Puppeteer |
+| `test-db-connection.js` | Script to test the PostgreSQL database connection |
+| `test-server.js` | Simple Express test server for development |
+| `test-workflow.sh` | Shell script to start the test server |
 | `ensure-running.js` | Script to ensure the application stays running with auto-restart capability |
 | `fallback_run.sh` | Script to start the server using whatever runtime is available (Node.js, Python) |
 | `static_version.html` | Static HTML version of the application for when the main app can't be started |
@@ -110,3 +117,16 @@ The scripts used PID files for process tracking and signal handling for clean sh
 ## Why It Was Removed
 
 This system was implemented to keep the Replit development environment from going to sleep. Since the application has been successfully deployed to production, these mechanisms are no longer needed and have been removed to clean up the codebase.
+
+## Remaining References
+
+The following references to monitoring scripts still exist in package.json but haven't been removed due to restrictions on editing this file:
+
+```json
+"scripts": {
+  "status": "node scripts/run-app-status-check.js",
+  "monitor": "node scripts/monitor-app-status.js"
+}
+```
+
+The scripts themselves have been removed, so these npm scripts will not function if called.
