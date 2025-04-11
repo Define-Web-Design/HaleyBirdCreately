@@ -30,9 +30,15 @@ The keep-alive system was designed to prevent the Replit environment from going 
 | `scripts/ci-workflow.js` | Continuous Integration workflow script for automated testing and validation |
 | `scripts/performance-monitor.js` | Performance monitoring utility for web and iOS applications |
 | `scripts/monitor-app-status.js` | Advanced application monitoring system with automatic recovery capabilities |
+| `scripts/app-status.js` | Comprehensive application status monitoring utility |
+| `scripts/monitor-app-status.cjs` | Enterprise-grade monitoring and automatic recovery script |
+| `scripts/run-app-status-check.js` | Script to check if the application is running |
 | `ensure-running.js` | Script to ensure the application stays running with auto-restart capability |
 | `fallback_run.sh` | Script to start the server using whatever runtime is available (Node.js, Python) |
 | `static_version.html` | Static HTML version of the application for when the main app can't be started |
+| `bash_server.sh` | Bash-based HTTP server implementation for serving static content |
+| `start.sh` | Script to start the application with auto-restart capability |
+| `start-dev.sh` | Development startup script with auth bypass enabled |
 
 ### Additional Files
 
