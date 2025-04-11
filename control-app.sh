@@ -62,7 +62,7 @@ start_keep_alive() {
   
   # Use the simplified CommonJS version for maximum compatibility
   NODE_PATH=$(which node)
-  nohup $NODE_PATH replit-ping.js > logs/never-sleep.log 2>&1 &
+  nohup $NODE_PATH replit-ping.cjs > logs/never-sleep.log 2>&1 &
   
   local PID=$!
   echo $PID > .never-sleep.pid
