@@ -1,38 +1,94 @@
-# Clean Application Version
+# Creately - Advanced Intelligent Collaborative Platform
 
-This is a clean, optimized version of your application with only the essential dependencies and a streamlined folder structure.
+Creately is a cutting-edge collaborative platform leveraging AI to enhance team productivity through intelligent, adaptive technologies and engaging user experiences.
 
-## Structure
+## Quick Start
 
-The application is organized as follows:
+To run the application, use the following command:
 
-- `client/` - Frontend code
-  - `src/` - React application source
-    - `components/` - Reusable UI components
-    - `pages/` - Page components
-- `server/` - Backend code
-  - `services/` - Business logic services
-- `shared/` - Code shared between frontend and backend
-  - `schema.ts` - Database schema and types
+```bash
+./run-creately.sh
+```
 
-## Getting Started
+This script will automatically determine the best way to start the application in your environment.
 
-To run the application:
+## Manual Start Options
 
-1. Navigate to the clean_app directory
-2. Install dependencies: `npm install`
-3. Start the development server: `npm run dev`
+If you prefer to start the application manually, you have several options:
 
-## Features
+### Option 1: Using the enhanced starter script
 
-- Express backend with TypeScript
-- React frontend with TypeScript
-- PostgreSQL database with Drizzle ORM
-- Authentication with JWT
-- Route-based navigation with Wouter
+```bash
+./start-app.sh
+```
 
-## Development
+This script performs thorough environment checks and provides detailed feedback.
 
-- Use `npm run dev` to start the development server
-- Use `npm run db:push` to sync database schema changes
-- Use `npm run build` to create a production build
+### Option 2: Using the core starter
+
+```bash
+./start.sh
+```
+
+This is a simpler starter script with basic checks.
+
+### Option 3: Using Node.js directly
+
+```bash
+node start-app.js
+```
+
+This runs the JavaScript starter directly.
+
+## Core Technologies
+
+- React.js with TypeScript frontend
+- Tailwind CSS for responsive design
+- Advanced machine learning recommendation system
+- Real-time collaborative workspace
+- Adaptive UI with personalized interactions
+- PostgreSQL database for persistent storage
+
+## Environment Variables
+
+The application uses several environment variables that can be configured in the `.env` file:
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `PORT` | The port on which the server runs | 3000 |
+| `NODE_ENV` | Environment mode (development/production) | development |
+| `DATABASE_URL` | PostgreSQL database connection URL | Uses in-memory if not set |
+| `BYPASS_AUTH` | Enables authentication bypass (development only) | false |
+| `OPENAI_API_KEY` | OpenAI API key for AI features | (Required for AI features) |
+| `MISTRAL_API_KEY` | Mistral AI API key for alternative AI model | (Optional) |
+| `CODESTRAL_API_KEY` | Codestral API key for code generation | (Optional) |
+| `SESSION_SECRET` | Secret for session cookie encryption | creately-development-session-secret |
+
+## Troubleshooting
+
+If you encounter issues starting the application:
+
+1. Check if the starter scripts are executable:
+   ```bash
+   chmod +x start.sh start-app.sh run-creately.sh
+   ```
+
+2. Verify your environment variables:
+   ```bash
+   cat .env
+   ```
+
+3. Check database connectivity:
+   ```bash
+   echo $DATABASE_URL
+   ```
+
+4. If the main server fails, the application will automatically try to use the fallback server.
+
+## License
+
+© 2025 Creately. All rights reserved.
+
+---
+
+For more information, contact [info@creately.app](mailto:info@creately.app)
