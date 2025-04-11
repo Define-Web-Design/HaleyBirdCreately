@@ -55,9 +55,19 @@ start_keep_alive() {
   # Create logs directory if it doesn't exist
   mkdir -p logs
   
-  # Start the keep-alive process with full path to node
-  NODE_PATH=$(which node)
-  nohup $NODE_PATH keep-alive.js > logs/never-sleep.log 2>&1 &
+  # Start the keep-alive process using a more reliable method
+  
+  # First check if node is available using npx
+  if command -v npx &> /dev/null; then
+    echo -e "${BLUE}Using npx to run keep-alive...${NC}"
+    nohup npx -y tsx keep-alive.js > logs/never-sleep.log 2>&1 &
+  else
+    # Fallback to direct node if npx is not available
+    echo -e "${BLUE}Using node directly to run keep-alive...${NC}"
+    NODE_PATH=$(which node)
+    nohup $NODE_PATH keep-alive.js > logs/never-sleep.log 2>&1 &
+  fi
+  
   local PID=$!
   echo $PID > .never-sleep.pid
   
