@@ -374,7 +374,7 @@ args = "export PATH=\"./node_bin:$PATH\""
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "# Install all dependencies including dev dependencies"
+args = "# Install all dependencies"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
