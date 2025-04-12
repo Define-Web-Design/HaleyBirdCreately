@@ -35,7 +35,7 @@ app.use(performanceMonitor);
   try {
     await (storage as any).init();
     console.log('✅ Database initialized successfully');
-    
+
     // Test database connection with a simple query
     try {
       await (storage as any).testConnection();
@@ -51,40 +51,22 @@ app.use(performanceMonitor);
 // API routes
 app.use('/api', routes);
 
-// Vite or static file
-if (process.env.NODE_ENV === 'production') {
-  // In production, serve pre-built files
-  serveStatic(app);
-} else {
-  // In development, set up Vite dev server
-  const server = app.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}`);
-    setupVite(app, server).catch(console.error);
-  });
-  
-  // Don't immediately return as we want to keep the server running
-  return;
-}
-
-// Start server
-app.listen(port, () => {
-  console.log(`✅ Server running in ${process.env.NODE_ENV || 'development'} mode on port ${port}`);
-}); serving
+// Determine environment and start server accordingly
 const isDev = process.env.NODE_ENV !== 'production';
 if (isDev) {
   // Setup Vite development server
   const server = app.listen(port, '0.0.0.0');
-  setupVite(app, server);
+  setupVite(app, server).catch(console.error);
   console.log(`Development server running at http://0.0.0.0:${port}`);
 } else {
   // Serve static files in production
   serveStatic(app);
-  
+
   // Default route (for SPA routing)
   app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../dist/client/index.html'));
   });
-  
+
   // Start server
   app.listen(port, '0.0.0.0', () => {
     console.log(`Production server running at http://0.0.0.0:${port} (PORT=${process.env.PORT || 3000})`);

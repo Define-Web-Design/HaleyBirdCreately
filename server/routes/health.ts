@@ -1,34 +1,35 @@
-import { Request, Response, Router } from 'express';
-import os from 'os';
 
-const router = Router();
+import express from 'express';
+import storage from '../storage';
 
-/**
- * Comprehensive health check endpoint that provides detailed 
- * information about the system and application status
- */
-router.get('/', (req: Request, res: Response) => {
-  const memoryUsage = process.memoryUsage();
+const router = express.Router();
 
-  res.json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    version: process.env.npm_package_version || '1.0.0',
-    environment: process.env.NODE_ENV || 'development',
-    memory: {
-      rss: Math.round(memoryUsage.rss / 1024 / 1024) + 'MB',
-      heapTotal: Math.round(memoryUsage.heapTotal / 1024 / 1024) + 'MB',
-      heapUsed: Math.round(memoryUsage.heapUsed / 1024 / 1024) + 'MB',
-    },
-    system: {
-      platform: process.platform,
-      arch: process.arch,
-      cpus: os.cpus().length,
-      totalMemory: Math.round(os.totalmem() / 1024 / 1024) + 'MB',
-      freeMemory: Math.round(os.freemem() / 1024 / 1024) + 'MB',
+// Basic health check endpoint
+router.get('/', async (_req, res) => {
+  try {
+    // Check database connection
+    let dbStatus = 'unknown';
+    try {
+      const dbCheck = await (storage as any).testConnection();
+      dbStatus = dbCheck ? 'connected' : 'disconnected';
+    } catch (dbError) {
+      dbStatus = 'error';
+      console.error('Health check - DB error:', dbError);
     }
-  });
+
+    // Return system status
+    res.json({
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      environment: process.env.NODE_ENV,
+      database: dbStatus,
+      version: process.env.npm_package_version || 'unknown'
+    });
+  } catch (error) {
+    console.error('Health check error:', error);
+    res.status(500).json({ status: 'error', error: 'Internal server error' });
+  }
 });
 
 export default router;

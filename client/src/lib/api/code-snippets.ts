@@ -1,10 +1,16 @@
-import { apiRequest } from '../queryClient';
+
+/**
+ * API client for code snippets functionality
+ */
+import { queryClient } from '../queryClient';
+
+const API_BASE = '/api';
 
 export interface CodeSnippet {
   id: string;
   title: string;
-  language: string;
   code: string;
+  language: string;
   description?: string;
   tags?: string[];
   createdAt: string;
@@ -12,58 +18,101 @@ export interface CodeSnippet {
   userId?: string;
 }
 
-const API_BASE = '/api/snippets';
-
-export async function fetchSnippets(): Promise<CodeSnippet[]> {
+/**
+ * Fetch all snippets for the current user
+ */
+export const fetchSnippets = async (): Promise<CodeSnippet[]> => {
   try {
-    return await apiRequest(API_BASE);
+    const response = await fetch(`${API_BASE}/snippets`);
+    
+    if (!response.ok) {
+      if (response.status === 404) {
+        // This is expected if no snippets exist yet
+        return [];
+      }
+      throw new Error(`Error ${response.status}: ${response.statusText}`);
+    }
+    
+    return await response.json();
   } catch (error) {
-    console.error("Error fetching snippets:", error);
+    console.error('Error fetching snippets:', error);
+    // Return empty array instead of throwing to prevent UI crash
     return [];
   }
-}
+};
 
-export async function fetchSnippetById(id: string): Promise<CodeSnippet | null> {
-  try {
-    return await apiRequest(`${API_BASE}/${id}`);
-  } catch (error) {
-    console.error(`Error fetching snippet ${id}:`, error);
-    return null;
+/**
+ * Fetch a single snippet by ID
+ */
+export const fetchSnippetById = async (id: string): Promise<CodeSnippet> => {
+  const response = await fetch(`${API_BASE}/snippets/${id}`);
+  if (!response.ok) {
+    throw new Error(`Error ${response.status}: ${response.statusText}`);
   }
-}
+  return response.json();
+};
 
-export async function createSnippet(snippet: Omit<CodeSnippet, 'id' | 'createdAt' | 'updatedAt'>): Promise<CodeSnippet | null> {
-  try {
-    return await apiRequest(API_BASE, {
-      method: 'POST',
-      body: JSON.stringify(snippet)
-    });
-  } catch (error) {
-    console.error("Error creating snippet:", error);
-    return null;
+/**
+ * Create a new snippet
+ */
+export const createSnippet = async (snippet: Omit<CodeSnippet, 'id' | 'createdAt' | 'updatedAt'>): Promise<CodeSnippet> => {
+  const response = await fetch(`${API_BASE}/snippets`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(snippet),
+  });
+  
+  if (!response.ok) {
+    throw new Error(`Error ${response.status}: ${response.statusText}`);
   }
-}
+  
+  const newSnippet = await response.json();
+  
+  // Invalidate the snippets cache to refresh lists
+  queryClient.invalidateQueries(['snippets']);
+  
+  return newSnippet;
+};
 
-export async function updateSnippet(id: string, updates: Partial<CodeSnippet>): Promise<CodeSnippet | null> {
-  try {
-    return await apiRequest(`${API_BASE}/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(updates)
-    });
-  } catch (error) {
-    console.error(`Error updating snippet ${id}:`, error);
-    return null;
+/**
+ * Update an existing snippet
+ */
+export const updateSnippet = async (id: string, updates: Partial<CodeSnippet>): Promise<CodeSnippet> => {
+  const response = await fetch(`${API_BASE}/snippets/${id}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(updates),
+  });
+  
+  if (!response.ok) {
+    throw new Error(`Error ${response.status}: ${response.statusText}`);
   }
-}
+  
+  const updatedSnippet = await response.json();
+  
+  // Invalidate specific queries to refresh relevant data
+  queryClient.invalidateQueries(['snippets']);
+  queryClient.invalidateQueries(['snippet', id]);
+  
+  return updatedSnippet;
+};
 
-export async function deleteSnippet(id: string): Promise<boolean> {
-  try {
-    await apiRequest(`${API_BASE}/${id}`, {
-      method: 'DELETE'
-    });
-    return true;
-  } catch (error) {
-    console.error(`Error deleting snippet ${id}:`, error);
-    return false;
+/**
+ * Delete a snippet
+ */
+export const deleteSnippet = async (id: string): Promise<void> => {
+  const response = await fetch(`${API_BASE}/snippets/${id}`, {
+    method: 'DELETE',
+  });
+  
+  if (!response.ok) {
+    throw new Error(`Error ${response.status}: ${response.statusText}`);
   }
-}
+  
+  // Invalidate the snippets cache to refresh lists
+  queryClient.invalidateQueries(['snippets']);
+};

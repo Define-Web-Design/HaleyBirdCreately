@@ -1,26 +1,21 @@
-/**
- * Environment Variables Checker
- * 
- * This utility checks required environment variables and provides warnings
- * if any are missing. It also handles fallbacks for development.
- */
-
-// List of required environment variables
-const REQUIRED_ENV_VARS = [
-  // Database settings
-  'DATABASE_URL',
-  
-  // Security settings
-  'JWT_SECRET'
-];
 
 /**
- * Check if required environment variables are set and warn if not
+ * Checks for required environment variables and logs warnings if they're missing
+ * Sets reasonable fallbacks even in production for non-critical variables
  */
 export function checkRequiredEnvVars() {
+  // Always set these fallbacks regardless of environment
+  if (!process.env.PORT) process.env.PORT = '3000';
+  if (!process.env.NODE_ENV) process.env.NODE_ENV = 'production';
+  
+  const requiredVars = [
+    'DATABASE_URL',
+    'JWT_SECRET'
+  ];
+  
   const missing = [];
   
-  for (const envVar of REQUIRED_ENV_VARS) {
+  for (const envVar of requiredVars) {
     if (!process.env[envVar]) {
       missing.push(envVar);
     }
@@ -35,7 +30,7 @@ export function checkRequiredEnvVars() {
     // Setup default JWT_SECRET if missing in development
     if (missing.includes('JWT_SECRET')) {
       if (process.env.NODE_ENV !== 'production') {
-        process.env.JWT_SECRET = 'creately_dev_jwt_secret';
+        process.env.JWT_SECRET = 'dev_jwt_secret';
         console.warn('⚠️ Using default JWT_SECRET for development. DO NOT use in production!');
       } else {
         console.error('❌ ERROR: JWT_SECRET is required in production mode!');
@@ -44,10 +39,10 @@ export function checkRequiredEnvVars() {
     
     // Missing DATABASE_URL is critical
     if (missing.includes('DATABASE_URL')) {
-      console.error('❌ ERROR: DATABASE_URL is required for Creately to function properly.');
+      console.error('❌ ERROR: DATABASE_URL is required for the application to function properly.');
       console.error('   Database functionality will not be available.');
     }
   } else {
-    console.log('✅ All required environment variables are set');
+    console.log('✅ All required environment variables are set.');
   }
 }
