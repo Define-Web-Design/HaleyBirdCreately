@@ -146,6 +146,107 @@ class DbStorage implements IStorage {
     
     return result.length > 0;
   }
+
+  // Code snippets
+  async createCodeSnippet(snippet: Omit<schema.CodeSnippetInterface, 'id' | 'createdAt' | 'updatedAt' | 'viewCount'>): Promise<schema.CodeSnippetModel> {
+    // Generate a unique share ID
+    const shareId = this.generateShareId();
+    
+    const result = await this.db
+      .insert(schema.codeSnippets)
+      .values({
+        ...snippet,
+        shareId,
+        viewCount: 0
+      })
+      .returning();
+    
+    return result[0];
+  }
+
+  async getCodeSnippetById(id: string | number): Promise<schema.CodeSnippetModel | null> {
+    const snippets = await this.db
+      .select()
+      .from(schema.codeSnippets)
+      .where(eq(schema.codeSnippets.id, id));
+    
+    return snippets.length > 0 ? snippets[0] : null;
+  }
+
+  async getCodeSnippetByShareId(shareId: string): Promise<schema.CodeSnippetModel | null> {
+    const snippets = await this.db
+      .select()
+      .from(schema.codeSnippets)
+      .where(eq(schema.codeSnippets.shareId, shareId));
+    
+    return snippets.length > 0 ? snippets[0] : null;
+  }
+
+  async getCodeSnippetsByUserId(userId: string | number): Promise<schema.CodeSnippetModel[]> {
+    return this.db
+      .select()
+      .from(schema.codeSnippets)
+      .where(eq(schema.codeSnippets.userId, userId));
+  }
+
+  async getPublicCodeSnippets(): Promise<schema.CodeSnippetModel[]> {
+    return this.db
+      .select()
+      .from(schema.codeSnippets)
+      .where(eq(schema.codeSnippets.isPublic, true));
+  }
+
+  async updateCodeSnippet(id: string | number, data: Partial<schema.CodeSnippetInterface>): Promise<boolean> {
+    const result = await this.db
+      .update(schema.codeSnippets)
+      .set({
+        ...data,
+        updatedAt: new Date()
+      })
+      .where(eq(schema.codeSnippets.id, id))
+      .returning({ id: schema.codeSnippets.id });
+    
+    return result.length > 0;
+  }
+
+  async deleteCodeSnippet(id: string | number): Promise<boolean> {
+    const result = await this.db
+      .delete(schema.codeSnippets)
+      .where(eq(schema.codeSnippets.id, id))
+      .returning({ id: schema.codeSnippets.id });
+    
+    return result.length > 0;
+  }
+
+  async incrementCodeSnippetViewCount(id: string | number): Promise<boolean> {
+    const snippet = await this.getCodeSnippetById(id);
+    if (!snippet) return false;
+    
+    const result = await this.db
+      .update(schema.codeSnippets)
+      .set({
+        viewCount: snippet.viewCount + 1,
+        updatedAt: new Date()
+      })
+      .where(eq(schema.codeSnippets.id, id))
+      .returning({ id: schema.codeSnippets.id });
+    
+    return result.length > 0;
+  }
+
+  // Helper method to generate a unique share ID
+  private generateShareId(): string {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const length = 10;
+    let shareId = '';
+
+    for (let i = 0; i < length; i++) {
+      const randomIndex = Math.floor(Math.random() * characters.length);
+      shareId += characters.charAt(randomIndex);
+    }
+
+    return shareId;
+  }
 }
 
 // Create and export the appropriate storage implementation based on environment
@@ -276,6 +377,7 @@ class InMemoryStorage implements StorageInterface {
   private legalAcceptance: Map<string, any[]> = new Map();
   private assetOwnership: Map<string, any[]> = new Map();
   private securityAlerts: Map<string, any[]> = new Map();
+  private codeSnippets: Map<string, schema.CodeSnippetInterface> = new Map();
 
   // User management
   async createUser(user: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
@@ -933,6 +1035,115 @@ class InMemoryStorage implements StorageInterface {
   async getSecurityAlerts(userId: string | number): Promise<any[]> {
     const strUserId = String(userId);
     return this.securityAlerts.get(strUserId) || [];
+  }
+
+  // Code snippets
+  async createCodeSnippet(snippet: Omit<schema.CodeSnippetInterface, 'id' | 'createdAt' | 'updatedAt' | 'viewCount'>): Promise<string> {
+    const id = randomUUID();
+    const now = new Date();
+    const shareId = this.generateShareId();
+
+    this.codeSnippets.set(id, {
+      ...snippet,
+      id,
+      viewCount: 0,
+      shareId,
+      createdAt: now,
+      updatedAt: now
+    });
+
+    return id;
+  }
+
+  async getCodeSnippetById(id: string | number): Promise<schema.CodeSnippetInterface | null> {
+    return this.codeSnippets.get(String(id)) || null;
+  }
+
+  async getCodeSnippetByShareId(shareId: string): Promise<schema.CodeSnippetInterface | null> {
+    for (const snippet of this.codeSnippets.values()) {
+      if (snippet.shareId === shareId) {
+        return snippet;
+      }
+    }
+    return null;
+  }
+
+  async getCodeSnippetsByUserId(userId: string | number): Promise<schema.CodeSnippetInterface[]> {
+    const strUserId = String(userId);
+    const userSnippets: schema.CodeSnippetInterface[] = [];
+
+    for (const snippet of this.codeSnippets.values()) {
+      if (String(snippet.userId) === strUserId) {
+        userSnippets.push(snippet);
+      }
+    }
+
+    return userSnippets;
+  }
+
+  async getPublicCodeSnippets(): Promise<schema.CodeSnippetInterface[]> {
+    const publicSnippets: schema.CodeSnippetInterface[] = [];
+
+    for (const snippet of this.codeSnippets.values()) {
+      if (snippet.isPublic) {
+        publicSnippets.push(snippet);
+      }
+    }
+
+    return publicSnippets;
+  }
+
+  async updateCodeSnippet(id: string | number, data: Partial<schema.CodeSnippetInterface>): Promise<boolean> {
+    const strId = String(id);
+    const snippet = this.codeSnippets.get(strId);
+    if (!snippet) return false;
+
+    this.codeSnippets.set(strId, {
+      ...snippet,
+      ...data,
+      updatedAt: new Date()
+    });
+
+    return true;
+  }
+
+  async deleteCodeSnippet(id: string | number): Promise<boolean> {
+    return this.codeSnippets.delete(String(id));
+  }
+
+  async incrementCodeSnippetViewCount(id: string | number): Promise<boolean> {
+    const strId = String(id);
+    const snippet = this.codeSnippets.get(strId);
+    if (!snippet) return false;
+
+    this.codeSnippets.set(strId, {
+      ...snippet,
+      viewCount: snippet.viewCount + 1,
+      updatedAt: new Date()
+    });
+
+    return true;
+  }
+
+  // Helper method to generate a unique share ID
+  private generateShareId(): string {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const length = 10;
+    let shareId = '';
+
+    for (let i = 0; i < length; i++) {
+      const randomIndex = Math.floor(Math.random() * characters.length);
+      shareId += characters.charAt(randomIndex);
+    }
+
+    // Check if the share ID already exists and regenerate if needed
+    for (const snippet of this.codeSnippets.values()) {
+      if (snippet.shareId === shareId) {
+        return this.generateShareId(); // Recursively generate a new ID
+      }
+    }
+
+    return shareId;
   }
 }
 
