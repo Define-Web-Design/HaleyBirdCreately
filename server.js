@@ -98,43 +98,400 @@ const server = http.createServer((req, res) => {
     return;
   }
   
-  // New Mistral AI-powered color routes
+  // Enhanced AI-powered color routes with built-in fallbacks
+  // These routes handle color palette generation, design schemes, and accessible colors
+  // with automatic fallback between Mistral AI and OpenAI
+  
+  // Color palette generation endpoint
   if (pathname === '/api/colors/generate-palette' && req.method === 'POST') {
-    if (colorGenerator && MISTRAL_API_KEY) {
-      handleMistralPaletteGeneration(req, res);
-    } else {
-      res.writeHead(503, { 'Content-Type': 'application/json' });
+    try {
+      // Parse the request body
+      const data = await parseRequestBody(req);
+      const description = data.description || '';
+      const colors = data.colors || 5;
+      
+      if (!description) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          status: 'error',
+          message: 'Description is required for palette generation'
+        }));
+        return;
+      }
+      
+      // Check for AI service availability
+      let result;
+      let serviceUsed = 'none';
+      
+      // Try to use Mistral AI first (preferred)
+      if (colorGenerator && MISTRAL_API_KEY) {
+        try {
+          console.log(`Generating palette with Mistral AI: "${description}"`);
+          result = await colorGenerator.generatePalette(description, colors);
+          serviceUsed = 'mistral';
+        } catch (mistralError) {
+          console.error('Error using Mistral AI for palette generation:', mistralError);
+          // Fall through to OpenAI or default
+        }
+      }
+      
+      // Try OpenAI as fallback if Mistral failed or is unavailable
+      if (!result && OPENAI_API_KEY) {
+        try {
+          console.log(`Falling back to OpenAI for palette generation: "${description}"`);
+          
+          // Create a prompt for OpenAI
+          const prompt = `Generate a color palette of 5 hex codes for the mood: ${description}.`;
+          const systemPrompt = `You are a professional color designer. Generate a harmonious color palette of exactly 5 colors as hex codes for the given mood. Respond with a JSON object containing two properties: 'palette' as an array of 5 hex color codes, and 'explanation' as a short description of the palette.`;
+          
+          const openaiResponse = await callOpenAI(OPENAI_API_KEY, prompt, systemPrompt);
+          result = {
+            theme: description,
+            description: openaiResponse.explanation || `A palette for "${description}"`,
+            colors: openaiResponse.palette.map((hex, i) => ({
+              hex: hex,
+              name: `Color ${i+1}`,
+              role: i === 0 ? 'primary' : i === 1 ? 'secondary' : i === 2 ? 'accent' : i === 3 ? 'background' : 'text'
+            })),
+            source: 'openai',
+            timestamp: new Date().toISOString()
+          };
+          serviceUsed = 'openai';
+        } catch (openaiError) {
+          console.error('Error using OpenAI for palette generation:', openaiError);
+          // Fall through to default palettes
+        }
+      }
+      
+      // Use default palette as last resort
+      if (!result) {
+        console.log(`Using default palette for: "${description}"`);
+        // Find a matching default palette or use 'happy' as fallback
+        const lowerDesc = description.toLowerCase();
+        let matchedMood = 'happy';
+        
+        for (const mood of Object.keys(DEFAULT_PALETTES)) {
+          if (lowerDesc.includes(mood)) {
+            matchedMood = mood;
+            break;
+          }
+        }
+        
+        const defaultPalette = DEFAULT_PALETTES[matchedMood];
+        result = {
+          theme: description,
+          description: `A default ${matchedMood} palette as no AI services were available for custom generation.`,
+          palette: defaultPalette,
+          source: 'default',
+          timestamp: new Date().toISOString()
+        };
+        serviceUsed = 'default';
+      }
+      
+      // Return the result
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        status: 'success',
+        service_used: serviceUsed,
+        ...result
+      }));
+    } catch (error) {
+      console.error('Error in palette generation endpoint:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
         status: 'error',
-        message: 'Mistral AI-powered color generation is not available. Please configure MISTRAL_API_KEY.'
+        message: 'Server error during palette generation',
+        error: error.message
       }));
     }
     return;
   }
   
+  // Design scheme generation endpoint
   if (pathname === '/api/colors/design-scheme' && req.method === 'POST') {
-    if (colorGenerator && MISTRAL_API_KEY) {
-      handleDesignSchemeGeneration(req, res);
-    } else {
-      res.writeHead(503, { 'Content-Type': 'application/json' });
+    try {
+      // Parse the request body
+      const data = await parseRequestBody(req);
+      const designType = data.designType || '';
+      
+      if (!designType) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          status: 'error',
+          message: 'Design type is required for scheme generation'
+        }));
+        return;
+      }
+      
+      // Check for AI service availability
+      let result;
+      let serviceUsed = 'none';
+      
+      // Try to use our specialized service if available
+      if (colorGenerator) {
+        try {
+          console.log(`Generating design scheme with AI color generator: "${designType}"`);
+          result = await colorGenerator.generateDesignScheme(designType);
+          serviceUsed = result.source || 'service';
+        } catch (serviceError) {
+          console.error('Error using AI service for design scheme generation:', serviceError);
+          // Fall through to OpenAI or default
+        }
+      }
+      
+      // Use default scheme as last resort
+      if (!result) {
+        console.log(`Using default design scheme for: "${designType}"`);
+        // Find a matching default scheme or use 'website' as fallback
+        const lowerType = designType.toLowerCase();
+        let matchedType = 'website';
+        
+        if (lowerType.includes('mobile') || lowerType.includes('app')) {
+          matchedType = 'mobile app';
+        } else if (lowerType.includes('presentation') || lowerType.includes('slide')) {
+          matchedType = 'presentation';
+        }
+        
+        // Simple default schemes
+        const defaultSchemes = {
+          'website': {
+            scheme: {
+              primary: '#3498db',
+              secondary: '#2ecc71',
+              accent: '#9b59b6',
+              background: '#f5f5f5',
+              text: '#333333',
+              success: '#27ae60',
+              warning: '#f39c12',
+              error: '#e74c3c'
+            },
+            description: 'A balanced website color scheme with good contrast and readability'
+          },
+          'mobile app': {
+            scheme: {
+              primary: '#1abc9c',
+              secondary: '#3498db',
+              accent: '#9b59b6',
+              background: '#ffffff',
+              text: '#2c3e50',
+              success: '#2ecc71',
+              warning: '#f1c40f',
+              error: '#e74c3c'
+            },
+            description: 'A vibrant mobile app color scheme optimized for small screens and touch interactions'
+          },
+          'presentation': {
+            scheme: {
+              primary: '#3498db',
+              secondary: '#2ecc71',
+              accent: '#e74c3c',
+              background: '#ecf0f1',
+              text: '#2c3e50',
+              success: '#27ae60',
+              warning: '#f39c12',
+              error: '#c0392b'
+            },
+            description: 'A professional presentation color scheme with high contrast for readability'
+          }
+        };
+        
+        const defaultScheme = defaultSchemes[matchedType];
+        result = {
+          designType: designType,
+          description: defaultScheme.description,
+          scheme: defaultScheme.scheme,
+          recommendations: [
+            "Maintain good contrast between text and background colors",
+            "Use the primary color for main interface elements",
+            "Reserve accent colors for calls to action"
+          ],
+          source: 'default',
+          timestamp: new Date().toISOString()
+        };
+        serviceUsed = 'default';
+      }
+      
+      // Return the result
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        status: 'success',
+        service_used: serviceUsed,
+        ...result
+      }));
+    } catch (error) {
+      console.error('Error in design scheme generation endpoint:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
         status: 'error',
-        message: 'Mistral AI-powered design scheme generation is not available. Please configure MISTRAL_API_KEY.'
+        message: 'Server error during design scheme generation',
+        error: error.message
       }));
     }
     return;
   }
   
+  // Accessible colors generation endpoint
   if (pathname === '/api/colors/accessible-colors' && req.method === 'POST') {
-    if (colorGenerator && MISTRAL_API_KEY) {
-      handleAccessibleColorsGeneration(req, res);
-    } else {
-      res.writeHead(503, { 'Content-Type': 'application/json' });
+    try {
+      // Parse the request body
+      const data = await parseRequestBody(req);
+      const baseColor = data.baseColor || '';
+      const purpose = data.purpose || '';
+      
+      if (!baseColor) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          status: 'error',
+          message: 'Base color is required for accessible color generation'
+        }));
+        return;
+      }
+      
+      if (!purpose) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          status: 'error',
+          message: 'Purpose is required for accessible color generation'
+        }));
+        return;
+      }
+      
+      // Check color format
+      const hexColorRegex = /^#[0-9A-Fa-f]{6}$/;
+      if (!hexColorRegex.test(baseColor)) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          status: 'error',
+          message: 'Base color must be a valid hex color in format #RRGGBB'
+        }));
+        return;
+      }
+      
+      // Check for AI service availability
+      let result;
+      let serviceUsed = 'none';
+      
+      // Try to use our specialized service if available
+      if (colorGenerator) {
+        try {
+          console.log(`Generating accessible colors with AI color generator for ${baseColor} as ${purpose}`);
+          result = await colorGenerator.suggestAccessibleColors(baseColor, purpose);
+          serviceUsed = result.source || 'service';
+        } catch (serviceError) {
+          console.error('Error using AI service for accessible colors generation:', serviceError);
+          // Fall through to algorithmic approach
+        }
+      }
+      
+      // Use algorithmic approach as last resort
+      if (!result) {
+        console.log(`Using algorithmic accessible colors for ${baseColor} as ${purpose}`);
+        
+        // Convert hex to RGB
+        const hexToRgb = (hex) => {
+          const r = parseInt(hex.substring(1, 3), 16);
+          const g = parseInt(hex.substring(3, 5), 16);
+          const b = parseInt(hex.substring(5, 7), 16);
+          return { r, g, b };
+        };
+        
+        // Convert RGB to hex
+        const rgbToHex = (r, g, b) => {
+          return `#${Math.round(r).toString(16).padStart(2, '0')}${Math.round(g).toString(16).padStart(2, '0')}${Math.round(b).toString(16).padStart(2, '0')}`;
+        };
+        
+        // Calculate luminance for accessibility
+        const calculateLuminance = (r, g, b) => {
+          const a = [r, g, b].map(v => {
+            v /= 255;
+            return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+          });
+          return a[0] * 0.2126 + a[1] * 0.7152 + a[2] * 0.0722;
+        };
+        
+        // Generate variants
+        const rgb = hexToRgb(baseColor);
+        const luminance = calculateLuminance(rgb.r, rgb.g, rgb.b);
+        
+        // High contrast - increase or decrease brightness based on current luminance
+        const highContrast = luminance > 0.5
+          ? rgbToHex(Math.max(rgb.r - 50, 0), Math.max(rgb.g - 50, 0), Math.max(rgb.b - 50, 0))
+          : rgbToHex(Math.min(rgb.r + 50, 255), Math.min(rgb.g + 50, 255), Math.min(rgb.b + 50, 255));
+        
+        // Low light - reduce saturation
+        const lowLight = rgbToHex(
+          Math.round((rgb.r + 50) / 2),
+          Math.round((rgb.g + 50) / 2),
+          Math.round((rgb.b + 50) / 2)
+        );
+        
+        // Color blind friendly - adjust red/green balance
+        const colorBlindFriendly = rgbToHex(
+          Math.round((rgb.r + rgb.b) / 2),
+          Math.round((rgb.g + rgb.b) / 2),
+          rgb.b
+        );
+        
+        // Text color - black or white based on luminance
+        const textColor = luminance > 0.5 ? '#000000' : '#ffffff';
+        
+        // Border color - slightly darker/lighter than base
+        const borderColor = luminance > 0.5
+          ? rgbToHex(Math.max(rgb.r - 30, 0), Math.max(rgb.g - 30, 0), Math.max(rgb.b - 30, 0))
+          : rgbToHex(Math.min(rgb.r + 30, 255), Math.min(rgb.g + 30, 255), Math.min(rgb.b + 30, 255));
+        
+        result = {
+          baseColor: baseColor,
+          purpose: purpose,
+          variations: {
+            normal: baseColor,
+            highContrast: highContrast,
+            lowLight: lowLight,
+            colorBlindFriendly: colorBlindFriendly
+          },
+          complementaryColors: {
+            text: textColor,
+            border: borderColor
+          },
+          wcagRating: luminance > 0.2 ? 'AA' : 'AAA',
+          tips: [
+            `Ensure a contrast ratio of at least 4.5:1 for normal text`,
+            `Use larger text for better readability with this color`,
+            `Test your design with color blindness simulators`
+          ],
+          source: 'algorithm',
+          timestamp: new Date().toISOString()
+        };
+        serviceUsed = 'algorithm';
+      }
+      
+      // Return the result
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        status: 'success',
+        service_used: serviceUsed,
+        ...result
+      }));
+    } catch (error) {
+      console.error('Error in accessible colors generation endpoint:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
         status: 'error',
-        message: 'Mistral AI-powered accessible color generation is not available. Please configure MISTRAL_API_KEY.'
+        message: 'Server error during accessible colors generation',
+        error: error.message
       }));
     }
+    return;
+  }
+  
+  // Get default color palettes
+  if (pathname === '/api/colors/default-palettes' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      status: 'success',
+      message: 'Default palettes for when AI services are unavailable',
+      palettes: DEFAULT_PALETTES
+    }));
     return;
   }
 

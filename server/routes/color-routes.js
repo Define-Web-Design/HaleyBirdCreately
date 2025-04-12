@@ -1,7 +1,8 @@
 /**
  * Color Generator API Routes
  * 
- * This module provides API endpoints for AI-powered color palette generation features.
+ * This module provides API endpoints for AI-powered color palette generation features
+ * with automatic fallback between Mistral AI and OpenAI.
  */
 
 const express = require('express');
@@ -21,39 +22,33 @@ try {
   };
 }
 
-// Import color generator service
+// Import enhanced AI color generator service with fallbacks
 let colorGenerator;
 try {
-  colorGenerator = require('../services/color-generator');
+  colorGenerator = require('../services/ai-color-generator');
+  console.log('Successfully loaded AI color generator with fallback support');
 } catch (error) {
-  console.error('Failed to load color generator service:', error.message);
-  colorGenerator = null;
+  console.error('Failed to load AI color generator service:', error.message);
+  
+  // Try loading original color generator as fallback
+  try {
+    colorGenerator = require('../services/color-generator');
+    console.log('Loaded Mistral-only color generator as fallback');
+  } catch (secondError) {
+    console.error('Also failed to load original color generator:', secondError.message);
+    colorGenerator = null;
+  }
 }
 
 /**
- * Middleware to check if AI services are available
+ * Middleware to check if color generation services are available
  */
-function checkAIAvailability(req, res, next) {
+function checkColorGeneratorAvailability(req, res, next) {
   if (!colorGenerator) {
     return res.status(503).json({
       status: 'error',
-      message: 'AI Color Generator service is not available'
-    });
-  }
-  
-  // If the request specifically requires Mistral AI
-  if (req.path.includes('/mistral') && !environmentConfig.apiKeys.mistral) {
-    return res.status(503).json({
-      status: 'error',
-      message: 'Mistral AI service is not available. Please configure MISTRAL_API_KEY.'
-    });
-  }
-  
-  // If the request specifically requires OpenAI
-  if (req.path.includes('/openai') && !environmentConfig.apiKeys.openai) {
-    return res.status(503).json({
-      status: 'error',
-      message: 'OpenAI service is not available. Please configure OPENAI_API_KEY.'
+      message: 'Color Generator service is not available',
+      suggestion: 'Try again later or check server configuration'
     });
   }
   
@@ -66,15 +61,26 @@ function checkAIAvailability(req, res, next) {
  * @access Public
  */
 router.get('/status', (req, res) => {
-  const status = {
+  let servicesStatus = {
     mistral: environmentConfig.apiKeys.mistral ? 'available' : 'unavailable',
-    openai: environmentConfig.apiKeys.openai ? 'available' : 'unavailable'
+    openai: environmentConfig.apiKeys.openai ? 'available' : 'unavailable',
+    colorGeneratorLoaded: !!colorGenerator
   };
+  
+  // If enhanced generator is loaded, get detailed status
+  if (colorGenerator && colorGenerator.getServiceStatus) {
+    const detailedStatus = colorGenerator.getServiceStatus();
+    servicesStatus = {
+      ...servicesStatus,
+      aiServices: detailedStatus,
+      usingFallbacks: detailedStatus.usingFallbacks
+    };
+  }
   
   res.json({
     status: 'success',
-    services: status,
-    colorGeneratorLoaded: !!colorGenerator
+    services: servicesStatus,
+    timestamp: new Date().toISOString()
   });
 });
 
@@ -83,7 +89,7 @@ router.get('/status', (req, res) => {
  * @desc Generate a color palette based on a mood or description
  * @access Public
  */
-router.post('/generate-palette', checkAIAvailability, async (req, res) => {
+router.post('/generate-palette', checkColorGeneratorAvailability, async (req, res) => {
   try {
     const { description, colors } = req.body;
     
@@ -94,9 +100,12 @@ router.post('/generate-palette', checkAIAvailability, async (req, res) => {
       });
     }
     
+    console.log(`Generating palette for "${description}" with ${colors || 5} colors`);
     const result = await colorGenerator.generatePalette(description, colors || 5);
     
-    if (result.error) {
+    // Check for error in result
+    if (result && result.error) {
+      console.error('Error in palette generation:', result.error);
       return res.status(400).json({
         status: 'error',
         message: result.message || 'Failed to generate palette',
@@ -106,7 +115,8 @@ router.post('/generate-palette', checkAIAvailability, async (req, res) => {
     
     res.json({
       status: 'success',
-      ...result
+      ...result,
+      requestedAt: new Date().toISOString()
     });
   } catch (error) {
     console.error('Error in palette generation route:', error);
@@ -123,7 +133,7 @@ router.post('/generate-palette', checkAIAvailability, async (req, res) => {
  * @desc Generate color schemes for common design scenarios
  * @access Public
  */
-router.post('/design-scheme', checkAIAvailability, async (req, res) => {
+router.post('/design-scheme', checkColorGeneratorAvailability, async (req, res) => {
   try {
     const { designType } = req.body;
     
@@ -134,9 +144,12 @@ router.post('/design-scheme', checkAIAvailability, async (req, res) => {
       });
     }
     
+    console.log(`Generating design scheme for "${designType}"`);
     const result = await colorGenerator.generateDesignScheme(designType);
     
-    if (result.error) {
+    // Check for error in result
+    if (result && result.error) {
+      console.error('Error in design scheme generation:', result.error);
       return res.status(400).json({
         status: 'error',
         message: result.message || 'Failed to generate design scheme',
@@ -146,7 +159,8 @@ router.post('/design-scheme', checkAIAvailability, async (req, res) => {
     
     res.json({
       status: 'success',
-      ...result
+      ...result,
+      requestedAt: new Date().toISOString()
     });
   } catch (error) {
     console.error('Error in design scheme generation route:', error);
@@ -163,7 +177,7 @@ router.post('/design-scheme', checkAIAvailability, async (req, res) => {
  * @desc Generate accessible color suggestions based on a base color
  * @access Public
  */
-router.post('/accessible-colors', checkAIAvailability, async (req, res) => {
+router.post('/accessible-colors', checkColorGeneratorAvailability, async (req, res) => {
   try {
     const { baseColor, purpose } = req.body;
     
@@ -181,9 +195,21 @@ router.post('/accessible-colors', checkAIAvailability, async (req, res) => {
       });
     }
     
+    // Validate hex color format
+    const hexColorRegex = /^#[0-9A-Fa-f]{6}$/;
+    if (!hexColorRegex.test(baseColor)) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Base color must be a valid hex color in format #RRGGBB'
+      });
+    }
+    
+    console.log(`Generating accessible colors for ${baseColor} as ${purpose}`);
     const result = await colorGenerator.suggestAccessibleColors(baseColor, purpose);
     
-    if (result.error) {
+    // Check for error in result
+    if (result && result.error) {
+      console.error('Error in accessible colors generation:', result.error);
       return res.status(400).json({
         status: 'error',
         message: result.message || 'Failed to generate accessible colors',
@@ -193,7 +219,8 @@ router.post('/accessible-colors', checkAIAvailability, async (req, res) => {
     
     res.json({
       status: 'success',
-      ...result
+      ...result,
+      requestedAt: new Date().toISOString()
     });
   } catch (error) {
     console.error('Error in accessible colors generation route:', error);
@@ -206,40 +233,125 @@ router.post('/accessible-colors', checkAIAvailability, async (req, res) => {
 });
 
 /**
- * @route GET /api/colors/fallback-palettes
- * @desc Get fallback color palettes when AI services are unavailable
+ * @route GET /api/colors/default-palettes
+ * @desc Get default color palettes for common moods
  * @access Public
  */
-router.get('/fallback-palettes', (req, res) => {
-  // Default color palettes for common moods and themes
-  const fallbackPalettes = {
-    'happy': {
-      colors: ['#FFD166', '#06D6A0', '#118AB2', '#EF476F', '#073B4C'],
-      description: 'A cheerful palette with bright yellows, turquoise, and vibrant accents'
-    },
-    'calm': {
-      colors: ['#A8DADC', '#E0FBFC', '#457B9D', '#1D3557', '#F1FAEE'],
-      description: 'A tranquil palette with soft blues and gentle neutral tones'
-    },
-    'energetic': {
-      colors: ['#FF595E', '#FFCA3A', '#8AC926', '#1982C4', '#6A4C93'],
-      description: 'A vibrant palette with bold reds, yellows, and electric blues'
-    },
-    'professional': {
-      colors: ['#0A192F', '#112240', '#233554', '#8892B0', '#CCD6F6'],
-      description: 'A sleek palette with deep blues and subtle gray undertones'
-    },
-    'creative': {
-      colors: ['#F72585', '#7209B7', '#3A0CA3', '#4361EE', '#4CC9F0'],
-      description: 'An imaginative palette with bold purples and vibrant blues'
+router.get('/default-palettes', (req, res) => {
+  try {
+    // If enhanced generator is loaded, use its default palettes
+    let defaultPalettes = {};
+    
+    if (colorGenerator && colorGenerator.getDefaultPalettes) {
+      defaultPalettes = colorGenerator.getDefaultPalettes();
+    } else {
+      // Fallback default palettes
+      defaultPalettes = {
+        'happy': {
+          colors: [
+            { hex: '#FFD166', name: 'Sunny Yellow', role: 'primary' },
+            { hex: '#06D6A0', name: 'Bright Mint', role: 'secondary' },
+            { hex: '#118AB2', name: 'Ocean Blue', role: 'accent' },
+            { hex: '#EF476F', name: 'Coral Pink', role: 'accent' },
+            { hex: '#073B4C', name: 'Deep Navy', role: 'background' }
+          ],
+          description: 'A cheerful palette with bright yellows, turquoise, and vibrant accents'
+        },
+        'calm': {
+          colors: [
+            { hex: '#A8DADC', name: 'Soft Blue', role: 'primary' },
+            { hex: '#E0FBFC', name: 'Pale Cyan', role: 'background' },
+            { hex: '#457B9D', name: 'Steel Blue', role: 'secondary' },
+            { hex: '#1D3557', name: 'Navy Blue', role: 'accent' },
+            { hex: '#F1FAEE', name: 'Off White', role: 'text' }
+          ],
+          description: 'A tranquil palette with soft blues and gentle neutral tones'
+        },
+        'professional': {
+          colors: [
+            { hex: '#0A192F', name: 'Dark Navy', role: 'background' },
+            { hex: '#112240', name: 'Midnight Blue', role: 'secondary' },
+            { hex: '#233554', name: 'Slate Blue', role: 'accent' },
+            { hex: '#8892B0', name: 'Muted Gray', role: 'text' },
+            { hex: '#CCD6F6', name: 'Light Lavender', role: 'primary' }
+          ],
+          description: 'A sleek palette with deep blues and subtle gray undertones'
+        }
+      };
     }
-  };
-  
-  res.json({
-    status: 'success',
-    message: 'Fallback palettes for when AI services are unavailable',
-    palettes: fallbackPalettes
-  });
+    
+    res.json({
+      status: 'success',
+      message: 'Default palettes for common moods',
+      palettes: defaultPalettes
+    });
+  } catch (error) {
+    console.error('Error retrieving default palettes:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Server error retrieving default palettes',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * @route GET /api/colors/default-schemes
+ * @desc Get default design schemes
+ * @access Public
+ */
+router.get('/default-schemes', (req, res) => {
+  try {
+    // If enhanced generator is loaded, use its default schemes
+    let defaultSchemes = {};
+    
+    if (colorGenerator && colorGenerator.getDefaultDesignSchemes) {
+      defaultSchemes = colorGenerator.getDefaultDesignSchemes();
+    } else {
+      // Fallback default schemes
+      defaultSchemes = {
+        'website': {
+          scheme: {
+            primary: '#3498db',
+            secondary: '#2ecc71',
+            accent: '#9b59b6',
+            background: '#f5f5f5',
+            text: '#333333',
+            success: '#27ae60',
+            warning: '#f39c12',
+            error: '#e74c3c'
+          },
+          description: 'A balanced website color scheme with good contrast and readability'
+        },
+        'mobile app': {
+          scheme: {
+            primary: '#1abc9c',
+            secondary: '#3498db',
+            accent: '#9b59b6',
+            background: '#ffffff',
+            text: '#2c3e50',
+            success: '#2ecc71',
+            warning: '#f1c40f',
+            error: '#e74c3c'
+          },
+          description: 'A vibrant mobile app color scheme optimized for small screens and touch interactions'
+        }
+      };
+    }
+    
+    res.json({
+      status: 'success',
+      message: 'Default design schemes',
+      schemes: defaultSchemes
+    });
+  } catch (error) {
+    console.error('Error retrieving default schemes:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Server error retrieving default schemes',
+      error: error.message
+    });
+  }
 });
 
 module.exports = router;
