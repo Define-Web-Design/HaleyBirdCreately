@@ -1,114 +1,592 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Creately - Code Snippet Sharing</title>
+  <title>Creately Code Snippet Sharing</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      line-height: 1.6;
-      color: #333;
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 20px;
+      background-color: #f8f9fa;
+      padding-top: 20px;
     }
-    header {
-      text-align: center;
-      margin-bottom: 40px;
-    }
-    h1 {
-      color: #2563eb;
-    }
-    .snippet-container {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 20px;
+    .header {
+      background: #fff;
+      padding: 20px 0;
+      border-bottom: 1px solid #e3e3e3;
+      margin-bottom: 30px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
     }
     .snippet-card {
-      border: 1px solid #e5e7eb;
       border-radius: 8px;
-      padding: 20px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      transition: all 0.3s ease;
+      margin-bottom: 25px;
+      background: white;
+    }
+    .snippet-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.12);
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 20px;
+      background: #f5f7fa;
+    }
+    .card-body {
+      padding: 0;
     }
     pre {
-      background: #f3f4f6;
-      padding: 15px;
-      border-radius: 6px;
-      overflow-x: auto;
+      margin: 0;
+      border-radius: 0;
     }
-    .language-tag {
-      display: inline-block;
-      background: #2563eb;
+    code {
+      border-radius: 0;
+      font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 14px;
+      padding: 15px !important;
+    }
+    .code-container {
+      position: relative;
+    }
+    .copy-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
       color: white;
-      padding: 4px 8px;
       border-radius: 4px;
-      font-size: 0.8rem;
-      margin-top: 10px;
+      padding: 5px 10px;
+      font-size: 12px;
+      cursor: pointer;
+      z-index: 10;
     }
-    .empty-state {
-      text-align: center;
-      padding: 40px;
-      background: #f9fafb;
-      border-radius: 8px;
+    .copy-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+    .tag {
+      background: #e9ecef;
+      padding: 4px 8px;
+      border-radius: 50px;
+      font-size: 12px;
+      margin-right: 5px;
+      color: #495057;
+    }
+    .card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 20px;
+      background: white;
+      border-top: 1px solid #eee;
+    }
+    .create-new {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: #0d6efd;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      z-index: 100;
+    }
+    .create-new:hover {
+      background: #0b5ed7;
+      transform: scale(1.05);
+    }
+    .modal-body {
+      padding: 20px;
+    }
+    .language-select {
+      margin-bottom: 20px;
+    }
+    .code-editor {
+      font-family: monospace;
+      height: 250px;
+      resize: vertical;
+    }
+    .share-url {
+      font-family: monospace;
+      background: #f8f9fa;
+      padding: 10px;
+      border-radius: 4px;
+      word-break: break-all;
+    }
+    #shareUrlDisplay {
+      font-family: monospace;
+      background: #f5f7fa;
+      padding: 15px;
+      border-radius: 4px;
+      margin-top: 15px;
+      display: none;
+    }
+    .sharing-options {
+      margin-top: 15px;
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Creately - Code Snippet Sharing</h1>
-    <p>Share and collaborate on code snippets with your team</p>
-  </header>
-
-  <div class="snippet-container">
-    <div class="snippet-card">
-      <h3>Welcome to Creately</h3>
-      <pre><code>console.log("Hello, Creately!");</code></pre>
-      <span class="language-tag">JavaScript</span>
-    </div>
-    <div class="snippet-card">
-      <h3>React Component</h3>
-      <pre><code>function Button({ children, onClick }) {
-  return (
-    <button 
-      className="btn primary" 
-      onClick={onClick}
-    >
-      {children}
-    </button>
-  );
-}</code></pre>
-      <span class="language-tag">JSX</span>
-    </div>
-    <div class="snippet-card">
-      <h3>Database Query</h3>
-      <pre><code>const snippets = await db
-  .select()
-  .from(schema.codeSnippets)
-  .where(eq(schema.codeSnippets.isPublic, true))
-  .orderBy(sql\`\${schema.codeSnippets.createdAt} desc\`);</code></pre>
-      <span class="language-tag">TypeScript</span>
+  <div class="header">
+    <div class="container">
+      <div class="row align-items-center">
+        <div class="col-md-6">
+          <h1>Code Snippet Sharing</h1>
+          <p class="text-muted">Share and discover code snippets with the Creately community</p>
+        </div>
+        <div class="col-md-6 text-end">
+          <div class="btn-group" role="group">
+            <button type="button" class="btn btn-outline-primary active" id="allSnippetsBtn">All Snippets</button>
+            <button type="button" class="btn btn-outline-primary" id="publicSnippetsBtn">Public Snippets</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
-  <div class="api-status">
-    <p>API Status: <span id="status">Checking...</span></p>
+  <div class="container">
+    <div id="snippetsContainer" class="row"></div>
+    <div id="noSnippetsMessage" class="col-12 text-center py-5" style="display: none;">
+      <div class="alert alert-light">
+        <h4>No snippets found</h4>
+        <p>Click the "+" button to create your first code snippet.</p>
+      </div>
+    </div>
   </div>
 
+  <!-- Create New Snippet Button -->
+  <div class="create-new" data-bs-toggle="modal" data-bs-target="#createSnippetModal">
+    <span>+</span>
+  </div>
+
+  <!-- Create Snippet Modal -->
+  <div class="modal fade" id="createSnippetModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Create New Code Snippet</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="createSnippetForm">
+            <div class="mb-3">
+              <label for="snippetTitle" class="form-label">Title</label>
+              <input type="text" class="form-control" id="snippetTitle" placeholder="Enter a descriptive title" required>
+            </div>
+
+            <div class="mb-3">
+              <label for="snippetDescription" class="form-label">Description (optional)</label>
+              <input type="text" class="form-control" id="snippetDescription" placeholder="Brief description of what this code does">
+            </div>
+
+            <div class="mb-3 language-select">
+              <label for="snippetLanguage" class="form-label">Language</label>
+              <select class="form-select" id="snippetLanguage">
+                <option value="javascript">JavaScript</option>
+                <option value="python">Python</option>
+                <option value="java">Java</option>
+                <option value="csharp">C#</option>
+                <option value="cpp">C++</option>
+                <option value="ruby">Ruby</option>
+                <option value="php">PHP</option>
+                <option value="go">Go</option>
+                <option value="swift">Swift</option>
+                <option value="typescript">TypeScript</option>
+                <option value="html">HTML</option>
+                <option value="css">CSS</option>
+                <option value="json">JSON</option>
+                <option value="sql">SQL</option>
+                <option value="bash">Bash</option>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label for="snippetCode" class="form-label">Code</label>
+              <textarea class="form-control code-editor" id="snippetCode" placeholder="Paste your code here" required></textarea>
+            </div>
+
+            <div class="mb-3">
+              <label for="snippetTags" class="form-label">Tags (comma separated)</label>
+              <input type="text" class="form-control" id="snippetTags" placeholder="e.g. function, algorithm, sorting">
+            </div>
+
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" id="snippetIsPublic" checked>
+              <label class="form-check-label" for="snippetIsPublic">
+                Make this snippet public
+              </label>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" id="saveSnippetBtn">Save Snippet</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Share Snippet Modal -->
+  <div class="modal fade" id="shareSnippetModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Share Code Snippet</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p>Anyone with this link can view your code snippet:</p>
+          <div class="share-url" id="shareUrlDisplay"></div>
+          <div class="sharing-options mt-3">
+            <button type="button" class="btn btn-primary" id="copyShareUrlBtn">
+              <i class="bi bi-clipboard"></i> Copy Link
+            </button>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- View Snippet Modal -->
+  <div class="modal fade" id="viewSnippetModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="viewSnippetTitle"></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p id="viewSnippetDescription" class="text-muted"></p>
+          <div class="code-container mt-3">
+            <button class="copy-btn" id="viewCopyBtn">Copy</button>
+            <pre><code id="viewSnippetCode"></code></pre>
+          </div>
+          <div class="mt-3" id="viewSnippetTagsContainer"></div>
+        </div>
+        <div class="modal-footer">
+          <div class="me-auto">
+            <span class="text-muted">Views: <span id="viewSnippetCount">0</span></span>
+          </div>
+          <button type="button" class="btn btn-primary" id="viewShareBtn">Share</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
   <script>
-    // Check API health
-    fetch("/api/health")
-      .then(response => response.json())
-      .then(data => {
-        document.getElementById("status").textContent = "Online";
-        document.getElementById("status").style.color = "#22c55e";
-      })
-      .catch(error => {
-        document.getElementById("status").textContent = "Offline";
-        document.getElementById("status").style.color = "#ef4444";
+    // Global variables
+    let currentSnippets = [];
+    let currentSnippet = null;
+    const API_BASE_URL = '/api';
+    const baseUrl = window.location.origin;
+
+    // DOM Elements
+    const snippetsContainer = document.getElementById('snippetsContainer');
+    const noSnippetsMessage = document.getElementById('noSnippetsMessage');
+    const allSnippetsBtn = document.getElementById('allSnippetsBtn');
+    const publicSnippetsBtn = document.getElementById('publicSnippetsBtn');
+    const saveSnippetBtn = document.getElementById('saveSnippetBtn');
+    const shareUrlDisplay = document.getElementById('shareUrlDisplay');
+    const copyShareUrlBtn = document.getElementById('copyShareUrlBtn');
+    const viewShareBtn = document.getElementById('viewShareBtn');
+    const viewCopyBtn = document.getElementById('viewCopyBtn');
+
+    // Fetch and render code snippets
+    async function fetchSnippets(publicOnly = false) {
+      try {
+        const endpoint = publicOnly ? `${API_BASE_URL}/snippets/public/all` : `${API_BASE_URL}/snippets`;
+        const response = await fetch(endpoint);
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch snippets: ${response.status}`);
+        }
+        
+        const snippets = await response.json();
+        currentSnippets = snippets;
+        renderSnippets(snippets);
+      } catch (error) {
+        console.error('Error fetching snippets:', error);
+        snippetsContainer.innerHTML = `
+          <div class="col-12">
+            <div class="alert alert-danger">
+              Failed to fetch snippets: ${error.message}
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    // Render snippets to the page
+    function renderSnippets(snippets) {
+      snippetsContainer.innerHTML = '';
+      
+      if (snippets.length === 0) {
+        noSnippetsMessage.style.display = 'block';
+        return;
+      }
+      
+      noSnippetsMessage.style.display = 'none';
+      
+      snippets.forEach(snippet => {
+        const card = document.createElement('div');
+        card.className = 'col-md-6 col-lg-4';
+        
+        // Format tags
+        const tags = Array.isArray(snippet.tags) 
+          ? snippet.tags.map(tag => `<span class="tag">${tag}</span>`).join('')
+          : '';
+        
+        card.innerHTML = `
+          <div class="snippet-card" data-id="${snippet.id}" data-share-id="${snippet.share_id || ''}">
+            <div class="card-header">
+              <h5 class="m-0">${escapeHtml(snippet.title)}</h5>
+              <span class="badge ${snippet.is_public ? 'bg-success' : 'bg-secondary'}">
+                ${snippet.is_public ? 'Public' : 'Private'}
+              </span>
+            </div>
+            <div class="card-body">
+              <div class="code-container">
+                <button class="copy-btn">Copy</button>
+                <pre><code class="language-${snippet.language}">${escapeHtml(snippet.code)}</code></pre>
+              </div>
+            </div>
+            <div class="card-footer">
+              <div>
+                ${tags}
+              </div>
+              <div>
+                <span class="text-muted">Views: ${snippet.view_count || 0}</span>
+              </div>
+            </div>
+          </div>
+        `;
+        
+        snippetsContainer.appendChild(card);
       });
+      
+      // Initialize syntax highlighting
+      document.querySelectorAll('pre code').forEach(block => {
+        hljs.highlightElement(block);
+      });
+      
+      // Add event listeners to the copy buttons
+      document.querySelectorAll('.copy-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const code = e.target.closest('.code-container').querySelector('code').textContent;
+          copyToClipboard(code);
+          
+          // Provide feedback
+          const originalText = e.target.textContent;
+          e.target.textContent = 'Copied!';
+          setTimeout(() => {
+            e.target.textContent = originalText;
+          }, 1500);
+        });
+      });
+      
+      // Add click listeners to snippet cards
+      document.querySelectorAll('.snippet-card').forEach(card => {
+        card.addEventListener('click', () => {
+          const snippetId = parseInt(card.dataset.id);
+          const snippet = snippets.find(s => s.id === snippetId);
+          
+          if (snippet) {
+            viewSnippet(snippet);
+          }
+        });
+      });
+    }
+
+    // View a snippet in modal
+    function viewSnippet(snippet) {
+      currentSnippet = snippet;
+      
+      // Set modal content
+      document.getElementById('viewSnippetTitle').textContent = snippet.title;
+      document.getElementById('viewSnippetDescription').textContent = snippet.description || '';
+      document.getElementById('viewSnippetCode').textContent = snippet.code;
+      document.getElementById('viewSnippetCode').className = `language-${snippet.language}`;
+      document.getElementById('viewSnippetCount').textContent = snippet.view_count || 0;
+      
+      // Format tags
+      const tagsContainer = document.getElementById('viewSnippetTagsContainer');
+      tagsContainer.innerHTML = '';
+      
+      if (Array.isArray(snippet.tags) && snippet.tags.length > 0) {
+        snippet.tags.forEach(tag => {
+          const span = document.createElement('span');
+          span.className = 'tag';
+          span.textContent = tag;
+          tagsContainer.appendChild(span);
+        });
+      }
+      
+      // Apply syntax highlighting
+      hljs.highlightElement(document.getElementById('viewSnippetCode'));
+      
+      // Show the modal
+      const modal = new bootstrap.Modal(document.getElementById('viewSnippetModal'));
+      modal.show();
+    }
+
+    // Save a new snippet
+    async function saveSnippet() {
+      const titleInput = document.getElementById('snippetTitle');
+      const descriptionInput = document.getElementById('snippetDescription');
+      const codeInput = document.getElementById('snippetCode');
+      const languageSelect = document.getElementById('snippetLanguage');
+      const tagsInput = document.getElementById('snippetTags');
+      const isPublicCheckbox = document.getElementById('snippetIsPublic');
+      
+      // Validate inputs
+      if (!titleInput.value.trim() || !codeInput.value.trim()) {
+        alert('Title and code are required');
+        return;
+      }
+      
+      // Parse tags
+      const tags = tagsInput.value.trim() 
+        ? tagsInput.value.split(',').map(tag => tag.trim()) 
+        : [];
+      
+      // Prepare request data
+      const snippetData = {
+        title: titleInput.value.trim(),
+        description: descriptionInput.value.trim(),
+        code: codeInput.value,
+        language: languageSelect.value,
+        tags: tags,
+        isPublic: isPublicCheckbox.checked
+      };
+      
+      try {
+        const response = await fetch(`${API_BASE_URL}/snippets`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(snippetData)
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to save snippet: ${response.status}`);
+        }
+        
+        const newSnippet = await response.json();
+        
+        // Close the modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('createSnippetModal'));
+        modal.hide();
+        
+        // Show the share dialog
+        showShareDialog(newSnippet);
+        
+        // Refresh the snippets list
+        fetchSnippets(publicSnippetsBtn.classList.contains('active'));
+        
+        // Reset the form
+        document.getElementById('createSnippetForm').reset();
+      } catch (error) {
+        console.error('Error saving snippet:', error);
+        alert(`Failed to save snippet: ${error.message}`);
+      }
+    }
+
+    // Show the share dialog
+    function showShareDialog(snippet) {
+      const shareUrl = `${baseUrl}/share/${snippet.share_id}`;
+      shareUrlDisplay.textContent = shareUrl;
+      shareUrlDisplay.style.display = 'block';
+      
+      const modal = new bootstrap.Modal(document.getElementById('shareSnippetModal'));
+      modal.show();
+    }
+
+    // Copy text to clipboard
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text).catch(err => {
+        console.error('Failed to copy text:', err);
+      });
+    }
+
+    // Helper function to escape HTML
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Event Listeners
+    document.addEventListener('DOMContentLoaded', () => {
+      // Initial fetch
+      fetchSnippets();
+      
+      // Tab Switching
+      allSnippetsBtn.addEventListener('click', () => {
+        allSnippetsBtn.classList.add('active');
+        publicSnippetsBtn.classList.remove('active');
+        fetchSnippets(false);
+      });
+      
+      publicSnippetsBtn.addEventListener('click', () => {
+        publicSnippetsBtn.classList.add('active');
+        allSnippetsBtn.classList.remove('active');
+        fetchSnippets(true);
+      });
+      
+      // Save Snippet
+      saveSnippetBtn.addEventListener('click', saveSnippet);
+      
+      // Copy Share URL
+      copyShareUrlBtn.addEventListener('click', () => {
+        copyToClipboard(shareUrlDisplay.textContent);
+        copyShareUrlBtn.textContent = 'Copied!';
+        setTimeout(() => {
+          copyShareUrlBtn.textContent = 'Copy Link';
+        }, 1500);
+      });
+      
+      // Share Button in View Modal
+      viewShareBtn.addEventListener('click', () => {
+        if (currentSnippet) {
+          // Close the view modal
+          bootstrap.Modal.getInstance(document.getElementById('viewSnippetModal')).hide();
+          
+          // Show the share dialog
+          showShareDialog(currentSnippet);
+        }
+      });
+      
+      // Copy button in View Modal
+      viewCopyBtn.addEventListener('click', () => {
+        copyToClipboard(document.getElementById('viewSnippetCode').textContent);
+        viewCopyBtn.textContent = 'Copied!';
+        setTimeout(() => {
+          viewCopyBtn.textContent = 'Copy';
+        }, 1500);
+      });
+    });
   </script>
 </body>
 </html>
-
