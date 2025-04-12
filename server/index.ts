@@ -10,6 +10,10 @@ import { setupVite, serveStatic } from './vite';
 // Load environment variables
 dotenv.config();
 
+// Import environment variable check
+import { checkRequiredEnvVars } from './utils/env-check.js';
+checkRequiredEnvVars();
+
 // Get __dirname equivalent in ESM
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -26,9 +30,17 @@ app.use(express.json());
 (async () => {
   try {
     await (storage as any).init();
-    console.log('Database initialized');
+    console.log('✅ Database initialized successfully');
+    
+    // Test database connection with a simple query
+    try {
+      await (storage as any).testConnection();
+      console.log('✅ Database connection verified');
+    } catch (testError) {
+      console.error('❌ Database connection test failed:', testError);
+    }
   } catch (error) {
-    console.error('Error initializing database:', error);
+    console.error('❌ Error initializing database:', error);
   }
 })();
 
@@ -39,9 +51,9 @@ app.use('/api', routes);
 const isDev = process.env.NODE_ENV !== 'production';
 if (isDev) {
   // Setup Vite development server
-  const server = app.listen(port);
+  const server = app.listen(port, '0.0.0.0');
   setupVite(app, server);
-  console.log(`Development server running at http://localhost:${port}`);
+  console.log(`Development server running at http://0.0.0.0:${port}`);
 } else {
   // Serve static files in production
   serveStatic(app);
