@@ -3,11 +3,40 @@ import http from 'http';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import dotenv from 'dotenv';
 import crypto from 'crypto';
 
-// Load environment variables from .env file
-dotenv.config();
+// Load environment variables manually since we can't use dotenv
+try {
+  const envPath = path.join(process.cwd(), '.env');
+  if (fs.existsSync(envPath)) {
+    const envContent = fs.readFileSync(envPath, 'utf8');
+    const envLines = envContent.split('\n');
+    
+    for (const line of envLines) {
+      // Skip comments and empty lines
+      if (line.trim().startsWith('#') || !line.trim()) {
+        continue;
+      }
+      
+      // Parse KEY=VALUE format
+      const match = line.match(/^\s*([^=]+?)\s*=\s*(.*)?\s*$/);
+      if (match) {
+        const key = match[1];
+        // Remove quotes if present
+        let value = match[2] || '';
+        value = value.replace(/(^['"]|['"]$)/g, '');
+        
+        // Set environment variable
+        process.env[key] = value;
+      }
+    }
+    console.log('✅ Loaded environment variables from .env file');
+  } else {
+    console.warn('⚠️ No .env file found, using default environment variables');
+  }
+} catch (error) {
+  console.error('❌ Error loading environment variables:', error);
+}
 
 // Get current directory (ESM equivalent of __dirname)
 const __filename = fileURLToPath(import.meta.url);
