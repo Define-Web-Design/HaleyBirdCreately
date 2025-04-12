@@ -485,7 +485,7 @@ args = "#!/bin/bash"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "# Install dependencies including development dependencies "
+args = "# Install all dependencies including development dependencies"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
@@ -501,7 +501,7 @@ args = "npm run build"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "# Run the application"
+args = "# Run the application in production mode"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
