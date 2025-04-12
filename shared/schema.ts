@@ -46,7 +46,7 @@ export interface MoodCapsule {
 }
 
 // ColorPalette interface
-export interface ColorPalette {
+export interface ColorPaletteInterface {
   id: number;
   userId: number;
   name: string;
@@ -179,5 +179,5 @@ export type InsertCodeSnippet = z.infer<typeof insertCodeSnippetSchema>;
 export type User = typeof users.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
 export type RefreshToken = typeof refreshTokens.$inferSelect;
-export type ColorPalette = typeof colorPalettes.$inferSelect;
-export type CodeSnippet = typeof codeSnippets.$inferSelect;
+export type ColorPaletteModel = typeof colorPalettes.$inferSelect;
+export type CodeSnippetModel = typeof codeSnippets.$inferSelect;

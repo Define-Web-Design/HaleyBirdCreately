@@ -246,6 +246,16 @@ export interface StorageInterface {
   
   // Security
   getSecurityAlerts(userId: string | number): Promise<any[]>;
+  
+  // Code snippets
+  createCodeSnippet(snippet: Omit<schema.CodeSnippetInterface, 'id' | 'createdAt' | 'updatedAt' | 'viewCount'>): Promise<string | number>;
+  getCodeSnippetById(id: string | number): Promise<schema.CodeSnippetInterface | null>;
+  getCodeSnippetByShareId(shareId: string): Promise<schema.CodeSnippetInterface | null>;
+  getCodeSnippetsByUserId(userId: string | number): Promise<schema.CodeSnippetInterface[]>;
+  getPublicCodeSnippets(): Promise<schema.CodeSnippetInterface[]>;
+  updateCodeSnippet(id: string | number, data: Partial<schema.CodeSnippetInterface>): Promise<boolean>;
+  deleteCodeSnippet(id: string | number): Promise<boolean>;
+  incrementCodeSnippetViewCount(id: string | number): Promise<boolean>;
 }
 
 /**
