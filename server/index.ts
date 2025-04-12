@@ -53,7 +53,7 @@ if (isDev) {
   
   // Start server
   app.listen(port, '0.0.0.0', () => {
-    console.log(`Production server running at http://0.0.0.0:${port}`);
+    console.log(`Production server running at http://0.0.0.0:${port} (PORT=${process.env.PORT || 3000})`);
   });
 }
 
