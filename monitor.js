@@ -8,7 +8,7 @@ const path = require('path');
 
 const CHECK_INTERVAL = 60000; // Check every minute
 const PORT = process.env.PORT || 3001;
-const TARGET_URL = `http://localhost:${process.env.PORT || 3000}/api/health`;
+const TARGET_URL = `http://0.0.0.0:${process.env.PORT || 3000}/api/health`;
 
 // Make the monitoring directory
 const LOGS_DIR = path.join(__dirname, 'logs');
