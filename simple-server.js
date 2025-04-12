@@ -1,154 +1,245 @@
-const http = require('http');
-const fs = require('fs');
-const path = require('path');
+import http from 'http';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { parse } from 'url';
 
+// Get current directory
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Configuration
 const PORT = process.env.PORT || 3000;
 
-// Create a simple HTTP server
+// Sample data for code snippets
+const SNIPPETS = [
+  {
+    id: 1,
+    title: "React Button Component",
+    description: "A reusable button component with TypeScript",
+    code: `import React from 'react';
+
+interface ButtonProps {
+  children: React.ReactNode;
+  onClick?: () => void;
+  variant?: 'primary' | 'secondary' | 'danger';
+}
+
+export const Button: React.FC<ButtonProps> = ({ 
+  children, 
+  onClick, 
+  variant = 'primary' 
+}) => {
+  return (
+    <button 
+      className={\`btn btn-\${variant}\`}
+      onClick={onClick}
+    >
+      {children}
+    </button>
+  );
+};`,
+    language: "typescript",
+    tags: ["react", "typescript", "ui"],
+    isPublic: true,
+    viewCount: 42,
+    shareId: "abc123",
+    userId: 1,
+    createdAt: "2023-04-01T12:00:00Z",
+  },
+  {
+    id: 2,
+    title: "PostgreSQL Query with Drizzle ORM",
+    description: "Example of querying with Drizzle ORM",
+    code: `import { eq } from 'drizzle-orm';
+import { db } from '../db';
+import { users } from '../schema';
+
+// Get user by email
+async function getUserByEmail(email: string) {
+  const result = await db.select()
+    .from(users)
+    .where(eq(users.email, email))
+    .limit(1);
+  
+  return result[0] || null;
+}`,
+    language: "typescript",
+    tags: ["database", "drizzle", "postgres"],
+    isPublic: true,
+    viewCount: 17,
+    shareId: "def456",
+    userId: 2,
+    createdAt: "2023-04-05T14:30:00Z",
+  },
+  {
+    id: 3,
+    title: "API Route Handler",
+    description: "Express route handler for creating snippets",
+    code: `router.post('/snippets', async (req, res) => {
+  try {
+    // Ensure user is logged in
+    if (!req.user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    
+    // Validate request body
+    const validationResult = snippetSchema.safeParse({
+      ...req.body,
+      userId: req.user.id
+    });
+    
+    if (!validationResult.success) {
+      return res.status(400).json({ 
+        error: 'Invalid data',
+        details: validationResult.error.format()
+      });
+    }
+    
+    // Create the snippet
+    const snippet = await storage.createSnippet(validationResult.data);
+    
+    res.status(201).json(snippet);
+  } catch (error) {
+    console.error('Error creating snippet:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});`,
+    language: "javascript",
+    tags: ["express", "api", "validation"],
+    isPublic: true,
+    viewCount: 23,
+    shareId: "ghi789",
+    userId: 1,
+    createdAt: "2023-04-10T09:15:00Z",
+  }
+];
+
+// Create HTTP server
 const server = http.createServer((req, res) => {
+  const parsedUrl = parse(req.url || '/', true);
+  const pathname = parsedUrl.pathname || '/';
+
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  
+
+  // Handle preflight requests
   if (req.method === 'OPTIONS') {
     res.writeHead(200);
     res.end();
     return;
   }
-  
-  console.log(`${req.method} ${req.url}`);
-  
-  // Handle API requests
-  if (req.url.startsWith('/api')) {
-    res.setHeader('Content-Type', 'application/json');
-    
-    // Simple health check endpoint
-    if (req.url === '/api/health') {
-      res.writeHead(200);
-      res.end(JSON.stringify({ 
+
+  // API Routes
+  if (pathname.startsWith('/api/')) {
+    // Handle API health check
+    if (pathname === '/api/health') {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
         status: 'ok',
         message: 'Server is running',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        version: '1.0.0'
       }));
       return;
     }
-    
-    // Default API response
-    res.writeHead(404);
+
+    // Handle snippets API
+    if (pathname === '/api/snippets') {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(SNIPPETS));
+      return;
+    }
+
+    // Handle single snippet API
+    if (pathname.startsWith('/api/snippets/') && pathname.split('/').length === 4) {
+      const snippetId = parseInt(pathname.split('/')[3], 10);
+      const snippet = SNIPPETS.find(s => s.id === snippetId);
+      
+      if (snippet) {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(snippet));
+      } else {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Snippet not found' }));
+      }
+      return;
+    }
+
+    // Handle public snippets API
+    if (pathname === '/api/snippets/public/all') {
+      const publicSnippets = SNIPPETS.filter(s => s.isPublic);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(publicSnippets));
+      return;
+    }
+
+    // Default API response for unknown endpoints
+    res.writeHead(404, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ error: 'API endpoint not found' }));
     return;
   }
-  
-  // Serve index.html for root path
-  if (req.url === '/' || req.url === '/index.html') {
-    const indexPath = path.join(__dirname, 'public', 'index.html');
-    if (fs.existsSync(indexPath)) {
-      const content = fs.readFileSync(indexPath);
-      res.setHeader('Content-Type', 'text/html');
-      res.writeHead(200);
-      res.end(content);
-    } else {
-      // Create a default HTML page if index.html doesn't exist
-      res.setHeader('Content-Type', 'text/html');
-      res.writeHead(200);
-      res.end(`
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Creately - Code Snippet Sharing</title>
-          <style>
-            body {
-              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-              max-width: 800px;
-              margin: 0 auto;
-              padding: 2rem;
-              line-height: 1.6;
-            }
-            h1 { color: #333; }
-            .card {
-              border: 1px solid #ddd;
-              border-radius: 8px;
-              padding: 1.5rem;
-              margin-bottom: 1rem;
-              box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            }
-            pre {
-              background: #f5f5f5;
-              padding: 1rem;
-              border-radius: 4px;
-              overflow-x: auto;
-            }
-            button {
-              background: #4a7bff;
-              color: white;
-              border: none;
-              padding: 0.5rem 1rem;
-              border-radius: 4px;
-              cursor: pointer;
-            }
-            button:hover {
-              background: #3a6bef;
-            }
-          </style>
-        </head>
-        <body>
-          <h1>Creately - Code Snippet Sharing</h1>
-          <div class="card">
-            <h2>Sample Code Snippet</h2>
-            <pre><code>function greet(name) {
-  return \`Hello, \${name}!\`;
-}
 
-console.log(greet('World'));</code></pre>
-            <p>Language: JavaScript</p>
-            <button>Copy Code</button>
-          </div>
-          <p>Server is running. API health check available at <a href="/api/health">/api/health</a></p>
-        </body>
-        </html>
-      `);
-    }
-    return;
-  }
+  // Static file handling
+  let filePath = './public' + (pathname === '/' ? '/index.html' : pathname);
   
-  // Handle static files
-  try {
-    const filePath = path.join(__dirname, 'public', req.url);
-    if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
-      const content = fs.readFileSync(filePath);
-      
-      // Set content type based on file extension
-      const ext = path.extname(filePath);
-      let contentType = 'text/plain';
-      
-      switch (ext) {
-        case '.html': contentType = 'text/html'; break;
-        case '.css': contentType = 'text/css'; break;
-        case '.js': contentType = 'text/javascript'; break;
-        case '.json': contentType = 'application/json'; break;
-        case '.png': contentType = 'image/png'; break;
-        case '.jpg': contentType = 'image/jpeg'; break;
-        case '.svg': contentType = 'image/svg+xml'; break;
+  const extname = path.extname(filePath);
+  let contentType = 'text/html';
+  
+  switch (extname) {
+    case '.js':
+      contentType = 'text/javascript';
+      break;
+    case '.css':
+      contentType = 'text/css';
+      break;
+    case '.json':
+      contentType = 'application/json';
+      break;
+    case '.png':
+      contentType = 'image/png';
+      break;
+    case '.jpg':
+      contentType = 'image/jpg';
+      break;
+    case '.svg':
+      contentType = 'image/svg+xml';
+      break;
+  }
+
+  fs.readFile(filePath, (err, content) => {
+    if (err) {
+      if (err.code === 'ENOENT') {
+        // Page not found
+        fs.readFile('./public/index.html', (err, content) => {
+          if (err) {
+            // If even the index.html is not available, return a simple 404
+            res.writeHead(404);
+            res.end('404 Not Found');
+          } else {
+            // Serve index.html as fallback
+            res.writeHead(200, { 'Content-Type': 'text/html' });
+            res.end(content, 'utf-8');
+          }
+        });
+      } else {
+        // Server error
+        res.writeHead(500);
+        res.end(`Server Error: ${err.code}`);
       }
-      
-      res.setHeader('Content-Type', contentType);
-      res.writeHead(200);
-      res.end(content);
-      return;
+    } else {
+      // Success
+      res.writeHead(200, { 'Content-Type': contentType });
+      res.end(content, 'utf-8');
     }
-  } catch (err) {
-    console.error('Error serving static file:', err);
-  }
-  
-  // Default 404 response
-  res.writeHead(404);
-  res.end('Not Found');
+  });
 });
 
-// Start the server
+// Start server
 server.listen(PORT, () => {
   console.log(`Server running at http://0.0.0.0:${PORT}/`);
+  console.log(`API Health: http://0.0.0.0:${PORT}/api/health`);
+  console.log(`API Snippets: http://0.0.0.0:${PORT}/api/snippets`);
 });
