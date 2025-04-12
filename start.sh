@@ -1,50 +1,23 @@
 #!/bin/bash
 
-# Simple starter script for the Creately application
+echo "Starting Creately Code Snippet Server"
 
-# ANSI color codes
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
-BLUE='\033[0;34m'
-CYAN='\033[0;36m'
-NC='\033[0m' # No Color
-
-# Print banner
-echo -e "${BLUE}================================================${NC}"
-echo -e "${BLUE}             Creately Application              ${NC}"
-echo -e "${BLUE}================================================${NC}"
-echo ""
-
-# Check for server.js
-if [ -f "server.js" ]; then
-  echo -e "${GREEN}Found server.js - starting the application...${NC}"
-  
-  # Load environment variables from .env if it exists
-  if [ -f .env ]; then
-    echo -e "${CYAN}Loading environment from .env file...${NC}"
-    export $(cat .env | grep -v '^#' | xargs)
-  else
-    echo -e "${YELLOW}No .env file found. Using system environment variables.${NC}"
-  fi
-  
-  # Check if we have a node command
-  if command -v node &>/dev/null; then
-    echo -e "${GREEN}Using node to start the server...${NC}"
-    node server.js
-  else
-    # Try to use npm
-    if command -v npm &>/dev/null; then
-      echo -e "${YELLOW}Node command not found, trying npm start...${NC}"
-      npm start
-    else
-      echo -e "${RED}Error: Neither node nor npm commands are available.${NC}"
-      echo -e "${RED}Please make sure Node.js is installed.${NC}"
-      exit 1
-    fi
-  fi
+# Try different Node.js paths
+NODE_PATH="/home/runner/workspace/node_bin/node"
+if [ -f "$NODE_PATH" ]; then
+  echo "Using Node.js at $NODE_PATH"
+  $NODE_PATH server.js
 else
-  echo -e "${RED}Error: server.js not found!${NC}"
-  echo -e "${RED}Please make sure you're in the correct directory.${NC}"
-  exit 1
+  # Check for 'node' command
+  if command -v node >/dev/null 2>&1; then
+    echo "Using system Node.js"
+    node server.js
+  # Check for global Node.js installations
+  elif [ -f "/nix/store/wfxq6w9bkp5dcfr8yb6789b0w7128gnb-nodejs-20.18.1/bin/node" ]; then
+    echo "Using Nix Node.js"
+    /nix/store/wfxq6w9bkp5dcfr8yb6789b0w7128gnb-nodejs-20.18.1/bin/node server.js
+  else
+    echo "ERROR: Could not find Node.js. Please install Node.js to run this server."
+    exit 1
+  fi
 fi
