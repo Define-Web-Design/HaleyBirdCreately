@@ -48,3 +48,16 @@ args = "npm run build"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "PORT=3000 NODE_ENV=production node dist/index.js"
+
+[[workflows.workflow]]
+name = "Monitor Server"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "chmod +x start-monitor.sh"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "./start-monitor.sh"
