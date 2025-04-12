@@ -20,7 +20,7 @@ pattern = "**/{*.js,*.jsx,*.ts,*.tsx}"
 start = "typescript-language-server --stdio"
 
 [deployment]
-run = ["sh", "-c", "NODE_ENV=production PORT=3000 node dist/index.js"]
+run = ["sh", "-c", "PORT=3000 NODE_ENV=production node dist/index.js"]
 deploymentTarget = "gce"
 build = ["sh", "-c", "npm run build"]
 
@@ -38,8 +38,12 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
+args = "npm install"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
 args = "npm run build"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npm start"
+args = "PORT=3000 NODE_ENV=production node dist/index.js"
