@@ -374,7 +374,7 @@ args = "export PATH=\"./node_bin:$PATH\""
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "# Install dependencies and build"
+args = "# Install all dependencies including dev dependencies"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
@@ -382,11 +382,15 @@ args = "npm install"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
+args = "# Build the application"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
 args = "npm run build"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "# Run the application"
+args = "# Run the application in production mode"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
