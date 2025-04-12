@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 import storage from './storage';
 import snippetRoutes from './routes/snippet-routes';
+import { spawn } from 'child_process'; // Added for process monitoring
 
 const router = express.Router();
 
@@ -14,18 +15,18 @@ router.get('/health', (req, res) => {
 // Middleware to verify JWT tokens
 const verifyToken = (req: any, res: any, next: any) => {
   const authHeader = req.headers.authorization;
-  
+
   if (!authHeader) {
     // Continue without user info
     return next();
   }
-  
+
   const token = authHeader.split(' ')[1];
-  
+
   if (!token) {
     return next();
   }
-  
+
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'default_secret');
     req.user = decoded;
@@ -48,27 +49,27 @@ router.post('/auth/register', async (req, res) => {
       email: z.string().email(),
       password: z.string().min(6)
     });
-    
+
     const validationResult = schema.safeParse(req.body);
-    
+
     if (!validationResult.success) {
       return res.status(400).json({ 
         error: 'Invalid data',
         details: validationResult.error.format()
       });
     }
-    
+
     const { username, email, password } = validationResult.data;
-    
+
     const user = await storage.registerUser(username, email, password);
-    
+
     // Create token
     const token = jwt.sign(
       { id: user.id, username: user.username, email: user.email, role: user.role },
       process.env.JWT_SECRET || 'default_secret',
       { expiresIn: '7d' }
     );
-    
+
     res.status(201).json({
       user: {
         id: user.id,
@@ -80,11 +81,11 @@ router.post('/auth/register', async (req, res) => {
     });
   } catch (error) {
     console.error('Error registering user:', error);
-    
+
     if ((error as any).code === '23505') { // PostgreSQL unique constraint violation
       return res.status(409).json({ error: 'Username or email already exists' });
     }
-    
+
     res.status(500).json({ error: 'An error occurred during registration' });
   }
 });
@@ -96,31 +97,31 @@ router.post('/auth/login', async (req, res) => {
       email: z.string().email(),
       password: z.string()
     });
-    
+
     const validationResult = schema.safeParse(req.body);
-    
+
     if (!validationResult.success) {
       return res.status(400).json({ 
         error: 'Invalid credentials',
         details: validationResult.error.format()
       });
     }
-    
+
     const { email, password } = validationResult.data;
-    
+
     const user = await storage.loginUser(email, password);
-    
+
     if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
-    
+
     // Create token
     const token = jwt.sign(
       { id: user.id, username: user.username, email: user.email, role: user.role },
       process.env.JWT_SECRET || 'default_secret',
       { expiresIn: '7d' }
     );
-    
+
     res.json({
       user: {
         id: user.id,
@@ -141,14 +142,14 @@ router.get('/auth/me', async (req, res) => {
   if (!req.user) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
-  
+
   try {
     const user = await storage.getUserById(req.user.id);
-    
+
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
-    
+
     res.json({
       user: {
         id: user.id,
