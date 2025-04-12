@@ -34,7 +34,7 @@ localPort = 3001
 externalPort = 3001
 
 [workflows]
-runButton = "Deploy Application"
+runButton = "Run Application"
 
 [[workflows.workflow]]
 name = "Build and Start Production"
@@ -289,3 +289,40 @@ args = "chmod +x deploy.sh"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "./deploy.sh"
+
+[[workflows.workflow]]
+name = "Run Application"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "#!/bin/bash"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Setup log directory"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "mkdir -p logs"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Use existing node installation or install if needed"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "export PATH=\"$PATH:./node_bin:$HOME/n/bin:$HOME/.n/bin\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node_bin/npm install"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node_bin/npm run build"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "NODE_ENV=production node_bin/node dist/index.js"
