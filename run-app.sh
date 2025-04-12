@@ -21,10 +21,10 @@ if ! command -v node &> /dev/null; then
   log "Node.js not found, installing..."
   
   # Try with multiple mirrors to avoid connectivity issues
-  if curl -fsSL https://npm.im/n | bash -s -- -y latest; then
-    log "Successfully installed Node.js using npm.im"
-  elif curl -fsSL https://raw.githubusercontent.com/tj/n/master/bin/n | bash -s -- -y latest; then
+  if curl -fsSL https://raw.githubusercontent.com/tj/n/master/bin/n | bash -s -- -y latest; then
     log "Successfully installed Node.js using GitHub mirror"
+  elif curl -fsSL https://githubusercontent.com/tj/n/master/bin/n | bash -s -- -y latest; then
+    log "Successfully installed Node.js using GitHub alternate"
   elif curl -fsSL https://nodejs.org/dist/v20.0.0/node-v20.0.0-linux-x64.tar.gz -o node.tar.gz; then
     mkdir -p ./node_bin
     tar -xzf node.tar.gz -C ./node_bin --strip-components=1
