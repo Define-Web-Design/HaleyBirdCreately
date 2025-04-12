@@ -2,9 +2,14 @@
 /**
  * Simple server monitoring script
  */
-const http = require('http');
-const fs = require('fs');
-const path = require('path');
+import http from 'http';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// Get current directory in ESM
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const CHECK_INTERVAL = 60000; // Check every minute
 const PORT = process.env.PORT || 3001;
