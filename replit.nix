@@ -1,5 +1,6 @@
 {pkgs}: {
   deps = [
+    pkgs.netcat
     pkgs.rPackages.mosum
     pkgs.rPackages.Mu15v1_db
     pkgs.rubyPackages_3_2.activejob
