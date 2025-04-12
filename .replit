@@ -39,11 +39,11 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npm install"
+args = "node_bin/npm install"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npm run build"
+args = "node_bin/npm run build"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
