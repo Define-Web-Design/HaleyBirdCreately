@@ -10,6 +10,25 @@ export enum ContentSentiment {
   MIXED = 'MIXED'
 }
 
+// Programming language enum for code snippets
+export enum ProgrammingLanguage {
+  JAVASCRIPT = 'javascript',
+  TYPESCRIPT = 'typescript',
+  PYTHON = 'python',
+  JAVA = 'java',
+  CSHARP = 'csharp',
+  PHP = 'php',
+  RUBY = 'ruby',
+  GO = 'go',
+  RUST = 'rust',
+  HTML = 'html',
+  CSS = 'css',
+  JSON = 'json',
+  MARKDOWN = 'markdown',
+  TEXT = 'text',
+  OTHER = 'other'
+}
+
 // MoodCapsule interface
 export interface MoodCapsule {
   id: number;
@@ -22,6 +41,22 @@ export interface MoodCapsule {
   contentIds: number[];
   thumbnailUrl?: string;
   isArchived: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+// CodeSnippet interface
+export interface CodeSnippet {
+  id: number;
+  userId: number;
+  title: string;
+  description?: string;
+  code: string;
+  language: ProgrammingLanguage;
+  tags?: string[];
+  isPublic: boolean;
+  viewCount: number;
+  shareId: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -64,6 +99,22 @@ export const refreshTokens = pgTable('refresh_tokens', {
   userAgent: text('user_agent')
 });
 
+// Code Snippets Table
+export const codeSnippets = pgTable('code_snippets', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull().references(() => users.id),
+  title: varchar('title', { length: 100 }).notNull(),
+  description: text('description'),
+  code: text('code').notNull(),
+  language: varchar('language', { length: 20 }).notNull(),
+  tags: text('tags').array(),
+  isPublic: boolean('is_public').default(true).notNull(),
+  viewCount: integer('view_count').default(0).notNull(),
+  shareId: varchar('share_id', { length: 20 }).notNull().unique(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull()
+});
+
 // Define insert schemas with zod
 export const insertUserSchema = createInsertSchema(users)
   .omit({ id: true, passwordHash: true, createdAt: true, updatedAt: true, lastLogin: true })
@@ -77,10 +128,18 @@ export const insertSessionSchema = createInsertSchema(sessions)
 export const insertRefreshTokenSchema = createInsertSchema(refreshTokens)
   .omit({ id: true, createdAt: true, isRevoked: true });
 
+export const insertCodeSnippetSchema = createInsertSchema(codeSnippets)
+  .omit({ id: true, viewCount: true, createdAt: true, updatedAt: true })
+  .extend({
+    tags: z.array(z.string()).optional()
+  });
+
 // Define types based on the schemas
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertSession = z.infer<typeof insertSessionSchema>;
 export type InsertRefreshToken = z.infer<typeof insertRefreshTokenSchema>;
+export type InsertCodeSnippet = z.infer<typeof insertCodeSnippetSchema>;
 export type User = typeof users.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
 export type RefreshToken = typeof refreshTokens.$inferSelect;
+export type CodeSnippet = typeof codeSnippets.$inferSelect;
