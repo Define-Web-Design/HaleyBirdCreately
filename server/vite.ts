@@ -33,20 +33,20 @@ export async function setupVite(app: Application, server: Server) {
  * Serves static files for production
  */
 export function serveStatic(app: Application) {
-  const DIST_DIR = path.resolve(__dirname, '../dist');
+  const CLIENT_DIST_DIR = path.resolve(__dirname, '../dist/client');
   
-  if (!fs.existsSync(DIST_DIR)) {
-    console.error(`Production build directory not found: ${DIST_DIR}`);
+  if (!fs.existsSync(CLIENT_DIST_DIR)) {
+    console.error(`Production build directory not found: ${CLIENT_DIST_DIR}`);
     console.error('Please run "npm run build" before starting in production mode');
     process.exit(1);
   }
   
   // Serve static files
-  app.use(express.static(DIST_DIR));
+  app.use(express.static(CLIENT_DIST_DIR));
   
   // Serve index.html for all other routes for SPA
   app.get('*', (req, res) => {
-    res.sendFile(path.join(DIST_DIR, 'index.html'));
+    res.sendFile(path.join(CLIENT_DIST_DIR, 'index.html'));
   });
   
   console.log('Static files configured for production');

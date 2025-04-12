@@ -51,7 +51,25 @@ app.use(performanceMonitor);
 // API routes
 app.use('/api', routes);
 
-// Vite or static file serving
+// Vite or static file
+if (process.env.NODE_ENV === 'production') {
+  // In production, serve pre-built files
+  serveStatic(app);
+} else {
+  // In development, set up Vite dev server
+  const server = app.listen(port, () => {
+    console.log(`Server running at http://localhost:${port}`);
+    setupVite(app, server).catch(console.error);
+  });
+  
+  // Don't immediately return as we want to keep the server running
+  return;
+}
+
+// Start server
+app.listen(port, () => {
+  console.log(`✅ Server running in ${process.env.NODE_ENV || 'development'} mode on port ${port}`);
+}); serving
 const isDev = process.env.NODE_ENV !== 'production';
 if (isDev) {
   // Setup Vite development server
