@@ -30,7 +30,7 @@ localPort = 3000
 externalPort = 80
 
 [workflows]
-runButton = "Build and Start Production"
+runButton = "Monitor Server with Node"
 
 [[workflows.workflow]]
 name = "Build and Start Production"
@@ -61,3 +61,12 @@ args = "chmod +x start-monitor.sh"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "./start-monitor.sh"
+
+[[workflows.workflow]]
+name = "Monitor Server with Node"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "./node_bin/node monitor.js"

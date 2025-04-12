@@ -1,4 +1,3 @@
-
 /**
  * Health Check Routes
  * 
@@ -18,19 +17,19 @@ router.get('/', (req, res) => {
     environment: process.env.NODE_ENV,
     uptime: process.uptime()
   };
-  
+
   log.info('Health check performed', { 
     requestId: req.requestId,
     ip: req.ip
   });
-  
+
   res.status(200).json(healthData);
 });
 
 // Detailed health check with more system information
 router.get('/detailed', (req, res) => {
   const memoryUsage = process.memoryUsage();
-  
+
   const healthData = {
     status: 'ok',
     timestamp: new Date().toISOString(),
@@ -44,13 +43,13 @@ router.get('/detailed', (req, res) => {
     },
     cpuUsage: process.cpuUsage()
   };
-  
+
   log.info('Detailed health check performed', { 
     requestId: req.requestId,
     ip: req.ip,
     memoryUsage: healthData.memory
   });
-  
+
   res.status(200).json(healthData);
 });
 
