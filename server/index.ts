@@ -52,7 +52,7 @@ if (isDev) {
   });
   
   // Start server
-  app.listen(port, () => {
+  app.listen(port, '0.0.0.0', () => {
     console.log(`Production server running at http://0.0.0.0:${port}`);
   });
 }
