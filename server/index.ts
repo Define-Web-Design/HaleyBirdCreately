@@ -26,6 +26,10 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
+// Import and use performance monitoring middleware
+import { performanceMonitor } from './middleware/performance';
+app.use(performanceMonitor);
+
 // Initialize database
 (async () => {
   try {

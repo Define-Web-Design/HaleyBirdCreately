@@ -1,21 +1,45 @@
 
-run = "bash start-server.sh"
-entrypoint = "simple-server.js"
+entrypoint = "server/index.ts"
+hidden = [".config", "package-lock.json"]
+compile = ["npm", "run", "build"]
 
-[languages]
-nodejs = "nodejs-20"
+run = "bash run-app.sh"
 
 [nix]
 channel = "stable-23_11"
 
-[hosting]
-route = "/"
-directory = "public"
+[env]
+PORT = "3000"
+NODE_ENV = "development"
+REPLIT_DISABLE_PACKAGE_LAYER = "1"
+
+[languages]
+[languages.javascript]
+pattern = "**/{*.js,*.jsx,*.ts,*.tsx}"
+[languages.javascript.languageServer]
+start = "typescript-language-server --stdio"
 
 [deployment]
-run = ["sh", "-c", "bash start-server.sh"]
-deploymentTarget = "cloudrun"
+run = ["sh", "-c", "NODE_ENV=production PORT=3000 node dist/index.js"]
+deploymentTarget = "gce"
+build = ["sh", "-c", "npm run build"]
 
 [[ports]]
 localPort = 3000
 externalPort = 80
+
+[workflows]
+runButton = "Build and Start Production"
+
+[[workflows.workflow]]
+name = "Build and Start Production"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run build"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm start"
