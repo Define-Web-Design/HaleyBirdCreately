@@ -34,7 +34,7 @@ localPort = 3001
 externalPort = 3001
 
 [workflows]
-runButton = "Build and Start App"
+runButton = "Optimized Build and Start"
 
 [[workflows.workflow]]
 name = "Build and Start Production"
@@ -506,3 +506,72 @@ args = "# Run the application in production mode"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "NODE_ENV=production node dist/index.js"
+
+[[workflows.workflow]]
+name = "Optimized Build and Start"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "#!/bin/bash"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Set environment variables"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "export PATH=\"$PATH:./node_bin\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "export NODE_ENV=development"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Create logs directory"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "mkdir -p logs"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Install dependencies if needed"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "if [ ! -d \"node_modules\" ]; then"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "  echo \"Installing dependencies...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "  npm install || npm install --legacy-peer-deps"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "fi"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run the application in development mode for faster iteration"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
