@@ -19,9 +19,29 @@ log "Starting application..."
 # Check for Node.js and install if needed
 if ! command -v node &> /dev/null; then
   log "Node.js not found, installing..."
-  curl -fsSL https://npm.im/n | bash -s -- -y latest
-  export PATH="$PATH:$HOME/n/bin:$HOME/.n/bin"
-  log "Node.js installed: $(node -v)"
+  
+  # Try with multiple mirrors to avoid connectivity issues
+  if curl -fsSL https://npm.im/n | bash -s -- -y latest; then
+    log "Successfully installed Node.js using npm.im"
+  elif curl -fsSL https://raw.githubusercontent.com/tj/n/master/bin/n | bash -s -- -y latest; then
+    log "Successfully installed Node.js using GitHub mirror"
+  elif curl -fsSL https://nodejs.org/dist/v20.0.0/node-v20.0.0-linux-x64.tar.gz -o node.tar.gz; then
+    mkdir -p ./node_bin
+    tar -xzf node.tar.gz -C ./node_bin --strip-components=1
+    export PATH="$PATH:$(pwd)/node_bin"
+    log "Installed Node.js from direct download"
+  else
+    log "WARNING: Could not install Node.js automatically, checking for alternative paths"
+    # Check for binary in various locations
+    if [ -f "./node_bin/node" ]; then
+      log "Found node in ./node_bin"
+      export PATH="$PATH:$(pwd)/node_bin"
+    fi
+  fi
+  
+  # Update PATH to include Node.js binaries
+  export PATH="$PATH:$HOME/n/bin:$HOME/.n/bin:./node_bin"
+  log "Node.js version: $(node -v || echo 'Not available')"
 fi
 
 # Install dependencies if needed

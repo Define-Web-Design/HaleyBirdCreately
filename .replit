@@ -34,7 +34,7 @@ localPort = 3001
 externalPort = 3001
 
 [workflows]
-runButton = "Robust Server"
+runButton = "Complete System with Fallbacks"
 
 [[workflows.workflow]]
 name = "Build and Start Production"
@@ -182,6 +182,43 @@ args = "bash -c \"chmod +x run-app.sh && ./run-app.sh\""
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "# Run the monitor in parallel"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "bash -c \"chmod +x start-monitor.sh && ./start-monitor.sh\""
+
+[[workflows.workflow]]
+name = "Complete System with Fallbacks"
+author = 40896524
+mode = "parallel"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "#!/bin/bash"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# First ensure logs directory exists"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "mkdir -p logs"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "chmod +x run-app.sh start-monitor.sh"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run the main application with enhanced error handling"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "bash -c \"chmod +x run-app.sh && ./run-app.sh || (echo 'Main server failed, attempting fallback' && node server/simple-server.js)\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run the monitor in parallel with its own error handling"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"

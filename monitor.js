@@ -43,8 +43,21 @@ function logMessage(message, level = 'INFO') {
 function checkServerHealth() {
   logMessage('Checking server health...');
   
+  // Create a timeout for the request
+  const timeout = setTimeout(() => {
+    logMessage('Health check timeout - server not responding', 'ERROR');
+    consecutiveFailures++;
+    
+    if (consecutiveFailures >= MAX_FAILURES) {
+      logMessage(`${consecutiveFailures} consecutive failures detected. Threshold reached.`, 'WARNING');
+      attemptServerRestart();
+    }
+  }, 5000); // 5 second timeout
+  
   try {
-    http.get(TARGET_URL, (res) => {
+    const req = http.get(TARGET_URL, (res) => {
+      clearTimeout(timeout);
+      
       if (res.statusCode === 200) {
         logMessage('Server is healthy', 'SUCCESS');
         consecutiveFailures = 0; // Reset counter on success
@@ -60,8 +73,10 @@ function checkServerHealth() {
       
       res.on('end', () => {
         try {
-          const parsedData = JSON.parse(data);
-          logMessage(`Health check response: ${JSON.stringify(parsedData)}`);
+          if (data) {
+            const parsedData = JSON.parse(data);
+            logMessage(`Health check response: ${JSON.stringify(parsedData)}`);
+          }
         } catch (e) {
           logMessage(`Failed to parse response: ${data}`, 'ERROR');
         }
@@ -72,7 +87,10 @@ function checkServerHealth() {
           attemptServerRestart();
         }
       });
-    }).on('error', (err) => {
+    });
+    
+    req.on('error', (err) => {
+      clearTimeout(timeout);
       logMessage(`Health check failed: ${err.message}`, 'ERROR');
       consecutiveFailures++;
       
@@ -82,8 +100,17 @@ function checkServerHealth() {
         attemptServerRestart();
       }
     });
+    
+    // Set request timeout
+    req.setTimeout(4000, () => {
+      req.abort();
+      logMessage('Request timed out', 'ERROR');
+    });
+    
   } catch (error) {
+    clearTimeout(timeout);
     logMessage(`Error performing health check: ${error.message}`, 'ERROR');
+    consecutiveFailures++;
   }
 }
 
@@ -91,17 +118,43 @@ function checkServerHealth() {
 function attemptServerRestart() {
   logMessage('Attempting to restart the main server...', 'WARNING');
   
-  exec(SERVER_START_COMMAND, (error, stdout, stderr) => {
+  // Make sure the script is executable
+  try {
+    fs.chmodSync(SERVER_START_COMMAND, 0o755);
+  } catch (err) {
+    logMessage(`Failed to set execute permissions: ${err.message}`, 'ERROR');
+  }
+  
+  // Check if the restart script exists
+  if (!fs.existsSync(SERVER_START_COMMAND)) {
+    logMessage(`Restart script not found: ${SERVER_START_COMMAND}`, 'ERROR');
+    return;
+  }
+  
+  logMessage(`Executing restart command: ${SERVER_START_COMMAND}`, 'INFO');
+  
+  // Use spawn instead of exec to get real-time output
+  const child = exec(SERVER_START_COMMAND, {
+    maxBuffer: 10 * 1024 * 1024, // 10MB buffer
+    timeout: 60000 // 60 second timeout
+  }, (error, stdout, stderr) => {
     if (error) {
       logMessage(`Failed to restart server: ${error.message}`, 'ERROR');
       return;
     }
     
-    logMessage('Server restart initiated', 'INFO');
-    logMessage(`Output: ${stdout}`, 'DEBUG');
+    logMessage('Server restart completed', 'SUCCESS');
     
     // Reset the counter after restart attempt
     consecutiveFailures = 0;
+  });
+  
+  child.stdout?.on('data', (data) => {
+    logMessage(`Restart output: ${data.toString().trim()}`, 'INFO');
+  });
+  
+  child.stderr?.on('data', (data) => {
+    logMessage(`Restart error: ${data.toString().trim()}`, 'ERROR');
   });
 }
 
