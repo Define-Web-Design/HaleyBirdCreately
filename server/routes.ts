@@ -1,106 +1,169 @@
 import express from 'express';
-import { ServiceRegistry } from './services/registry';
+import jwt from 'jsonwebtoken';
+import { z } from 'zod';
 import storage from './storage';
 import snippetRoutes from './routes/snippet-routes';
 
 const router = express.Router();
 
-// Get server status
-router.get('/status', (req, res) => {
+// Health check endpoint
+router.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Authentication routes
+// Middleware to verify JWT tokens
+const verifyToken = (req: any, res: any, next: any) => {
+  const authHeader = req.headers.authorization;
+  
+  if (!authHeader) {
+    // Continue without user info
+    return next();
+  }
+  
+  const token = authHeader.split(' ')[1];
+  
+  if (!token) {
+    return next();
+  }
+  
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'default_secret');
+    req.user = decoded;
+    next();
+  } catch (error) {
+    console.error('Token verification failed:', error);
+    // Continue without user info instead of returning 401
+    next();
+  }
+};
+
+// Apply token verification middleware to all routes
+router.use(verifyToken);
+
+// Register a new user
 router.post('/auth/register', async (req, res) => {
   try {
-    const { username, email, password } = req.body;
+    const schema = z.object({
+      username: z.string().min(3).max(30),
+      email: z.string().email(),
+      password: z.string().min(6)
+    });
     
-    if (!username || !email || !password) {
-      return res.status(400).json({ error: 'Missing required fields' });
+    const validationResult = schema.safeParse(req.body);
+    
+    if (!validationResult.success) {
+      return res.status(400).json({ 
+        error: 'Invalid data',
+        details: validationResult.error.format()
+      });
     }
     
-    // Check if user already exists
-    const existingUser = await storage.findUserByEmail(email);
-    if (existingUser) {
-      return res.status(409).json({ error: 'User with this email already exists' });
-    }
+    const { username, email, password } = validationResult.data;
     
-    // Get the auth service from registry
-    const authService = ServiceRegistry.getInstance().getService('authService');
-    if (!authService) {
-      return res.status(500).json({ error: 'Auth service not available' });
-    }
+    const user = await storage.registerUser(username, email, password);
     
-    // Register the user
-    const user = await authService.registerUser(username, email, password);
+    // Create token
+    const token = jwt.sign(
+      { id: user.id, username: user.username, email: user.email, role: user.role },
+      process.env.JWT_SECRET || 'default_secret',
+      { expiresIn: '7d' }
+    );
     
-    res.status(201).json({ user });
+    res.status(201).json({
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+      },
+      token
+    });
   } catch (error) {
-    console.error('Register error:', error);
-    res.status(500).json({ error: 'Failed to register user' });
+    console.error('Error registering user:', error);
+    
+    if ((error as any).code === '23505') { // PostgreSQL unique constraint violation
+      return res.status(409).json({ error: 'Username or email already exists' });
+    }
+    
+    res.status(500).json({ error: 'An error occurred during registration' });
   }
 });
 
+// Login
 router.post('/auth/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const schema = z.object({
+      email: z.string().email(),
+      password: z.string()
+    });
     
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Missing required fields' });
+    const validationResult = schema.safeParse(req.body);
+    
+    if (!validationResult.success) {
+      return res.status(400).json({ 
+        error: 'Invalid credentials',
+        details: validationResult.error.format()
+      });
     }
     
-    // Get the auth service from registry
-    const authService = ServiceRegistry.getInstance().getService('authService');
-    if (!authService) {
-      return res.status(500).json({ error: 'Auth service not available' });
+    const { email, password } = validationResult.data;
+    
+    const user = await storage.loginUser(email, password);
+    
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid credentials' });
     }
     
-    // Login the user
-    const result = await authService.loginUser(email, password);
+    // Create token
+    const token = jwt.sign(
+      { id: user.id, username: user.username, email: user.email, role: user.role },
+      process.env.JWT_SECRET || 'default_secret',
+      { expiresIn: '7d' }
+    );
     
-    res.json(result);
+    res.json({
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+      },
+      token
+    });
   } catch (error) {
-    console.error('Login error:', error);
-    res.status(401).json({ error: 'Invalid credentials' });
+    console.error('Error logging in:', error);
+    res.status(500).json({ error: 'An error occurred during login' });
   }
 });
 
-// Protected route example
-router.get('/user/profile', async (req, res) => {
+// Get current user
+router.get('/auth/me', async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  
   try {
-    // This would normally use middleware to verify the token
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'Unauthorized - No token provided' });
-    }
+    const user = await storage.getUserById(req.user.id);
     
-    const token = authHeader.split(' ')[1];
-    
-    // Get the auth service from registry
-    const authService = ServiceRegistry.getInstance().getService('authService');
-    if (!authService) {
-      return res.status(500).json({ error: 'Auth service not available' });
-    }
-    
-    // Verify the token
-    const decoded = authService.verifyToken(token);
-    
-    // Get the user
-    const user = await storage.findUserById(decoded.id);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
     
-    // Return user without password hash
-    const { passwordHash, ...userWithoutPassword } = user;
-    res.json({ user: userWithoutPassword });
+    res.json({
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+      }
+    });
   } catch (error) {
-    console.error('Profile error:', error);
-    res.status(401).json({ error: 'Unauthorized - Invalid token' });
+    console.error('Error fetching user:', error);
+    res.status(500).json({ error: 'An error occurred while fetching user data' });
   }
 });
 
-// Register code snippet routes
+// Use snippet routes
 router.use('/snippets', snippetRoutes);
 
 export default router;

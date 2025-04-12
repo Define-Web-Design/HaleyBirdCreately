@@ -1,14 +1,14 @@
-import { useState, useEffect, useCallback, createContext, useContext } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
+// Define the shape of our user object
 export interface User {
-  id: string | number;
+  id: number;
   username: string;
   email: string;
-  displayName?: string;
-  avatar?: string;
-  role?: string;
+  role: string;
 }
 
+// Define the shape of our auth context
 interface AuthContextType {
   user: User | null;
   loading: boolean;
@@ -19,58 +19,51 @@ interface AuthContextType {
   clearError: () => void;
 }
 
-// Create a context with default values
-const AuthContext = createContext<AuthContextType>({
-  user: null,
-  loading: false,
-  error: null,
-  login: async () => {},
-  register: async () => {},
-  logout: () => {},
-  clearError: () => {},
-});
+// Create the context with an initial undefined value
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Provider component
+// Create a provider component
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Initialize auth state
+  // Check if the user is already logged in on initial load
   useEffect(() => {
-    const initAuth = async () => {
+    const checkLoggedIn = async () => {
       try {
-        // Check for stored token
         const token = localStorage.getItem('token');
         
-        if (token) {
-          // Validate token and get user info
-          const response = await fetch('/api/user/profile', {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          });
-          
-          if (response.ok) {
-            const data = await response.json();
-            setUser(data.user);
-          } else {
-            // Token is invalid, clear it
-            localStorage.removeItem('token');
+        if (!token) {
+          setLoading(false);
+          return;
+        }
+        
+        const response = await fetch('/api/auth/me', {
+          headers: {
+            'Authorization': `Bearer ${token}`
           }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          setUser(data.user);
+        } else {
+          // Token is invalid or expired, remove it
+          localStorage.removeItem('token');
         }
       } catch (err) {
-        console.error('Auth initialization error:', err);
+        console.error('Error checking authentication status:', err);
       } finally {
         setLoading(false);
       }
     };
-
-    initAuth();
+    
+    checkLoggedIn();
   }, []);
 
-  // Login
-  const login = useCallback(async (email: string, password: string) => {
+  // Login function
+  const login = async (email: string, password: string) => {
     setLoading(true);
     setError(null);
     
@@ -89,19 +82,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error(data.error || 'Login failed');
       }
       
-      // Store token and user info
+      // Save token and user data
       localStorage.setItem('token', data.token);
       setUser(data.user);
     } catch (err: any) {
-      setError(err.message || 'Login failed');
+      setError(err.message || 'An error occurred during login');
       throw err;
     } finally {
       setLoading(false);
     }
-  }, []);
+  };
 
-  // Register
-  const register = useCallback(async (username: string, email: string, password: string) => {
+  // Register function
+  const register = async (username: string, email: string, password: string) => {
     setLoading(true);
     setError(null);
     
@@ -120,27 +113,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error(data.error || 'Registration failed');
       }
       
-      // After registration, automatically log in
-      await login(email, password);
+      // Save token and user data
+      localStorage.setItem('token', data.token);
+      setUser(data.user);
     } catch (err: any) {
-      setError(err.message || 'Registration failed');
+      setError(err.message || 'An error occurred during registration');
       throw err;
     } finally {
       setLoading(false);
     }
-  }, [login]);
+  };
 
-  // Logout
-  const logout = useCallback(() => {
+  // Logout function
+  const logout = () => {
     localStorage.removeItem('token');
     setUser(null);
-  }, []);
+  };
 
-  // Clear error
-  const clearError = useCallback(() => {
+  // Clear error function
+  const clearError = () => {
     setError(null);
-  }, []);
+  };
 
+  // Create the context value object
   const value = {
     user,
     loading,
@@ -151,14 +146,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     clearError
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-// Hook to use auth context
-export const useAuth = () => useContext(AuthContext);
-
-export default useAuth;
+// Custom hook to use the auth context
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  
+  return context;
+};
