@@ -4,6 +4,7 @@ hidden = [".config", "package-lock.json"]
 compile = ["npm", "run", "build"]
 
 run = "bash run-app.sh"
+modules = ["nodejs-20"]
 
 [nix]
 channel = "stable-23_11"

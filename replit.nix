@@ -1,5 +1,6 @@
 {pkgs}: {
   deps = [
+    pkgs.nodejs
     pkgs.netcat
     pkgs.rPackages.mosum
     pkgs.rPackages.Mu15v1_db
