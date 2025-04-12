@@ -1,12 +1,23 @@
-/**
- * Creately - Main Server
- * 
- * This is the main entry point for the Creately application.
- * It sets up an Express server that handles API requests and serves the frontend.
- */
+// Simple HTTP server for Creately code snippet sharing
+const http = require('http');
+const PORT = process.env.PORT || 3000;
 
-// Import the server module
-import './server/index.js';
+// Create server
+const server = http.createServer((req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.writeHead(200);
+  res.end(JSON.stringify({
+    status: 'ok',
+    message: 'Creately code snippet server is running',
+    endpoints: [
+      '/api/snippets',
+      '/api/snippets/:id',
+      '/api/snippets/public/all'
+    ]
+  }));
+});
 
-// This file acts as the main entry point for the application
-console.log('Creately server starting...');
+// Start server
+server.listen(PORT, () => {
+  console.log(`Server running at http://0.0.0.0:${PORT}/`);
+});

@@ -1,23 +1,36 @@
 {
-  "run": "./run-creately.sh",
-  "language": "nodejs",
-  "onBoot": "echo 'Creately application is ready to start. Click the Run button or run ./run-creately.sh'",
-  "environmentVariables": {
-    "NODE_ENV": "development"
-  },
-  "ports": {
-    "3000": {
-      "name": "Creately Application",
-      "description": "Main application server"
+  "run": {
+    "commands": {
+      "start-server": "/home/runner/workspace/node_bin/node simple-server.js"
     },
-    "5000": {
-      "name": "Fallback Server",
-      "description": "Fallback server when main server is unavailable"
+    "name": "start-server",
+    "title": "Start Server",
+    "description": "Starts the Creately code snippet server",
+    "persistent": true
+  },
+  "lsp": {
+    "display": {
+      "node": "nodejs-20",
+      "js": "nodejs-20",
+      "ts": "nodejs-20",
+      "jsx": "nodejs-20",
+      "tsx": "nodejs-20"
     }
   },
-  "hints": [
-    "Make sure all API keys are set in the .env file for full functionality",
-    "The application will automatically use fallback mechanisms if needed",
-    "Use run-creately.sh for the most reliable startup experience"
+  "language": "nodejs-20",
+  "entrypoint": "simple-server.js",
+  "hosting": {
+    "route": "/",
+    "directory": "public"
+  },
+  "deployment": {
+    "run": ["/home/runner/workspace/node_bin/node", "simple-server.js"],
+    "deploymentTarget": "cloudrun"
+  },
+  "ports": [
+    {
+      "localPort": 3000,
+      "externalPort": 80
+    }
   ]
 }
