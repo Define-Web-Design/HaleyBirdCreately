@@ -114,20 +114,27 @@ Creately integrates with Mistral AI and Codestral to provide advanced AI feature
 
 ### Setup
 
-1. Obtain API keys:
-   - Mistral AI: Sign up at [https://console.mistral.ai/](https://console.mistral.ai/)
-   - Codestral: Available in the Mistral AI console
-
-2. Add the keys to your `.env` file:
-   ```
-   MISTRAL_API_KEY=your_mistral_api_key
-   CODESTRAL_API_KEY=your_codestral_api_key
-   ```
-
-3. Test your configuration:
+1. **Using the setup assistant (Recommended)**:
    ```bash
-   node test-mistral.js
+   node setup-ai-keys.js
    ```
+   This interactive script will guide you through setting up your API keys and can test them automatically.
+
+2. **Manual setup**:
+   - Obtain API keys:
+     - Mistral AI: Sign up at [https://console.mistral.ai/](https://console.mistral.ai/)
+     - Codestral: Available in the Mistral AI console
+
+   - Add the keys to your `.env` file:
+     ```
+     MISTRAL_API_KEY=your_mistral_api_key
+     CODESTRAL_API_KEY=your_codestral_api_key
+     ```
+
+   - Test your configuration:
+     ```bash
+     node test-mistral.js
+     ```
 
 ### API Usage
 
@@ -177,6 +184,32 @@ Endpoints available at `/api/ai/`:
 - **Bug Fixing**: Identify and get solutions for common coding errors
 - **Learning**: Get explanations of complex code patterns
 - **Brainstorming**: Generate creative ideas using the Mistral chat API
+
+### Troubleshooting
+
+If you encounter issues with the AI features:
+
+1. **API key issues**:
+   ```bash
+   node setup-ai-keys.js
+   ```
+   This will help you check and configure your API keys correctly.
+
+2. **Test API connections**:
+   ```bash
+   node test-mistral.js
+   ```
+   This will verify connectivity to both Mistral and Codestral services.
+
+3. **Common errors**:
+   - `401 Unauthorized`: Your API key is invalid or expired
+   - `429 Too Many Requests`: You've exceeded your API rate limits
+   - `500 Server Error`: The AI service is experiencing issues
+
+4. **Fixing endpoint errors**:
+   - Check the API documentation for the most up-to-date endpoints
+   - Verify your request format matches the expected schema
+   - Try lowering the request frequency if hitting rate limits
 
 ## License
 

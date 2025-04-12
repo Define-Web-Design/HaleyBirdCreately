@@ -15,6 +15,18 @@ const https = require('https');
 // Environment variables
 const PORT = process.env.PORT || 3000;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY || '';
+const MISTRAL_API_KEY = process.env.MISTRAL_API_KEY || '';
+const CODESTRAL_API_KEY = process.env.CODESTRAL_API_KEY || '';
+
+// Load color generator service if available
+let colorGenerator;
+try {
+  colorGenerator = require('./server/services/color-generator');
+  console.log('Color generator service loaded successfully');
+} catch (error) {
+  console.warn('Color generator service not available:', error.message);
+  colorGenerator = null;
+}
 
 // MIME types for static file serving
 const MIME_TYPES = {
@@ -77,10 +89,52 @@ const server = http.createServer((req, res) => {
     const status = {
       server: 'online',
       openai_api: OPENAI_API_KEY ? 'connected' : 'not_connected',
+      mistral_api: MISTRAL_API_KEY ? 'connected' : 'not_connected',
+      codestral_api: CODESTRAL_API_KEY ? 'connected' : 'not_connected',
       version: '1.0.0'
     };
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify(status));
+    return;
+  }
+  
+  // New Mistral AI-powered color routes
+  if (pathname === '/api/colors/generate-palette' && req.method === 'POST') {
+    if (colorGenerator && MISTRAL_API_KEY) {
+      handleMistralPaletteGeneration(req, res);
+    } else {
+      res.writeHead(503, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        status: 'error',
+        message: 'Mistral AI-powered color generation is not available. Please configure MISTRAL_API_KEY.'
+      }));
+    }
+    return;
+  }
+  
+  if (pathname === '/api/colors/design-scheme' && req.method === 'POST') {
+    if (colorGenerator && MISTRAL_API_KEY) {
+      handleDesignSchemeGeneration(req, res);
+    } else {
+      res.writeHead(503, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        status: 'error',
+        message: 'Mistral AI-powered design scheme generation is not available. Please configure MISTRAL_API_KEY.'
+      }));
+    }
+    return;
+  }
+  
+  if (pathname === '/api/colors/accessible-colors' && req.method === 'POST') {
+    if (colorGenerator && MISTRAL_API_KEY) {
+      handleAccessibleColorsGeneration(req, res);
+    } else {
+      res.writeHead(503, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        status: 'error',
+        message: 'Mistral AI-powered accessible color generation is not available. Please configure MISTRAL_API_KEY.'
+      }));
+    }
     return;
   }
 
@@ -356,10 +410,161 @@ async function callOpenAI(apiKey, prompt, systemPrompt, imageUrl = null) {
   });
 }
 
+/**
+ * Handle Mistral AI-powered palette generation
+ */
+async function handleMistralPaletteGeneration(req, res) {
+  try {
+    const data = await parseRequestBody(req);
+    const description = data.description;
+    const colors = data.colors || 5;
+    
+    if (!description) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        status: 'error',
+        message: 'Description is required for palette generation'
+      }));
+      return;
+    }
+    
+    // Use Mistral AI to generate a color palette
+    const result = await colorGenerator.generatePalette(description, colors);
+    
+    if (result.error) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        status: 'error',
+        message: result.message || 'Failed to generate palette',
+        error: result.error
+      }));
+      return;
+    }
+    
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      status: 'success',
+      ...result
+    }));
+  } catch (error) {
+    console.error('Error in Mistral palette generation:', error);
+    res.writeHead(500, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      status: 'error',
+      message: 'Failed to generate palette',
+      error: error.message
+    }));
+  }
+}
+
+/**
+ * Handle Mistral AI-powered design scheme generation
+ */
+async function handleDesignSchemeGeneration(req, res) {
+  try {
+    const data = await parseRequestBody(req);
+    const designType = data.designType;
+    
+    if (!designType) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        status: 'error',
+        message: 'Design type is required for scheme generation'
+      }));
+      return;
+    }
+    
+    // Use Mistral AI to generate a design scheme
+    const result = await colorGenerator.generateDesignScheme(designType);
+    
+    if (result.error) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        status: 'error',
+        message: result.message || 'Failed to generate design scheme',
+        error: result.error
+      }));
+      return;
+    }
+    
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      status: 'success',
+      ...result
+    }));
+  } catch (error) {
+    console.error('Error in design scheme generation:', error);
+    res.writeHead(500, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      status: 'error',
+      message: 'Failed to generate design scheme',
+      error: error.message
+    }));
+  }
+}
+
+/**
+ * Handle Mistral AI-powered accessible color generation
+ */
+async function handleAccessibleColorsGeneration(req, res) {
+  try {
+    const data = await parseRequestBody(req);
+    const baseColor = data.baseColor;
+    const purpose = data.purpose;
+    
+    if (!baseColor) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        status: 'error',
+        message: 'Base color is required for accessible color generation'
+      }));
+      return;
+    }
+    
+    if (!purpose) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        status: 'error',
+        message: 'Purpose is required for accessible color generation'
+      }));
+      return;
+    }
+    
+    // Use Mistral AI to generate accessible colors
+    const result = await colorGenerator.suggestAccessibleColors(baseColor, purpose);
+    
+    if (result.error) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        status: 'error',
+        message: result.message || 'Failed to generate accessible colors',
+        error: result.error
+      }));
+      return;
+    }
+    
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      status: 'success',
+      ...result
+    }));
+  } catch (error) {
+    console.error('Error in accessible colors generation:', error);
+    res.writeHead(500, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      status: 'error',
+      message: 'Failed to generate accessible colors',
+      error: error.message
+    }));
+  }
+}
+
 // Start the server
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on http://0.0.0.0:${PORT}`);
   console.log(`OpenAI API: ${OPENAI_API_KEY ? 'Configured' : 'Not configured'}`);
+  console.log(`Mistral AI: ${MISTRAL_API_KEY ? 'Configured' : 'Not configured'}`);
+  console.log(`Codestral: ${CODESTRAL_API_KEY ? 'Configured' : 'Not configured'}`);
   console.log(`Environment: NODE_ENV=${process.env.NODE_ENV || 'development'}`);
   console.log(`Server start time: ${new Date().toISOString()}`);
 });

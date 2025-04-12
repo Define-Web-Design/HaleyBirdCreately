@@ -34,7 +34,6 @@ echo -e "${CYAN}Checking API keys...${NC}"
 if [ -z "$MISTRAL_API_KEY" ]; then
   echo -e "${YELLOW}⚠️  Warning: MISTRAL_API_KEY is not set.${NC}"
   echo -e "${YELLOW}    AI chat features will be disabled.${NC}"
-  echo -e "${YELLOW}    Set this key in your .env file to enable Mistral AI features.${NC}"
 else
   echo -e "${GREEN}✅ MISTRAL_API_KEY is configured${NC}"
 fi
@@ -43,7 +42,6 @@ fi
 if [ -z "$CODESTRAL_API_KEY" ]; then
   echo -e "${YELLOW}⚠️  Warning: CODESTRAL_API_KEY is not set.${NC}"
   echo -e "${YELLOW}    Code assistance features will be disabled.${NC}"
-  echo -e "${YELLOW}    Set this key in your .env file to enable Codestral features.${NC}"
 else
   echo -e "${GREEN}✅ CODESTRAL_API_KEY is configured${NC}"
 fi
@@ -52,9 +50,28 @@ fi
 if [ -z "$OPENAI_API_KEY" ]; then
   echo -e "${YELLOW}⚠️  Warning: OPENAI_API_KEY is not set.${NC}"
   echo -e "${YELLOW}    AI palette generation will be disabled.${NC}"
-  echo -e "${YELLOW}    Set this key in your .env file to enable OpenAI-powered features.${NC}"
 else
   echo -e "${GREEN}✅ OPENAI_API_KEY is configured${NC}"
+fi
+
+# Check if any AI keys are missing and offer to set them up
+if [ -z "$MISTRAL_API_KEY" ] || [ -z "$CODESTRAL_API_KEY" ] || [ -z "$OPENAI_API_KEY" ]; then
+  echo -e ""
+  echo -e "${YELLOW}Some AI API keys are missing. Would you like to set them up now?${NC}"
+  read -p "Run setup-ai-keys.js? (y/n): " answer
+  
+  if [ "$answer" = "y" ] || [ "$answer" = "Y" ]; then
+    echo -e "${CYAN}Running AI keys setup utility...${NC}"
+    node setup-ai-keys.js
+    
+    # Reload environment
+    if [ -f .env ]; then
+      echo -e "${GREEN}Reloading environment from .env file...${NC}"
+      export $(cat .env | grep -v '^#' | xargs)
+    fi
+  else
+    echo -e "${YELLOW}Skipping API key setup. Some AI features will be limited.${NC}"
+  fi
 fi
 
 echo ""
