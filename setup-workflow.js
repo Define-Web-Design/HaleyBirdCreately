@@ -1,55 +1,49 @@
-// This script helps configure the workflow for the application
-const fs = require('fs');
-const path = require('path');
-const { exec } = require('child_process');
+/**
+ * Setup Workflow Script for Creately
+ * 
+ * This script configures the Replit workflow for the application.
+ */
 
-console.log('Setting up Creately application workflow...');
+import { execSync } from 'child_process';
+import fs from 'fs';
 
-// Create a start script that combines the frontend and backend
-const startScript = `#!/bin/bash
-echo "Starting Creately application..."
-npm run dev
+const replitConfigPath = '.replit';
+
+// Workflow configuration
+const workflowConfig = `
+run = "bash start-server.sh"
+entrypoint = "simple-server.js"
+
+[languages]
+nodejs = "nodejs-20"
+
+[nix]
+channel = "stable-23_11"
+
+[hosting]
+route = "/"
+directory = "public"
+
+[deployment]
+run = ["sh", "-c", "bash start-server.sh"]
+deploymentTarget = "cloudrun"
+
+[[ports]]
+localPort = 3000
+externalPort = 80
 `;
 
-// Write the start script to a file
-fs.writeFileSync('start-app.sh', startScript, { mode: 0o755 });
-console.log('Created start-app.sh script');
+try {
+  // Write configuration to .replit file
+  fs.writeFileSync(replitConfigPath, workflowConfig);
+  console.log('✅ Workflow configuration created successfully.');
 
-// Create a setup for Node.js environment
-exec('node -v', (error, stdout, stderr) => {
-  if (error) {
-    console.error('Node.js is not installed properly:', error);
-    return;
-  }
-  
-  console.log(`Node.js version: ${stdout.trim()}`);
-  
-  // Set up package.json scripts if needed
-  try {
-    const packageJson = require('./package.json');
-    
-    // Ensure we have the right scripts
-    let modified = false;
-    
-    if (!packageJson.scripts.dev) {
-      packageJson.scripts.dev = "node server.js";
-      modified = true;
-    }
-    
-    if (!packageJson.scripts.start) {
-      packageJson.scripts.start = "node server.js";
-      modified = true;
-    }
-    
-    if (modified) {
-      fs.writeFileSync('package.json', JSON.stringify(packageJson, null, 2));
-      console.log('Updated package.json scripts');
-    }
-    
-    console.log('Environment setup complete!');
-    console.log('To start the application, run: bash start-app.sh');
-    
-  } catch (err) {
-    console.error('Error updating package.json:', err);
-  }
-});
+  // Make start script executable
+  execSync('chmod +x start-server.sh');
+  console.log('✅ Made start script executable.');
+
+  console.log('🚀 Setup complete! You can now run the workflow.');
+} catch (error) {
+  console.error('❌ Error setting up workflow:', error.message);
+  process.exit(1);
+}

@@ -1,69 +1,21 @@
-run = "bash -c 'command -v npm &>/dev/null && npm run dev || ./run-static.sh'"
-hidden = [
-  ".config",
-  "package-lock.json",
-  ".replit.bak",
-  ".gitignore",
-  ".keep-alive.pid",
-  ".never-sleep.pid",
-  ".bash-keep-alive.pid",
-  ".static-server.pid",
-]
-language = "nodejs"
-entrypoint = "index.js"
-modules = ["postgresql-16", "nodejs-20", "python-3.11", "nodejs-23", "nix", "gcloud", "hermit-0.38.2", "cpp-clang14", "angular-node-20", "bash", "postgresql-17", "python-3.9", "php-8.3", "replit-rtld-loader", "ruby-3.2", "rust-nightly", "rust-stable", "svelte-kit-node-20", "swift-5.8", "swift-5.6", "typescript-language-server", "vue-node-20", "web", "pyright", "ruff", "nodejs-with-prybar-18", "python-with-prybar-3.10", "docker", "zig-0.11"]
+
+run = "bash start-server.sh"
+entrypoint = "simple-server.js"
+
+[languages]
+nodejs = "nodejs-20"
 
 [nix]
 channel = "stable-23_11"
 
+[hosting]
+route = "/"
+directory = "public"
+
 [deployment]
-run = ["sh", "-c", "PORT=3000 npm start"]
-deploymentTarget = "gce"
-build = ["sh", "-c", "npm run build"]
+run = ["sh", "-c", "bash start-server.sh"]
+deploymentTarget = "cloudrun"
 
-[packager]
-language = "nodejs"
-
-[packager.features]
-packageSearch = true
-guessImports = true
-enabledForHosting = false
-
-[env]
-XDG_CONFIG_HOME = "$REPL_HOME/.config"
-PORT = "5173"
-REPLIT_DISABLE_PACKAGE_LAYER = "1"
-
-[languages]
-
-[languages.javascript]
-pattern = "**/{*.js,*.jsx,*.ts,*.tsx}"
-
-[languages.javascript.languageServer]
-start = "typescript-language-server --stdio"
-
-[languages.typescript]
-pattern = "**/{*.ts,*.tsx}"
-
-[languages.typescript.languageServer]
-start = "typescript-language-server --stdio"
-
-[auth]
-pageEnabled = true
-buttonEnabled = false
-
-[workflows]
-runButton = "Build and Start Production"
-
-[[workflows.workflow]]
-name = "Build and Start Production"
-author = 40896524
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "./node_bin/npm run build"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "./node_bin/npm start"
+[[ports]]
+localPort = 3000
+externalPort = 80
