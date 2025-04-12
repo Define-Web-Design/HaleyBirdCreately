@@ -7,14 +7,14 @@ const defaultFetchOptions: RequestInit = {
   }
 };
 
-// API request helper function that handles auth token
+// API request helper function that handles auth token and improved error handling
 export async function apiRequest(
   url: string,
   options: RequestInit = {}
 ): Promise<any> {
   // Get auth token from localStorage
   const token = localStorage.getItem('token');
-  
+
   // Merge default options with provided options
   const fetchOptions = {
     ...defaultFetchOptions,
@@ -25,23 +25,28 @@ export async function apiRequest(
       ...(token ? { 'Authorization': `Bearer ${token}` } : {})
     }
   };
-  
+
   // Make the request
-  const response = await fetch(url, fetchOptions);
-  
-  // Handle non-2xx responses
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error || `API request failed with status ${response.status}`);
+  try {
+    const response = await fetch(url, fetchOptions);
+
+    // Handle non-2xx responses
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: `API request failed with status ${response.status}` }));
+      throw new Error(errorData.error);
+    }
+
+    // For 204 No Content responses, return null
+    if (response.status === 204) {
+      return null;
+    }
+
+    // Parse and return the JSON response
+    return await response.json();
+  } catch (error) {
+    console.error("API Request Error:", error); // Log the error for debugging
+    throw error; // Re-throw the error to be handled by react-query
   }
-  
-  // For 204 No Content responses, return null
-  if (response.status === 204) {
-    return null;
-  }
-  
-  // Parse and return the JSON response
-  return await response.json();
 }
 
 // Create the query client with default options
@@ -54,7 +59,7 @@ export const queryClient = new QueryClient({
         const url = Array.isArray(queryKey) 
           ? queryKey.join('/') 
           : queryKey.toString();
-          
+
         return apiRequest(url);
       },
       // Default caching and error handling settings
