@@ -4,7 +4,7 @@ hidden = [".config", "package-lock.json"]
 compile = ["npm", "run", "build"]
 
 run = "bash run-app.sh"
-modules = ["nodejs-20"]
+modules = ["nodejs-20", "postgresql-16"]
 
 [nix]
 channel = "stable-23_11"
