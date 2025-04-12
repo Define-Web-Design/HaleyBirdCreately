@@ -34,7 +34,7 @@ localPort = 3001
 externalPort = 3001
 
 [workflows]
-runButton = "Server and Monitor"
+runButton = "Robust Server"
 
 [[workflows.workflow]]
 name = "Build and Start Production"
@@ -87,3 +87,102 @@ args = "bash -c \"curl -fsSL https://npm.im/n | bash -s -- -y latest && npm i &&
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "./node_bin/node monitor.js"
+
+[[workflows.workflow]]
+name = "Robust Server"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "#!/bin/bash"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# First ensure we have a working environment"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "mkdir -p logs"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Install Node.js using n"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "bash -c \"curl -fsSL https://npm.im/n | bash -s -- -y latest && export PATH=$PATH:$HOME/n/bin:$HOME/.n/bin && node -v\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Install build essentials for native modules"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "bash -c \"if [ -f '/usr/bin/apt-get' ]; then apt-get update -y && apt-get install -y build-essential python3; fi\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Install dependencies with fallbacks"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "bash -c \"npm install || npm install --no-optional || npm install --legacy-peer-deps\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Build the application"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run build"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run the application"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "NODE_ENV=production node dist/index.js"
+
+[[workflows.workflow]]
+name = "Monitor Only"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "#!/bin/bash"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "chmod +x start-monitor.sh"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "./start-monitor.sh"
+
+[[workflows.workflow]]
+name = "Complete System"
+author = 40896524
+mode = "parallel"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "#!/bin/bash"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run the main server"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "bash -c \"chmod +x run-app.sh && ./run-app.sh\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run the monitor in parallel"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "bash -c \"chmod +x start-monitor.sh && ./start-monitor.sh\""

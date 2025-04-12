@@ -12,45 +12,82 @@ import { exec } from 'child_process';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const CHECK_INTERVAL = 15000; // Check every 15 seconds
-const PORT = process.env.PORT || 3001;
+// Constants
+const CHECK_INTERVAL = 60000; // Check every minute
+const PORT = process.env.MONITOR_PORT || 3001;
 const TARGET_URL = `http://0.0.0.0:${process.env.PORT || 3000}/api/health`;
-
-// Make the monitoring directory
-const LOGS_DIR = path.join(__dirname, 'logs');
-if (!fs.existsSync(LOGS_DIR)) {
-  fs.mkdirSync(LOGS_DIR, { recursive: true });
-}
-
-function logMessage(message, type = 'INFO') {
-  const timestamp = new Date().toISOString();
-  const logMessage = `[${timestamp}] [${type}] ${message}\n`;
-  
-  console.log(logMessage.trim());
-  fs.appendFileSync(path.join(LOGS_DIR, 'monitor.log'), logMessage);
-}
-
-// Create a very simple status server
-const server = http.createServer((req, res) => {
-  if (req.url === '/status') {
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ status: 'Monitor is running' }));
-    return;
-  }
-  
-  res.writeHead(200);
-  res.end('Monitor is running. Check /status for API endpoint.');
-});
-
-server.listen(PORT, () => {
-  logMessage(`Monitor server running on port ${PORT}`);
-});
-
-// Check the main server health periodically
-let consecutiveFailures = 0;
 const MAX_FAILURES = 3;
-const SERVER_START_COMMAND = './start.sh';
+const LOG_FILE = path.join(__dirname, 'logs', 'monitor.log');
+const SERVER_START_COMMAND = './run-app.sh';
 
+// Ensure logs directory exists
+if (!fs.existsSync(path.join(__dirname, 'logs'))) {
+  fs.mkdirSync(path.join(__dirname, 'logs'), { recursive: true });
+}
+
+// Track failures
+let consecutiveFailures = 0;
+
+// Log message to console and file
+function logMessage(message, level = 'INFO') {
+  const timestamp = new Date().toISOString();
+  const logEntry = `[${timestamp}] [${level}] ${message}`;
+  
+  console.log(logEntry);
+  
+  // Append to log file
+  fs.appendFileSync(LOG_FILE, logEntry + '\n');
+}
+
+// Check server health
+function checkServerHealth() {
+  logMessage('Checking server health...');
+  
+  try {
+    http.get(TARGET_URL, (res) => {
+      if (res.statusCode === 200) {
+        logMessage('Server is healthy', 'SUCCESS');
+        consecutiveFailures = 0; // Reset counter on success
+      } else {
+        logMessage(`Server returned status code: ${res.statusCode}`, 'WARNING');
+        consecutiveFailures++;
+      }
+      
+      let data = '';
+      res.on('data', (chunk) => {
+        data += chunk;
+      });
+      
+      res.on('end', () => {
+        try {
+          const parsedData = JSON.parse(data);
+          logMessage(`Health check response: ${JSON.stringify(parsedData)}`);
+        } catch (e) {
+          logMessage(`Failed to parse response: ${data}`, 'ERROR');
+        }
+        
+        // Check if we need to restart the server
+        if (consecutiveFailures >= MAX_FAILURES) {
+          logMessage(`${consecutiveFailures} consecutive failures detected. Threshold reached.`, 'WARNING');
+          attemptServerRestart();
+        }
+      });
+    }).on('error', (err) => {
+      logMessage(`Health check failed: ${err.message}`, 'ERROR');
+      consecutiveFailures++;
+      
+      // Check if we need to restart the server
+      if (consecutiveFailures >= MAX_FAILURES) {
+        logMessage(`${consecutiveFailures} consecutive failures detected. Threshold reached.`, 'WARNING');
+        attemptServerRestart();
+      }
+    });
+  } catch (error) {
+    logMessage(`Error performing health check: ${error.message}`, 'ERROR');
+  }
+}
+
+// Attempt to restart the server
 function attemptServerRestart() {
   logMessage('Attempting to restart the main server...', 'WARNING');
   
@@ -68,59 +105,33 @@ function attemptServerRestart() {
   });
 }
 
-function checkServerHealth() {
-  logMessage('Checking server health...');
-  
-  http.get(TARGET_URL, (res) => {
-    if (res.statusCode === 200) {
-      logMessage('Server is healthy', 'SUCCESS');
-      consecutiveFailures = 0; // Reset counter on success
-    } else {
-      logMessage(`Server returned status code: ${res.statusCode}`, 'WARNING');
-      consecutiveFailures++;
-    }
-    
-    let data = '';
-    res.on('data', (chunk) => {
-      data += chunk;
-    });
-    
-    res.on('end', () => {
-      try {
-        const parsedData = JSON.parse(data);
-        logMessage(`Health check response: ${JSON.stringify(parsedData)}`);
-      } catch (e) {
-        logMessage(`Failed to parse response: ${data}`, 'ERROR');
-      }
-      
-      // Check if we need to restart the server
-      if (consecutiveFailures >= MAX_FAILURES) {
-        logMessage(`${consecutiveFailures} consecutive failures detected. Threshold reached.`, 'WARNING');
-        attemptServerRestart();
-      }
-    });
-  }).on('error', (err) => {
-    logMessage(`Health check failed: ${err.message}`, 'ERROR');
-    consecutiveFailures++;
-    
-    // Check if we need to restart the server
-    if (consecutiveFailures >= MAX_FAILURES) {
-      logMessage(`${consecutiveFailures} consecutive failures detected. Threshold reached.`, 'WARNING');
-      attemptServerRestart();
-    }
-  });
-}
-
-// Start monitoring
-setInterval(checkServerHealth, CHECK_INTERVAL);
-checkServerHealth(); // Run first check immediately
-
-process.on('SIGINT', () => {
-  logMessage('Monitor shutting down...');
-  server.close(() => {
-    logMessage('Monitor server closed');
-    process.exit(0);
-  });
+// Start HTTP server for monitoring
+const server = http.createServer((req, res) => {
+  if (req.url === '/status') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ 
+      status: 'running', 
+      uptime: process.uptime(),
+      lastCheck: new Date().toISOString()
+    }));
+  } else {
+    res.writeHead(404);
+    res.end();
+  }
 });
 
+server.listen(PORT, '0.0.0.0', () => {
+  logMessage(`Monitor server running on port ${PORT}`);
+});
+
+// Handle process termination
+process.on('SIGINT', () => {
+  logMessage('Monitor shutting down...', 'INFO');
+  server.close();
+  process.exit(0);
+});
+
+// Start monitoring
 logMessage('Monitor started');
+setInterval(checkServerHealth, CHECK_INTERVAL);
+checkServerHealth(); // Run first check immediately
