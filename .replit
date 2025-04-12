@@ -34,7 +34,7 @@ localPort = 3001
 externalPort = 3001
 
 [workflows]
-runButton = "Run Application"
+runButton = "Run Production App"
 
 [[workflows.workflow]]
 name = "Build and Start Production"
@@ -354,3 +354,40 @@ args = "# Run the application"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "NODE_ENV=production PORT=3000 node dist/index.js"
+
+[[workflows.workflow]]
+name = "Run Production App"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "#!/bin/bash"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Use local node binary if available"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "export PATH=\"./node_bin:$PATH\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Install dependencies and build"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm install"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run build"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run the application"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "NODE_ENV=production node dist/index.js"
