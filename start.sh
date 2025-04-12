@@ -1,86 +1,50 @@
 #!/bin/bash
 
-echo "🚀 Clean App Startup Script for Replit"
-echo "======================================="
+# Simple starter script for the Creately application
 
-# Set environment variables
-export NODE_ENV=development
-export PORT=3000
+# ANSI color codes
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+NC='\033[0m' # No Color
 
-# Ensure database connection is available
-if [ -n "$DATABASE_URL" ]; then
-  echo "✅ Database URL found in environment"
-else
-  echo "⚠️ No DATABASE_URL found, using in-memory storage"
-  export USE_IN_MEMORY_DB=true
-fi
+# Print banner
+echo -e "${BLUE}================================================${NC}"
+echo -e "${BLUE}             Creately Application              ${NC}"
+echo -e "${BLUE}================================================${NC}"
+echo ""
 
-# Create any missing directories
-mkdir -p node_modules
-mkdir -p client/dist
-mkdir -p server/logs
-
-# Check if we need to install dependencies using a flag file
-if [ ! -f "node_modules/.install_complete" ]; then
-  echo "📦 Installing dependencies (this may take a while)..."
+# Check for server.js
+if [ -f "server.js" ]; then
+  echo -e "${GREEN}Found server.js - starting the application...${NC}"
   
-  # Try to use npm if available
-  if command -v npm &> /dev/null; then
-    npm install || echo "⚠️ npm install failed, will use existing modules if available"
+  # Load environment variables from .env if it exists
+  if [ -f .env ]; then
+    echo -e "${CYAN}Loading environment from .env file...${NC}"
+    export $(cat .env | grep -v '^#' | xargs)
   else
-    echo "⚠️ npm not found, will try to use existing modules"
+    echo -e "${YELLOW}No .env file found. Using system environment variables.${NC}"
   fi
   
-  # Create a flag file to avoid reinstallation
-  touch node_modules/.install_complete
-fi
-
-# Clean any stale process locks
-rm -f ./.config/workflows/*.lock 2>/dev/null || true
-
-# Start the server
-echo "🌐 Starting server on port ${PORT}..."
-
-# Check if we have the enhanced node starter script
-if [ -f "start-app.js" ]; then
-  echo "🚀 Using enhanced application starter..."
-  node start-app.js
-  exit $?
-fi
-
-# If we don't have the enhanced starter, fall back to the original approach
-echo "⚠️ Enhanced starter not found, using legacy startup method"
-
-# Try to use npm script if package.json contains dev script
-if grep -q '"dev"' package.json; then
-  echo "📡 Using npm run dev to start the application"
-  npm run dev || FALLBACK=true
+  # Check if we have a node command
+  if command -v node &>/dev/null; then
+    echo -e "${GREEN}Using node to start the server...${NC}"
+    node server.js
+  else
+    # Try to use npm
+    if command -v npm &>/dev/null; then
+      echo -e "${YELLOW}Node command not found, trying npm start...${NC}"
+      npm start
+    else
+      echo -e "${RED}Error: Neither node nor npm commands are available.${NC}"
+      echo -e "${RED}Please make sure Node.js is installed.${NC}"
+      exit 1
+    fi
+  fi
 else
-  # Fallback to direct command if npm script is not available
-  echo "📡 Using direct command to start the application"
-  if [ -f "server/index.ts" ]; then
-    echo "🔍 Found server/index.ts, attempting to start..."
-    npx ts-node --esm server/index.ts || FALLBACK=true
-  elif [ -f "server/index.js" ]; then
-    echo "🔍 Found server/index.js, attempting to start..."
-    node server/index.js || FALLBACK=true
-  else
-    echo "⚠️ Could not find main server entry point, using fallback"
-    FALLBACK=true
-  fi
-fi
-
-# If all previous attempts failed, use fallback server
-if [ "$FALLBACK" = "true" ]; then
-  echo "🚨 Main server failed to start, using fallback server"
-  if [ -f "server/simple-server.ts" ]; then
-    echo "🔄 Starting fallback server..."
-    npx ts-node server/simple-server.ts
-  elif [ -f "simple_server.py" ]; then
-    echo "🔄 Starting Python fallback server..."
-    python simple_server.py
-  else
-    echo "❌ Error: Could not find fallback server. Please check your installation."
-    exit 1
-  fi
+  echo -e "${RED}Error: server.js not found!${NC}"
+  echo -e "${RED}Please make sure you're in the correct directory.${NC}"
+  exit 1
 fi
