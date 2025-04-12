@@ -1,3 +1,4 @@
+
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 
 interface Props {
@@ -49,46 +50,35 @@ export class ErrorBoundary extends Component<Props, State> {
       if (this.props.fallback) {
         return this.props.fallback;
       }
-
-      // Default error UI if no fallback provided
+      
+      // Default error UI
       return (
-        <div className="error-boundary-container" style={{
-          padding: '20px',
-          margin: '20px',
-          border: '1px solid #f5c6cb',
-          borderRadius: '5px',
-          backgroundColor: '#f8d7da',
-          color: '#721c24',
-          textAlign: 'center'
-        }}>
-          <h2>Something went wrong</h2>
-          <p>We're sorry, but an error occurred while rendering this component.</p>
+        <div className="error-boundary p-4 border border-red-300 rounded bg-red-50 text-red-800">
+          <h2 className="text-lg font-bold mb-2">Something went wrong</h2>
+          <details className="whitespace-pre-wrap">
+            <summary className="cursor-pointer mb-2">Show error details</summary>
+            <p className="text-sm font-mono bg-red-100 p-2 rounded mb-2">
+              {this.state.error && this.state.error.toString()}
+            </p>
+            {this.state.errorInfo && (
+              <pre className="text-xs overflow-auto bg-red-100 p-2 rounded">
+                {this.state.errorInfo.componentStack}
+              </pre>
+            )}
+          </details>
           <button 
+            className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
             onClick={() => window.location.reload()}
-            style={{
-              padding: '8px 16px',
-              backgroundColor: '#F2994A',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              marginTop: '10px'
-            }}
           >
-            Refresh Page
+            Reload Page
           </button>
-          {process.env.NODE_ENV === 'development' && this.state.error && (
-            <details style={{ whiteSpace: 'pre-wrap', marginTop: '15px', textAlign: 'left' }}>
-              <summary>Error Details</summary>
-              <p>{this.state.error?.toString()}</p>
-              <p>{this.state.errorInfo?.componentStack}</p>
-            </details>
-          )}
         </div>
       );
     }
 
-    // If there's no error, render children normally
+    // When there's no error, render children normally
     return this.props.children;
   }
 }
+
+export default ErrorBoundary;

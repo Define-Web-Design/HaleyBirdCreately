@@ -170,6 +170,6 @@ router.get('/auth/me', async (req, res) => {
 });
 
 // Use snippet routes
-router.use('/snippets', snippetRoutes);
+router.use('/api/snippets', snippetRoutes); // Modified to add snippet routes
 
 export default router;

@@ -1,27 +1,40 @@
+
 #!/bin/bash
 
-# Create logs directory if it doesn't exist
+# Setup log directory
 mkdir -p logs
+LOG_FILE="logs/app.log"
 
-# Use local Node.js binaries if available
+# Log function
+log() {
+  echo "[$(date -u +"%Y-%m-%dT%H:%M:%SZ")] $1"
+  echo "[$(date -u +"%Y-%m-%dT%H:%M:%SZ")] $1" >> "$LOG_FILE"
+}
+
+log "Starting application..."
+
+# Use local Node.js if available, otherwise use system Node.js
 if [ -f "./node_bin/node" ]; then
   export PATH="./node_bin:$PATH"
-  chmod +x ./node_bin/node ./node_bin/npm
-  echo "Using local Node.js: $(./node_bin/node -v)"
+  chmod +x ./node_bin/node ./node_bin/npm 2>/dev/null
+  log "Using local Node.js: $(node -v)"
 else
-  echo "Using system Node.js: $(node -v)"
+  log "Using system Node.js: $(node -v)"
 fi
 
-# Install dependencies if node_modules doesn't exist
+# Install dependencies if needed
 if [ ! -d "node_modules" ]; then
-  echo "Installing dependencies..."
-  npm install
+  log "Installing dependencies..."
+  npm install || npm install --legacy-peer-deps
+else
+  log "Dependencies already installed"
 fi
 
 # Build the application
-echo "Building application..."
+log "Building the application..."
 npm run build
 
-# Start the application in production mode
-echo "Starting application..."
-NODE_ENV=production node dist/index.js
+# Start the application
+log "Starting the application..."
+export NODE_ENV=production
+node dist/index.js

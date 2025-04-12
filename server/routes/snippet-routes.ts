@@ -195,3 +195,142 @@ router.delete('/:id', verifyOwnership, async (req, res) => {
 });
 
 export default router;
+import { Router } from 'express';
+import { v4 as uuidv4 } from 'uuid';
+
+// Mock data store - replace with database in production
+let snippets: any[] = [
+  {
+    id: '1',
+    title: 'Hello World in JavaScript',
+    language: 'javascript',
+    code: 'console.log("Hello, World!");',
+    description: 'A simple hello world example',
+    tags: ['javascript', 'beginner'],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  }
+];
+
+const router = Router();
+
+// Get all snippets
+router.get('/', (req, res) => {
+  try {
+    res.json(snippets);
+  } catch (error) {
+    console.error('Error fetching snippets:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch snippets',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+// Get snippet by ID
+router.get('/:id', (req, res) => {
+  try {
+    const snippet = snippets.find(s => s.id === req.params.id);
+    
+    if (!snippet) {
+      return res.status(404).json({ error: 'Snippet not found' });
+    }
+    
+    res.json(snippet);
+  } catch (error) {
+    console.error(`Error fetching snippet ${req.params.id}:`, error);
+    res.status(500).json({ 
+      error: 'Failed to fetch snippet',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+// Create new snippet
+router.post('/', (req, res) => {
+  try {
+    const { title, language, code, description, tags } = req.body;
+    
+    if (!title || !language || !code) {
+      return res.status(400).json({ error: 'Title, language and code are required' });
+    }
+    
+    const newSnippet = {
+      id: uuidv4(),
+      title,
+      language,
+      code,
+      description,
+      tags: tags || [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      userId: req.user?.id // If you have authentication
+    };
+    
+    snippets.push(newSnippet);
+    res.status(201).json(newSnippet);
+  } catch (error) {
+    console.error('Error creating snippet:', error);
+    res.status(500).json({ 
+      error: 'Failed to create snippet',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+// Update snippet
+router.put('/:id', (req, res) => {
+  try {
+    const index = snippets.findIndex(s => s.id === req.params.id);
+    
+    if (index === -1) {
+      return res.status(404).json({ error: 'Snippet not found' });
+    }
+    
+    // Optional check for ownership if you have authentication
+    // if (req.user.id !== snippets[index].userId) {
+    //   return res.status(403).json({ error: 'Not authorized to update this snippet' });
+    // }
+    
+    snippets[index] = {
+      ...snippets[index],
+      ...req.body,
+      updatedAt: new Date().toISOString()
+    };
+    
+    res.json(snippets[index]);
+  } catch (error) {
+    console.error(`Error updating snippet ${req.params.id}:`, error);
+    res.status(500).json({ 
+      error: 'Failed to update snippet',
+      message: error instanceof Error ? error.message : 'Unknown error' 
+    });
+  }
+});
+
+// Delete snippet
+router.delete('/:id', (req, res) => {
+  try {
+    const index = snippets.findIndex(s => s.id === req.params.id);
+    
+    if (index === -1) {
+      return res.status(404).json({ error: 'Snippet not found' });
+    }
+    
+    // Optional check for ownership if you have authentication
+    // if (req.user.id !== snippets[index].userId) {
+    //   return res.status(403).json({ error: 'Not authorized to delete this snippet' });
+    // }
+    
+    snippets.splice(index, 1);
+    res.status(204).send();
+  } catch (error) {
+    console.error(`Error deleting snippet ${req.params.id}:`, error);
+    res.status(500).json({ 
+      error: 'Failed to delete snippet',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+export default router;
