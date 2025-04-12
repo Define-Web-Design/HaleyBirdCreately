@@ -1,503 +1,114 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Creately | Advanced Intelligent Collaborative Platform</title>
+  <title>Creately - Code Snippet Sharing</title>
   <style>
-    :root {
-      --primary: #4a6cf7;
-      --secondary: #f4508d;
-      --dark-blue: #1d2144;
-      --light-blue: #e9f2ff;
-      --text-color: #565656;
-      --dark-text: #1d2144;
-      --light-text: #ffffff;
-      --bg-color: #f8f9ff;
-    }
-    
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-    
     body {
-      background-color: var(--bg-color);
-      color: var(--text-color);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       line-height: 1.6;
-    }
-    
-    .container {
+      color: #333;
       max-width: 1200px;
       margin: 0 auto;
-      padding: 0 20px;
+      padding: 20px;
     }
-    
     header {
-      background-color: var(--light-blue);
-      padding: 20px 0;
-      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-    }
-    
-    .header-content {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    
-    .logo {
-      font-size: 28px;
-      font-weight: 700;
-      color: var(--primary);
-      text-decoration: none;
-    }
-    
-    .nav-links {
-      display: flex;
-      gap: 30px;
-    }
-    
-    .nav-links a {
-      color: var(--dark-blue);
-      text-decoration: none;
-      font-weight: 500;
-      transition: color 0.3s ease;
-    }
-    
-    .nav-links a:hover {
-      color: var(--primary);
-    }
-    
-    .nav-links .cta {
-      background-color: var(--primary);
-      color: var(--light-text);
-      padding: 10px 20px;
-      border-radius: 6px;
-      font-weight: 600;
-    }
-    
-    .nav-links .cta:hover {
-      background-color: #3a59e0;
-      color: var(--light-text);
-    }
-    
-    .hero {
-      padding: 100px 0;
       text-align: center;
-      background-color: var(--light-blue);
-    }
-    
-    .hero h1 {
-      font-size: 48px;
-      color: var(--dark-text);
-      margin-bottom: 20px;
-      line-height: 1.2;
-    }
-    
-    .hero p {
-      font-size: 18px;
-      color: var(--text-color);
-      max-width: 700px;
-      margin: 0 auto 40px;
-    }
-    
-    .hero-buttons {
-      display: flex;
-      justify-content: center;
-      gap: 20px;
-    }
-    
-    .button {
-      display: inline-block;
-      padding: 14px 30px;
-      border-radius: 6px;
-      font-weight: 600;
-      text-decoration: none;
-      transition: all 0.3s ease;
-    }
-    
-    .button-primary {
-      background-color: var(--primary);
-      color: var(--light-text);
-    }
-    
-    .button-primary:hover {
-      background-color: #3a59e0;
-    }
-    
-    .button-secondary {
-      background-color: transparent;
-      color: var(--primary);
-      border: 2px solid var(--primary);
-    }
-    
-    .button-secondary:hover {
-      background-color: rgba(74, 108, 247, 0.05);
-    }
-    
-    .fallback-notice {
-      background-color: #fff3cd;
-      border: 1px solid #ffecb5;
-      color: #856404;
-      padding: 15px;
-      margin-top: 20px;
-      border-radius: 6px;
-      text-align: center;
-    }
-    
-    .features {
-      padding: 80px 0;
-      background-color: #ffffff;
-    }
-    
-    .section-title {
-      text-align: center;
-      margin-bottom: 60px;
-    }
-    
-    .section-title h2 {
-      font-size: 36px;
-      color: var(--dark-text);
-      margin-bottom: 15px;
-    }
-    
-    .section-title p {
-      color: var(--text-color);
-      max-width: 700px;
-      margin: 0 auto;
-    }
-    
-    .feature-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 30px;
-    }
-    
-    .feature-card {
-      background-color: #f8f9ff;
-      border-radius: 6px;
-      padding: 30px;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-    
-    .feature-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-    }
-    
-    .feature-icon {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 60px;
-      height: 60px;
-      background-color: rgba(74, 108, 247, 0.1);
-      border-radius: 50%;
-      margin-bottom: 20px;
-    }
-    
-    .feature-icon svg {
-      width: 30px;
-      height: 30px;
-      fill: var(--primary);
-    }
-    
-    .feature-card h3 {
-      font-size: 20px;
-      color: var(--dark-text);
-      margin-bottom: 15px;
-    }
-    
-    footer {
-      background-color: var(--dark-blue);
-      color: var(--light-text);
-      padding: 60px 0 30px;
-    }
-    
-    .footer-content {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 40px;
       margin-bottom: 40px;
     }
-    
-    .footer-column h3 {
-      font-size: 18px;
-      margin-bottom: 20px;
+    h1 {
+      color: #2563eb;
     }
-    
-    .footer-column ul {
-      list-style: none;
+    .snippet-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
     }
-    
-    .footer-column ul li {
-      margin-bottom: 10px;
-    }
-    
-    .footer-column ul li a {
-      color: rgba(255, 255, 255, 0.8);
-      text-decoration: none;
-      transition: color 0.3s ease;
-    }
-    
-    .footer-column ul li a:hover {
-      color: #ffffff;
-    }
-    
-    .copyright {
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
-      padding-top: 30px;
-      text-align: center;
-      color: rgba(255, 255, 255, 0.6);
-    }
-    
-    @media (max-width: 768px) {
-      .nav-links {
-        display: none;
-      }
-      
-      .hero h1 {
-        font-size: 36px;
-      }
-      
-      .hero-buttons {
-        flex-direction: column;
-        align-items: center;
-      }
-    }
-
-    .status-info {
-      background-color: #fff;
+    .snippet-card {
+      border: 1px solid #e5e7eb;
       border-radius: 8px;
       padding: 20px;
-      margin: 30px auto;
-      max-width: 800px;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
     }
-
-    .status-info h3 {
-      border-bottom: 1px solid #eee;
-      padding-bottom: 10px;
-      margin-bottom: 15px;
-      color: var(--dark-text);
+    pre {
+      background: #f3f4f6;
+      padding: 15px;
+      border-radius: 6px;
+      overflow-x: auto;
     }
-
-    .status-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 8px 0;
-      border-bottom: 1px solid #f5f5f5;
+    .language-tag {
+      display: inline-block;
+      background: #2563eb;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      margin-top: 10px;
     }
-
-    .status-label {
-      font-weight: 500;
-      color: var(--dark-text);
-    }
-
-    .status-value {
-      color: var(--text-color);
-    }
-
-    .status-success {
-      color: #28a745;
-    }
-
-    .status-warning {
-      color: #ffc107;
-    }
-
-    .status-error {
-      color: #dc3545;
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      background: #f9fafb;
+      border-radius: 8px;
     }
   </style>
 </head>
 <body>
   <header>
-    <div class="container header-content">
-      <a href="/" class="logo">Creately</a>
-      <nav class="nav-links">
-        <a href="#features">Features</a>
-        <a href="#about">About</a>
-        <a href="#contact">Contact</a>
-        <a href="/login" class="cta">Sign In</a>
-      </nav>
-    </div>
+    <h1>Creately - Code Snippet Sharing</h1>
+    <p>Share and collaborate on code snippets with your team</p>
   </header>
-  
-  <section class="hero">
-    <div class="container">
-      <h1>Collaborate Intelligently with Creately</h1>
-      <p>An advanced platform leveraging AI to enhance team productivity through intelligent, adaptive technologies and engaging user experiences.</p>
-      <div class="hero-buttons">
-        <a href="/register" class="button button-primary">Get Started</a>
-        <a href="#features" class="button button-secondary">Learn More</a>
-      </div>
-      
-      <div class="fallback-notice">
-        <strong>Notice:</strong> You are currently viewing the fallback server. The main application may be undergoing maintenance or updates.
-      </div>
 
-      <div class="status-info">
-        <h3>Server Status</h3>
-        <div class="status-row">
-          <span class="status-label">Server Type:</span>
-          <span class="status-value">Fallback Server</span>
-        </div>
-        <div class="status-row">
-          <span class="status-label">Environment:</span>
-          <span class="status-value" id="env-mode">-</span>
-        </div>
-        <div class="status-row">
-          <span class="status-label">Database:</span>
-          <span class="status-value" id="db-status">-</span>
-        </div>
-        <div class="status-row">
-          <span class="status-label">API Health:</span>
-          <span class="status-value" id="api-status">Checking...</span>
-        </div>
-      </div>
+  <div class="snippet-container">
+    <div class="snippet-card">
+      <h3>Welcome to Creately</h3>
+      <pre><code>console.log("Hello, Creately!");</code></pre>
+      <span class="language-tag">JavaScript</span>
     </div>
-  </section>
-  
-  <section id="features" class="features">
-    <div class="container">
-      <div class="section-title">
-        <h2>Powerful Features That Drive Collaboration</h2>
-        <p>Creately combines cutting-edge AI with intuitive design to create a seamless collaborative experience for teams of all sizes.</p>
-      </div>
-      
-      <div class="feature-grid">
-        <div class="feature-card">
-          <div class="feature-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-              <path d="M13 15l11-7L11.993 2.3a1 1 0 0 0-1.986 0L0 8l13 7zm-2 1L0 9v7l11 6 11-6V9l-11 7z"/>
-            </svg>
-          </div>
-          <h3>AI-Powered Insights</h3>
-          <p>Leverage machine learning algorithms that adapt to your team's workflow and provide actionable insights for improved productivity.</p>
-        </div>
-        
-        <div class="feature-card">
-          <div class="feature-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-              <path d="M17 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h10zm-4 14a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/>
-            </svg>
-          </div>
-          <h3>Real-Time Collaboration</h3>
-          <p>Work simultaneously with your team members on projects with real-time updates and seamless integration across all devices.</p>
-        </div>
-        
-        <div class="feature-card">
-          <div class="feature-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-              <path d="M14 2a8 8 0 0 1 3.292 15.293A8 8 0 1 1 6.706 6.707 8.003 8.003 0 0 1 14 2zm-4 6a6 6 0 1 0 0 12 6 6 0 0 0 0-12zm1 1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm8 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-8 5a4 4 0 0 1 3.2 1.6 1 1 0 1 1-1.6 1.2 2 2 0 0 0-3.2 0 1 1 0 1 1-1.6-1.2A4 4 0 0 1 11 14z"/>
-            </svg>
-          </div>
-          <h3>Adaptive User Interface</h3>
-          <p>Enjoy a personalized experience with an interface that adapts to your preferences and work habits for maximum efficiency.</p>
-        </div>
-      </div>
+    <div class="snippet-card">
+      <h3>React Component</h3>
+      <pre><code>function Button({ children, onClick }) {
+  return (
+    <button 
+      className="btn primary" 
+      onClick={onClick}
+    >
+      {children}
+    </button>
+  );
+}</code></pre>
+      <span class="language-tag">JSX</span>
     </div>
-  </section>
-  
-  <footer>
-    <div class="container">
-      <div class="footer-content">
-        <div class="footer-column">
-          <h3>Creately</h3>
-          <ul>
-            <li><a href="#about">About Us</a></li>
-            <li><a href="#careers">Careers</a></li>
-            <li><a href="#blog">Blog</a></li>
-            <li><a href="#pricing">Pricing</a></li>
-          </ul>
-        </div>
-        
-        <div class="footer-column">
-          <h3>Features</h3>
-          <ul>
-            <li><a href="#ai-insights">AI Insights</a></li>
-            <li><a href="#collaboration">Collaboration</a></li>
-            <li><a href="#integrations">Integrations</a></li>
-            <li><a href="#security">Security</a></li>
-          </ul>
-        </div>
-        
-        <div class="footer-column">
-          <h3>Resources</h3>
-          <ul>
-            <li><a href="#documentation">Documentation</a></li>
-            <li><a href="#tutorials">Tutorials</a></li>
-            <li><a href="#webinars">Webinars</a></li>
-            <li><a href="#support">Support</a></li>
-          </ul>
-        </div>
-        
-        <div class="footer-column">
-          <h3>Contact</h3>
-          <ul>
-            <li><a href="mailto:info@creately.app">info@creately.app</a></li>
-            <li><a href="tel:+1234567890">+1 (234) 567-890</a></li>
-            <li><a href="#address">123 Innovation Street<br>Tech City, TC 98765</a></li>
-          </ul>
-        </div>
-      </div>
-      
-      <div class="copyright">
-        <p>&copy; 2025 Creately. All rights reserved.</p>
-      </div>
+    <div class="snippet-card">
+      <h3>Database Query</h3>
+      <pre><code>const snippets = await db
+  .select()
+  .from(schema.codeSnippets)
+  .where(eq(schema.codeSnippets.isPublic, true))
+  .orderBy(sql\`\${schema.codeSnippets.createdAt} desc\`);</code></pre>
+      <span class="language-tag">TypeScript</span>
     </div>
-  </footer>
+  </div>
+
+  <div class="api-status">
+    <p>API Status: <span id="status">Checking...</span></p>
+  </div>
 
   <script>
-    // Simple script to check the fallback server API status
-    document.addEventListener('DOMContentLoaded', function() {
-      // Get status elements
-      const envMode = document.getElementById('env-mode');
-      const dbStatus = document.getElementById('db-status');
-      const apiStatus = document.getElementById('api-status');
-      
-      // Fetch API health status
-      fetch('/api/health')
-        .then(response => {
-          if (!response.ok) {
-            throw new Error('API health check failed');
-          }
-          return response.json();
-        })
-        .then(data => {
-          // Update status elements with API response
-          envMode.textContent = data.environment || 'Unknown';
-          
-          if (data.database && data.database.status) {
-            if (data.database.status === 'available') {
-              dbStatus.textContent = `${data.database.type} (Connected)`;
-              dbStatus.className = 'status-value status-success';
-            } else {
-              dbStatus.textContent = `${data.database.type} (${data.database.message || 'Disconnected'})`;
-              dbStatus.className = 'status-value status-warning';
-            }
-          } else {
-            dbStatus.textContent = 'Not Connected';
-            dbStatus.className = 'status-value status-error';
-          }
-          
-          apiStatus.textContent = `Online (Uptime: ${data.uptime})`;
-          apiStatus.className = 'status-value status-success';
-        })
-        .catch(error => {
-          console.error('Error checking API health:', error);
-          apiStatus.textContent = 'Offline or Unavailable';
-          apiStatus.className = 'status-value status-error';
-          
-          // Set default values if API is unavailable
-          envMode.textContent = 'Unknown';
-          dbStatus.textContent = 'Status Unknown';
-          dbStatus.className = 'status-value status-warning';
-        });
-    });
+    // Check API health
+    fetch("/api/health")
+      .then(response => response.json())
+      .then(data => {
+        document.getElementById("status").textContent = "Online";
+        document.getElementById("status").style.color = "#22c55e";
+      })
+      .catch(error => {
+        document.getElementById("status").textContent = "Offline";
+        document.getElementById("status").style.color = "#ef4444";
+      });
   </script>
 </body>
 </html>
+
