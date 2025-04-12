@@ -11,7 +11,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const CHECK_INTERVAL = 60000; // Check every minute
+const CHECK_INTERVAL = 15000; // Check every 15 seconds
 const PORT = process.env.PORT || 3001;
 const TARGET_URL = `http://0.0.0.0:${process.env.PORT || 3000}/api/health`;
 
@@ -46,14 +46,38 @@ server.listen(PORT, () => {
 });
 
 // Check the main server health periodically
+let consecutiveFailures = 0;
+const MAX_FAILURES = 3;
+const SERVER_START_COMMAND = './start.sh';
+
+function attemptServerRestart() {
+  logMessage('Attempting to restart the main server...', 'WARNING');
+  const { exec } = require('child_process');
+  
+  exec(SERVER_START_COMMAND, (error, stdout, stderr) => {
+    if (error) {
+      logMessage(`Failed to restart server: ${error.message}`, 'ERROR');
+      return;
+    }
+    
+    logMessage('Server restart initiated', 'INFO');
+    logMessage(`Output: ${stdout}`, 'DEBUG');
+    
+    // Reset the counter after restart attempt
+    consecutiveFailures = 0;
+  });
+}
+
 function checkServerHealth() {
   logMessage('Checking server health...');
   
   http.get(TARGET_URL, (res) => {
     if (res.statusCode === 200) {
       logMessage('Server is healthy', 'SUCCESS');
+      consecutiveFailures = 0; // Reset counter on success
     } else {
       logMessage(`Server returned status code: ${res.statusCode}`, 'WARNING');
+      consecutiveFailures++;
     }
     
     let data = '';
@@ -68,9 +92,22 @@ function checkServerHealth() {
       } catch (e) {
         logMessage(`Failed to parse response: ${data}`, 'ERROR');
       }
+      
+      // Check if we need to restart the server
+      if (consecutiveFailures >= MAX_FAILURES) {
+        logMessage(`${consecutiveFailures} consecutive failures detected. Threshold reached.`, 'WARNING');
+        attemptServerRestart();
+      }
     });
   }).on('error', (err) => {
     logMessage(`Health check failed: ${err.message}`, 'ERROR');
+    consecutiveFailures++;
+    
+    // Check if we need to restart the server
+    if (consecutiveFailures >= MAX_FAILURES) {
+      logMessage(`${consecutiveFailures} consecutive failures detected. Threshold reached.`, 'WARNING');
+      attemptServerRestart();
+    }
   });
 }
 

@@ -1,23 +1,62 @@
+
 #!/bin/bash
 
-echo "Starting Creately Code Snippet Server"
+# Creately Application Server Startup Script
+# This script starts the main application server with fallbacks
 
-# Try different Node.js paths
-NODE_PATH="/home/runner/workspace/node_bin/node"
-if [ -f "$NODE_PATH" ]; then
-  echo "Using Node.js at $NODE_PATH"
-  $NODE_PATH server.js
+echo "Starting Creately application server..."
+
+# Set default port if not specified
+export PORT="${PORT:-3000}"
+export NODE_ENV="${NODE_ENV:-production}"
+
+# Create logs directory if it doesn't exist
+mkdir -p logs
+
+# Function to log messages
+log() {
+  echo "[$(date -u +"%Y-%m-%dT%H:%M:%SZ")] $1"
+  echo "[$(date -u +"%Y-%m-%dT%H:%M:%SZ")] $1" >> logs/server.log
+}
+
+# Check if node_bin exists
+if [ -f "./node_bin/node" ]; then
+  NODE_CMD="./node_bin/node"
+  NPM_CMD="./node_bin/npm"
+  log "Using node_bin executables"
 else
-  # Check for 'node' command
-  if command -v node >/dev/null 2>&1; then
-    echo "Using system Node.js"
-    node server.js
-  # Check for global Node.js installations
-  elif [ -f "/nix/store/wfxq6w9bkp5dcfr8yb6789b0w7128gnb-nodejs-20.18.1/bin/node" ]; then
-    echo "Using Nix Node.js"
-    /nix/store/wfxq6w9bkp5dcfr8yb6789b0w7128gnb-nodejs-20.18.1/bin/node server.js
+  NODE_CMD="node"
+  NPM_CMD="npm"
+  log "Using system node"
+fi
+
+# Build the application if dist directory doesn't exist
+if [ ! -d "dist" ]; then
+  log "Building application..."
+  $NPM_CMD run build
+  if [ $? -ne 0 ]; then
+    log "Build failed, attempting to start from source"
   else
-    echo "ERROR: Could not find Node.js. Please install Node.js to run this server."
-    exit 1
+    log "Build completed successfully"
   fi
+fi
+
+# Try to start the built app first
+if [ -f "dist/index.js" ]; then
+  log "Starting production server from dist/index.js"
+  $NODE_CMD dist/index.js
+  SERVER_EXIT_CODE=$?
+  
+  if [ $SERVER_EXIT_CODE -ne 0 ]; then
+    log "Production server failed with exit code $SERVER_EXIT_CODE"
+    # Try development mode as fallback
+    log "Falling back to development mode..."
+    $NPM_CMD run dev
+    exit $?
+  fi
+else
+  # Fallback to dev mode if build failed
+  log "Starting development server..."
+  $NPM_CMD run dev
+  exit $?
 fi

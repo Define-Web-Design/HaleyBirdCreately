@@ -21,7 +21,7 @@ pattern = "**/{*.js,*.jsx,*.ts,*.tsx}"
 start = "typescript-language-server --stdio"
 
 [deployment]
-run = ["sh", "-c", "PORT=3000 NODE_ENV=production node dist/index.js"]
+run = ["sh", "-c", "NODE_ENV=production node dist/index.js"]
 deploymentTarget = "gce"
 build = ["sh", "-c", "npm run build"]
 
@@ -34,7 +34,7 @@ localPort = 3001
 externalPort = 3001
 
 [workflows]
-runButton = "Monitor Server with Node"
+runButton = "Server and Monitor"
 
 [[workflows.workflow]]
 name = "Build and Start Production"
@@ -70,6 +70,23 @@ args = "./start-monitor.sh"
 name = "Monitor Server with Node"
 author = 40896524
 mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "./node_bin/node monitor.js"
+
+[[workflows.workflow]]
+name = "Server and Monitor"
+author = 40896524
+mode = "parallel"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run build"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "NODE_ENV=production node dist/index.js"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
