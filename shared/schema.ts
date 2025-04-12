@@ -45,8 +45,23 @@ export interface MoodCapsule {
   updatedAt?: Date;
 }
 
+// ColorPalette interface
+export interface ColorPalette {
+  id: number;
+  userId: number;
+  name: string;
+  description?: string;
+  colors: string[];
+  mood?: string;
+  isPublic: boolean;
+  usageCount: number;
+  tags?: string[];
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
 // CodeSnippet interface
-export interface CodeSnippet {
+export interface CodeSnippetInterface {
   id: number;
   userId: number;
   title: string;
@@ -99,6 +114,21 @@ export const refreshTokens = pgTable('refresh_tokens', {
   userAgent: text('user_agent')
 });
 
+// Color Palettes Table
+export const colorPalettes = pgTable('color_palettes', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull().references(() => users.id),
+  name: varchar('name', { length: 100 }).notNull(),
+  description: text('description'),
+  colors: text('colors').array().notNull(),
+  mood: varchar('mood', { length: 50 }),
+  isPublic: boolean('is_public').default(true).notNull(),
+  usageCount: integer('usage_count').default(0).notNull(),
+  tags: text('tags').array(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull()
+});
+
 // Code Snippets Table
 export const codeSnippets = pgTable('code_snippets', {
   id: serial('id').primaryKey(),
@@ -128,6 +158,12 @@ export const insertSessionSchema = createInsertSchema(sessions)
 export const insertRefreshTokenSchema = createInsertSchema(refreshTokens)
   .omit({ id: true, createdAt: true, isRevoked: true });
 
+export const insertColorPaletteSchema = createInsertSchema(colorPalettes)
+  .omit({ id: true, usageCount: true, createdAt: true, updatedAt: true })
+  .extend({
+    tags: z.array(z.string()).optional()
+  });
+
 export const insertCodeSnippetSchema = createInsertSchema(codeSnippets)
   .omit({ id: true, viewCount: true, createdAt: true, updatedAt: true })
   .extend({
@@ -138,8 +174,10 @@ export const insertCodeSnippetSchema = createInsertSchema(codeSnippets)
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertSession = z.infer<typeof insertSessionSchema>;
 export type InsertRefreshToken = z.infer<typeof insertRefreshTokenSchema>;
+export type InsertColorPalette = z.infer<typeof insertColorPaletteSchema>;
 export type InsertCodeSnippet = z.infer<typeof insertCodeSnippetSchema>;
 export type User = typeof users.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
 export type RefreshToken = typeof refreshTokens.$inferSelect;
+export type ColorPalette = typeof colorPalettes.$inferSelect;
 export type CodeSnippet = typeof codeSnippets.$inferSelect;
