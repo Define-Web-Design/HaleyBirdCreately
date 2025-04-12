@@ -132,3 +132,17 @@ export const deleteCodeSnippet = async (id: string | number): Promise<boolean> =
   });
   return response.success || false;
 };
+
+// Fetching code snippet content
+export const fetchSnippets = async () => {
+  try {
+    const response = await fetch('/api/snippets');
+    if (!response.ok) {
+      throw new Error(`HTTP error ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("Error fetching snippets:", error);
+    return { snippets: [] };
+  }
+};

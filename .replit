@@ -301,7 +301,7 @@ args = "#!/bin/bash"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "# Setup log directory"
+args = "# First ensure we have a working environment"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
@@ -309,20 +309,48 @@ args = "mkdir -p logs"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "# Use existing node installation or install if needed"
+args = "# Use local node binary if available"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "export PATH=\"$PATH:./node_bin:$HOME/n/bin:$HOME/.n/bin\""
+args = "export PATH=\"$PATH:./node_bin\""
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "node_bin/npm install"
+args = "chmod +x ./node_bin/node ./node_bin/npm 2>/dev/null || echo \"No local node binaries available\""
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "node_bin/npm run build"
+args = ""
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "NODE_ENV=production node_bin/node dist/index.js"
+args = "# Install dependencies"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm install || npm install --legacy-peer-deps"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Build the application"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run build"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run the application"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "NODE_ENV=production PORT=3000 node dist/index.js"
