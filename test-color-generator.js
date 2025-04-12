@@ -24,7 +24,14 @@ try {
 }
 
 // Load the color generator service
-const colorGenerator = require('./server/services/color-generator');
+try {
+  var colorGenerator = require('./server/services/color-generator');
+  console.log('Color generator service loaded successfully');
+} catch (error) {
+  console.error(`${colors.red}Failed to load color generator service: ${error.message}${colors.reset}`);
+  console.error(`${colors.yellow}Make sure the server/services/color-generator.js file exists${colors.reset}`);
+  process.exit(1);
+}
 
 console.log(`${colors.blue}${colors.bold}==============================================${colors.reset}`);
 console.log(`${colors.blue}${colors.bold}       Color Generator Test Tool              ${colors.reset}`);
