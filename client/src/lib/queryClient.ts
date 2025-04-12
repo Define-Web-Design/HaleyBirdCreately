@@ -1,56 +1,68 @@
 import { QueryClient } from '@tanstack/react-query';
 
-// Helper function for API requests
+// Default fetch configuration for API requests
+const defaultFetchOptions: RequestInit = {
+  headers: {
+    'Content-Type': 'application/json'
+  }
+};
+
+// API request helper function that handles auth token
 export async function apiRequest(
   url: string,
   options: RequestInit = {}
 ): Promise<any> {
-  try {
-    // Default headers
-    const headers = {
-      'Content-Type': 'application/json',
+  // Get auth token from localStorage
+  const token = localStorage.getItem('token');
+  
+  // Merge default options with provided options
+  const fetchOptions = {
+    ...defaultFetchOptions,
+    ...options,
+    headers: {
+      ...defaultFetchOptions.headers,
       ...options.headers,
-    };
-
-    // Add auth token if available
-    const token = localStorage.getItem('token');
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {})
     }
-
-    // Make the request
-    const response = await fetch(url, {
-      ...options,
-      headers,
-    });
-
-    // Parse the JSON response
-    const data = await response.json();
-
-    // Check if the request was successful
-    if (!response.ok) {
-      // Add status to the error for easier error handling
-      throw {
-        ...data,
-        status: response.status,
-        statusText: response.statusText,
-      };
-    }
-
-    return data;
-  } catch (error) {
-    console.error('API request error:', error);
-    throw error;
+  };
+  
+  // Make the request
+  const response = await fetch(url, fetchOptions);
+  
+  // Handle non-2xx responses
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || `API request failed with status ${response.status}`);
   }
+  
+  // For 204 No Content responses, return null
+  if (response.status === 204) {
+    return null;
+  }
+  
+  // Parse and return the JSON response
+  return await response.json();
 }
 
-// Create a client
+// Create the query client with default options
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      refetchOnWindowFocus: false,
+      // Use our custom fetcher function
+      queryFn: async ({ queryKey }) => {
+        // Convert query key to URL
+        const url = Array.isArray(queryKey) 
+          ? queryKey.join('/') 
+          : queryKey.toString();
+          
+        return apiRequest(url);
+      },
+      // Default caching and error handling settings
+      staleTime: 1000 * 60 * 5, // 5 minutes
       retry: 1,
-      staleTime: 5 * 60 * 1000, // 5 minutes
-    },
-  },
+      refetchOnWindowFocus: false
+    }
+  }
 });
+
+export default queryClient;
