@@ -1,6 +1,7 @@
 import express from 'express';
 import { ServiceRegistry } from './services/registry';
 import storage from './storage';
+import snippetRoutes from './routes/snippet-routes';
 
 const router = express.Router();
 
@@ -98,5 +99,8 @@ router.get('/user/profile', async (req, res) => {
     res.status(401).json({ error: 'Unauthorized - Invalid token' });
   }
 });
+
+// Register code snippet routes
+router.use('/snippets', snippetRoutes);
 
 export default router;

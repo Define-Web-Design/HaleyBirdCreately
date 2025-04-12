@@ -21,7 +21,11 @@ const PORT = process.env.PORT || 3000;
 
 // Register services
 const registry = ServiceRegistry.getInstance();
-registry.registerService('authService', new AuthService(storage));
+const authService = new AuthService(storage);
+registry.registerService('authService', authService);
+
+// Make auth service available to routes
+app.set('authService', authService);
 
 // Middleware
 app.use(cors());
