@@ -82,11 +82,7 @@ mode = "parallel"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npm run build"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "NODE_ENV=production node dist/index.js"
+args = "bash -c \"curl -fsSL https://npm.im/n | bash -s -- -y latest && npm i && npm run build && NODE_ENV=production node dist/index.js\""
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"

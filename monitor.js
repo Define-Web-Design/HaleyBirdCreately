@@ -6,6 +6,7 @@ import http from 'http';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { exec } from 'child_process';
 
 // Get current directory in ESM
 const __filename = fileURLToPath(import.meta.url);
@@ -52,7 +53,6 @@ const SERVER_START_COMMAND = './start.sh';
 
 function attemptServerRestart() {
   logMessage('Attempting to restart the main server...', 'WARNING');
-  const { exec } = require('child_process');
   
   exec(SERVER_START_COMMAND, (error, stdout, stderr) => {
     if (error) {

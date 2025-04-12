@@ -1,46 +1,42 @@
 
 #!/bin/bash
-set -e
 
-# Environment detection
-if [ -z "$NODE_ENV" ]; then
-  export NODE_ENV="production"
-fi
+# Setup log directory
+mkdir -p logs
 
-echo "Starting Creately in $NODE_ENV mode..."
+# Set default environment variables
+export PORT="${PORT:-3000}"
+export NODE_ENV="${NODE_ENV:-production}"
 
-# Ensure PORT is set
-if [ -z "$PORT" ]; then
-  export PORT=3000
-fi
+# Log function
+log() {
+  echo "[$(date -u +"%Y-%m-%dT%H:%M:%SZ")] $1"
+  echo "[$(date -u +"%Y-%m-%dT%H:%M:%SZ")] $1" >> logs/server.log
+}
 
-# Verify node is available
+log "Starting application..."
+
+# Check for Node.js
 if ! command -v node &> /dev/null; then
-  echo "Node.js not found in PATH, checking alternatives..."
-  if [ -f "/usr/bin/nodejs" ]; then
-    NODE_CMD="/usr/bin/nodejs"
-  elif [ -f "/nix/store/*/bin/node" ]; then
-    NODE_CMD=$(find /nix/store -path "*/bin/node" -type f -executable | head -n 1)
-  else
-    echo "ERROR: Cannot find Node.js. Please check installation."
-    exit 1
-  fi
-else
-  NODE_CMD="node"
+  log "Node.js not found, installing..."
+  curl -fsSL https://npm.im/n | bash -s -- -y latest
+  PATH="$PATH:$HOME/n/bin"
+  log "Node.js installed: $(node -v)"
 fi
 
-# Build if necessary
-if [ "$NODE_ENV" = "production" ]; then
-  if [ ! -d "./dist" ] || [ ! -f "./dist/index.js" ]; then
-    echo "Building application..."
-    npm run build
-  fi
-  
-  # Start production server
-  echo "Starting production server on port $PORT..."
-  $NODE_CMD dist/index.js
-else
-  # Start development server
-  echo "Starting development server on port $PORT..."
-  npm run dev
+# Install dependencies if needed
+if [ ! -d "node_modules" ] || [ ! -f "node_modules/.package-lock.json" ]; then
+  log "Installing dependencies..."
+  npm install
+  touch node_modules/.package-lock.json
 fi
+
+# Build the application if needed
+if [ ! -d "dist" ] || [ -z "$(ls -A dist 2>/dev/null)" ]; then
+  log "Building application..."
+  npm run build
+fi
+
+# Start the application
+log "Starting server..."
+NODE_ENV=production node dist/index.js
