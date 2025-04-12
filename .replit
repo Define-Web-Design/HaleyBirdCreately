@@ -31,6 +31,7 @@ enabledForHosting = false
 [env]
 XDG_CONFIG_HOME = "$REPL_HOME/.config"
 PORT = "5173"
+REPLIT_DISABLE_PACKAGE_LAYER = "1"
 
 [languages]
 
@@ -49,3 +50,19 @@ start = "typescript-language-server --stdio"
 [auth]
 pageEnabled = true
 buttonEnabled = false
+
+[workflows]
+runButton = "Build and Start Production"
+
+[[workflows.workflow]]
+name = "Build and Start Production"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run build"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm start"
