@@ -21,7 +21,7 @@ pattern = "**/{*.js,*.jsx,*.ts,*.tsx}"
 start = "typescript-language-server --stdio"
 
 [deployment]
-run = ["sh", "-c", "NODE_ENV=production node dist/index.js"]
+run = ["sh", "-c", "node dist/index.js"]
 deploymentTarget = "gce"
 build = ["sh", "-c", "npm run build"]
 
@@ -34,7 +34,7 @@ localPort = 3001
 externalPort = 3001
 
 [workflows]
-runButton = "Complete System with Fallbacks"
+runButton = "Deploy Application"
 
 [[workflows.workflow]]
 name = "Build and Start Production"
@@ -272,3 +272,20 @@ args = "# Start the server"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "NODE_ENV=production node dist/index.js"
+
+[[workflows.workflow]]
+name = "Deploy Application"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "#!/bin/bash"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "chmod +x deploy.sh"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "./deploy.sh"
