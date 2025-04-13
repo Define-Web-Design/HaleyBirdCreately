@@ -1,4 +1,8 @@
 
+[env]
+REPLIT_KEEP_PACKAGE_DEV_DEPENDENCIES = "1"
+
+
 entrypoint = "server/index.ts"
 hidden = [".config", "package-lock.json"]
 compile = ["npm", "run", "build"]
