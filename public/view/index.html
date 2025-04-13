@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>View Snippet - Creately</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+  <!-- Load common languages -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/java.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/csharp.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/go.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/ruby.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/php.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/css.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/xml.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/markdown.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/sql.min.js"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    header {
+      margin-bottom: 30px;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 20px;
+    }
+    h1 { color: #2563eb; }
+    .header-links {
+      display: flex;
+      gap: 20px;
+    }
+    .header-links a {
+      color: #2563eb;
+      text-decoration: none;
+    }
+    .header-links a:hover {
+      text-decoration: underline;
+    }
+    .snippet-container {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 30px;
+    }
+    .snippet-header {
+      background-color: #f9fafb;
+      padding: 20px;
+      border-bottom: 1px solid #ddd;
+    }
+    .snippet-title {
+      margin: 0 0 10px 0;
+      font-size: 1.8rem;
+      color: #1e40af;
+    }
+    .snippet-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      font-size: 0.9rem;
+      color: #6b7280;
+    }
+    .snippet-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .snippet-description {
+      padding: 20px;
+      background-color: #fff;
+      border-bottom: 1px solid #ddd;
+      font-size: 1rem;
+      line-height: 1.7;
+    }
+    .code-container {
+      position: relative;
+    }
+    .language-badge {
+      position: absolute;
+      top: 10px;
+      right: 60px;
+      background-color: #4b5563;
+      color: #fff;
+      font-size: 0.8rem;
+      padding: 3px 8px;
+      border-radius: 4px;
+      z-index: 2;
+      text-transform: uppercase;
+    }
+    .copy-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background-color: #4b5563;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 3px 8px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      z-index: 2;
+    }
+    .copy-btn:hover {
+      background-color: #374151;
+    }
+    pre {
+      margin: 0;
+      padding: 20px;
+      overflow-x: auto;
+    }
+    pre code {
+      font-family: 'SFMono-Regular', Consolas, monospace;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      padding: 0 !important;
+    }
+    .code-with-line-numbers {
+      counter-reset: line;
+    }
+    .code-with-line-numbers .hljs-line {
+      position: relative;
+      display: block;
+      padding-left: 3.5em;
+    }
+    .code-with-line-numbers .hljs-line:before {
+      counter-increment: line;
+      content: counter(line);
+      position: absolute;
+      left: 0;
+      color: #777;
+      text-align: right;
+      width: 3em;
+      padding-right: 0.5em;
+      border-right: 1px solid #ddd;
+      user-select: none;
+    }
+    .snippet-footer {
+      padding: 15px 20px;
+      background-color: #f9fafb;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.9rem;
+      color: #6b7280;
+    }
+    .share-section {
+      margin-top: 30px;
+      padding: 20px;
+      background-color: #f9fafb;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+    }
+    .share-section h3 {
+      margin-top: 0;
+      color: #1e40af;
+    }
+    .share-url {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+    }
+    .share-url input {
+      flex: 1;
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+    .copy-url-btn {
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 8px 16px;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+    .copy-url-btn:hover {
+      background-color: #1d4ed8;
+    }
+    .loading {
+      text-align: center;
+      padding: 40px;
+      font-size: 1.1rem;
+      color: #6b7280;
+    }
+    .error {
+      text-align: center;
+      padding: 40px;
+      color: #b91c1c;
+      background-color: #fee2e2;
+      border-radius: 8px;
+      border: 1px solid #fecaca;
+    }
+    .back-btn {
+      display: inline-block;
+      padding: 8px 16px;
+      background-color: #f3f4f6;
+      border: 1px solid #e5e7eb;
+      border-radius: 4px;
+      color: #4b5563;
+      text-decoration: none;
+      font-size: 0.9rem;
+      margin-bottom: 20px;
+    }
+    .back-btn:hover {
+      background-color: #e5e7eb;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Creately Code Snippets</h1>
+    <div class="header-links">
+      <a href="/">Home</a>
+      <a href="/create-snippet.html">Create Snippet</a>
+    </div>
+  </header>
+
+  <main>
+    <a href="/" class="back-btn">← Back to all snippets</a>
+    
+    <div id="snippetContainer" class="loading">
+      Loading snippet...
+    </div>
+    
+    <div id="shareSection" class="share-section" style="display: none;">
+      <h3>Share this snippet</h3>
+      <p>Use the link below to share this code snippet with others:</p>
+      <div class="share-url">
+        <input type="text" id="shareUrl" readonly>
+        <button class="copy-url-btn" onclick="copyShareUrl()">Copy URL</button>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Function to format date
+    function formatDate(dateString) {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+
+    // Function to copy code to clipboard
+    function copyCode(button, code) {
+      navigator.clipboard.writeText(code)
+        .then(() => {
+          const originalText = button.textContent;
+          button.textContent = 'Copied!';
+          setTimeout(() => {
+            button.textContent = originalText;
+          }, 2000);
+        })
+        .catch(err => {
+          console.error('Failed to copy code', err);
+        });
+    }
+
+    // Function to copy share URL
+    function copyShareUrl() {
+      const shareUrlInput = document.getElementById('shareUrl');
+      shareUrlInput.select();
+      shareUrlInput.setSelectionRange(0, 99999);
+      
+      navigator.clipboard.writeText(shareUrlInput.value)
+        .then(() => {
+          const copyBtn = document.querySelector('.copy-url-btn');
+          const originalText = copyBtn.textContent;
+          copyBtn.textContent = 'Copied!';
+          setTimeout(() => {
+            copyBtn.textContent = originalText;
+          }, 2000);
+        })
+        .catch(err => {
+          console.error('Failed to copy URL', err);
+        });
+    }
+
+    // Function to escape HTML
+    function escapeHtml(text) {
+      const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+      };
+      return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+    }
+
+    // Function to add line numbers to code
+    function addLineNumbers(code) {
+      const lines = code.split('\\n');
+      return lines.map(line => `<span class="hljs-line">${line}</span>`).join('\\n');
+    }
+
+    // Function to get share ID from URL
+    function getShareIdFromUrl() {
+      const pathParts = window.location.pathname.split('/');
+      return pathParts[pathParts.length - 1];
+    }
+
+    // Function to load snippet by share ID
+    async function loadSnippet() {
+      const shareId = getShareIdFromUrl();
+      
+      if (!shareId) {
+        document.getElementById('snippetContainer').innerHTML = `
+          <div class="error">
+            <h2>Error: Missing Share ID</h2>
+            <p>No share ID was provided in the URL.</p>
+            <a href="/" class="back-btn">Go to Home</a>
+          </div>
+        `;
+        return;
+      }
+      
+      try {
+        const response = await fetch(`/api/snippets/${shareId}`);
+        
+        if (!response.ok) {
+          throw new Error(`Error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (!data.snippet) {
+          throw new Error('Snippet not found');
+        }
+        
+        const snippet = data.snippet;
+        const codeWithLineNumbers = addLineNumbers(escapeHtml(snippet.code));
+        
+        // Update page title
+        document.title = `${snippet.title} - Creately Code Snippet`;
+        
+        // Render snippet
+        document.getElementById('snippetContainer').innerHTML = `
+          <div class="snippet-container">
+            <div class="snippet-header">
+              <h2 class="snippet-title">${escapeHtml(snippet.title)}</h2>
+              <div class="snippet-meta">
+                <div class="snippet-meta-item">
+                  <span>Author: ${escapeHtml(snippet.author)}</span>
+                </div>
+                <div class="snippet-meta-item">
+                  <span>Created: ${formatDate(snippet.createdAt)}</span>
+                </div>
+                <div class="snippet-meta-item">
+                  <span>Language: ${snippet.language}</span>
+                </div>
+                <div class="snippet-meta-item">
+                  <span>Views: ${snippet.viewCount}</span>
+                </div>
+              </div>
+            </div>
+            
+            ${snippet.description ? `
+              <div class="snippet-description">
+                ${escapeHtml(snippet.description)}
+              </div>
+            ` : ''}
+            
+            <div class="code-container">
+              <span class="language-badge">${snippet.language}</span>
+              <button class="copy-btn" onclick="copyCode(this, '${escapeHtml(snippet.code).replace(/'/g, "\\'")}')">Copy</button>
+              <pre><code class="code-with-line-numbers ${snippet.language}">${codeWithLineNumbers}</code></pre>
+            </div>
+            
+            <div class="snippet-footer">
+              <span>Share ID: ${snippet.shareId}</span>
+            </div>
+          </div>
+        `;
+        
+        // Initialize syntax highlighting
+        document.querySelectorAll('pre code').forEach((block) => {
+          hljs.highlightElement(block);
+        });
+        
+        // Show share section
+        document.getElementById('shareSection').style.display = 'block';
+        document.getElementById('shareUrl').value = window.location.href;
+        
+      } catch (error) {
+        console.error('Error loading snippet:', error);
+        document.getElementById('snippetContainer').innerHTML = `
+          <div class="error">
+            <h2>Error loading snippet</h2>
+            <p>${error.message}</p>
+            <a href="/" class="back-btn">Go to Home</a>
+          </div>
+        `;
+      }
+    }
+
+    // Load snippet on page load
+    document.addEventListener('DOMContentLoaded', loadSnippet);
+  </script>
+</body>
+</html>

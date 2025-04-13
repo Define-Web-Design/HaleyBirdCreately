@@ -1,0 +1,9 @@
+{
+  "workflows": [
+    {
+      "name": "Code Snippet Server",
+      "run": "./snippet-server-workflow.sh",
+      "persistent": true
+    }
+  ]
+}

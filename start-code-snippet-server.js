@@ -95,8 +95,8 @@ async function main() {
   });
   
   log('Server started successfully! Use Ctrl+C to stop.', 'green');
-  log(`API available at: http://localhost:3000/api`, 'cyan');
-  log(`Web interface available at: http://localhost:3000/`, 'cyan');
+  log(`API available at: http://localhost:8080/api`, 'cyan');
+  log(`Web interface available at: http://localhost:8080/`, 'cyan');
 }
 
 // Run the script

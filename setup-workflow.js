@@ -60,8 +60,8 @@ function createWorkflowConfig() {
   const config = {
     workflows: [
       {
-        name: 'Start Server',
-        run: './start-server.sh',
+        name: 'Code Snippet Server',
+        run: './run.sh',
         persistent: true,
       }
     ]
@@ -73,10 +73,10 @@ function createWorkflowConfig() {
     fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
     
     log('✅ Workflow configuration created successfully at ' + configPath, 'green');
-    log('✅ Workflow "Start Server" is now available', 'green');
+    log('✅ Workflow "Code Snippet Server" is now available', 'green');
     log('');
     log('To start the server, press the "Run" button or run:', 'cyan');
-    log('  ./start-server.sh', 'yellow');
+    log('  ./run.sh', 'yellow');
     log('');
     
     return true;

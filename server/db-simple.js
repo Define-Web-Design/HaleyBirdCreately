@@ -1,197 +1,166 @@
 /**
- * Simple Database Connection Module
- * 
- * This module provides a simplified interface to connect to the PostgreSQL
- * database and perform operations, especially for our code snippet feature.
- * 
- * Since we're facing issues with installing the pg package in the Replit environment,
- * this file now uses a fallback in-memory implementation without actual database connections.
+ * Simple in-memory database for code snippets
+ * This is used as a fallback when PostgreSQL is unavailable
  */
 
 import crypto from 'crypto';
 
-// In-memory database for fallback
-const inMemoryDb = {
-  users: [
-    {
-      id: 1,
-      username: 'sampleuser',
-      email: 'sample@example.com',
-      password: 'placeholder_password',
-      role: 'user',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    }
-  ],
-  code_snippets: []
-};
+// In-memory storage for code snippets
+const snippets = [];
+let nextId = 1;
 
-// Test connection
+/**
+ * Generate a random ID for sharing
+ * @param {number} length - The length of the ID
+ * @returns {string} The generated ID
+ */
+function generateId(length = 6) {
+  const characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  const bytes = crypto.randomBytes(length);
+  let result = '';
+  
+  for (let i = 0; i < length; i++) {
+    const index = bytes[i] % characters.length;
+    result += characters[index];
+  }
+  
+  return result;
+}
+
+/**
+ * Test connection to database
+ * @returns {Promise<boolean>} True if connection is successful
+ */
 export async function testConnection() {
-  try {
-    // We're always using the in-memory database, so this always "succeeds"
-    console.log('✅ Using in-memory database for code snippets');
-    return true;
-  } catch (error) {
-    console.error('❌ Error initializing in-memory database:', error.message);
-    return false;
-  }
+  return true; // In-memory DB is always available
 }
 
-// Initialize database tables if they don't exist
+/**
+ * Initialize the database
+ * @returns {Promise<void>}
+ */
 export async function initDatabase() {
-  try {
-    // No need to initialize anything for in-memory
-    console.log('✅ In-memory database initialized successfully');
-    
-    // Add a sample snippet if there are none
-    if (inMemoryDb.code_snippets.length === 0) {
-      await addSampleSnippet();
-    }
-    
-    return true;
-  } catch (error) {
-    console.error('❌ In-memory database initialization error:', error.message);
-    return false;
+  console.log('Initializing in-memory database for code snippets');
+  
+  // Add a sample snippet if none exist
+  if (snippets.length === 0) {
+    await addSampleSnippet();
   }
+  
+  return true;
 }
 
-// Get all code snippets
+/**
+ * Get all code snippets
+ * @returns {Promise<Array>} Array of code snippets
+ */
 export async function getCodeSnippets() {
-  try {
-    // Sort by created_at in descending order
-    return [...inMemoryDb.code_snippets].sort((a, b) => 
-      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    );
-  } catch (error) {
-    console.error('Error fetching code snippets:', error.message);
-    return [];
-  }
+  return snippets.filter(snippet => snippet.isPublic);
 }
 
-// Get code snippet by ID
+/**
+ * Get a code snippet by ID
+ * @param {number} id - The snippet ID
+ * @returns {Promise<Object|null>} The snippet or null if not found
+ */
 export async function getCodeSnippetById(id) {
-  try {
-    return inMemoryDb.code_snippets.find(snippet => snippet.id === id) || null;
-  } catch (error) {
-    console.error(`Error fetching code snippet with ID ${id}:`, error.message);
-    return null;
-  }
+  const snippet = snippets.find(s => s.id === id);
+  return snippet || null;
 }
 
-// Get code snippet by share ID
+/**
+ * Get a code snippet by shareId
+ * @param {string} shareId - The snippet share ID
+ * @returns {Promise<Object|null>} The snippet or null if not found
+ */
 export async function getCodeSnippetByShareId(shareId) {
-  try {
-    return inMemoryDb.code_snippets.find(snippet => snippet.share_id === shareId) || null;
-  } catch (error) {
-    console.error(`Error fetching code snippet with share ID ${shareId}:`, error.message);
-    return null;
+  const snippet = snippets.find(s => s.shareId === shareId);
+  
+  if (snippet) {
+    // Increment view count
+    snippet.viewCount += 1;
   }
+  
+  return snippet || null;
 }
 
-// Get all public code snippets
+/**
+ * Get all public code snippets
+ * @returns {Promise<Array>} Array of public code snippets
+ */
 export async function getPublicCodeSnippets() {
-  try {
-    // Filter by is_public = true and sort by created_at in descending order
-    return inMemoryDb.code_snippets
-      .filter(snippet => snippet.is_public === true)
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-  } catch (error) {
-    console.error('Error fetching public code snippets:', error.message);
-    return [];
-  }
+  return snippets.filter(snippet => snippet.isPublic)
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 }
 
-// Create a new code snippet
+/**
+ * Create a new code snippet
+ * @param {Object} snippet - The snippet to create
+ * @returns {Promise<Object>} The created snippet
+ */
 export async function createCodeSnippet(snippet) {
-  try {
-    // Generate a new ID (max + 1)
-    const newId = inMemoryDb.code_snippets.length > 0 
-      ? Math.max(...inMemoryDb.code_snippets.map(s => s.id)) + 1 
-      : 1;
-    
-    // Generate UUID for shareId if not provided
-    const shareId = snippet.shareId || crypto.randomUUID();
-    
-    // Create the new snippet
-    const now = new Date().toISOString();
-    const newSnippet = {
-      id: newId,
-      user_id: snippet.userId,
-      title: snippet.title,
-      description: snippet.description || null,
-      code: snippet.code,
-      language: snippet.language,
-      tags: Array.isArray(snippet.tags) ? snippet.tags : [],
-      is_public: snippet.isPublic || false,
-      view_count: 0,
-      share_id: shareId,
-      created_at: now,
-      updated_at: now
-    };
-    
-    // Add to the in-memory database
-    inMemoryDb.code_snippets.push(newSnippet);
-    
-    // Return a copy to avoid accidental mutations
-    return { ...newSnippet };
-  } catch (error) {
-    console.error('Error creating code snippet:', error.message);
-    throw error;
-  }
+  const id = nextId++;
+  const shareId = generateId(8);
+  const createdAt = new Date().toISOString();
+  
+  const newSnippet = {
+    id,
+    shareId,
+    createdAt,
+    viewCount: 0,
+    ...snippet
+  };
+  
+  snippets.push(newSnippet);
+  return newSnippet;
 }
 
-// Update code snippet view count
+/**
+ * Increment the view count for a snippet
+ * @param {number} id - The snippet ID
+ * @returns {Promise<Object|null>} The updated snippet or null if not found
+ */
 export async function incrementCodeSnippetViewCount(id) {
-  try {
-    const snippet = inMemoryDb.code_snippets.find(s => s.id === id);
-    
-    if (snippet) {
-      // Increment the view count
-      snippet.view_count += 1;
-      snippet.updated_at = new Date().toISOString();
-      
-      // Return a copy to avoid accidental mutations
-      return { ...snippet };
-    }
-    
-    return null;
-  } catch (error) {
-    console.error(`Error incrementing view count for snippet ${id}:`, error.message);
-    return null;
+  const snippet = await getCodeSnippetById(id);
+  
+  if (snippet) {
+    snippet.viewCount += 1;
   }
+  
+  return snippet;
 }
 
-// Function to quickly add a sample snippet for testing
+/**
+ * Add a sample snippet to the database
+ * @returns {Promise<Object>} The created snippet
+ */
 export async function addSampleSnippet() {
-  try {
-    // Use the first user (we always have a sample user in our in-memory database)
-    const userId = inMemoryDb.users[0].id;
-    
-    // Create a sample code snippet
-    return await createCodeSnippet({
-      userId: userId,
-      title: 'Hello World in JavaScript',
-      description: 'A simple Hello World example in JavaScript',
-      code: 'console.log("Hello World!");',
-      language: 'javascript',
-      tags: ['hello-world', 'javascript', 'beginner'],
-      isPublic: true
-    });
-  } catch (error) {
-    console.error('Error adding sample snippet:', error.message);
-    return null;
-  }
+  return createCodeSnippet({
+    title: 'Welcome to Creately Code Snippets',
+    language: 'javascript',
+    code: `/**
+ * Welcome to Creately Code Snippets
+ * 
+ * This is a sample code snippet to demonstrate the functionality.
+ * You can create your own snippets and share them with others.
+ */
+function greeting(name) {
+  return \`Hello, \${name}! Welcome to Creately Code Snippets.\`;
 }
 
-export default {
-  testConnection,
-  initDatabase,
-  getCodeSnippets,
-  getCodeSnippetById,
-  getCodeSnippetByShareId,
-  getPublicCodeSnippets,
-  createCodeSnippet,
-  incrementCodeSnippetViewCount,
-  addSampleSnippet
-};
+// Example usage
+const message = greeting('User');
+console.log(message);
+
+// Features:
+// - Syntax highlighting
+// - Line numbers
+// - Copy to clipboard
+// - Public/private snippets
+// - Share via URL
+`,
+    description: 'A sample code snippet to demonstrate the functionality of Creately Code Snippets.',
+    author: 'Creately Team',
+    isPublic: true
+  });
+}

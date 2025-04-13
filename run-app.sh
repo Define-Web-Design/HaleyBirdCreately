@@ -1,40 +1,41 @@
-
 #!/bin/bash
 
-# Setup log directory
-mkdir -p logs
-LOG_FILE="logs/app.log"
+# Script to run the Creately Code Snippet Server
+# Fixed version to resolve 'unexpected end of file' error
 
-# Log function
-log() {
-  echo "[$(date -u +"%Y-%m-%dT%H:%M:%SZ")] $1"
-  echo "[$(date -u +"%Y-%m-%dT%H:%M:%SZ")] $1" >> "$LOG_FILE"
-}
+# ANSI color escape codes
+GREEN='\033[0;32m'
+CYAN='\033[0;36m'
+YELLOW='\033[0;33m'
+RESET='\033[0m'
 
-log "Starting application..."
+# Display banner
+echo -e "${CYAN}"
+echo "   ______                __       __          "
+echo "  / ____/_______  ____ _/ /____  / /_  __     "
+echo " / /   / ___/ _ \/ __ \`/ __/ _ \/ / / / /   "
+echo "/ /___/ /  /  __/ /_/ / /_/  __/ / /_/ /      "
+echo "\____/_/   \___/\__,_/\__/\___/_/\__, /       "
+echo "                                 /____/        "
+echo "                                               "
+echo "  Code Snippet Server - Replit Edition         "
+echo -e "${RESET}"
 
-# Use local Node.js if available, otherwise use system Node.js
+# Set environment variables
+export PORT=8080
+
+# Create necessary directories
+mkdir -p public
+
+# Detect Node.js
 if [ -f "./node_bin/node" ]; then
-  export PATH="./node_bin:$PATH"
-  chmod +x ./node_bin/node ./node_bin/npm 2>/dev/null
-  log "Using local Node.js: $(node -v)"
+  echo -e "${YELLOW}Using Node.js from node_bin directory${RESET}"
+  NODE_CMD="./node_bin/node"
 else
-  log "Using system Node.js: $(node -v)"
+  echo -e "${YELLOW}Using system Node.js${RESET}"
+  NODE_CMD="node"
 fi
 
-# Install dependencies if needed
-if [ ! -d "node_modules" ]; then
-  log "Installing dependencies..."
-  npm install || npm install --legacy-peer-deps
-else
-  log "Dependencies already installed"
-fi
-
-# Build the application
-log "Building the application..."
-npm run build
-
-# Start the application
-log "Starting the application..."
-export NODE_ENV=production
-node dist/index.js
+# Start the server
+echo -e "${GREEN}Starting Code Snippet Server on port $PORT...${RESET}"
+$NODE_CMD simple-server.js
