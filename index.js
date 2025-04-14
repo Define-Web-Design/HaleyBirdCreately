@@ -1,3 +1,4 @@
+
 // Simple entry point - redirects to the main server file
 console.log('Starting server from index.js...');
 
@@ -16,19 +17,13 @@ try {
   if (!fs.existsSync(logsDir)) {
     fs.mkdirSync(logsDir, { recursive: true });
   }
-
-  // Create PageSpeed logs directory
-  const pageSpeedLogsDir = path.join(logsDir, 'pagespeed');
-  if (!fs.existsSync(pageSpeedLogsDir)) {
-    fs.mkdirSync(pageSpeedLogsDir, { recursive: true });
-  }
 } catch (error) {
   console.error('Error creating log directories:', error);
 }
 
-
 // Load the main server file
 try {
+  console.log('Attempting to load simple-server.js...');
   require('./simple-server.js');
 } catch (error) {
   console.error('Failed to load simple-server.js:', error);
@@ -37,6 +32,8 @@ try {
   const http = require('http');
   const port = process.env.PORT || 3000;
 
+  console.log('Starting emergency server on port', port);
+  
   const server = http.createServer((req, res) => {
     res.writeHead(200, {'Content-Type': 'text/html'});
     res.end(`

@@ -4,91 +4,84 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Creately Code Snippet Server</title>
+  <title>Code Snippet Server</title>
   <style>
     body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      line-height: 1.6;
+      color: #333;
       max-width: 800px;
       margin: 0 auto;
+      padding: 1rem;
+    }
+    .container {
       padding: 2rem;
-      line-height: 1.6;
+      border-radius: 8px;
+      background-color: #f9f9f9;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #2c3e50;
+      margin-top: 0;
     }
     .card {
-      border: 1px solid #ddd;
-      border-radius: 8px;
+      background-color: white;
+      border-radius: 6px;
       padding: 1.5rem;
       margin: 1rem 0;
-      background: #f9f9f9;
-    }
-    .button {
-      display: inline-block;
-      background: #0066cc;
-      color: white;
-      padding: 0.5rem 1rem;
-      border-radius: 4px;
-      text-decoration: none;
-      margin-right: 0.5rem;
-    }
-    header {
-      margin-bottom: 2rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
     .status {
       display: inline-block;
-      padding: 0.25rem 0.5rem;
-      border-radius: 4px;
+      padding: 0.25rem 0.75rem;
+      border-radius: 50px;
       font-size: 0.875rem;
-      font-weight: 600;
+      font-weight: 500;
     }
-    .status.ok {
-      background: #d4edda;
+    .status.success {
+      background-color: #d4edda;
       color: #155724;
     }
-    .status.error {
-      background: #f8d7da;
-      color: #721c24;
+    .footer {
+      margin-top: 2rem;
+      font-size: 0.875rem;
+      color: #6c757d;
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Creately Code Snippet Server</h1>
-    <p>A platform for managing and sharing code snippets with AI-enhanced features.</p>
-  </header>
-  
-  <div class="card">
-    <h2>Server Status</h2>
-    <p>
-      <span class="status ok">Server Running</span>
-    </p>
-    <p>The server is running in static mode. Some dynamic features may be limited.</p>
+  <div class="container">
+    <h1>Code Snippet Server</h1>
+    <p>Welcome to the Code Snippet Server - a platform for managing and sharing code snippets.</p>
+    
+    <div class="card">
+      <h2>Server Status</h2>
+      <p><span class="status success">Server is running</span></p>
+      <p>The server is up and running. You can use the API endpoints to interact with the system.</p>
+    </div>
+    
+    <div class="card">
+      <h2>API Endpoints</h2>
+      <ul>
+        <li><strong>/api/status</strong> - Check the server status</li>
+        <li><strong>/api/info</strong> - Get server information</li>
+      </ul>
+    </div>
+    
+    <div class="footer">
+      <p>© 2023-2024 Code Snippet Server</p>
+    </div>
   </div>
   
-  <div class="card">
-    <h2>API Endpoints</h2>
-    <ul>
-      <li><a href="/api/health" class="button">Check Health</a></li>
-      <li><a href="/api/info" class="button">Server Info</a></li>
-    </ul>
-  </div>
-  
-  <div class="card">
-    <h2>Documentation</h2>
-    <p>This is a simple landing page for the Creately Code Snippet Server.</p>
-    <p>For more information, check the documentation or API endpoints.</p>
-  </div>
-
   <script>
     // Simple script to check server status
-    fetch('/api/health')
+    fetch('/api/status')
       .then(response => response.json())
       .then(data => {
-        if (data.status === 'ok') {
-          document.querySelector('.status').textContent = 'Server Online';
-        }
+        console.log('Server status:', data);
       })
       .catch(error => {
-        document.querySelector('.status').className = 'status error';
-        document.querySelector('.status').textContent = 'Server Error';
+        console.error('Error checking server status:', error);
       });
   </script>
 </body>

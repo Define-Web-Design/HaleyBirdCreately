@@ -54,39 +54,40 @@ if [ ! -d "node_modules" ]; then
     ./node_bin/npm install || ./node_bin/npm install --legacy-peer-deps
   else
     echo -e "${YELLOW}npm not found, skipping dependency installation${NC}"
-    echo -e "${YELLOW}Will try to run the app anyway...${NC}"
   fi
 fi
 
-# Main function to start the server
-start_server() {
-  echo -e "${GREEN}Starting the server...${NC}"
-  
-  # Try the TypeScript/Vite dev server first
-  if [ -f "server/index.ts" ] && command -v npm &> /dev/null; then
-    echo -e "${GREEN}Starting Vite dev server...${NC}"
-    npm run dev || {
-      echo -e "${YELLOW}Failed to start Vite dev server, trying fallback...${NC}"
-      start_fallback
-    }
-  else
-    start_fallback
-  fi
-}
+# Start the server
+echo -e "${GREEN}Starting the server...${NC}"
 
-# Fallback server function
-start_fallback() {
-  echo -e "${YELLOW}Starting fallback server...${NC}"
-  
+# Try to start the server in this priority order:
+# 1. server/index.ts (TypeScript server with Vite)
+# 2. simple-server.js (Simple HTTP server)
+# 3. index.js (Emergency fallback)
+
+if [ -f "server/index.ts" ] && command -v npm &> /dev/null; then
+  echo -e "${GREEN}Starting TypeScript server with Vite...${NC}"
+  npm run dev || {
+    echo -e "${YELLOW}Failed to start TypeScript server, trying simple-server.js...${NC}"
+    if [ -f "simple-server.js" ]; then
+      $NODE simple-server.js
+    elif [ -f "index.js" ]; then
+      echo -e "${YELLOW}Falling back to index.js...${NC}"
+      $NODE index.js
+    else
+      echo -e "${RED}No server files found!${NC}"
+      exit 1
+    fi
+  }
+else
   if [ -f "simple-server.js" ]; then
+    echo -e "${YELLOW}Starting simple-server.js...${NC}"
     $NODE simple-server.js
   elif [ -f "index.js" ]; then
+    echo -e "${YELLOW}Starting index.js...${NC}"
     $NODE index.js
   else
     echo -e "${RED}No server files found!${NC}"
     exit 1
   fi
-}
-
-# Start the server
-start_server
+fi

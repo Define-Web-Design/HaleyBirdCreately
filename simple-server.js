@@ -45,9 +45,23 @@ try {
   console.error('Error creating log directories:', error);
 }
 
+// Access logging middleware
+function logRequest(req, res) {
+  const timestamp = new Date().toISOString();
+  console.log(`${timestamp} - ${req.method} ${req.url}`);
+  
+  // Also log to file if possible
+  try {
+    const logEntry = `${timestamp} - ${req.method} ${req.url}\n`;
+    fs.appendFileSync(path.join('logs', 'access.log'), logEntry);
+  } catch (error) {
+    // Silent fail for log writing
+  }
+}
+
 // Create HTTP server
 const server = http.createServer((req, res) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  logRequest(req, res);
   
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -174,4 +188,16 @@ process.on('SIGINT', () => {
     console.log('Server closed');
     process.exit(0);
   });
+});
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught exception:', err);
+  // Log the error
+  try {
+    const logEntry = `${new Date().toISOString()} - UNCAUGHT EXCEPTION: ${err.stack || err}\n`;
+    fs.appendFileSync(path.join('logs', 'error.log'), logEntry);
+  } catch (logError) {
+    // Silent fail for log writing
+  }
 });
