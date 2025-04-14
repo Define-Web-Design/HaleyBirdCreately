@@ -1,105 +1,84 @@
+import { Component, ErrorInfo, ReactNode } from 'react';
 
-import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
-
-interface Props {
+interface ErrorBoundaryProps {
   children: ReactNode;
   fallback?: ReactNode;
+  onReset?: () => void;
 }
 
-interface State {
+interface ErrorBoundaryState {
   hasError: boolean;
-  error?: Error;
-  errorInfo?: ErrorInfo;
+  error: Error | null;
+  errorInfo?: ErrorInfo; // Added errorInfo to state
 }
 
-export class ErrorBoundary extends Component<Props, State> {
-  constructor(props: Props) {
+export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
     super(props);
-    this.state = { hasError: false };
+    this.state = { hasError: false, error: null }; //Initialized error to null
   }
 
-  static getDerivedStateFromError(error: Error): State {
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
     this.setState({
       error,
-      errorInfo
+      errorInfo,
+      hasError: true //Ensure hasError is set to true
     });
-    
-    // Log the error to an error reporting service
+
     console.error('UI Error:', error, errorInfo);
-    
-    // Consider sending to server-side logging in production
+
     if (process.env.NODE_ENV === 'production') {
       try {
         fetch('/api/logs/client-error', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
+          body: JSON.stringify({
             error: error.toString(),
             componentStack: errorInfo.componentStack,
             location: window.location.href
           })
         }).catch(e => console.error('Failed to report error:', e));
       } catch (e) {
-        // Fallback if fetch fails
         console.error('Failed to send error to server:', e);
       }
     }
   }
-  
+
   private handleReset = () => {
-    this.setState({ hasError: false, error: undefined, errorInfo: undefined });
+    this.setState({ hasError: false, error: null, errorInfo: undefined });
+    this.props.onReset && this.props.onReset(); // Call onReset prop if provided
   };
 
   render() {
     if (this.state.hasError) {
-      // Custom fallback UI
       if (this.props.fallback) {
         return this.props.fallback;
       }
-      
-      // Default fallback UI
+
       return (
         <div className="p-6 max-w-xl mx-auto">
-          <Alert variant="destructive" className="mb-4">
-            <AlertTitle>Something went wrong</AlertTitle>
-            <AlertDescription className="mt-2">
-              {this.state.error?.message || 'An unexpected error occurred'}
-            </AlertDescription>
-          </Alert>
-          
-          <div className="flex space-x-4 mt-4">
-            <Button 
-              variant="outline" 
-              onClick={this.handleReset}
-            >
-              Try Again
-            </Button>
-            
-            <Button 
-              onClick={() => window.location.href = '/'}
-            >
-              Go to Dashboard
-            </Button>
+          <div>
+            {/* Changed Alert to a simpler div for better fallback */}
+            <p>Something went wrong</p>
+            <p>{this.state.error?.message || 'An unexpected error occurred'}</p>
           </div>
-          
+          <div className="flex space-x-4 mt-4">
+            <button onClick={this.handleReset}>Try Again</button>
+            <button onClick={() => window.location.href = '/'}>Go to Dashboard</button>
+          </div>
+
           {process.env.NODE_ENV === 'development' && this.state.errorInfo && (
-            <div className="mt-6 p-4 bg-gray-100 dark:bg-gray-800 rounded overflow-auto text-xs">
-              <details>
-                <summary className="cursor-pointer font-medium mb-2">Error Details</summary>
-                <pre className="whitespace-pre-wrap">
-                  {this.state.error?.stack}
-                </pre>
-                <pre className="whitespace-pre-wrap mt-4">
-                  {this.state.errorInfo.componentStack}
-                </pre>
-              </details>
-            </div>
+            <details>
+              <summary>Error Details</summary>
+              <pre>
+                {this.state.error?.stack}
+                {this.state.errorInfo.componentStack}
+              </pre>
+            </details>
           )}
         </div>
       );

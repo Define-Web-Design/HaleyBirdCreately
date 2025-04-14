@@ -44,5 +44,6 @@ export function checkRequiredEnvVars() {
     }
   } else {
     console.log('✅ All required environment variables are set.');
+  } set.');
   }
 }

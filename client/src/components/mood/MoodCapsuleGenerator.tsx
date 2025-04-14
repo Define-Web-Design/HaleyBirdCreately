@@ -491,11 +491,94 @@ const MoodCapsuleGenerator: React.FC = () => {
                       </ScrollArea>
                     ) : (
                       <div className="text-center p-4 border rounded-md text-muted-foreground">
-                        No content selected. Please select content items.
-                      </div>
-                    )}
-                  </div>
-                )}
+                        import React, { useState } from 'react';
+import { Button } from '../ui/button';
+
+interface MoodCapsuleGeneratorProps {
+  onGenerate: (moodData: any) => void;
+}
+
+export const MoodCapsuleGenerator: React.FC<MoodCapsuleGeneratorProps> = ({ onGenerate }) => {
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [selectedContent, setSelectedContent] = useState<string[]>([]);
+  
+  const handleGenerate = async () => {
+    if (selectedContent.length === 0) {
+      return;
+    }
+    
+    setIsGenerating(true);
+    
+    try {
+      // In a real implementation, this would call an API
+      const generatedMood = {
+        id: `mood-${Date.now()}`,
+        content: selectedContent,
+        timestamp: new Date().toISOString(),
+        mood: 'Inspired',
+        colors: ['#a3e4d7', '#f9e79f', '#fadbd8']
+      };
+      
+      onGenerate(generatedMood);
+    } catch (error) {
+      console.error('Failed to generate mood capsule:', error);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+  
+  return (
+    <div className="p-4 border rounded-lg bg-white shadow-sm">
+      <h3 className="text-lg font-medium mb-3">Mood Capsule Generator</h3>
+      
+      <div className="mb-4">
+        <p className="text-sm text-gray-600 mb-2">Select content to include in your mood capsule</p>
+        
+        <div className="space-y-2 max-h-60 overflow-y-auto">
+          {[
+            'Recent photos', 
+            'Social media posts', 
+            'Notes and thoughts',
+            'Color inspirations',
+            'Creative prompts'
+          ].map(item => (
+            <div key={item} className="flex items-center">
+              <input
+                type="checkbox"
+                id={`item-${item}`}
+                className="mr-2"
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    setSelectedContent(prev => [...prev, item]);
+                  } else {
+                    setSelectedContent(prev => prev.filter(i => i !== item));
+                  }
+                }}
+              />
+              <label htmlFor={`item-${item}`}>{item}</label>
+            </div>
+          ))}
+        </div>
+      </div>
+      
+      <Button 
+        onClick={handleGenerate}
+        disabled={isGenerating || selectedContent.length === 0}
+        className="w-full"
+      >
+        {isGenerating ? 'Generating...' : 'Create Mood Capsule'}
+      </Button>
+      
+      {selectedContent.length === 0 && (
+        <div className="mt-2 text-sm text-red-500">
+          <p>No content selected. Please select content items.</p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default MoodCapsuleGenerator;
 
                 <Button
                   onClick={handleCreateCapsule}

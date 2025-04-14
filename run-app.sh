@@ -15,11 +15,9 @@ if [ ! -d "node_modules" ]; then
 fi
 
 # Run the application in development mode
-npm run dev
+npm run dev || node simple-server.js
 
-#!/bin/bash
-
-# Script to run the Creately Code Snippet Server
+# If the development server fails, this fallback ensures something is running
 # Fixed version to resolve 'unexpected end of file' error
 
 # ANSI color escape codes
