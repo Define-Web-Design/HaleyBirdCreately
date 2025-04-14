@@ -61,6 +61,4 @@ export function checkRequiredEnvVars() {
     if (!process.env.CODESTRAL_API_KEY) console.warn('- Code assistance');
     if (!process.env.PAGESPEED_INSIGHTS_API_KEY) console.warn('- PageSpeed analysis');
   }
-}et.');
-  }
 }

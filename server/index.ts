@@ -54,10 +54,21 @@ app.use('/api', routes);
 // Determine environment and start server accordingly
 const isDev = process.env.NODE_ENV !== 'production';
 if (isDev) {
-  // Setup Vite development server
-  const server = app.listen(port, '0.0.0.0');
-  setupVite(app, server).catch(console.error);
-  console.log(`Development server running at http://0.0.0.0:${port}`);
+  try {
+    // Setup Vite development server
+    const server = app.listen(port, '0.0.0.0');
+    setupVite(app, server).catch(err => {
+      console.error('Failed to setup Vite:', err);
+      console.log('Continuing with basic server setup...');
+    });
+    console.log(`Development server running at http://0.0.0.0:${port}`);
+  } catch (error) {
+    console.error('Error starting development server:', error);
+    // Fallback to standard server without Vite
+    app.listen(port, '0.0.0.0', () => {
+      console.log(`Fallback server running at http://0.0.0.0:${port}`);
+    });
+  }
 } else {
   // Serve static files in production
   serveStatic(app);

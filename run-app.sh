@@ -1,3 +1,22 @@
+
+#!/bin/bash
+
+# Ensure logs directory exists
+mkdir -p logs
+
+# Set environment variables
+export PATH="$PATH:./node_bin"
+export NODE_ENV=development
+
+# Install dependencies if needed
+if [ ! -d "node_modules" ]; then
+  echo "Installing dependencies..."
+  npm install || npm install --legacy-peer-deps
+fi
+
+# Run the application in development mode
+npm run dev
+
 #!/bin/bash
 
 # Script to run the Creately Code Snippet Server
