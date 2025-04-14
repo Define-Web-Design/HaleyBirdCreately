@@ -2,48 +2,46 @@
  * Code Snippet Server Workflow Setup
  */
 
-import { spawn } from 'child_process';
-import process from 'process';
-import fs from 'fs/promises';
-import path from 'path';
-import { fileURLToPath } from 'url';
+const fs = require('fs');
+const path = require('path');
+const { exec } = require('child_process');
+const { promisify } = require('util');
 
-// Get directory name in ESM
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// ANSI color codes for console output
-const colors = {
-  reset: '\x1b[0m',
-  red: '\x1b[31m',
-  green: '\x1b[32m',
-  yellow: '\x1b[33m',
-  blue: '\x1b[34m',
-  magenta: '\x1b[35m',
-  cyan: '\x1b[36m'
-};
+// Promisify fs and exec functions
+const mkdir = promisify(fs.mkdir);
+const writeFile = promisify(fs.writeFile);
+const access = promisify(fs.access);
+const execPromise = promisify(exec);
 
 /**
  * Print a banner
  */
 function printBanner() {
-  console.log(colors.cyan);
-  console.log('   ______                __       __          ');
-  console.log('  / ____/_______  ____ _/ /____  / /_  __     ');
-  console.log(' / /   / ___/ _ \\/ __ `/ __/ _ \\/ / / / /  ');
-  console.log('/ /___/ /  /  __/ /_/ / /_/  __/ / /_/ /      ');
-  console.log('\\____/_/   \\___/\\__,_/\\__/\\___/_/\\__, /  ');
-  console.log('                                 /____/        ');
-  console.log('                                              ');
-  console.log('  Code Snippet Server - Workflow Runner       ');
-  console.log(colors.reset);
+  console.log(`
+┌───────────────────────────────────────────────────┐
+│                                                   │
+│   Creately Code Snippet Server                    │
+│                                                   │
+│   Workflow Setup                                  │
+│                                                   │
+└───────────────────────────────────────────────────┘`);
 }
 
 /**
  * Log a message with timestamp and color
  */
 function log(message, color = 'reset') {
-  const timestamp = new Date().toISOString();
+  const colors = {
+    reset: '\x1b[0m',
+    red: '\x1b[31m',
+    green: '\x1b[32m',
+    yellow: '\x1b[33m',
+    blue: '\x1b[34m',
+    magenta: '\x1b[35m',
+    cyan: '\x1b[36m',
+  };
+
+  const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19);
   console.log(`${colors[color]}[${timestamp}] ${message}${colors.reset}`);
 }
 
@@ -51,13 +49,26 @@ function log(message, color = 'reset') {
  * Ensure public directory exists
  */
 async function ensurePublicDirectory() {
+  const publicDir = path.join(__dirname, 'public');
+  
   try {
-    await fs.mkdir(path.join(__dirname, 'public'), { recursive: true });
-    log('Public directory exists', 'green');
-    return true;
+    await access(publicDir);
+    log('Public directory already exists', 'green');
   } catch (error) {
-    log(`Error creating public directory: ${error.message}`, 'red');
-    return false;
+    log('Creating public directory...', 'yellow');
+    await mkdir(publicDir, { recursive: true });
+    log('Public directory created', 'green');
+  }
+  
+  const viewDir = path.join(publicDir, 'view');
+  
+  try {
+    await access(viewDir);
+    log('View directory already exists', 'green');
+  } catch (error) {
+    log('Creating view directory...', 'yellow');
+    await mkdir(viewDir, { recursive: true });
+    log('View directory created', 'green');
   }
 }
 
@@ -68,303 +79,336 @@ async function ensureIndexHtml() {
   const indexPath = path.join(__dirname, 'public', 'index.html');
   
   try {
-    await fs.access(indexPath);
-    log('Index.html already exists', 'green');
-    return true;
+    await access(indexPath);
+    log('index.html already exists', 'green');
+    return;
   } catch (error) {
-    // File doesn't exist, create it
-    try {
-      const htmlContent = `<!DOCTYPE html>
+    log('Creating index.html...', 'yellow');
+  }
+  
+  const indexHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Creately Code Snippets</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+  <!-- Load common languages -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/python.min.js"></script>
   <style>
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       line-height: 1.6;
       color: #333;
-      max-width: 1200px;
+      max-width: 1000px;
       margin: 0 auto;
       padding: 20px;
     }
     header {
-      text-align: center;
       margin-bottom: 30px;
       border-bottom: 1px solid #eee;
       padding-bottom: 20px;
     }
-    h1 {
-      color: #2563eb;
-    }
-    .container {
+    h1 { color: #2563eb; }
+    .header-links {
       display: flex;
-      flex-direction: column;
       gap: 20px;
     }
-    .snippet {
+    .header-links a {
+      color: #2563eb;
+      text-decoration: none;
+    }
+    .header-links a:hover {
+      text-decoration: underline;
+    }
+    .snippet-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+      margin-top: 30px;
+    }
+    .snippet-card {
       border: 1px solid #ddd;
       border-radius: 8px;
-      padding: 20px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-      transition: transform 0.2s ease;
+      overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s;
     }
-    .snippet:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    .snippet-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
     }
     .snippet-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 15px;
+      padding: 15px;
+      background-color: #f9fafb;
+      border-bottom: 1px solid #ddd;
     }
     .snippet-title {
-      margin: 0;
+      margin: 0 0 10px 0;
+      font-size: 1.2rem;
       color: #1e40af;
     }
     .snippet-meta {
-      color: #666;
-      font-size: 0.9em;
-    }
-    .code-block {
-      background-color: #f8f9fa;
-      border-radius: 6px;
-      padding: 15px;
-      overflow-x: auto;
-      font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-      position: relative;
-      border: 1px solid #eaeaea;
-    }
-    .code-header {
+      font-size: 0.9rem;
+      color: #6b7280;
       display: flex;
       justify-content: space-between;
-      padding: 8px 15px;
-      background-color: #eaeaea;
-      border-top-left-radius: 6px;
-      border-top-right-radius: 6px;
-      font-size: 0.9em;
-      color: #555;
     }
-    .copy-btn {
+    .snippet-preview {
+      padding: 15px;
+      height: 150px;
+      overflow: hidden;
+      position: relative;
+      background-color: #282c34;
+    }
+    .snippet-preview code {
+      font-family: 'SFMono-Regular', Consolas, monospace;
+      font-size: 0.9rem;
+      color: #abb2bf;
+    }
+    .snippet-preview::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 50px;
+      background: linear-gradient(transparent, #282c34);
+    }
+    .snippet-footer {
+      padding: 15px;
+      background-color: #f9fafb;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.9rem;
+      color: #6b7280;
+    }
+    .view-btn {
+      display: inline-block;
+      padding: 8px 16px;
       background-color: #2563eb;
       color: white;
-      border: none;
       border-radius: 4px;
-      padding: 6px 12px;
-      cursor: pointer;
-      font-size: 0.9em;
-      transition: background-color 0.2s ease;
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: background-color 0.2s;
     }
-    .copy-btn:hover {
-      background-color: #1e40af;
+    .view-btn:hover {
+      background-color: #1d4ed8;
+      text-decoration: none;
     }
-    .loader {
+    .create-btn {
+      display: inline-block;
+      padding: 10px 20px;
+      background-color: #2563eb;
+      color: white;
+      border-radius: 4px;
+      text-decoration: none;
+      font-weight: 500;
+      transition: background-color 0.2s;
+      margin-bottom: 30px;
+    }
+    .create-btn:hover {
+      background-color: #1d4ed8;
+      text-decoration: none;
+    }
+    .empty-state {
       text-align: center;
-      padding: 40px;
-      font-style: italic;
-      color: #666;
+      padding: 50px;
+      background-color: #f9fafb;
+      border-radius: 8px;
+      margin-top: 30px;
     }
-    @media (max-width: 768px) {
-      .container {
-        padding: 10px;
-      }
+    .error {
+      padding: 20px;
+      background-color: #fee2e2;
+      border: 1px solid #fecaca;
+      border-radius: 8px;
+      color: #b91c1c;
+    }
+    .loading {
+      text-align: center;
+      padding: 30px;
     }
   </style>
 </head>
 <body>
   <header>
     <h1>Creately Code Snippets</h1>
-    <p>Share and discover code snippets with your team</p>
+    <div class="header-links">
+      <a href="/">Home</a>
+      <a href="/create-snippet.html">Create Snippet</a>
+    </div>
   </header>
-  
+
   <main>
-    <div class="container" id="snippets-container">
-      <div class="loader">Loading snippets...</div>
+    <a href="/create-snippet.html" class="create-btn">+ Create New Snippet</a>
+    
+    <div id="snippetContainer" class="loading">
+      Loading snippets...
     </div>
   </main>
 
   <script>
-    // Fetch snippets from the API
-    async function fetchSnippets() {
-      try {
-        const response = await fetch('/api/snippets');
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        const data = await response.json();
-        displaySnippets(data.snippets);
-      } catch (error) {
-        console.error('Error fetching snippets:', error);
-        document.getElementById('snippets-container').innerHTML = \`
-          <div style="text-align: center; padding: 40px; color: #e53e3e;">
-            <p>Error loading snippets. Please try again later.</p>
-          </div>
-        \`;
-      }
-    }
-
-    // Display snippets in the DOM
-    function displaySnippets(snippets) {
-      const container = document.getElementById('snippets-container');
-      
-      if (!snippets || snippets.length === 0) {
-        container.innerHTML = \`
-          <div style="text-align: center; padding: 40px; color: #666;">
-            <p>No snippets available. Be the first to share a code snippet!</p>
-          </div>
-        \`;
-        return;
-      }
-      
-      const snippetsHtml = snippets.map(snippet => {
-        return `
-          <div class="snippet">
-            <div class="snippet-header">
-              <h2 class="snippet-title">${snippet.title}</h2>
-              <span class="snippet-meta">By ${snippet.author || 'Anonymous'} • ${formatDate(snippet.createdAt)}</span>
-            </div>
-            <p>${snippet.description || ''}</p>
-            <div>
-              <div class="code-header">
-                <span>${snippet.language || 'plaintext'}</span>
-                <button class="copy-btn" onclick="copyCode(this, '${snippet.code.replace(/'/g, "\\'")}')">Copy</button>
-              </div>
-              <pre class="code-block"><code>${escapeHtml(snippet.code)}</code></pre>
-            </div>
-            <div class="snippet-meta" style="margin-top: 15px;">
-              Share ID: <a href="/snippet/${snippet.shareId}">${snippet.shareId}</a>
-              • Views: ${snippet.viewCount || 0}
-            </div>
-          </div>
-        `;
-      }).join('');
-      
-      container.innerHTML = snippetsHtml;
-    }
-
-    // Format date function
+    // Function to format date
     function formatDate(dateString) {
       const date = new Date(dateString);
-      return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-    }
-
-    // Copy code to clipboard
-    function copyCode(button, code) {
-      navigator.clipboard.writeText(code).then(() => {
-        const originalText = button.textContent;
-        button.textContent = 'Copied!';
-        button.style.backgroundColor = '#10b981';
-        setTimeout(() => {
-          button.textContent = originalText;
-          button.style.backgroundColor = '#2563eb';
-        }, 2000);
-      }).catch(err => {
-        console.error('Failed to copy text: ', err);
-        button.textContent = 'Error!';
-        button.style.backgroundColor = '#ef4444';
-        setTimeout(() => {
-          button.textContent = 'Copy';
-          button.style.backgroundColor = '#2563eb';
-        }, 2000);
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
       });
     }
-
-    // Escape HTML to prevent XSS
+    
+    // Function to copy code
+    function copyCode(button, code) {
+      navigator.clipboard.writeText(code)
+        .then(() => {
+          const originalText = button.textContent;
+          button.textContent = 'Copied!';
+          setTimeout(() => {
+            button.textContent = originalText;
+          }, 2000);
+        })
+        .catch(err => {
+          console.error('Failed to copy code:', err);
+        });
+    }
+    
+    // Function to escape HTML
     function escapeHtml(text) {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
+      const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+      };
+      return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+    }
+    
+    // Function to truncate text
+    function truncateText(text, maxLength) {
+      if (text.length <= maxLength) return text;
+      return text.slice(0, maxLength) + '...';
     }
 
-    // Initialize
-    window.addEventListener('DOMContentLoaded', fetchSnippets);
+    // Function to load all public snippets
+    async function loadSnippets() {
+      try {
+        const response = await fetch('/api/snippets');
+        
+        if (!response.ok) {
+          throw new Error(\`Server responded with status: \${response.status}\`);
+        }
+        
+        const data = await response.json();
+        
+        if (!data.snippets || !Array.isArray(data.snippets)) {
+          throw new Error('Invalid response format');
+        }
+        
+        const snippetContainer = document.getElementById('snippetContainer');
+        
+        if (data.snippets.length === 0) {
+          snippetContainer.innerHTML = \`
+            <div class="empty-state">
+              <h2>No code snippets found</h2>
+              <p>Be the first to create a code snippet!</p>
+              <a href="/create-snippet.html" class="create-btn">Create Snippet</a>
+            </div>
+          \`;
+          return;
+        }
+        
+        const snippetsHtml = data.snippets.map(snippet => \`
+          <div class="snippet-card">
+            <div class="snippet-header">
+              <h3 class="snippet-title">\${escapeHtml(snippet.title)}</h3>
+              <div class="snippet-meta">
+                <span>By: \${escapeHtml(snippet.author)}</span>
+                <span>\${snippet.language}</span>
+              </div>
+            </div>
+            <div class="snippet-preview">
+              <pre><code class="\${snippet.language}">\${escapeHtml(truncateText(snippet.code, 500))}</code></pre>
+            </div>
+            <div class="snippet-footer">
+              <span>\${formatDate(snippet.createdAt)}</span>
+              <a href="/view/\${snippet.shareId}" class="view-btn">View Snippet</a>
+            </div>
+          </div>
+        \`).join('');
+        
+        snippetContainer.innerHTML = \`<div class="snippet-list">\${snippetsHtml}</div>\`;
+        
+        // Initialize syntax highlighting
+        document.querySelectorAll('pre code').forEach((block) => {
+          hljs.highlightElement(block);
+        });
+        
+      } catch (error) {
+        console.error('Error loading snippets:', error);
+        document.getElementById('snippetContainer').innerHTML = \`
+          <div class="error">
+            <h2>Error loading snippets</h2>
+            <p>\${error.message}</p>
+          </div>
+        \`;
+      }
+    }
+
+    // Load snippets on page load
+    document.addEventListener('DOMContentLoaded', loadSnippets);
   </script>
 </body>
 </html>`;
-      
-      await fs.writeFile(indexPath, htmlContent);
-      log('Created index.html', 'green');
-      return true;
-    } catch (writeError) {
-      log(`Error creating index.html: ${writeError.message}`, 'red');
-      return false;
-    }
-  }
+
+  await writeFile(indexPath, indexHtml);
+  log('index.html created', 'green');
 }
 
 /**
  * Start the server
  */
 async function startServer() {
-  log('Starting the Code Snippet Server...', 'yellow');
+  log('Starting server...', 'yellow');
   
-  // Use node from system path
-  const serverProcess = spawn('node', ['simple-server.js'], {
-    stdio: 'inherit',
-    env: { ...process.env, PORT: '8080' }
-  });
-  
-  // Log server process information
-  log(`Server process started with PID: ${serverProcess.pid}`, 'green');
-  
-  // Handle errors
-  serverProcess.on('error', (error) => {
-    log(`Error starting server: ${error.message}`, 'red');
-  });
-  
-  // Handle server process exit
-  serverProcess.on('exit', (code, signal) => {
-    if (code !== 0) {
-      log(`Server process exited with code ${code}`, 'red');
-    } else {
-      log('Server process exited normally', 'yellow');
-    }
-  });
-  
-  return serverProcess;
+  try {
+    // Use node from node_bin if available
+    const nodePath = fs.existsSync('./node_bin/node') ? './node_bin/node' : 'node';
+    
+    // Run the server in the background
+    const { stdout, stderr } = await execPromise(`${nodePath} snippet-server.cjs`);
+    
+    if (stdout) log(`Server output: ${stdout}`, 'green');
+    if (stderr) log(`Server error: ${stderr}`, 'red');
+    
+    log('Server started successfully', 'green');
+  } catch (error) {
+    log(`Failed to start server: ${error.message}`, 'red');
+    if (error.stdout) log(`Server output: ${error.stdout}`, 'yellow');
+    if (error.stderr) log(`Server error: ${error.stderr}`, 'red');
+  }
 }
 
 /**
  * Main function
  */
 async function main() {
-  // Print banner
   printBanner();
   
-  // Ensure directories and files
-  const publicDirExists = await ensurePublicDirectory();
-  const indexHtmlExists = await ensureIndexHtml();
-  
-  if (!publicDirExists || !indexHtmlExists) {
-    log('Failed to create required files or directories', 'red');
-    process.exit(1);
+  try {
+    await ensurePublicDirectory();
+    await ensureIndexHtml();
+    await startServer();
+  } catch (error) {
+    log(`Error: ${error.message}`, 'red');
   }
-  
-  // Start server
-  const serverProcess = await startServer();
-  
-  // Handle process termination
-  process.on('SIGINT', () => {
-    log('Stopping server (SIGINT)...', 'yellow');
-    serverProcess.kill();
-    process.exit(0);
-  });
-  
-  process.on('SIGTERM', () => {
-    log('Stopping server (SIGTERM)...', 'yellow');
-    serverProcess.kill();
-    process.exit(0);
-  });
-  
-  log('Server started successfully!', 'green');
-  log('API available at: http://localhost:8080/api', 'cyan');
-  log('Web interface available at: http://localhost:8080/', 'cyan');
 }
 
-// Run main function
-main().catch(error => {
-  log(`Unhandled error: ${error.message}`, 'red');
-  process.exit(1);
-});
+// Execute main function
+main();

@@ -1,52 +1,33 @@
 #!/bin/bash
 
-# Set text colors
-GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
-CYAN='\033[0;36m'
-RED='\033[0;31m'
-NC='\033[0m' # No Color
+# Set environment variables
+export PORT=8080
 
-echo -e "${GREEN}Using Node.js from node_bin directory${NC}"
-
-# Make node binaries executable
-chmod +x ./node_bin/node
-chmod +x ./node_bin/npm
-
-echo -e "${CYAN}Starting Code Snippet Server...
-
-   ______                __       __          
-  / ____/_______  ____ _/ /____  / /_  __     
- / /   / ___/ _ \/ __ \`/ __/ _ \/ / / / /  
-/ /___/ /  /  __/ /_/ / /_/  __/ / /_/ /      
-\____/_/   \___/\__,_/\__/\___/_/\__, /  
-                                 /____/        
-                                              
-  Code Snippet Server - Workflow Runner         
-"
-
-echo -e "${YELLOW}Setting up environment..."
-
-# Create necessary directories
-if [ ! -d "public" ]; then
-  mkdir -p public
+# Kill any existing process
+if [ -f snippet-server.pid ]; then
+  PID=$(cat snippet-server.pid)
+  if ps -p $PID > /dev/null; then
+    echo "Stopping existing server with PID: $PID"
+    kill $PID
+  fi
+  rm snippet-server.pid
 fi
 
-if [ ! -d "public/view" ]; then
-  mkdir -p public/view
-fi
+# Clear log file
+echo "" > snippet-server.log
 
-if [ ! -d "logs" ]; then
-  mkdir -p logs
-fi
+# Start the server in the background
+echo "Starting snippet server..."
+nohup ./node_bin/node snippet-server.cjs > snippet-server.log 2>&1 &
 
-echo -e "${GREEN}Created necessary directories"
+# Store the process ID
+PID=$!
+echo $PID > snippet-server.pid
 
-# Start the server
-echo "Starting Code Snippet Server on port 8080..."
-./node_bin/node server.js
+echo "Started snippet server with PID: $PID"
+echo "Logs are available in snippet-server.log"
+echo "Access the server at: http://0.0.0.0:8080/"
 
-# Keep the workflow alive
-while true; do
-  sleep 10
-done
+# Keep script running to maintain the workflow
+echo "Press CTRL+C to stop the server"
+tail -f snippet-server.log

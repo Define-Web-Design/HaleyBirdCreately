@@ -1,37 +1,9 @@
 #!/bin/bash
 
-# Creately Code Snippet Server runner script
-# Fixed version with proper error handling
+echo "Starting Creately Code Snippet Server..."
 
-echo -e "\033[0;36m"
-echo "   ______                __       __          "
-echo "  / ____/_______  ____ _/ /____  / /_  __     "
-echo " / /   / ___/ _ \/ __ \`/ __/ _ \/ / / / /  "
-echo "/ /___/ /  /  __/ /_/ / /_/  __/ / /_/ /      "
-echo "\____/_/   \___/\__,_/\__/\___/_/\__, /  "
-echo "                                 /____/        "
-echo "                                              "
-echo "  Code Snippet Server - Runner Script         "
-echo -e "\033[0m"
-
-# Environment variables
-export PORT=8080
-
-# Check for Node.js
-if command -v node &> /dev/null; then
-  echo -e "\033[0;32mUsing system Node.js\033[0m"
-  NODE="node"
-elif [ -f "./node_bin/node" ]; then
-  echo -e "\033[0;32mUsing Node.js from node_bin directory\033[0m"
-  NODE="./node_bin/node"
-else
-  echo -e "\033[0;31mError: Node.js not found in system or node_bin\033[0m"
-  exit 1
-fi
-
-# Create public directory
-mkdir -p public
+# Clear log file
+echo "" > snippet-server.log
 
 # Start the server
-echo -e "\033[0;32mStarting Code Snippet Server on port $PORT...\033[0m"
-$NODE server.js
+exec ./node_bin/node snippet-server.cjs

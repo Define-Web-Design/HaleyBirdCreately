@@ -1,9 +1,8 @@
 {
-  "workflows": [
-    {
-      "name": "Code Snippet Server",
-      "run": "./snippet-server-workflow.sh",
-      "persistent": true
-    }
-  ]
+  "runMe": {
+    "name": "Code Snippet Server",
+    "command": "./node_bin/node server.js",
+    "environment": {},
+    "restartPolicy": "always"
+  }
 }
