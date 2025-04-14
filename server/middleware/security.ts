@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { log } from '../utils/logger';
 
 // Rate limiting middleware for API routes
 export const apiLimiter = (req: Request, res: Response, next: NextFunction) => {
@@ -37,6 +38,11 @@ export const validateAccess = (req: Request, res: Response, next: NextFunction) 
 export const monitorSecurity = (req: Request, res: Response, next: NextFunction) => {
   // In a real implementation, this would track unusual patterns
   // For now, just log the request for auditing
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path} - ${req.ip}`);
+  log.security('request_audit', 'low', {
+    method: req.method,
+    path: req.path,
+    ip: req.ip,
+    userAgent: req.get('user-agent')
+  });
   next();
 };

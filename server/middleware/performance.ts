@@ -1,5 +1,6 @@
 
 import { Request, Response, NextFunction } from 'express';
+import { log } from '../utils/logger';
 
 /**
  * Performance monitoring middleware
@@ -19,12 +20,19 @@ export function performanceMonitor(req: Request, res: Response, next: NextFuncti
     
     // Log all API requests with timing
     if (req.path.startsWith('/api/')) {
-      console.log(`${req.method} ${req.path} - ${duration}ms`);
+      log.performance(req.path, duration, {
+        method: req.method,
+        path: req.path
+      });
     }
     
     // Warning for slow requests (> 500ms)
     if (duration > 500) {
-      console.warn(`⚠️ Slow request: ${req.method} ${req.path} - ${duration}ms`);
+      log.warn(`Slow request: ${req.method} ${req.path} - ${duration}ms`, {
+        method: req.method,
+        path: req.path,
+        duration
+      });
     }
   });
   
