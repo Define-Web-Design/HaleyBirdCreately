@@ -1,19 +1,17 @@
-// Simple Node.js HTTP server
+// Simple entry point - redirects to the main server file
+console.log('Starting server from index.js...');
 
-const http = require('http');
-const fs = require('fs');
-const path = require('path');
-
-// Load environment variables if dotenv is available
 try {
+  // Try to load dotenv for environment variables
   require('dotenv').config();
-  console.log('Environment variables loaded from .env file');
-} catch (error) {
-  console.log('dotenv module not available, using process.env directly');
+} catch (err) {
+  console.log('dotenv not available, using process.env directly');
 }
 
 // Create logs directory if it doesn't exist
 try {
+  const fs = require('fs');
+  const path = require('path');
   const logsDir = path.join(process.cwd(), 'logs');
   if (!fs.existsSync(logsDir)) {
     fs.mkdirSync(logsDir, { recursive: true });
@@ -28,69 +26,42 @@ try {
   console.error('Error creating log directories:', error);
 }
 
-// Create HTTP server
-const server = http.createServer((req, res) => {
-  // Set CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  
-  // Handle OPTIONS request for CORS
-  if (req.method === 'OPTIONS') {
-    res.statusCode = 204; // No content
-    res.end();
-    return;
-  }
-  
-  // Set content type to JSON
-  res.setHeader('Content-Type', 'application/json');
-  
-  // Handle routes
-  if (req.url === '/' || req.url === '/api') {
-    const response = {
-      message: 'Hello from Creately API!',
-      timestamp: new Date().toISOString(),
-      status: 'SUCCESS',
-      database: process.env.DATABASE_URL ? 'Available (PostgreSQL)' : 'Not configured',
-      apiKeys: {
-        openai: process.env.OPENAI_API_KEY ? 'Available' : 'Missing',
-        pagespeed: process.env.PAGESPEED_INSIGHTS_API_KEY ? 'Available' : 'Missing'
-      }
-    };
-    
-    res.statusCode = 200;
-    res.end(JSON.stringify(response, null, 2));
-  } 
-  // Route to test PageSpeed Insights API
-  else if (req.url.startsWith('/pagespeed')) {
-    const response = {
-      message: 'PageSpeed Insights API route',
-      timestamp: new Date().toISOString()
-    };
-    
-    if (!process.env.PAGESPEED_INSIGHTS_API_KEY) {
-      response.error = 'PageSpeed Insights API key is not configured';
-      res.statusCode = 400;
-    } else {
-      response.status = 'API key is configured';
-      res.statusCode = 200;
-    }
-    
-    res.end(JSON.stringify(response, null, 2));
-  }
-  // Not found
-  else {
-    res.statusCode = 404;
-    res.end(JSON.stringify({ 
-      error: 'Not Found',
-      message: `The requested path ${req.url} was not found`,
-      timestamp: new Date().toISOString()
-    }, null, 2));
-  }
-});
 
-// Start the server
-const port = process.env.PORT || 3000;
-server.listen(port, '0.0.0.0', () => {
-  console.log(`Server running at http://0.0.0.0:${port}`);
-});
+// Load the main server file
+try {
+  require('./simple-server.js');
+} catch (error) {
+  console.error('Failed to load simple-server.js:', error);
+
+  // Create a very basic HTTP server as last resort
+  const http = require('http');
+  const port = process.env.PORT || 3000;
+
+  const server = http.createServer((req, res) => {
+    res.writeHead(200, {'Content-Type': 'text/html'});
+    res.end(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>Emergency Server</title>
+          <style>
+            body { font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; }
+            .card { border: 1px solid #ddd; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; background: #f9f9f9; }
+          </style>
+        </head>
+        <body>
+          <h1>Emergency Server Mode</h1>
+          <div class="card">
+            <p>The main server failed to start. This is a minimal emergency server.</p>
+            <p>Check the console logs for more information.</p>
+          </div>
+        </body>
+      </html>
+    `);
+  });
+
+  server.listen(port, '0.0.0.0', () => {
+    console.log(`Emergency server running at http://0.0.0.0:${port}`);
+  });
+}

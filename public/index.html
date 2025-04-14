@@ -1,348 +1,95 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Code Snippets - Creately</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/typescript.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/javascript.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/python.min.js"></script>
+  <title>Creately Code Snippet Server</title>
   <style>
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      line-height: 1.6;
-      color: #333;
-      max-width: 1000px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      max-width: 800px;
       margin: 0 auto;
-      padding: 20px;
+      padding: 2rem;
+      line-height: 1.6;
     }
-    header {
-      margin-bottom: 30px;
-      border-bottom: 1px solid #eee;
-      padding-bottom: 20px;
-    }
-    h1 { color: #2563eb; }
-    .header-links {
-      display: flex;
-      gap: 20px;
-    }
-    .header-links a {
-      color: #2563eb;
-      text-decoration: none;
-    }
-    .header-links a:hover {
-      text-decoration: underline;
-    }
-    .snippet-list {
-      display: grid;
-      gap: 20px;
-    }
-    .snippet-card {
+    .card {
       border: 1px solid #ddd;
       border-radius: 8px;
-      overflow: hidden;
-      transition: box-shadow 0.3s ease;
+      padding: 1.5rem;
+      margin: 1rem 0;
+      background: #f9f9f9;
     }
-    .snippet-card:hover {
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    }
-    .snippet-header {
-      background-color: #f9fafb;
-      padding: 15px;
-      border-bottom: 1px solid #ddd;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .snippet-title {
-      margin: 0;
-      font-size: 1.2rem;
-    }
-    .snippet-meta {
-      font-size: 0.85rem;
-      color: #6b7280;
-    }
-    .snippet-description {
-      padding: 15px;
-      background-color: #fff;
-      border-bottom: 1px solid #ddd;
-      font-size: 0.95rem;
-    }
-    .code-container {
-      position: relative;
-    }
-    .language-badge {
-      position: absolute;
-      top: 10px;
-      right: 60px;
-      background-color: #4b5563;
-      color: #fff;
-      font-size: 0.7rem;
-      padding: 3px 8px;
-      border-radius: 4px;
-      z-index: 2;
-      text-transform: uppercase;
-    }
-    .copy-btn {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      background-color: #4b5563;
-      color: #fff;
-      border: none;
-      border-radius: 4px;
-      padding: 3px 8px;
-      font-size: 0.7rem;
-      cursor: pointer;
-      z-index: 2;
-    }
-    .copy-btn:hover {
-      background-color: #374151;
-    }
-    pre {
-      margin: 0;
-      padding: 15px;
-      overflow-x: auto;
-    }
-    pre code {
-      font-family: 'SFMono-Regular', Consolas, monospace;
-      font-size: 0.9rem;
-      line-height: 1.6;
-      padding: 0 !important;
-    }
-    .code-with-line-numbers {
-      counter-reset: line;
-    }
-    .code-with-line-numbers .hljs-line {
-      position: relative;
-      display: block;
-      padding-left: 3em;
-    }
-    .code-with-line-numbers .hljs-line:before {
-      counter-increment: line;
-      content: counter(line);
-      position: absolute;
-      left: 0;
-      color: #777;
-      text-align: right;
-      width: 2.5em;
-      padding-right: 0.5em;
-      border-right: 1px solid #ddd;
-      user-select: none;
-    }
-    .snippet-footer {
-      padding: 10px 15px;
-      background-color: #f9fafb;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 0.85rem;
-      color: #6b7280;
-    }
-    .view-btn {
-      background-color: #2563eb;
+    .button {
+      display: inline-block;
+      background: #0066cc;
       color: white;
-      border: none;
+      padding: 0.5rem 1rem;
       border-radius: 4px;
-      padding: 6px 12px;
-      font-size: 0.85rem;
-      cursor: pointer;
       text-decoration: none;
+      margin-right: 0.5rem;
     }
-    .view-btn:hover {
-      background-color: #1d4ed8;
+    header {
+      margin-bottom: 2rem;
     }
-    .empty-state {
-      text-align: center;
-      padding: 40px;
-      background-color: #f9fafb;
-      border-radius: 8px;
-      border: 1px dashed #d1d5db;
-    }
-    .empty-state h3 {
-      margin-top: 0;
-      color: #374151;
-    }
-    .load-more {
-      display: block;
-      width: 100%;
-      padding: 10px;
-      background-color: #f3f4f6;
-      border: 1px solid #e5e7eb;
+    .status {
+      display: inline-block;
+      padding: 0.25rem 0.5rem;
       border-radius: 4px;
-      text-align: center;
-      margin-top: 20px;
-      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 600;
     }
-    .load-more:hover {
-      background-color: #e5e7eb;
+    .status.ok {
+      background: #d4edda;
+      color: #155724;
     }
-    .create-btn {
-      background-color: #2563eb;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      padding: 8px 16px;
-      font-size: 1rem;
-      cursor: pointer;
-      text-decoration: none;
-    }
-    .create-btn:hover {
-      background-color: #1d4ed8;
+    .status.error {
+      background: #f8d7da;
+      color: #721c24;
     }
   </style>
 </head>
 <body>
   <header>
-    <h1>Creately Code Snippets</h1>
-    <div class="header-links">
-      <a href="/">Home</a>
-      <a href="/create-snippet.html">Create Snippet</a>
-    </div>
+    <h1>Creately Code Snippet Server</h1>
+    <p>A platform for managing and sharing code snippets with AI-enhanced features.</p>
   </header>
-
-  <main>
-    <div class="actions" style="margin-bottom: 20px;">
-      <a href="/create-snippet.html" class="create-btn">Create New Snippet</a>
-    </div>
-    
-    <div id="snippetsList" class="snippet-list">
-      <!-- Snippets will be loaded here -->
-      <div class="empty-state">
-        <h3>Loading snippets...</h3>
-        <p>Please wait while we fetch the available code snippets</p>
-      </div>
-    </div>
-    
-    <button id="loadMoreBtn" class="load-more" style="display: none;">Load More</button>
-  </main>
+  
+  <div class="card">
+    <h2>Server Status</h2>
+    <p>
+      <span class="status ok">Server Running</span>
+    </p>
+    <p>The server is running in static mode. Some dynamic features may be limited.</p>
+  </div>
+  
+  <div class="card">
+    <h2>API Endpoints</h2>
+    <ul>
+      <li><a href="/api/health" class="button">Check Health</a></li>
+      <li><a href="/api/info" class="button">Server Info</a></li>
+    </ul>
+  </div>
+  
+  <div class="card">
+    <h2>Documentation</h2>
+    <p>This is a simple landing page for the Creately Code Snippet Server.</p>
+    <p>For more information, check the documentation or API endpoints.</p>
+  </div>
 
   <script>
-    // Function to format date
-    function formatDate(dateString) {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
+    // Simple script to check server status
+    fetch('/api/health')
+      .then(response => response.json())
+      .then(data => {
+        if (data.status === 'ok') {
+          document.querySelector('.status').textContent = 'Server Online';
+        }
+      })
+      .catch(error => {
+        document.querySelector('.status').className = 'status error';
+        document.querySelector('.status').textContent = 'Server Error';
       });
-    }
-
-    // Function to copy code to clipboard
-    function copyCode(button, code) {
-      navigator.clipboard.writeText(code)
-        .then(() => {
-          const originalText = button.textContent;
-          button.textContent = 'Copied!';
-          setTimeout(() => {
-            button.textContent = originalText;
-          }, 2000);
-        })
-        .catch(err => {
-          console.error('Failed to copy code', err);
-        });
-    }
-
-    // Function to escape HTML
-    function escapeHtml(text) {
-      const map = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#039;'
-      };
-      return text.replace(/[&<>"']/g, function(m) { return map[m]; });
-    }
-
-    // Function to add line numbers to code
-    function addLineNumbers(code) {
-      const lines = code.split('\\n');
-      return lines.map(line => `<span class="hljs-line">${line}</span>`).join('\\n');
-    }
-
-    // Load snippets from API
-    async function loadSnippets() {
-      try {
-        const response = await fetch('/api/snippets');
-        if (!response.ok) {
-          throw new Error(`Error: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        const snippetsContainer = document.getElementById('snippetsList');
-        
-        // Clear loading state
-        snippetsContainer.innerHTML = '';
-        
-        if (data.snippets.length === 0) {
-          snippetsContainer.innerHTML = `
-            <div class="empty-state">
-              <h3>No snippets found</h3>
-              <p>Be the first to create a code snippet!</p>
-              <a href="/create-snippet.html" class="create-btn">Create Snippet</a>
-            </div>
-          `;
-          return;
-        }
-        
-        // Render each snippet
-        data.snippets.forEach(snippet => {
-          const codeWithLineNumbers = addLineNumbers(escapeHtml(snippet.code));
-          
-          const snippetElement = document.createElement('div');
-          snippetElement.className = 'snippet-card';
-          snippetElement.innerHTML = `
-            <div class="snippet-header">
-              <div>
-                <h3 class="snippet-title">${escapeHtml(snippet.title)}</h3>
-                <div class="snippet-meta">
-                  By ${escapeHtml(snippet.author)} • ${formatDate(snippet.createdAt)}
-                </div>
-              </div>
-            </div>
-            
-            ${snippet.description ? `
-              <div class="snippet-description">
-                ${escapeHtml(snippet.description)}
-              </div>
-            ` : ''}
-            
-            <div class="code-container">
-              <span class="language-badge">${snippet.language}</span>
-              <button class="copy-btn" onclick="copyCode(this, '${escapeHtml(snippet.code).replace(/'/g, "\\'")}')">Copy</button>
-              <pre><code class="code-with-line-numbers ${snippet.language}">${codeWithLineNumbers}</code></pre>
-            </div>
-            
-            <div class="snippet-footer">
-              <span>${snippet.viewCount} ${snippet.viewCount === 1 ? 'view' : 'views'}</span>
-              <a href="/view/${snippet.shareId}" class="view-btn">View Full Snippet</a>
-            </div>
-          `;
-          
-          snippetsContainer.appendChild(snippetElement);
-        });
-        
-        // Initialize syntax highlighting
-        document.querySelectorAll('pre code').forEach((block) => {
-          hljs.highlightElement(block);
-        });
-        
-      } catch (error) {
-        console.error('Error loading snippets:', error);
-        document.getElementById('snippetsList').innerHTML = `
-          <div class="empty-state">
-            <h3>Error loading snippets</h3>
-            <p>${error.message}</p>
-          </div>
-        `;
-      }
-    }
-
-    // Load snippets on page load
-    document.addEventListener('DOMContentLoaded', loadSnippets);
   </script>
 </body>
 </html>
