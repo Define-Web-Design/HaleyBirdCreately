@@ -32,6 +32,24 @@ export class ErrorBoundary extends Component<Props, State> {
     
     // Log the error to an error reporting service
     console.error('UI Error:', error, errorInfo);
+    
+    // Consider sending to server-side logging in production
+    if (process.env.NODE_ENV === 'production') {
+      try {
+        fetch('/api/logs/client-error', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            error: error.toString(),
+            componentStack: errorInfo.componentStack,
+            location: window.location.href
+          })
+        }).catch(e => console.error('Failed to report error:', e));
+      } catch (e) {
+        // Fallback if fetch fails
+        console.error('Failed to send error to server:', e);
+      }
+    }
   }
   
   private handleReset = () => {

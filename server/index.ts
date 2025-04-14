@@ -11,7 +11,7 @@ import { setupVite, serveStatic } from './vite';
 dotenv.config();
 
 // Import environment variable check
-import { checkRequiredEnvVars } from './utils/env-check.js';
+import { checkRequiredEnvVars } from './utils/env-check';
 checkRequiredEnvVars();
 
 // Get __dirname equivalent in ESM

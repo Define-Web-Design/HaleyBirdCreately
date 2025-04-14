@@ -41,4 +41,26 @@ export function checkRequiredEnvVars() {
   } else {
     console.log('✅ All required environment variables are set.');
   }
+  
+  // Check optional API keys
+  const optionalVars = [
+    'OPENAI_API_KEY',
+    'MISTRAL_API_KEY',
+    'CODESTRAL_API_KEY',
+    'PAGESPEED_INSIGHTS_API_KEY'
+  ];
+  
+  const missingOptional = optionalVars.filter(name => !process.env[name]);
+  
+  if (missingOptional.length > 0) {
+    console.warn('⚠️ Some optional API keys are missing:', missingOptional.join(', '));
+    console.warn('Some features will be disabled:');
+    
+    if (!process.env.OPENAI_API_KEY) console.warn('- AI color palette generation');
+    if (!process.env.MISTRAL_API_KEY) console.warn('- AI chat features');
+    if (!process.env.CODESTRAL_API_KEY) console.warn('- Code assistance');
+    if (!process.env.PAGESPEED_INSIGHTS_API_KEY) console.warn('- PageSpeed analysis');
+  }
+}et.');
+  }
 }
