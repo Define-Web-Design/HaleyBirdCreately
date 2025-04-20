@@ -10,6 +10,7 @@
     "db:push": "drizzle-kit push"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.37.0",
     "@googleapis/docs": "^3.3.3",
     "@neondatabase/serverless": "^0.10.4",
     "@tailwindcss/typography": "^0.5.16",
