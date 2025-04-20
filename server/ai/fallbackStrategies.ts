@@ -1,259 +1,364 @@
 /**
  * AI Service Fallback Strategies
  * 
- * This module provides strategies for handling fallbacks between AI providers
- * when a preferred provider is unavailable or encounters an error.
+ * This module provides fallback strategies for AI service operations.
+ * If a primary AI service fails, these strategies determine how to
+ * retry or switch to alternative providers.
  */
 
-import { AIServiceAdapter } from './adapters/baseAdapter';
-import { AdapterRegistry } from './adapterRegistry';
+import { 
+  AIAdapter, 
+  AIAdapterRegistry, 
+  AIProvider, 
+  AIRequestOptions,
+  AIResponse,
+  AIFallbackStrategy
+} from './aiTypes';
 import { logger } from '../utils/logger';
 
 /**
- * Interface for adapter fallback strategies
+ * Simple fallback strategy that tries providers in sequence
+ * until one succeeds or all fail.
  */
-export interface AdapterFallbackStrategy {
+export class SimpleFallbackStrategy implements AIFallbackStrategy {
+  constructor(
+    private registry: AIAdapterRegistry,
+    private preferredOrder: AIProvider[] = []
+  ) {}
+  
   /**
-   * Get the best adapter based on the strategy
-   * @param preferredProvider Optional preferred provider name
-   * @returns The best adapter or null if none available
+   * Execute an operation with fallback support
    */
-  getAdapter(preferredProvider?: string): Promise<AIServiceAdapter | null>;
+  async execute<T>(
+    operation: (adapter: AIAdapter) => Promise<AIResponse<T>>,
+    options?: AIRequestOptions
+  ): Promise<AIResponse<T>> {
+    // If a specific provider is requested, try only that provider
+    if (options?.provider) {
+      const adapter = this.registry.get(options.provider);
+      if (!adapter) {
+        throw new Error(`Provider not found: ${options.provider}`);
+      }
+      
+      try {
+        return await operation(adapter);
+      } catch (error) {
+        logger.error(`Operation failed with provider ${options.provider}`, {
+          error: error instanceof Error ? error.message : String(error)
+        });
+        throw error;
+      }
+    }
+    
+    // Otherwise, try providers in the preferred order, then any remaining providers
+    const attemptedProviders: AIProvider[] = [];
+    const errors: Record<AIProvider, string> = {};
+    
+    // First try providers in preferred order
+    for (const provider of this.preferredOrder) {
+      const adapter = this.registry.get(provider);
+      if (!adapter) continue;
+      
+      attemptedProviders.push(provider);
+      
+      try {
+        return await operation(adapter);
+      } catch (error) {
+        logger.warn(`Operation failed with provider ${provider}, trying next`, {
+          error: error instanceof Error ? error.message : String(error)
+        });
+        errors[provider] = error instanceof Error ? error.message : String(error);
+      }
+    }
+    
+    // Then try any providers not already attempted
+    const remainingProviders = this.registry.getAll()
+      .filter(adapter => !attemptedProviders.includes(adapter.provider));
+    
+    for (const adapter of remainingProviders) {
+      const provider = adapter.provider;
+      attemptedProviders.push(provider);
+      
+      try {
+        return await operation(adapter);
+      } catch (error) {
+        logger.warn(`Operation failed with provider ${provider}, trying next`, {
+          error: error instanceof Error ? error.message : String(error)
+        });
+        errors[provider] = error instanceof Error ? error.message : String(error);
+      }
+    }
+    
+    // If we get here, all providers failed
+    const errorMessage = `All providers failed: ${JSON.stringify(errors)}`;
+    logger.error(errorMessage);
+    throw new Error(errorMessage);
+  }
 }
 
 /**
- * Create a simple fallback strategy that just uses the best adapter from the registry
- * @param registry Adapter registry
- * @returns Fallback strategy
+ * Prioritized fallback strategy that weighs provider selection based on
+ * recent success rates, latency, and other factors.
+ */
+export class PrioritizedFallbackStrategy implements AIFallbackStrategy {
+  private maxRetries = 3;
+  
+  constructor(
+    private registry: AIAdapterRegistry,
+    private weights = {
+      successRate: 0.5,
+      latency: 0.3,
+      cost: 0.2
+    }
+  ) {}
+  
+  /**
+   * Execute an operation with fallback support
+   */
+  async execute<T>(
+    operation: (adapter: AIAdapter) => Promise<AIResponse<T>>,
+    options?: AIRequestOptions
+  ): Promise<AIResponse<T>> {
+    // If a specific provider is requested, try only that provider
+    if (options?.provider) {
+      const adapter = this.registry.get(options.provider);
+      if (!adapter) {
+        throw new Error(`Provider not found: ${options.provider}`);
+      }
+      
+      return this.tryWithRetries(adapter, operation, options.retries || this.maxRetries);
+    }
+    
+    // Get all adapters and sort by score
+    const adapters = this.registry.getAll();
+    const rankedAdapters = this.rankAdapters(adapters);
+    
+    // Try adapters in ranked order
+    const errors: Record<AIProvider, string> = {};
+    
+    for (const adapter of rankedAdapters) {
+      const provider = adapter.provider;
+      
+      try {
+        return await this.tryWithRetries(adapter, operation, options?.retries || this.maxRetries);
+      } catch (error) {
+        logger.warn(`Operation failed with provider ${provider}, trying next`, {
+          error: error instanceof Error ? error.message : String(error)
+        });
+        errors[provider] = error instanceof Error ? error.message : String(error);
+      }
+    }
+    
+    // If we get here, all providers failed
+    const errorMessage = `All providers failed: ${JSON.stringify(errors)}`;
+    logger.error(errorMessage);
+    throw new Error(errorMessage);
+  }
+  
+  /**
+   * Try an operation with the given adapter, with retries
+   */
+  private async tryWithRetries<T>(
+    adapter: AIAdapter,
+    operation: (adapter: AIAdapter) => Promise<AIResponse<T>>,
+    maxRetries: number
+  ): Promise<AIResponse<T>> {
+    let lastError: Error | undefined;
+    
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        return await operation(adapter);
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error));
+        
+        if (attempt < maxRetries) {
+          // Exponential backoff
+          const delay = Math.min(100 * Math.pow(2, attempt), 2000);
+          logger.debug(`Retrying with ${adapter.provider} after ${delay}ms (attempt ${attempt + 1}/${maxRetries})`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      }
+    }
+    
+    // If we get here, all retries failed
+    throw lastError || new Error(`Failed after ${maxRetries} retries`);
+  }
+  
+  /**
+   * Rank adapters based on their success rates, latency, and cost
+   */
+  private rankAdapters(adapters: AIAdapter[]): AIAdapter[] {
+    return adapters.map(adapter => {
+      const metrics = adapter.getMetrics();
+      const status = adapter.getStatus();
+      
+      // Calculate success rate (0-1)
+      const successRate = metrics.totalRequests > 0
+        ? metrics.successfulRequests / metrics.totalRequests
+        : 0.5; // Default if no data
+      
+      // Calculate normalized latency score (0-1, higher is better/faster)
+      const latencyScore = metrics.averageLatency > 0
+        ? Math.min(1, 2000 / metrics.averageLatency) // Cap at 2 seconds
+        : 0.5; // Default if no data
+      
+      // Calculate availability score
+      const availabilityScore = status.healthy ? 1 : 0;
+      
+      // Calculate total score
+      const score = 
+        (this.weights.successRate * successRate) +
+        (this.weights.latency * latencyScore) +
+        (availabilityScore); // Immediate disqualification if not healthy
+      
+      return { adapter, score };
+    })
+    .filter(item => item.score > 0) // Filter out unhealthy adapters
+    .sort((a, b) => b.score - a.score) // Sort by score (descending)
+    .map(item => item.adapter);
+  }
+}
+
+/**
+ * Token preservation strategy that selects providers based on
+ * token availability and usage limits.
+ */
+export class TokenPreservationStrategy implements AIFallbackStrategy {
+  constructor(
+    private registry: AIAdapterRegistry,
+    private tokenBudgets: Record<AIProvider, number> = {}
+  ) {}
+  
+  /**
+   * Execute an operation with token budget awareness
+   */
+  async execute<T>(
+    operation: (adapter: AIAdapter) => Promise<AIResponse<T>>,
+    options?: AIRequestOptions
+  ): Promise<AIResponse<T>> {
+    // If a specific provider is requested, use it regardless of token budget
+    if (options?.provider) {
+      const adapter = this.registry.get(options.provider);
+      if (!adapter) {
+        throw new Error(`Provider not found: ${options.provider}`);
+      }
+      
+      try {
+        return await operation(adapter);
+      } catch (error) {
+        logger.error(`Operation failed with provider ${options.provider}`, {
+          error: error instanceof Error ? error.message : String(error)
+        });
+        throw error;
+      }
+    }
+    
+    // Otherwise, select provider based on token budgets
+    const adapters = this.registry.getAll();
+    const rankedAdapters = this.rankAdaptersByTokenBudget(adapters);
+    
+    // Try adapters in ranked order
+    const errors: Record<AIProvider, string> = {};
+    
+    for (const adapter of rankedAdapters) {
+      const provider = adapter.provider;
+      
+      try {
+        return await operation(adapter);
+      } catch (error) {
+        logger.warn(`Operation failed with provider ${provider}, trying next`, {
+          error: error instanceof Error ? error.message : String(error)
+        });
+        errors[provider] = error instanceof Error ? error.message : String(error);
+      }
+    }
+    
+    // If we get here, all providers failed
+    const errorMessage = `All providers failed: ${JSON.stringify(errors)}`;
+    logger.error(errorMessage);
+    throw new Error(errorMessage);
+  }
+  
+  /**
+   * Rank adapters based on token budgets
+   */
+  private rankAdaptersByTokenBudget(adapters: AIAdapter[]): AIAdapter[] {
+    return adapters.map(adapter => {
+      const provider = adapter.provider;
+      const metrics = adapter.getMetrics();
+      const status = adapter.getStatus();
+      
+      // Skip unhealthy adapters
+      if (!status.healthy) {
+        return { adapter, score: -1 };
+      }
+      
+      // Get token budget for this provider
+      const budget = this.tokenBudgets[provider] || 0;
+      
+      // Get token usage
+      const tokensUsed = 
+        (metrics.totalTokensIn || 0) + 
+        (metrics.totalTokensOut || 0);
+      
+      // Calculate remaining budget
+      const remainingBudget = Math.max(0, budget - tokensUsed);
+      
+      // If budget is 0, it means unlimited, so rank based on success rate
+      const score = budget === 0
+        ? (metrics.totalRequests > 0 
+           ? metrics.successfulRequests / metrics.totalRequests 
+           : 0.5)
+        : remainingBudget;
+      
+      return { adapter, score };
+    })
+    .filter(item => item.score > 0) // Filter out unhealthy adapters or those with no budget
+    .sort((a, b) => b.score - a.score) // Sort by score (descending)
+    .map(item => item.adapter);
+  }
+  
+  /**
+   * Update token budget for a provider
+   */
+  updateTokenBudget(provider: AIProvider, budget: number): void {
+    this.tokenBudgets[provider] = budget;
+  }
+  
+  /**
+   * Get current token budgets
+   */
+  getTokenBudgets(): Record<AIProvider, number> {
+    return { ...this.tokenBudgets };
+  }
+}
+
+/**
+ * Create a simple fallback strategy with the given registry
  */
 export function createSimpleFallbackStrategy(
-  registry: AdapterRegistry
-): AdapterFallbackStrategy {
-  return {
-    async getAdapter(preferredProvider?: string): Promise<AIServiceAdapter | null> {
-      return registry.getBestAdapter(preferredProvider);
-    }
-  };
+  registry: AIAdapterRegistry,
+  preferredOrder: AIProvider[] = []
+): AIFallbackStrategy {
+  return new SimpleFallbackStrategy(registry, preferredOrder);
 }
 
 /**
- * Create a priority-based fallback strategy that sorts adapters by priority
- * 
- * @param registry Adapter registry
- * @returns Fallback strategy
+ * Create a prioritized fallback strategy with the given registry
  */
-export function createPriorityBasedFallbackStrategy(
-  registry: AdapterRegistry
-): AdapterFallbackStrategy {
-  return {
-    async getAdapter(preferredProvider?: string): Promise<AIServiceAdapter | null> {
-      // First try preferred provider if specified
-      if (preferredProvider) {
-        const adapter = registry.getAdapter(preferredProvider);
-        if (adapter) {
-          const available = await registry.checkAdapterHealth(preferredProvider);
-          if (available) {
-            logger.debug(`Using preferred provider: ${preferredProvider}`);
-            return adapter;
-          }
-          logger.warn(`Preferred provider ${preferredProvider} is not available, falling back to priority-based selection`);
-        }
-      }
-      
-      // Get all adapters and sort by priority
-      const adapters = Array.from(registry.getAllAdapters().entries())
-        .sort((a, b) => {
-          const statusA = registry.getAdapterStatus()[a[0]] || {};
-          const statusB = registry.getAdapterStatus()[b[0]] || {};
-          const priorityA = statusA.priority || 100;
-          const priorityB = statusB.priority || 100;
-          return priorityA - priorityB;
-        });
-      
-      // Try each adapter in order
-      for (const [name, adapter] of adapters) {
-        const available = await registry.checkAdapterHealth(name);
-        if (available) {
-          logger.debug(`Selected provider by priority: ${name}`);
-          return adapter;
-        }
-      }
-      
-      logger.error('No available adapters found');
-      return null;
-    }
-  };
+export function createPrioritizedFallbackStrategy(
+  registry: AIAdapterRegistry,
+  weights = { successRate: 0.5, latency: 0.3, cost: 0.2 }
+): AIFallbackStrategy {
+  return new PrioritizedFallbackStrategy(registry, weights);
 }
 
 /**
- * Create a capability-based fallback strategy that selects adapters based on
- * whether they implement a specific capability
- * 
- * @param registry Adapter registry
- * @param capability Name of the required capability/method
- * @returns Fallback strategy
+ * Create a token preservation fallback strategy with the given registry
  */
-export function createCapabilityBasedFallbackStrategy(
-  registry: AdapterRegistry,
-  capability: string
-): AdapterFallbackStrategy {
-  return {
-    async getAdapter(preferredProvider?: string): Promise<AIServiceAdapter | null> {
-      // First try preferred provider if specified
-      if (preferredProvider) {
-        const adapter = registry.getAdapter(preferredProvider);
-        if (adapter && typeof (adapter as any)[capability] === 'function') {
-          const available = await registry.checkAdapterHealth(preferredProvider);
-          if (available) {
-            logger.debug(`Using preferred provider: ${preferredProvider}`);
-            return adapter;
-          }
-          logger.warn(`Preferred provider ${preferredProvider} is not available, falling back to capability-based selection`);
-        } else if (adapter) {
-          logger.warn(`Preferred provider ${preferredProvider} does not support capability: ${capability}`);
-        }
-      }
-      
-      // Get all adapters with the capability
-      const adapters = Array.from(registry.getAllAdapters().entries())
-        .filter(([_, adapter]) => typeof (adapter as any)[capability] === 'function')
-        .sort((a, b) => {
-          const statusA = registry.getAdapterStatus()[a[0]] || {};
-          const statusB = registry.getAdapterStatus()[b[0]] || {};
-          const priorityA = statusA.priority || 100;
-          const priorityB = statusB.priority || 100;
-          return priorityA - priorityB;
-        });
-      
-      // Try each adapter in order
-      for (const [name, adapter] of adapters) {
-        const available = await registry.checkAdapterHealth(name);
-        if (available) {
-          logger.debug(`Selected provider by capability (${capability}): ${name}`);
-          return adapter;
-        }
-      }
-      
-      logger.error(`No available adapters found with capability: ${capability}`);
-      return null;
-    }
-  };
-}
-
-/**
- * Create a cost-based fallback strategy that favors lower-cost providers
- * until a threshold of failures or latency is reached
- * 
- * @param registry Adapter registry
- * @param costThreshold Cost threshold for considering higher-cost providers
- * @param failureThreshold Failure threshold for switching providers
- * @returns Fallback strategy
- */
-export function createCostBasedFallbackStrategy(
-  registry: AdapterRegistry,
-  costThreshold: number = 0.5,
-  failureThreshold: number = 3
-): AdapterFallbackStrategy {
-  // Track failures per provider
-  const failures: Record<string, number> = {};
-  
-  return {
-    async getAdapter(preferredProvider?: string): Promise<AIServiceAdapter | null> {
-      // First try preferred provider if specified
-      if (preferredProvider) {
-        const adapter = registry.getAdapter(preferredProvider);
-        if (adapter) {
-          const available = await registry.checkAdapterHealth(preferredProvider);
-          if (available && (failures[preferredProvider] || 0) < failureThreshold) {
-            logger.debug(`Using preferred provider: ${preferredProvider}`);
-            return adapter;
-          }
-          
-          if (!available) {
-            logger.warn(`Preferred provider ${preferredProvider} is not available, falling back to cost-based selection`);
-          } else {
-            logger.warn(`Preferred provider ${preferredProvider} exceeded failure threshold, falling back to cost-based selection`);
-          }
-        }
-      }
-      
-      // Cost tiers for providers (example values)
-      const costTiers: Record<string, number> = {
-        'openai': 1.0,
-        'anthropic': 0.8,
-        'perplexity': 0.3,
-        // Add more as needed
-      };
-      
-      // Get all adapters and sort by cost
-      const adapters = Array.from(registry.getAllAdapters().entries())
-        .map(([name, adapter]) => {
-          return {
-            name,
-            adapter,
-            cost: costTiers[name] || 0.5,
-            failures: failures[name] || 0
-          };
-        })
-        .filter(item => item.failures < failureThreshold) // Filter out adapters that exceeded failure threshold
-        .sort((a, b) => a.cost - b.cost);
-      
-      // First try cheap providers
-      for (const item of adapters) {
-        if (item.cost <= costThreshold) {
-          const available = await registry.checkAdapterHealth(item.name);
-          if (available) {
-            logger.debug(`Selected low-cost provider: ${item.name} (cost: ${item.cost})`);
-            return item.adapter;
-          }
-        }
-      }
-      
-      // If no cheap providers available, try expensive ones
-      for (const item of adapters) {
-        if (item.cost > costThreshold) {
-          const available = await registry.checkAdapterHealth(item.name);
-          if (available) {
-            logger.debug(`Selected higher-cost provider: ${item.name} (cost: ${item.cost})`);
-            return item.adapter;
-          }
-        }
-      }
-      
-      logger.error('No available adapters found');
-      return null;
-    }
-  };
-}
-
-/**
- * Helper function to track a provider failure
- * @param registry Adapter registry
- * @param provider Provider name
- * @param failures Failures record
- */
-export function trackProviderFailure(
-  registry: AdapterRegistry,
-  provider: string,
-  failures: Record<string, number>
-): void {
-  if (!failures[provider]) {
-    failures[provider] = 0;
-  }
-  failures[provider]++;
-  
-  logger.warn(`Provider ${provider} failure count: ${failures[provider]}`);
-}
-
-/**
- * Helper function to reset failure count for a provider
- * @param provider Provider name
- * @param failures Failures record
- */
-export function resetProviderFailures(
-  provider: string, 
-  failures: Record<string, number>
-): void {
-  failures[provider] = 0;
-  logger.info(`Reset failure count for provider: ${provider}`);
+export function createTokenPreservationStrategy(
+  registry: AIAdapterRegistry,
+  tokenBudgets: Record<AIProvider, number> = {}
+): TokenPreservationStrategy {
+  return new TokenPreservationStrategy(registry, tokenBudgets);
 }
