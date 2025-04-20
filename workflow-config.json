@@ -1,0 +1,60 @@
+{
+  "workflows": [
+    {
+      "name": "Development Mode",
+      "description": "Starts the application in development mode with live reloading",
+      "command": "npm run dev",
+      "env": {
+        "NODE_ENV": "development",
+        "PORT": "3000"
+      }
+    },
+    {
+      "name": "Production Build",
+      "description": "Builds and starts the application in production mode",
+      "command": "npm run build && NODE_ENV=production node dist/index.js",
+      "env": {
+        "NODE_ENV": "production",
+        "PORT": "3000"
+      }
+    },
+    {
+      "name": "Deploy Application",
+      "description": "Builds and deploys the application for production use",
+      "command": "npm run build && NODE_ENV=production node dist/index.js",
+      "env": {
+        "NODE_ENV": "production",
+        "PORT": "3000"
+      }
+    },
+    {
+      "name": "Database Management",
+      "description": "Manages database schema updates and migrations",
+      "command": "npm run db:push",
+      "env": {
+        "NODE_ENV": "development"
+      }
+    }
+  ],
+  "defaultWorkflow": "Development Mode",
+  "dependencies": {
+    "required": [
+      "typescript",
+      "express",
+      "drizzle-orm",
+      "drizzle-zod",
+      "zod"
+    ],
+    "development": [
+      "tsx",
+      "vite",
+      "drizzle-kit"
+    ]
+  },
+  "environment": {
+    "defaults": {
+      "PORT": "3000",
+      "NODE_ENV": "development"
+    }
+  }
+}
