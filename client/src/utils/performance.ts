@@ -1,381 +1,343 @@
-
 /**
  * Performance Monitoring Utilities
  * 
- * Provides comprehensive tools for measuring and tracking client-side
- * performance metrics including component rendering, lazy loading,
- * and interaction responsiveness.
+ * Provides tools for tracking and reporting frontend performance metrics
+ * using the Web Vitals API and custom performance markers.
  */
 
-// Performance mark categories
-export enum PerformanceCategory {
-  NAVIGATION = 'navigation',
-  COMPONENT = 'component',
-  LAZY_LOAD = 'lazy-load',
-  INTERACTION = 'interaction',
-  API = 'api',
-  RESOURCE = 'resource'
+// Import Web Vitals
+import type { Metric as WebVitalsMetric } from 'web-vitals';
+import { onCLS, onFID, onLCP, onFCP, onTTFB } from 'web-vitals';
+
+// Use the imported Metric type
+type Metric = WebVitalsMetric;
+
+// Types for performance metrics
+export interface PerformanceMetrics {
+  // Core Web Vitals
+  CLS?: number;  // Cumulative Layout Shift
+  FID?: number;  // First Input Delay
+  LCP?: number;  // Largest Contentful Paint
+  
+  // Other Web Vitals
+  FCP?: number;  // First Contentful Paint
+  TTFB?: number; // Time to First Byte
+  
+  // Custom metrics
+  TTI?: number;  // Time to Interactive
+  TBT?: number;  // Total Blocking Time
+  
+  // Component-specific metrics
+  componentLoadTimes?: Record<string, number>;
+  apiCallTimes?: Record<string, number>;
+  renderTimes?: Record<string, number>;
 }
 
-// Performance measurement interface
-interface PerformanceMeasurement {
+// Metric reporting options
+export interface MetricReportOptions {
+  path?: string;
+  analyticsId?: string;
+  debug?: boolean;
+  reportUri?: string;
+  onReport?: (metrics: PerformanceMetrics) => void;
+}
+
+// Performance marker interface
+export interface PerformanceMarker {
   name: string;
-  duration: number;
-  category: PerformanceCategory;
-  timestamp: number;
+  startTime: number;
+  duration?: number;
   metadata?: Record<string, any>;
 }
 
-// Component render timings cache
-const componentRenderTimings: Map<string, number[]> = new Map();
-const lazyLoadTimings: Map<string, number[]> = new Map();
-const interactionTimings: Map<string, number[]> = new Map();
-const apiCallTimings: Map<string, number[]> = new Map();
+// Store for performance markers
+const performanceMarkers: Map<string, PerformanceMarker> = new Map();
 
-// Enhanced measurements log with categorization
-const measurements: PerformanceMeasurement[] = [];
+// Current metrics collection
+let currentMetrics: PerformanceMetrics = {};
+
+// Default report options
+const defaultReportOptions: MetricReportOptions = {
+  debug: process.env.NODE_ENV !== 'production',
+  reportUri: '/api/performance/report'
+};
 
 /**
- * Start timing a performance measurement
+ * Initialize performance monitoring
+ * @param options Metric reporting options
  */
-export function startMeasure(name: string, category: PerformanceCategory): void {
-  const markName = `${category}:${name}:start`;
-  performance.mark(markName);
+export function initPerformanceMonitoring(options: MetricReportOptions = {}) {
+  const mergedOptions = { ...defaultReportOptions, ...options };
+  
+  // Get current path
+  const path = options.path || window.location.pathname;
+  
+  // Reset current metrics
+  currentMetrics = {};
+  
+  // Capture Web Vitals using the updated web-vitals API
+  onCLS(metric => reportWebVital('CLS', metric, mergedOptions));
+  onFID(metric => reportWebVital('FID', metric, mergedOptions));
+  onLCP(metric => reportWebVital('LCP', metric, mergedOptions));
+  onFCP(metric => reportWebVital('FCP', metric, mergedOptions));
+  onTTFB(metric => reportWebVital('TTFB', metric, mergedOptions));
+  
+  // Log initialization if in debug mode
+  if (mergedOptions.debug) {
+    console.info('Performance monitoring initialized', { path });
+  }
+  
+  // Return function to manually report metrics
+  return {
+    reportMetrics: () => reportAllMetrics(mergedOptions)
+  };
 }
 
 /**
- * End timing a performance measurement and record it
+ * Report a Web Vital metric
+ * @param name Metric name
+ * @param metric Web Vitals metric
+ * @param options Report options
  */
-export function endMeasure(name: string, category: PerformanceCategory, metadata?: Record<string, any>): number {
-  const startMark = `${category}:${name}:start`;
-  const endMark = `${category}:${name}:end`;
+function reportWebVital(
+  name: keyof PerformanceMetrics, 
+  metric: Metric, 
+  options: MetricReportOptions
+) {
+  // Store metric value safely with proper typing
+  if (name === 'componentLoadTimes' || name === 'apiCallTimes' || name === 'renderTimes') {
+    // These are record types, initialize if needed
+    if (!currentMetrics[name]) {
+      currentMetrics[name] = {};
+    }
+    // In this case, we'd add to the record, but we'd need a key
+  } else {
+    // For simple numeric metrics
+    (currentMetrics as any)[name] = metric.value;
+  }
   
-  performance.mark(endMark);
+  // Debug log
+  if (options.debug) {
+    console.info(`Web Vital: ${name}`, metric);
+  }
   
-  try {
-    const measureName = `${category}:${name}`;
-    performance.measure(measureName, startMark, endMark);
+  // Call user callback if provided
+  if (options.onReport) {
+    options.onReport(currentMetrics);
+  }
+}
+
+/**
+ * Start a performance marker for custom timing
+ * @param name Marker name
+ * @param metadata Optional metadata
+ * @returns Marker object
+ */
+export function startPerformanceMarker(
+  name: string, 
+  metadata?: Record<string, any>
+): PerformanceMarker {
+  // Create marker
+  const marker: PerformanceMarker = {
+    name,
+    startTime: performance.now(),
+    metadata
+  };
+  
+  // Store marker
+  performanceMarkers.set(name, marker);
+  
+  // Add performance entry if browser API available
+  if (typeof window !== 'undefined' && window.performance && window.performance.mark) {
+    window.performance.mark(`${name}:start`);
+  }
+  
+  return marker;
+}
+
+/**
+ * End a performance marker and calculate duration
+ * @param name Marker name
+ * @param additionalMetadata Additional metadata to add
+ * @returns Duration in milliseconds or -1 if marker not found
+ */
+export function endPerformanceMarker(
+  name: string,
+  additionalMetadata?: Record<string, any>
+): number {
+  // Get marker
+  const marker = performanceMarkers.get(name);
+  
+  if (!marker) {
+    console.warn(`Performance marker '${name}' not found`);
+    return -1;
+  }
+  
+  // Calculate duration
+  const endTime = performance.now();
+  const duration = endTime - marker.startTime;
+  
+  // Update marker
+  marker.duration = duration;
+  
+  if (additionalMetadata) {
+    marker.metadata = { ...marker.metadata, ...additionalMetadata };
+  }
+  
+  // Add performance entry if browser API available
+  if (typeof window !== 'undefined' && window.performance) {
+    if (window.performance.mark) {
+      window.performance.mark(`${name}:end`);
+    }
     
-    const entries = performance.getEntriesByName(measureName, 'measure');
-    if (entries.length > 0) {
-      const duration = entries[0].duration;
+    if (window.performance.measure) {
+      try {
+        window.performance.measure(name, `${name}:start`, `${name}:end`);
+      } catch (e) {
+        // Some browsers might throw if marks don't exist
+      }
+    }
+  }
+  
+  return duration;
+}
+
+/**
+ * Track component render time using React's useEffect hook
+ * @param componentName Component name
+ * @returns Object with start and end functions
+ */
+export function useComponentPerformanceTracking(componentName: string) {
+  return {
+    startRender: () => startPerformanceMarker(`render:${componentName}`),
+    endRender: () => {
+      const duration = endPerformanceMarker(`render:${componentName}`);
       
-      // Record the measurement
-      measurements.push({
-        name,
-        duration,
-        category,
-        timestamp: Date.now(),
-        metadata
-      });
-      
-      // Update specific timing maps based on category
-      switch (category) {
-        case PerformanceCategory.COMPONENT:
-          updateTimingMap(componentRenderTimings, name, duration);
-          break;
-        case PerformanceCategory.LAZY_LOAD:
-          updateTimingMap(lazyLoadTimings, name, duration);
-          break;
-        case PerformanceCategory.INTERACTION:
-          updateTimingMap(interactionTimings, name, duration);
-          break;
-        case PerformanceCategory.API:
-          updateTimingMap(apiCallTimings, name, duration);
-          break;
+      // Store in metrics
+      if (!currentMetrics.renderTimes) {
+        currentMetrics.renderTimes = {};
       }
       
-      // Clean up
-      performance.clearMarks(startMark);
-      performance.clearMarks(endMark);
-      performance.clearMeasures(measureName);
+      currentMetrics.renderTimes[componentName] = duration;
       
       return duration;
     }
-  } catch (error) {
-    console.error(`Error measuring performance for ${name}:`, error);
-  }
-  
-  return 0;
-}
-
-/**
- * Measure component render time with React hooks integration
- */
-export function measureComponentRender(componentName: string, callback?: (duration: number) => void): [() => void, () => void] {
-  let startTime = 0;
-  
-  const start = () => {
-    startTime = performance.now();
-    startMeasure(componentName, PerformanceCategory.COMPONENT);
   };
-  
-  const end = () => {
-    if (startTime > 0) {
-      const duration = endMeasure(componentName, PerformanceCategory.COMPONENT);
-      if (callback) callback(duration);
-    }
-  };
-  
-  return [start, end];
 }
 
 /**
- * Measure lazy loading performance
+ * Track API call performance
+ * @param endpoint API endpoint name
+ * @returns Object with start and end functions
  */
-export function measureLazyLoad(componentName: string): Promise<number> {
-  const startTime = performance.now();
-  startMeasure(componentName, PerformanceCategory.LAZY_LOAD);
-  
-  return new Promise(resolve => {
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        const duration = endMeasure(componentName, PerformanceCategory.LAZY_LOAD, {
-          timestamp: startTime
-        });
-        resolve(duration);
+export function trackApiCall(endpoint: string) {
+  return {
+    startCall: () => startPerformanceMarker(`api:${endpoint}`),
+    endCall: (success: boolean, additionalInfo?: Record<string, any>) => {
+      const duration = endPerformanceMarker(`api:${endpoint}`, { 
+        success, 
+        ...additionalInfo 
       });
-    });
-  });
-}
-
-/**
- * Measure user interaction response time
- */
-export function measureInteraction(interactionName: string, callback: () => Promise<any> | any): Promise<any> {
-  startMeasure(interactionName, PerformanceCategory.INTERACTION);
-  
-  const result = callback();
-  
-  if (result instanceof Promise) {
-    return result.finally(() => {
-      endMeasure(interactionName, PerformanceCategory.INTERACTION);
-    });
-  } else {
-    endMeasure(interactionName, PerformanceCategory.INTERACTION);
-    return Promise.resolve(result);
-  }
-}
-
-/**
- * Measure API call performance
- */
-export function measureApiCall<T>(
-  apiName: string, 
-  apiCall: () => Promise<T>,
-  metadata?: Record<string, any>
-): Promise<T> {
-  startMeasure(apiName, PerformanceCategory.API);
-  
-  return apiCall()
-    .then(result => {
-      endMeasure(apiName, PerformanceCategory.API, metadata);
-      return result;
-    })
-    .catch(error => {
-      endMeasure(apiName, PerformanceCategory.API, {
-        ...metadata,
-        error: error.message
-      });
-      throw error;
-    });
-}
-
-/**
- * Record FPS measurements for animations and scrolling
- */
-export function measureFPS(durationMs = 1000): Promise<number> {
-  return new Promise(resolve => {
-    let frameCount = 0;
-    let startTime = performance.now();
-    
-    function countFrame() {
-      frameCount++;
-      const elapsed = performance.now() - startTime;
       
-      if (elapsed < durationMs) {
-        requestAnimationFrame(countFrame);
-      } else {
-        const fps = (frameCount / elapsed) * 1000;
-        resolve(fps);
+      // Store in metrics
+      if (!currentMetrics.apiCallTimes) {
+        currentMetrics.apiCallTimes = {};
       }
+      
+      currentMetrics.apiCallTimes[endpoint] = duration;
+      
+      return duration;
     }
-    
-    requestAnimationFrame(countFrame);
-  });
-}
-
-/**
- * Get performance statistics for a specific category
- */
-export function getPerformanceStats(category: PerformanceCategory): {
-  average: number;
-  median: number;
-  p95: number;
-  min: number;
-  max: number;
-  count: number;
-} {
-  let timingsMap: Map<string, number[]>;
-  
-  switch (category) {
-    case PerformanceCategory.COMPONENT:
-      timingsMap = componentRenderTimings;
-      break;
-    case PerformanceCategory.LAZY_LOAD:
-      timingsMap = lazyLoadTimings;
-      break;
-    case PerformanceCategory.INTERACTION:
-      timingsMap = interactionTimings;
-      break;
-    case PerformanceCategory.API:
-      timingsMap = apiCallTimings;
-      break;
-    default:
-      timingsMap = new Map();
-  }
-  
-  // Flatten all timings
-  const allTimings = Array.from(timingsMap.values()).flat();
-  
-  if (allTimings.length === 0) {
-    return {
-      average: 0,
-      median: 0,
-      p95: 0,
-      min: 0,
-      max: 0,
-      count: 0
-    };
-  }
-  
-  // Sort for percentile calculations
-  allTimings.sort((a, b) => a - b);
-  
-  return {
-    average: allTimings.reduce((sum, val) => sum + val, 0) / allTimings.length,
-    median: allTimings[Math.floor(allTimings.length / 2)],
-    p95: allTimings[Math.floor(allTimings.length * 0.95)],
-    min: allTimings[0],
-    max: allTimings[allTimings.length - 1],
-    count: allTimings.length
   };
 }
 
 /**
- * Get detailed performance metrics for components
+ * Report all collected metrics
+ * @param options Report options
  */
-export function getComponentMetrics(): Record<string, {
-  average: number;
-  median: number;
-  count: number;
-  recent: number;
-}> {
-  const metrics: Record<string, any> = {};
+export async function reportAllMetrics(options: MetricReportOptions = defaultReportOptions) {
+  // Merge options
+  const mergedOptions = { ...defaultReportOptions, ...options };
   
-  componentRenderTimings.forEach((timings, componentName) => {
-    if (timings.length === 0) return;
-    
-    // Sort timings
-    const sortedTimings = [...timings].sort((a, b) => a - b);
-    
-    metrics[componentName] = {
-      average: timings.reduce((sum, val) => sum + val, 0) / timings.length,
-      median: sortedTimings[Math.floor(sortedTimings.length / 2)],
-      count: timings.length,
-      recent: timings[timings.length - 1]
-    };
-  });
-  
-  return metrics;
-}
-
-/**
- * Get lazy loading performance metrics
- */
-export function getLazyLoadingMetrics(): Record<string, {
-  average: number;
-  median: number;
-  count: number;
-  recent: number;
-}> {
-  const metrics: Record<string, any> = {};
-  
-  lazyLoadTimings.forEach((timings, componentName) => {
-    if (timings.length === 0) return;
-    
-    // Sort timings
-    const sortedTimings = [...timings].sort((a, b) => a - b);
-    
-    metrics[componentName] = {
-      average: timings.reduce((sum, val) => sum + val, 0) / timings.length,
-      median: sortedTimings[Math.floor(sortedTimings.length / 2)],
-      count: timings.length,
-      recent: timings[timings.length - 1]
-    };
-  });
-  
-  return metrics;
-}
-
-/**
- * Export performance data for analysis
- */
-export function exportPerformanceData(): {
-  measurements: PerformanceMeasurement[];
-  componentMetrics: Record<string, any>;
-  lazyLoadMetrics: Record<string, any>;
-  interactionMetrics: Record<string, any>;
-  apiMetrics: Record<string, any>;
-  timestamp: number;
-} {
-  return {
-    measurements,
-    componentMetrics: getComponentMetrics(),
-    lazyLoadMetrics: getLazyLoadingMetrics(),
-    interactionMetrics: calculateMetricsFromMap(interactionTimings),
-    apiMetrics: calculateMetricsFromMap(apiCallTimings),
-    timestamp: Date.now()
+  // Prepare report data
+  const reportData = {
+    timestamp: new Date().toISOString(),
+    url: window.location.href,
+    path: window.location.pathname,
+    metrics: { ...currentMetrics },
+    userAgent: navigator.userAgent,
+    markers: Array.from(performanceMarkers.entries()).map(([name, marker]) => ({
+      name,
+      duration: marker.duration || 0,
+      metadata: marker.metadata
+    }))
   };
-}
-
-/**
- * Helper function to update timing maps
- */
-function updateTimingMap(map: Map<string, number[]>, key: string, value: number): void {
-  const existing = map.get(key) || [];
-  existing.push(value);
   
-  // Keep only the last 100 measurements to avoid memory issues
-  if (existing.length > 100) {
-    existing.shift();
+  // Debug log
+  if (mergedOptions.debug) {
+    console.info('Performance metrics report', reportData);
   }
   
-  map.set(key, existing);
+  // Call user callback if provided
+  if (mergedOptions.onReport) {
+    mergedOptions.onReport(currentMetrics);
+  }
+  
+  // Send to server if reporting URI provided
+  if (mergedOptions.reportUri) {
+    try {
+      const response = await fetch(mergedOptions.reportUri, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(reportData)
+      });
+      
+      if (!response.ok) {
+        console.error('Failed to report performance metrics', {
+          status: response.status,
+          statusText: response.statusText
+        });
+      }
+      
+      return response.ok;
+    } catch (error) {
+      console.error('Error reporting performance metrics', error);
+      return false;
+    }
+  }
+  
+  return true;
 }
 
 /**
- * Calculate metrics from a timing map
+ * Get all current performance metrics
+ * @returns Current performance metrics
  */
-function calculateMetricsFromMap(map: Map<string, number[]>): Record<string, any> {
-  const metrics: Record<string, any> = {};
-  
-  map.forEach((timings, name) => {
-    if (timings.length === 0) return;
-    
-    // Sort timings
-    const sortedTimings = [...timings].sort((a, b) => a - b);
-    
-    metrics[name] = {
-      average: timings.reduce((sum, val) => sum + val, 0) / timings.length,
-      median: sortedTimings[Math.floor(sortedTimings.length / 2)],
-      p95: sortedTimings[Math.floor(sortedTimings.length * 0.95)],
-      min: sortedTimings[0],
-      max: sortedTimings[sortedTimings.length - 1],
-      count: timings.length,
-      recent: timings[timings.length - 1]
-    };
+export function getCurrentMetrics(): PerformanceMetrics {
+  return { ...currentMetrics };
+}
+
+/**
+ * Get all performance markers
+ * @returns Array of performance markers
+ */
+export function getAllPerformanceMarkers(): PerformanceMarker[] {
+  return Array.from(performanceMarkers.values());
+}
+
+/**
+ * Clear all performance markers
+ */
+export function clearPerformanceMarkers(): void {
+  performanceMarkers.clear();
+}
+
+// Initialize on load if in browser environment
+if (typeof window !== 'undefined') {
+  window.addEventListener('load', () => {
+    // Initialize on page load with a small delay to allow the page to settle
+    setTimeout(() => initPerformanceMonitoring(), 100);
   });
-  
-  return metrics;
 }

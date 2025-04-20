@@ -1,4 +1,3 @@
-
 /**
  * Global Configuration System
  * 
@@ -8,204 +7,268 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import * as dotenv from 'dotenv';
 import { z } from 'zod';
-import dotenv from 'dotenv';
+import winston from 'winston';
 
-// Environment types
+// Define supported environments
 export type Environment = 'development' | 'test' | 'staging' | 'production';
 
-// Base configuration schema
-const ConfigSchema = z.object({
-  // App configuration
-  app: z.object({
-    name: z.string().default('Creately'),
-    port: z.number().default(3000),
-    apiUrl: z.string().default('/api'),
-    timeout: z.number().default(30000),
-    debug: z.boolean().default(false),
-    version: z.string().default('1.0.0')
-  }),
+// Configuration schema using Zod for validation
+export const ConfigSchema = z.object({
+  // Environment
+  environment: z.enum(['development', 'test', 'staging', 'production']).default('development'),
   
-  // Server configuration
+  // Server settings
   server: z.object({
+    port: z.number().min(1).max(65535).default(3000),
     host: z.string().default('0.0.0.0'),
-    cors: z.object({
-      enabled: z.boolean().default(true),
-      origins: z.array(z.string()).default(['*']),
-      methods: z.array(z.string()).default(['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']),
-      maxAge: z.number().default(86400)
-    }),
-    rateLimit: z.object({
-      enabled: z.boolean().default(true),
-      max: z.number().default(100),
-      windowMs: z.number().default(60000)
-    }),
-    compression: z.boolean().default(true),
-    timeout: z.number().default(30000)
+    apiPrefix: z.string().default('/api'),
+    staticDir: z.string().default('public'),
+    sessionSecret: z.string().min(8).default('change-in-production'),
+    trustProxy: z.boolean().default(false),
+    timeout: z.number().min(1000).default(30000),
+    enableCors: z.boolean().default(true),
+    corsOrigins: z.array(z.string()).default(['*']),
   }),
   
-  // Database configuration
+  // Database settings
   database: z.object({
-    type: z.enum(['postgres', 'mysql', 'sqlite', 'mongodb']).default('postgres'),
+    url: z.string().optional(),
     host: z.string().default('localhost'),
-    port: z.number().optional(),
-    database: z.string().optional(),
+    port: z.number().min(1).max(65535).default(5432),
     username: z.string().optional(),
     password: z.string().optional(),
-    connection: z.string().optional(),
+    database: z.string().optional(),
     ssl: z.boolean().default(false),
-    poolSize: z.number().default(10)
+    poolSize: z.number().min(1).default(10),
+    connectionTimeout: z.number().min(1000).default(30000),
   }),
   
-  // Auth configuration
-  auth: z.object({
-    jwt: z.object({
-      secret: z.string().default('default-jwt-secret'),
-      expiresIn: z.string().default('1d')
-    }),
-    session: z.object({
-      enabled: z.boolean().default(true),
-      secret: z.string().default('default-session-secret'),
-      maxAge: z.number().default(86400000)
-    })
+  // Logging settings
+  logging: z.object({
+    level: z.enum(['error', 'warn', 'info', 'http', 'debug', 'silly']).default('info'),
+    format: z.enum(['json', 'simple', 'colorized']).default('colorized'),
+    directory: z.string().default('logs'),
+    maxSize: z.number().min(1).default(10 * 1024 * 1024), // 10MB
+    maxFiles: z.number().min(1).default(5),
+    console: z.boolean().default(true),
   }),
   
-  // AI service configuration
+  // AI service settings
   ai: z.object({
-    defaultProvider: z.enum(['mistral', 'openai']).default('mistral'),
-    fallbackStrategy: z.enum(['sequential', 'racing', 'hybrid']).default('sequential'),
-    providers: z.object({
-      mistral: z.object({
-        enabled: z.boolean().default(true),
-        apiKey: z.string().optional(),
-        model: z.string().default('mistral-large-latest')
-      }),
-      openai: z.object({
-        enabled: z.boolean().default(true),
-        apiKey: z.string().optional(),
-        model: z.string().default('gpt-4o'),
-        organization: z.string().optional()
-      })
-    })
+    preferredProvider: z.string().optional(),
+    openai: z.object({
+      apiKey: z.string().optional(),
+      organization: z.string().optional(),
+      defaultModel: z.string().default('gpt-4o'),
+    }),
+    anthropic: z.object({
+      apiKey: z.string().optional(),
+      defaultModel: z.string().default('claude-3-7-sonnet-20250219'),
+    }),
+    perplexity: z.object({
+      apiKey: z.string().optional(),
+      defaultModel: z.string().default('llama-3.1-sonar-small-128k-online'),
+    }),
+  }),
+  
+  // Security settings
+  security: z.object({
+    jwtSecret: z.string().min(8).default('change-in-production'),
+    jwtExpiresIn: z.string().default('1d'),
+    rateLimitWindow: z.number().min(1).default(60 * 1000), // 1 minute
+    rateLimitMax: z.number().min(1).default(100),
+    csrfProtection: z.boolean().default(true),
+    helmet: z.boolean().default(true),
   }),
   
   // Feature flags
   features: z.object({
-    lazyLoading: z.boolean().default(true),
-    analytics: z.boolean().default(true),
-    darkMode: z.boolean().default(true),
-    moodCapsules: z.boolean().default(true),
-    collaborativeEditing: z.boolean().default(false),
-    betaFeatures: z.boolean().default(false)
+    enableAI: z.boolean().default(true),
+    enableAnalytics: z.boolean().default(false),
+    enableWorkflows: z.boolean().default(true),
+    experimentalFeatures: z.boolean().default(false),
   }),
   
-  // Logging configuration
-  logging: z.object({
-    level: z.enum(['error', 'warn', 'info', 'http', 'verbose', 'debug', 'silly']).default('info'),
-    format: z.enum(['json', 'simple', 'pretty']).default('pretty'),
-    file: z.boolean().default(true),
-    console: z.boolean().default(true),
-    maxFiles: z.number().default(5),
-    maxSize: z.string().default('10m')
-  })
+  // Monitoring and metrics
+  monitoring: z.object({
+    enabled: z.boolean().default(true),
+    interval: z.number().min(1000).default(60 * 1000), // 1 minute
+    metrics: z.object({
+      system: z.boolean().default(true),
+      http: z.boolean().default(true),
+      database: z.boolean().default(true),
+      ai: z.boolean().default(true),
+    }),
+  }),
+  
+  // Application specific settings
+  app: z.object({
+    name: z.string().default('Creately App'),
+    version: z.string().default('1.0.0'),
+    description: z.string().default('A powerful AI-driven application platform'),
+    applicationUrl: z.string().url().optional(),
+    maxUploadSize: z.number().min(1).default(10 * 1024 * 1024), // 10MB
+    tempDir: z.string().default('tmp'),
+    defaultLocale: z.string().default('en'),
+    supportedLocales: z.array(z.string()).default(['en']),
+  }),
 });
 
-// Configuration type
+// Export the config type
 export type ConfigType = z.infer<typeof ConfigSchema>;
 
-// Environment-specific values
-const environments: Record<Environment, Partial<ConfigType>> = {
-  development: {
-    app: {
-      debug: true
-    },
-    logging: {
-      level: 'debug'
-    },
-    features: {
-      betaFeatures: true
-    }
+// Default configuration
+const DEFAULT_CONFIG: ConfigType = {
+  environment: 'development',
+  server: {
+    port: 3000,
+    host: '0.0.0.0',
+    apiPrefix: '/api',
+    staticDir: 'public',
+    sessionSecret: 'change-in-production',
+    trustProxy: false,
+    timeout: 30000,
+    enableCors: true,
+    corsOrigins: ['*'],
   },
-  test: {
-    app: {
-      port: 3001
-    },
-    logging: {
-      level: 'warn',
-      file: false
-    }
+  database: {
+    host: 'localhost',
+    port: 5432,
+    ssl: false,
+    poolSize: 10,
+    connectionTimeout: 30000,
   },
-  staging: {
-    server: {
-      cors: {
-        origins: ['https://staging.creately.com']
-      }
-    },
-    features: {
-      betaFeatures: true
-    }
+  logging: {
+    level: 'info',
+    format: 'colorized',
+    directory: 'logs',
+    maxSize: 10 * 1024 * 1024, // 10MB
+    maxFiles: 5,
+    console: true,
   },
-  production: {
-    app: {
-      debug: false
+  ai: {
+    openai: {
+      defaultModel: 'gpt-4o',
     },
-    server: {
-      cors: {
-        origins: ['https://creately.com']
-      },
-      rateLimit: {
-        max: 50
-      }
+    anthropic: {
+      defaultModel: 'claude-3-7-sonnet-20250219',
     },
-    logging: {
-      level: 'warn',
-      format: 'json'
-    }
-  }
+    perplexity: {
+      defaultModel: 'llama-3.1-sonar-small-128k-online',
+    },
+  },
+  security: {
+    jwtSecret: 'change-in-production',
+    jwtExpiresIn: '1d',
+    rateLimitWindow: 60 * 1000, // 1 minute
+    rateLimitMax: 100,
+    csrfProtection: true,
+    helmet: true,
+  },
+  features: {
+    enableAI: true,
+    enableAnalytics: false,
+    enableWorkflows: true,
+    experimentalFeatures: false,
+  },
+  monitoring: {
+    enabled: true,
+    interval: 60 * 1000, // 1 minute
+    metrics: {
+      system: true,
+      http: true,
+      database: true,
+      ai: true,
+    },
+  },
+  app: {
+    name: 'Creately App',
+    version: '1.0.0',
+    description: 'A powerful AI-driven application platform',
+    maxUploadSize: 10 * 1024 * 1024, // 10MB
+    tempDir: 'tmp',
+    defaultLocale: 'en',
+    supportedLocales: ['en'],
+  },
 };
 
-// Load environment variables
+// Initialize logger
+const logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.json()
+  ),
+  defaultMeta: { service: 'config-system' },
+  transports: [
+    new winston.transports.Console({
+      format: winston.format.combine(
+        winston.format.colorize(),
+        winston.format.simple()
+      )
+    })
+  ]
+});
+
+/**
+ * Load environment variables from .env files
+ */
 function loadEnvVariables(): Record<string, string> {
-  // Determine which .env files to load
-  const envFiles = [
-    '.env',
-    `.env.${process.env.NODE_ENV || 'development'}`
-  ];
+  // Base .env file
+  const baseEnvPath = path.resolve(process.cwd(), '.env');
   
-  // Local overrides (not in git)
-  if (fs.existsSync(path.resolve(process.cwd(), '.env.local'))) {
-    envFiles.push('.env.local');
-  }
+  // Environment-specific .env file
+  const nodeEnv = process.env.NODE_ENV || 'development';
+  const envSpecificPath = path.resolve(process.cwd(), `.env.${nodeEnv}`);
   
-  // Load all env files
-  const envVars: Record<string, string> = {};
+  // Local overrides .env file
+  const localEnvPath = path.resolve(process.cwd(), '.env.local');
   
-  for (const file of envFiles) {
-    try {
-      const filePath = path.resolve(process.cwd(), file);
-      if (fs.existsSync(filePath)) {
-        const result = dotenv.parse(fs.readFileSync(filePath));
-        Object.assign(envVars, result);
-      }
-    } catch (error) {
-      console.warn(`Error loading env file ${file}:`, error);
+  // Load and merge all env files
+  const baseEnv = fs.existsSync(baseEnvPath) 
+    ? dotenv.parse(fs.readFileSync(baseEnvPath)) 
+    : {};
+    
+  const envSpecific = fs.existsSync(envSpecificPath) 
+    ? dotenv.parse(fs.readFileSync(envSpecificPath)) 
+    : {};
+    
+  const localEnv = fs.existsSync(localEnvPath)
+    ? dotenv.parse(fs.readFileSync(localEnvPath)) 
+    : {};
+  
+  // Create a safe copy of process.env with only string values
+  const safeProcessEnv: Record<string, string> = {};
+  Object.entries(process.env).forEach(([key, value]) => {
+    if (value !== undefined) {
+      safeProcessEnv[key] = value;
     }
-  }
+  });
   
-  // Also include process.env values
-  Object.assign(envVars, process.env);
-  
-  return envVars;
+  // Merge with process.env
+  return {
+    ...baseEnv,
+    ...envSpecific,
+    ...localEnv,
+    ...safeProcessEnv
+  };
 }
 
 /**
  * Convert env variable to proper type
  */
 function parseEnvValue(value: string): string | number | boolean {
-  if (value === 'true') return true;
-  if (value === 'false') return false;
-  if (/^\d+$/.test(value)) return parseInt(value, 10);
-  if (/^\d+\.\d+$/.test(value)) return parseFloat(value);
+  // Check for boolean values
+  if (value.toLowerCase() === 'true') return true;
+  if (value.toLowerCase() === 'false') return false;
+  
+  // Check for numeric values
+  if (/^-?\d+$/.test(value)) return parseInt(value, 10);
+  if (/^-?\d+\.\d+$/.test(value)) return parseFloat(value);
+  
+  // Return as string for everything else
   return value;
 }
 
@@ -213,82 +276,79 @@ function parseEnvValue(value: string): string | number | boolean {
  * Convert environment variables to config object
  */
 function envToConfig(env: Record<string, string>): Partial<ConfigType> {
-  const config: any = {};
+  const config: Partial<ConfigType> = {};
   
-  // Process each environment variable
-  Object.entries(env).forEach(([key, value]) => {
-    // Skip non-config variables
-    if (!key.startsWith('CONFIG_')) {
-      return;
-    }
+  // Map environment variables to configuration properties
+  for (const [key, value] of Object.entries(env)) {
+    // Skip empty values
+    if (!value) continue;
     
-    // Remove CONFIG_ prefix
-    const configPath = key.replace('CONFIG_', '').toLowerCase();
+    // Convert key to config path
+    const configPath = key
+      .toLowerCase()
+      .replace(/^app_/i, '')
+      .split('_');
     
-    // Split into path segments
-    const segments = configPath.split('_');
+    // Parse value
+    const parsedValue = parseEnvValue(value);
     
-    // Build nested object
-    let current = config;
-    for (let i = 0; i < segments.length - 1; i++) {
-      const segment = segments[i];
-      if (!current[segment]) {
-        current[segment] = {};
+    // Set nested value
+    let current: any = config;
+    for (let i = 0; i < configPath.length; i++) {
+      const part = configPath[i];
+      
+      if (i === configPath.length - 1) {
+        // Set the value at the leaf
+        current[part] = parsedValue;
+      } else {
+        // Create nested object if it doesn't exist
+        current[part] = current[part] || {};
+        current = current[part];
       }
-      current = current[segment];
     }
-    
-    // Set the final value
-    const lastSegment = segments[segments.length - 1];
-    current[lastSegment] = parseEnvValue(value);
-  });
-  
-  // Set specific variables that don't follow CONFIG_ pattern
-  if (env.PORT) {
-    if (!config.app) config.app = {};
-    config.app.port = parseInt(env.PORT, 10);
-  }
-  
-  if (env.DATABASE_URL) {
-    if (!config.database) config.database = {};
-    config.database.connection = env.DATABASE_URL;
-  }
-  
-  if (env.MISTRAL_API_KEY) {
-    if (!config.ai) config.ai = {};
-    if (!config.ai.providers) config.ai.providers = {};
-    if (!config.ai.providers.mistral) config.ai.providers.mistral = {};
-    config.ai.providers.mistral.apiKey = env.MISTRAL_API_KEY;
-    config.ai.providers.mistral.enabled = true;
-  }
-  
-  if (env.OPENAI_API_KEY) {
-    if (!config.ai) config.ai = {};
-    if (!config.ai.providers) config.ai.providers = {};
-    if (!config.ai.providers.openai) config.ai.providers.openai = {};
-    config.ai.providers.openai.apiKey = env.OPENAI_API_KEY;
-    config.ai.providers.openai.enabled = true;
   }
   
   return config;
 }
 
-// Deep merge objects
+/**
+ * Deep merge objects
+ */
 function deepMerge<T extends Record<string, any>>(
   target: T,
-  source: Partial<T>
+  ...sources: Partial<T>[]
 ): T {
-  const result = { ...target };
+  if (!sources.length) return target;
+  
+  const source = sources.shift();
+  if (!source) return target;
   
   for (const key in source) {
-    if (source[key] instanceof Object && key in target) {
-      result[key] = deepMerge(target[key], source[key]);
-    } else if (source[key] !== undefined) {
-      result[key] = source[key];
+    if (Object.prototype.hasOwnProperty.call(source, key)) {
+      const sourceValue = source[key];
+      const targetValue = target[key];
+      
+      // Skip undefined values
+      if (sourceValue === undefined) continue;
+      
+      // Merge objects recursively
+      if (
+        targetValue && 
+        sourceValue && 
+        typeof targetValue === 'object' && 
+        typeof sourceValue === 'object' &&
+        !Array.isArray(targetValue) &&
+        !Array.isArray(sourceValue)
+      ) {
+        target[key] = deepMerge(targetValue, sourceValue);
+      } else {
+        // Replace value
+        target[key] = sourceValue as any;
+      }
     }
   }
   
-  return result;
+  return deepMerge(target, ...sources);
 }
 
 /**
@@ -300,35 +360,37 @@ export class Config {
   private currentEnv: Environment;
   private subscribers: Set<(config: ConfigType) => void> = new Set();
   
+  /**
+   * Private constructor to enforce singleton
+   */
   private constructor() {
-    // Get environment
-    this.currentEnv = (process.env.NODE_ENV as Environment) || 'development';
-    
-    // Create base configuration from schema defaults
-    const baseConfig = ConfigSchema.parse({});
-    
     // Load environment variables
-    const envVars = loadEnvVariables();
+    const env = loadEnvVariables();
     
-    // Convert env vars to config
-    const envConfig = envToConfig(envVars);
+    // Determine environment
+    this.currentEnv = (env.NODE_ENV || 'development') as Environment;
     
-    // Merge configurations
-    this.config = deepMerge(
-      baseConfig,
-      deepMerge(
-        environments[this.currentEnv] || {},
-        envConfig
-      )
-    );
+    // Convert env variables to config
+    const envConfig = envToConfig(env);
     
-    // Validate complete configuration
-    this.config = ConfigSchema.parse(this.config);
+    // Merge with defaults
+    this.config = deepMerge({} as ConfigType, DEFAULT_CONFIG, envConfig);
     
-    // Log initial configuration
-    if (this.currentEnv !== 'test') {
-      this.logConfiguration();
+    // Ensure environment is set correctly
+    this.config.environment = this.currentEnv;
+    
+    // Validate configuration
+    try {
+      this.config = ConfigSchema.parse(this.config);
+    } catch (error) {
+      logger.error('Configuration validation failed', { 
+        error: error instanceof Error ? error.message : String(error) 
+      });
+      throw new Error(`Configuration validation failed: ${error instanceof Error ? error.message : String(error)}`);
     }
+    
+    // Log configuration (masked)
+    this.logConfiguration();
   }
   
   /**
@@ -338,6 +400,7 @@ export class Config {
     if (!Config.instance) {
       Config.instance = new Config();
     }
+    
     return Config.instance;
   }
   
@@ -345,7 +408,7 @@ export class Config {
    * Get current configuration
    */
   public getConfig(): ConfigType {
-    return this.config;
+    return { ...this.config };
   }
   
   /**
@@ -359,16 +422,28 @@ export class Config {
    * Update configuration at runtime
    */
   public updateConfig(partialConfig: Partial<ConfigType>): ConfigType {
-    // Update the config
-    this.config = deepMerge(this.config, partialConfig);
+    // Merge with current config
+    const updatedConfig = deepMerge({} as ConfigType, this.config, partialConfig);
     
     // Validate updated config
-    this.config = ConfigSchema.parse(this.config);
+    try {
+      this.config = ConfigSchema.parse(updatedConfig);
+    } catch (error) {
+      logger.error('Configuration update validation failed', { 
+        error: error instanceof Error ? error.message : String(error) 
+      });
+      throw new Error(`Configuration update validation failed: ${error instanceof Error ? error.message : String(error)}`);
+    }
+    
+    // Log changes
+    logger.info('Configuration updated', { 
+      changes: Object.keys(partialConfig).join(', ') 
+    });
     
     // Notify subscribers
     this.notifySubscribers();
     
-    return this.config;
+    return { ...this.config };
   }
   
   /**
@@ -387,54 +462,58 @@ export class Config {
    * Save current configuration overrides to .env.local
    */
   public saveLocalOverrides(): void {
-    try {
-      // Generate override strings
-      const lines: string[] = [
-        '# Local environment overrides',
-        '# Generated on ' + new Date().toISOString(),
-        ''
-      ];
-      
-      // Add specific overrides based on differences from base + env
-      const baseConfig = ConfigSchema.parse({});
-      const envConfig = environments[this.currentEnv] || {};
-      const baseWithEnv = deepMerge(baseConfig, envConfig);
-      
-      // Helper to generate flattened keys
-      const flattenConfig = (
-        obj: any,
-        prefix: string = 'CONFIG',
-        result: Record<string, string> = {}
-      ): Record<string, string> => {
-        for (const key in obj) {
-          const path = `${prefix}_${key.toUpperCase()}`;
-          if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
-            flattenConfig(obj[key], path, result);
-          } else if (obj[key] !== undefined) {
-            result[path] = obj[key].toString();
+    // Get only values that differ from defaults
+    const overrides: Record<string, string> = {};
+    
+    // Recursively compare with defaults
+    const findOverrides = (
+      current: any, 
+      defaults: any, 
+      path: string[] = []
+    ) => {
+      for (const key in current) {
+        if (Object.prototype.hasOwnProperty.call(current, key)) {
+          const currentValue = current[key];
+          const defaultValue = defaults?.[key];
+          const newPath = [...path, key];
+          
+          if (
+            currentValue && 
+            typeof currentValue === 'object' &&
+            !Array.isArray(currentValue)
+          ) {
+            // Recurse into objects
+            findOverrides(currentValue, defaultValue, newPath);
+          } else if (currentValue !== defaultValue) {
+            // Add primitive values that differ from defaults
+            const envKey = newPath
+              .map(part => part.toUpperCase())
+              .join('_');
+              
+            overrides[envKey] = String(currentValue);
           }
         }
-        return result;
-      };
-      
-      // Get flattened keys for current config
-      const currentFlat = flattenConfig(this.config);
-      const baseFlat = flattenConfig(baseWithEnv);
-      
-      // Find differences
-      for (const [key, value] of Object.entries(currentFlat)) {
-        if (baseFlat[key] !== value) {
-          lines.push(`${key}=${value}`);
-        }
       }
-      
-      // Write to file
-      const localEnvPath = path.resolve(process.cwd(), '.env.local');
-      fs.writeFileSync(localEnvPath, lines.join('\n'), 'utf8');
-      
-      console.log(`Local overrides saved to ${localEnvPath}`);
+    };
+    
+    findOverrides(this.config, DEFAULT_CONFIG);
+    
+    // Convert to .env format
+    const envContent = Object.entries(overrides)
+      .map(([key, value]) => `${key}=${value}`)
+      .join('\n');
+    
+    // Write to .env.local
+    const localEnvPath = path.resolve(process.cwd(), '.env.local');
+    
+    try {
+      fs.writeFileSync(localEnvPath, envContent);
+      logger.info('Saved configuration overrides to .env.local');
     } catch (error) {
-      console.error('Error saving local overrides:', error);
+      logger.error('Failed to save configuration overrides', { 
+        error: error instanceof Error ? error.message : String(error) 
+      });
+      throw new Error(`Failed to save configuration overrides: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
   
@@ -442,64 +521,84 @@ export class Config {
    * Export configuration as JSON
    */
   public exportConfigAsJson(): string {
-    return JSON.stringify(this.config, null, 2);
+    // Create a sanitized copy (mask sensitive fields)
+    const sanitized = this.getSanitizedConfig();
+    
+    return JSON.stringify(sanitized, null, 2);
+  }
+  
+  /**
+   * Get sanitized configuration (with sensitive info masked)
+   */
+  private getSanitizedConfig(): ConfigType {
+    const sanitized = JSON.parse(JSON.stringify(this.config));
+    
+    // Mask sensitive fields
+    if (sanitized.security?.jwtSecret) {
+      sanitized.security.jwtSecret = '***********';
+    }
+    
+    if (sanitized.server?.sessionSecret) {
+      sanitized.server.sessionSecret = '***********';
+    }
+    
+    if (sanitized.database?.password) {
+      sanitized.database.password = '***********';
+    }
+    
+    if (sanitized.ai?.openai?.apiKey) {
+      sanitized.ai.openai.apiKey = '***********';
+    }
+    
+    if (sanitized.ai?.anthropic?.apiKey) {
+      sanitized.ai.anthropic.apiKey = '***********';
+    }
+    
+    if (sanitized.ai?.perplexity?.apiKey) {
+      sanitized.ai.perplexity.apiKey = '***********';
+    }
+    
+    return sanitized;
   }
   
   /**
    * Log configuration (with sensitive info masked)
    */
   private logConfiguration(): void {
-    // Clone the config
-    const sanitizedConfig = JSON.parse(JSON.stringify(this.config));
+    const sanitized = this.getSanitizedConfig();
     
-    // Mask sensitive values
-    if (sanitizedConfig.ai?.providers?.mistral?.apiKey) {
-      sanitizedConfig.ai.providers.mistral.apiKey = '********';
-    }
-    
-    if (sanitizedConfig.ai?.providers?.openai?.apiKey) {
-      sanitizedConfig.ai.providers.openai.apiKey = '********';
-    }
-    
-    if (sanitizedConfig.database?.password) {
-      sanitizedConfig.database.password = '********';
-    }
-    
-    if (sanitizedConfig.auth?.jwt?.secret) {
-      sanitizedConfig.auth.jwt.secret = '********';
-    }
-    
-    if (sanitizedConfig.auth?.session?.secret) {
-      sanitizedConfig.auth.session.secret = '********';
-    }
-    
-    console.log('Configuration loaded for environment:', this.currentEnv);
-    console.log(JSON.stringify(sanitizedConfig, null, 2));
+    logger.info('Configuration loaded', { 
+      environment: this.currentEnv,
+      config: sanitized
+    });
   }
   
   /**
    * Notify subscribers of configuration changes
    */
   private notifySubscribers(): void {
-    for (const subscriber of this.subscribers) {
+    const config = { ...this.config };
+    
+    for (const callback of this.subscribers) {
       try {
-        subscriber(this.config);
+        callback(config);
       } catch (error) {
-        console.error('Error in configuration subscriber:', error);
+        logger.error('Error in configuration subscriber', { 
+          error: error instanceof Error ? error.message : String(error) 
+        });
       }
     }
   }
 }
 
-// Export a singleton instance
+// Export singleton instance
 export const config = Config.getInstance();
 
-// Export config getter for convenience
+// Helper functions
 export function getConfig(): ConfigType {
   return config.getConfig();
 }
 
-// Export some helpful functions
 export function isDevelopment(): boolean {
   return config.getEnvironment() === 'development';
 }

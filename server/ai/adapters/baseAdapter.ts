@@ -1,163 +1,123 @@
-
 /**
- * Base Adapter Interface for AI Services
+ * Base AI Service Adapter Interface
  * 
- * This defines the common interface that all AI service adapters must implement,
- * enabling seamless switching between different AI providers.
+ * This module defines the base interface for all AI service adapters,
+ * establishing a common contract that all provider implementations must follow.
  */
 
-import { EventEmitter } from 'events';
+import { 
+  AIChatMessage, 
+  AIImageGenerationOptions, 
+  AIRequestOptions,
+  AIResponse
+} from '../aiTypes';
 
-// Model-specific configuration
-export interface AIModelConfig {
-  model: string;                // Name of the model to use
-  temperature?: number;         // Randomness parameter (0-1)
-  maxTokens?: number;           // Maximum number of tokens to generate
-  topP?: number;                // Top-p sampling parameter
-  frequencyPenalty?: number;    // Penalty for token frequency
-  presencePenalty?: number;     // Penalty for token presence
-}
-
-// Request-specific options
-export interface AIRequestOptions extends AIModelConfig {
-  systemPrompt?: string;        // System-level instruction
-  responseFormat?: 'text' | 'json' | 'markdown';
-  stream?: boolean;             // Whether to stream the response
-  user?: string;                // User identifier for API
-  timeout?: number;             // Request timeout in milliseconds
-  retries?: number;             // Number of retry attempts
-  trackMetrics?: boolean;       // Whether to track performance metrics
-}
-
-// Response metadata
-export interface AIResponseMetadata {
-  model: string;                // Model used for generation
-  processingTime: number;       // Time taken in milliseconds
-  tokenCount?: {                // Token usage statistics
-    input: number;
-    output: number;
-    total: number;
-  };
-  provider: string;             // Provider name (e.g., 'openai', 'mistral')
-  requestId?: string;           // Provider's request ID if available
-  finishReason?: string;        // Reason for completion (e.g., 'stop', 'length')
-  created?: number;             // Timestamp when created
-  metricsCollected?: boolean;   // Whether metrics were collected
-}
-
-// Standard response format
-export interface AIResponse<T = any> {
-  content: T;                   // Response content
-  metadata: AIResponseMetadata;
-}
-
-// Response for streaming requests
-export interface AIStreamResponse<T = string> extends EventEmitter {
-  on(event: 'data', listener: (chunk: T) => void): this;
-  on(event: 'metadata', listener: (metadata: AIResponseMetadata) => void): this;
-  on(event: 'error', listener: (error: Error) => void): this;
-  on(event: 'end', listener: () => void): this;
-}
-
-// Image generation options
-export interface AIImageGenerationOptions {
-  prompt: string;               // Image description
-  n?: number;                   // Number of images to generate
-  size?: string;                // Image size (e.g., '1024x1024')
-  quality?: string;             // Image quality (e.g., 'standard', 'hd')
-  format?: 'url' | 'b64_json';  // Response format
-}
-
-// Image generation response
-export interface AIImageResponse {
-  images: string[];             // Array of image URLs or base64 data
-  metadata: AIResponseMetadata;
-}
-
-// Adapter status information
+/**
+ * Status of an AI service adapter
+ */
 export interface AIAdapterStatus {
-  available: boolean;           // Whether the adapter is available
-  name: string;                 // Adapter name
-  priority: number;             // Priority for fallback order
-  lastCheck?: Date;             // Last status check time
-  errorMessage?: string;        // Last error message
-  capabilities?: {              // Supported capabilities
-    textGeneration: boolean;
-    jsonGeneration: boolean;
-    imageGeneration: boolean;
-    streaming: boolean;
-    functionCalling: boolean;
-  };
+  /** Is the service available and responding */
+  available: boolean;
+  
+  /** Optional error message if service is unavailable */
+  error?: string;
+  
+  /** Timestamp of last status check */
+  lastCheck?: Date;
+  
+  /** Priority for fallback selection (lower = higher priority) */
+  priority?: number;
+  
+  /** Supported model types/capabilities */
+  capabilities?: string[];
 }
 
-// Adapter metrics for monitoring
+/**
+ * Performance metrics for an AI service adapter
+ */
 export interface AIAdapterMetrics {
-  requestCount: number;
-  totalProcessingTime: number;
-  averageProcessingTime: number;
-  successRate: number;
-  tokenUsage: {
-    input: number;
-    output: number;
-    total: number;
-  };
-  errorCount: number;
-  lastError?: Error;
+  /** Total number of requests made */
+  totalRequests: number;
+  
+  /** Number of successful requests */
+  successfulRequests: number;
+  
+  /** Number of failed requests */
+  failedRequests: number;
+  
+  /** Average request latency in milliseconds */
+  averageLatency: number;
+  
+  /** Timestamp of last usage */
+  lastUsed: Date | null;
 }
 
-// Main adapter interface
+/**
+ * Interface for all AI service adapters
+ * 
+ * All AI provider implementations must implement this interface
+ * to ensure consistent behavior across providers.
+ */
 export interface AIServiceAdapter {
   /**
-   * Generate text completion from the AI model
-   * @param prompt The prompt text to send to the model
-   * @param options Request configuration options
-   * @returns Promise with the generated text response
-   */
-  generateText(prompt: string, options?: AIRequestOptions): Promise<AIResponse<string>>;
-  
-  /**
-   * Generate structured JSON data from the AI model
-   * @param prompt The prompt text to send to the model
-   * @param options Request configuration options
-   * @returns Promise with the generated JSON data
-   */
-  generateJson<T>(prompt: string, options?: AIRequestOptions): Promise<AIResponse<T>>;
-  
-  /**
-   * Stream text completion from the AI model
-   * @param prompt The prompt text to send to the model
-   * @param options Request configuration options
-   * @returns An event emitter that streams response chunks
-   */
-  streamText?(prompt: string, options?: AIRequestOptions): AIStreamResponse;
-  
-  /**
-   * Generate an image from a text description
-   * @param options Image generation configuration
-   * @returns Promise with generated image data
-   */
-  generateImage?(options: AIImageGenerationOptions): Promise<AIImageResponse>;
-  
-  /**
-   * Check if the service is available and working
-   * @returns Promise resolving to connection status
-   */
-  testConnection(): Promise<boolean>;
-  
-  /**
-   * Get the current status of this adapter
-   * @returns Status information object
+   * Get current adapter status
+   * @returns Adapter status object
    */
   getStatus(): AIAdapterStatus;
   
   /**
-   * Get performance metrics for this adapter
-   * @returns Metrics data or null if not available
+   * Test connection to the AI service
+   * @returns Promise resolving to true if connection is successful
    */
-  getMetrics?(): AIAdapterMetrics | null;
+  testConnection(): Promise<boolean>;
   
   /**
-   * Reset the metrics counters
+   * Generate text using the AI service
+   * @param prompt Text prompt
+   * @param options Request options
+   * @returns Promise resolving to generated text
+   */
+  generateText(prompt: string, options?: AIRequestOptions): Promise<AIResponse<string>>;
+  
+  /**
+   * Generate JSON data using the AI service
+   * @param prompt Text prompt
+   * @param options Request options
+   * @returns Promise resolving to generated JSON
+   */
+  generateJson<T>(prompt: string, options?: AIRequestOptions): Promise<AIResponse<T>>;
+  
+  /**
+   * Get embeddings for text
+   * @param text Text to get embeddings for
+   * @param options Request options
+   * @returns Promise resolving to vector embedding
+   */
+  getEmbeddings(text: string, options?: AIRequestOptions): Promise<AIResponse<number[]>>;
+  
+  /**
+   * Generate image using the AI service
+   * @param options Image generation options
+   * @returns Promise resolving to image data
+   */
+  generateImage(options: AIImageGenerationOptions): Promise<any>;
+  
+  /**
+   * Get chat completion
+   * @param messages Chat message history
+   * @param options Request options
+   * @returns Promise resolving to chat completion
+   */
+  chatCompletion(messages: AIChatMessage[], options?: AIRequestOptions): Promise<AIResponse<AIChatMessage>>;
+  
+  /**
+   * Get performance metrics if supported
+   * @returns Adapter metrics
+   */
+  getMetrics?(): AIAdapterMetrics;
+  
+  /**
+   * Reset performance metrics if supported
    */
   resetMetrics?(): void;
 }

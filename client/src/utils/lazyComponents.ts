@@ -1,234 +1,238 @@
-
 /**
- * Enhanced Lazy Component Loading System
+ * Lazy Component Loading Utilities
  * 
- * This module provides optimized lazy loading for React components
- * with built-in performance tracking, error handling, and prefetching.
+ * Provides tools for efficient lazy loading of React components with
+ * performance tracking and error handling.
  */
 
-import React, { lazy, ComponentType, LazyExoticComponent } from 'react';
-import { measureLazyLoad, PerformanceCategory, startMeasure, endMeasure } from './performance';
+import { lazy, ComponentType, LazyExoticComponent } from 'react';
+import { startPerformanceMarker, endPerformanceMarker } from './performance';
 
-// Component loading states tracking
-interface ComponentLoadingState {
-  loaded: boolean;
-  loading: boolean;
-  error: Error | null;
-  timestamp: number;
-}
+// Component load status
+export type ComponentLoadStatus = 'pending' | 'loading' | 'loaded' | 'error';
 
-// Cache to track component loading states
-const componentCache = new Map<string, ComponentLoadingState>();
-
-// Component importers registry
-const componentImporters = new Map<string, () => Promise<{ default: ComponentType<any> }>>();
-
-/**
- * Register a component for lazy loading
- */
-export function registerLazyComponent(
-  name: string,
-  importer: () => Promise<{ default: ComponentType<any> }>
-): void {
-  componentImporters.set(name, importer);
-  componentCache.set(name, {
-    loaded: false,
-    loading: false,
-    error: null,
-    timestamp: 0
-  });
-}
-
-/**
- * Enhanced lazy loading with performance tracking
- */
-export function lazyWithPerf<T extends ComponentType<any>>(
-  name: string,
-  importFn: () => Promise<{ default: T }>
-): LazyExoticComponent<T> {
-  // Register the component if not already registered
-  if (!componentImporters.has(name)) {
-    registerLazyComponent(name, importFn);
-  }
-  
-  return lazy(() => {
-    startMeasure(name, PerformanceCategory.LAZY_LOAD);
-    
-    // Update component state
-    const state = componentCache.get(name) || {
-      loaded: false,
-      loading: false,
-      error: null,
-      timestamp: 0
-    };
-    
-    componentCache.set(name, {
-      ...state,
-      loading: true,
-      timestamp: Date.now()
-    });
-    
-    return importFn()
-      .then(module => {
-        // Measure load time
-        const duration = endMeasure(name, PerformanceCategory.LAZY_LOAD);
-        console.debug(`Lazy loaded component ${name} in ${duration.toFixed(2)}ms`);
-        
-        // Update component state
-        componentCache.set(name, {
-          loaded: true,
-          loading: false,
-          error: null,
-          timestamp: Date.now()
-        });
-        
-        return module;
-      })
-      .catch(error => {
-        console.error(`Error lazy loading component ${name}:`, error);
-        
-        // Update component state with error
-        componentCache.set(name, {
-          loaded: false,
-          loading: false,
-          error,
-          timestamp: Date.now()
-        });
-        
-        throw error;
-      });
-  });
-}
-
-/**
- * Preload a component without rendering it
- */
-export function preloadComponent(name: string): Promise<void> {
-  if (!componentImporters.has(name)) {
-    console.warn(`Component ${name} not registered for lazy loading`);
-    return Promise.reject(new Error(`Component ${name} not registered`));
-  }
-  
-  const state = componentCache.get(name);
-  if (state?.loaded) {
-    return Promise.resolve();
-  }
-  
-  if (state?.loading) {
-    return new Promise((resolve, reject) => {
-      // Check status every 100ms
-      const interval = setInterval(() => {
-        const currentState = componentCache.get(name);
-        if (currentState?.loaded) {
-          clearInterval(interval);
-          resolve();
-        } else if (currentState?.error) {
-          clearInterval(interval);
-          reject(currentState.error);
-        }
-      }, 100);
-    });
-  }
-  
-  startMeasure(`preload:${name}`, PerformanceCategory.LAZY_LOAD);
-  
-  // Update component state
-  componentCache.set(name, {
-    ...state!,
-    loading: true,
-    timestamp: Date.now()
-  });
-  
-  const importFn = componentImporters.get(name)!;
-  return importFn()
-    .then(() => {
-      const duration = endMeasure(`preload:${name}`, PerformanceCategory.LAZY_LOAD);
-      console.debug(`Preloaded component ${name} in ${duration.toFixed(2)}ms`);
-      
-      // Update component state
-      componentCache.set(name, {
-        loaded: true,
-        loading: false,
-        error: null,
-        timestamp: Date.now()
-      });
-    })
-    .catch(error => {
-      console.error(`Error preloading component ${name}:`, error);
-      
-      // Update component state
-      componentCache.set(name, {
-        loaded: false,
-        loading: false,
-        error,
-        timestamp: Date.now()
-      });
-      
-      throw error;
-    });
-}
-
-/**
- * Check if a component is already loaded
- */
-export function isComponentLoaded(name: string): boolean {
-  const state = componentCache.get(name);
-  return !!state?.loaded;
-}
-
-/**
- * Get loading state for a component
- */
-export function getComponentLoadingState(name: string): ComponentLoadingState | undefined {
-  return componentCache.get(name);
-}
-
-/**
- * Preload a group of components in parallel
- */
-export function preloadComponentGroup(names: string[]): Promise<void[]> {
-  return Promise.all(names.map(name => preloadComponent(name)));
-}
-
-/**
- * Get all registered component names
- */
-export function getRegisteredComponents(): string[] {
-  return Array.from(componentImporters.keys());
-}
-
-/**
- * Reset the loading state for a component
- */
-export function resetComponentLoadingState(name: string): void {
-  if (componentCache.has(name)) {
-    componentCache.set(name, {
-      loaded: false,
-      loading: false,
-      error: null,
-      timestamp: 0
-    });
-  }
-}
-
-/**
- * Get performance metrics for all lazy-loaded components
- */
-export function getLazyLoadingMetrics(): Record<string, {
-  loaded: boolean;
+// Component cache entry
+interface ComponentCacheEntry<T = any> {
+  component: LazyExoticComponent<ComponentType<T>>;
+  status: ComponentLoadStatus;
+  error?: Error;
   loadTime?: number;
-  loadTimestamp?: number;
-  error?: string;
-}> {
-  const metrics: Record<string, any> = {};
+}
+
+// Component cache
+const componentCache = new Map<string, ComponentCacheEntry>();
+
+// Options for lazy loading
+export interface LazyLoadOptions {
+  trackPerformance?: boolean;
+  retryOnError?: boolean;
+  maxRetries?: number;
+  retryDelay?: number;
+  errorFallback?: React.ComponentType<any>;
+  onLoad?: (name: string, loadTime: number) => void;
+  onError?: (name: string, error: Error) => void;
+}
+
+// Default options
+const defaultOptions: LazyLoadOptions = {
+  trackPerformance: true,
+  retryOnError: false,
+  maxRetries: 3,
+  retryDelay: 1000,
+};
+
+/**
+ * Create a lazy-loaded component with performance tracking
+ * @param importFn Function that imports the component
+ * @param name Component name for tracking
+ * @param options Lazy loading options
+ * @returns Lazy component
+ */
+export function createLazyComponent<T = any>(
+  importFn: () => Promise<{ default: ComponentType<T> }>,
+  name: string,
+  options: LazyLoadOptions = {}
+): LazyExoticComponent<ComponentType<T>> {
+  // Merge options with defaults
+  const mergedOptions = { ...defaultOptions, ...options };
   
-  componentCache.forEach((state, name) => {
-    metrics[name] = {
-      loaded: state.loaded,
-      loadTime: state.timestamp > 0 ? state.timestamp : undefined,
-      error: state.error ? state.error.message : undefined
-    };
+  // Check if component is already in cache
+  if (componentCache.has(name)) {
+    return componentCache.get(name)!.component;
+  }
+  
+  // Create wrapper around import function with performance tracking
+  const wrappedImport = async () => {
+    // Start tracking if enabled
+    let marker;
+    if (mergedOptions.trackPerformance) {
+      marker = startPerformanceMarker(`lazyLoad:${name}`);
+    }
+    
+    // Update status
+    if (componentCache.has(name)) {
+      componentCache.get(name)!.status = 'loading';
+    }
+    
+    let retries = 0;
+    let component: { default: ComponentType<T> };
+    
+    while (true) {
+      try {
+        // Import component
+        component = await importFn();
+        
+        // End tracking if enabled
+        if (mergedOptions.trackPerformance && marker) {
+          const loadTime = endPerformanceMarker(`lazyLoad:${name}`);
+          
+          // Update cache with load time
+          if (componentCache.has(name)) {
+            const entry = componentCache.get(name)!;
+            entry.loadTime = loadTime;
+            entry.status = 'loaded';
+          }
+          
+          // Call onLoad callback if provided
+          if (mergedOptions.onLoad) {
+            mergedOptions.onLoad(name, loadTime);
+          }
+        }
+        
+        break;
+      } catch (error) {
+        // Update cache with error
+        if (componentCache.has(name)) {
+          const entry = componentCache.get(name)!;
+          entry.error = error instanceof Error ? error : new Error(String(error));
+          entry.status = 'error';
+        }
+        
+        // Call onError callback if provided
+        if (mergedOptions.onError) {
+          mergedOptions.onError(name, error instanceof Error ? error : new Error(String(error)));
+        }
+        
+        // Retry if enabled and not exceeded max retries
+        if (mergedOptions.retryOnError && retries < (mergedOptions.maxRetries || 3)) {
+          retries++;
+          
+          // Wait before retry
+          await new Promise(resolve => 
+            setTimeout(resolve, mergedOptions.retryDelay || 1000)
+          );
+          
+          // Log retry
+          console.info(`Retrying to load component ${name} (${retries}/${mergedOptions.maxRetries})`);
+          
+          // Try again
+          continue;
+        }
+        
+        // Rethrow error if no more retries
+        throw error;
+      }
+    }
+    
+    return component;
+  };
+  
+  // Create lazy component
+  const lazyComponent = lazy(wrappedImport);
+  
+  // Store in cache
+  componentCache.set(name, {
+    component: lazyComponent,
+    status: 'pending',
   });
   
-  return metrics;
+  return lazyComponent;
+}
+
+/**
+ * Get the load status of a component
+ * @param name Component name
+ * @returns Load status or null if component not in cache
+ */
+export function getComponentStatus(name: string): ComponentLoadStatus | null {
+  return componentCache.has(name) ? componentCache.get(name)!.status : null;
+}
+
+/**
+ * Get the load time of a component
+ * @param name Component name
+ * @returns Load time in milliseconds or null if component not loaded
+ */
+export function getComponentLoadTime(name: string): number | null {
+  if (!componentCache.has(name)) return null;
+  
+  const entry = componentCache.get(name)!;
+  return entry.loadTime ?? null;
+}
+
+/**
+ * Get all component load statistics
+ * @returns Object with component load statistics
+ */
+export function getComponentLoadStats(): Record<string, { status: ComponentLoadStatus, loadTime?: number, error?: string }> {
+  const stats: Record<string, { status: ComponentLoadStatus, loadTime?: number, error?: string }> = {};
+  
+  // Collect stats from cache
+  for (const [name, entry] of componentCache.entries()) {
+    stats[name] = {
+      status: entry.status,
+      loadTime: entry.loadTime,
+      error: entry.error?.message
+    };
+  }
+  
+  return stats;
+}
+
+/**
+ * Preload a component
+ * @param name Component name
+ * @returns Promise that resolves when component is loaded
+ */
+export async function preloadComponent(name: string): Promise<void> {
+  if (!componentCache.has(name)) {
+    throw new Error(`Component ${name} not registered for lazy loading`);
+  }
+  
+  const entry = componentCache.get(name)!;
+  
+  // Only preload if not already loaded or loading
+  if (entry.status === 'pending' || entry.status === 'error') {
+    // Trigger load
+    try {
+      const componentModule = (entry.component as any)._payload;
+      await componentModule._load();
+    } catch (error) {
+      console.error(`Failed to preload component ${name}:`, error);
+    }
+  }
+}
+
+/**
+ * Create a bundle of lazy-loaded components
+ * @param components Object with component import functions
+ * @param options Lazy loading options
+ * @returns Object with lazy components
+ */
+export function createLazyBundle<T extends Record<string, () => Promise<{ default: ComponentType<any> }>>>(
+  components: T,
+  options: LazyLoadOptions = {}
+): { [K in keyof T]: LazyExoticComponent<ComponentType<any>> } {
+  const bundle = {} as { [K in keyof T]: LazyExoticComponent<ComponentType<any>> };
+  
+  // Create lazy components for each entry
+  for (const [name, importFn] of Object.entries(components)) {
+    bundle[name as keyof T] = createLazyComponent(
+      importFn as () => Promise<{ default: ComponentType<any> }>,
+      name,
+      options
+    );
+  }
+  
+  return bundle;
 }

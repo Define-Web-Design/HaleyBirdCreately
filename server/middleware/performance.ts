@@ -1,14 +1,14 @@
 /**
  * Performance Monitoring Middleware
  * 
- * This middleware adds performance monitoring capabilities to the application,
- * including request timing, response size tracking, and resource usage metrics.
+ * This middleware tracks request performance metrics and system resource usage,
+ * providing detailed insights into application performance.
  */
 
 import { Request, Response, NextFunction } from 'express';
-import { performance } from 'perf_hooks';
 import os from 'os';
 import winston from 'winston';
+import { config } from '../../config/globalConfig';
 
 // Initialize logger
 const logger = winston.createLogger({
@@ -17,12 +17,12 @@ const logger = winston.createLogger({
     winston.format.timestamp(),
     winston.format.json()
   ),
-  defaultMeta: { service: 'performance-monitor' },
+  defaultMeta: { service: 'performance-middleware' },
   transports: [
     new winston.transports.File({ 
       filename: 'logs/performance.log',
       maxsize: 5 * 1024 * 1024, // 5MB
-      maxFiles: 5,
+      maxFiles: 3,
     })
   ]
 });
@@ -37,320 +37,400 @@ if (process.env.NODE_ENV !== 'production') {
   }));
 }
 
-// Performance metrics
-interface PerformanceMetrics {
-  requestsTotal: number;
-  requestsPerMinute: number;
-  avgResponseTime: number;
-  maxResponseTime: number;
-  p95ResponseTime: number;
-  errorRate: number;
-  responseTimes: number[];
-  cpuUsage: number;
-  memoryUsage: number;
+// Performance metrics type
+export interface PerformanceMetrics {
+  requestId: string;
+  method: string;
+  path: string;
+  query: Record<string, any>;
+  statusCode: number;
   startTime: number;
+  endTime: number;
+  duration: number;
+  timestamp: string;
+  userAgent?: string;
+  referrer?: string;
+  contentLength?: number;
+  bytesSent?: number;
+  contentType?: string;
+  cpu?: {
+    system: number;
+    user: number;
+    percentage: number;
+  };
+  memory?: {
+    rss: number;
+    heapTotal: number;
+    heapUsed: number;
+    external: number;
+    arrayBuffers?: number;
+    usage: number;
+  };
+  system?: {
+    freemem: number;
+    totalmem: number;
+    loadavg: number[];
+    uptime: number;
+  };
+  databaseQueries?: {
+    count: number;
+    duration: number;
+  };
+  aiCalls?: {
+    count: number;
+    duration: number;
+    tokens: number;
+  };
 }
 
-// Initialize metrics
-const metrics: PerformanceMetrics = {
-  requestsTotal: 0,
-  requestsPerMinute: 0,
-  avgResponseTime: 0,
-  maxResponseTime: 0,
-  p95ResponseTime: 0,
-  errorRate: 0,
-  responseTimes: [],
-  cpuUsage: 0,
-  memoryUsage: 0,
-  startTime: Date.now()
-};
+// Performance metrics storage
+const metricsCache: PerformanceMetrics[] = [];
+const maxMetricsCache = 1000; // Maximum number of metrics to keep in memory
 
-// Request counter for calculating requests per minute
-let requestCounter = 0;
-let lastMinuteTimestamp = Date.now();
+// Request ID counter
+let requestIdCounter = 1;
 
-// Update requests per minute every 10 seconds
-setInterval(() => {
-  const now = Date.now();
-  const elapsedMinutes = (now - lastMinuteTimestamp) / 60000;
+// Generate unique request ID
+function generateRequestId(): string {
+  const timestamp = Date.now();
+  const counter = requestIdCounter++;
+  return `req-${timestamp}-${counter}`;
+}
+
+// Get CPU usage for the current process
+function getCpuUsage(): { system: number; user: number; percentage: number } {
+  const cpuUsage = process.cpuUsage();
   
-  if (elapsedMinutes > 0) {
-    metrics.requestsPerMinute = Math.round(requestCounter / elapsedMinutes);
-    requestCounter = 0;
-    lastMinuteTimestamp = now;
+  // Convert from microseconds to seconds
+  const system = cpuUsage.system / 1000000;
+  const user = cpuUsage.user / 1000000;
+  
+  // Calculate total CPU time across all cores
+  const totalCpuTime = os.cpus().reduce((total, cpu) => {
+    return total + Object.values(cpu.times).reduce((sum, time) => sum + time, 0);
+  }, 0);
+  
+  // Calculate percentage (this is approximate)
+  const totalProcessTime = system + user;
+  const percentage = (totalProcessTime / totalCpuTime) * 100 * os.cpus().length;
+  
+  return { system, user, percentage };
+}
+
+// Get memory usage for the current process
+function getMemoryUsage(): {
+  rss: number;
+  heapTotal: number;
+  heapUsed: number;
+  external: number;
+  arrayBuffers?: number;
+  usage: number;
+} {
+  const memoryUsage = process.memoryUsage();
+  
+  return {
+    rss: memoryUsage.rss, // Resident Set Size - total memory allocated
+    heapTotal: memoryUsage.heapTotal, // V8 heap memory allocated
+    heapUsed: memoryUsage.heapUsed, // V8 heap memory used
+    external: memoryUsage.external, // Memory used by C++ objects bound to JS
+    arrayBuffers: memoryUsage.arrayBuffers, // Memory used by ArrayBuffers and SharedArrayBuffers
+    usage: memoryUsage.heapUsed / os.totalmem() * 100, // Percentage of total system memory used
+  };
+}
+
+// Get system metrics
+function getSystemMetrics(): {
+  freemem: number;
+  totalmem: number;
+  loadavg: number[];
+  uptime: number;
+} {
+  return {
+    freemem: os.freemem(),
+    totalmem: os.totalmem(),
+    loadavg: os.loadavg(),
+    uptime: os.uptime(),
+  };
+}
+
+/**
+ * Store performance metrics
+ * @param metrics Performance metrics
+ */
+function storeMetrics(metrics: PerformanceMetrics): void {
+  // Add to cache
+  metricsCache.push(metrics);
+  
+  // Trim cache if necessary
+  if (metricsCache.length > maxMetricsCache) {
+    metricsCache.shift(); // Remove oldest entry
   }
   
-  // Update system resource usage
-  updateResourceUsage();
+  // Log metrics
+  logger.debug('Performance metrics', { metrics });
   
-  // Log metrics to console in development
-  if (process.env.NODE_ENV !== 'production') {
-    logger.debug('Performance metrics update', {
-      requestsPerMinute: metrics.requestsPerMinute,
-      avgResponseTime: metrics.avgResponseTime.toFixed(2),
-      errorRate: `${(metrics.errorRate * 100).toFixed(2)}%`,
-      cpuUsage: `${(metrics.cpuUsage * 100).toFixed(2)}%`,
-      memoryUsage: `${(metrics.memoryUsage * 100).toFixed(2)}%`
+  // Check for slow requests
+  if (metrics.duration > 500) {
+    logger.warn('Slow request detected', {
+      requestId: metrics.requestId,
+      method: metrics.method,
+      path: metrics.path,
+      duration: metrics.duration,
     });
   }
-}, 10000);
-
-/**
- * Update system resource usage metrics
- */
-function updateResourceUsage() {
-  // CPU usage (average load over number of cores)
-  const cpuLoad = os.loadavg()[0] / os.cpus().length;
-  metrics.cpuUsage = cpuLoad;
-  
-  // Memory usage
-  const totalMemory = os.totalmem();
-  const freeMemory = os.freemem();
-  const usedMemory = totalMemory - freeMemory;
-  metrics.memoryUsage = usedMemory / totalMemory;
-}
-
-/**
- * Calculate percentile value from an array
- * @param arr Array of numbers
- * @param percentile Percentile to calculate (0-100)
- * @returns Percentile value
- */
-function calculatePercentile(arr: number[], percentile: number): number {
-  if (arr.length === 0) return 0;
-  
-  // Sort array
-  const sorted = [...arr].sort((a, b) => a - b);
-  
-  // Calculate index
-  const index = Math.ceil((percentile / 100) * sorted.length) - 1;
-  
-  return sorted[index];
-}
-
-/**
- * Update response time metrics
- * @param time Response time in milliseconds
- */
-function updateResponseTimeMetrics(time: number) {
-  // Add to response times array (limit to last 1000 requests)
-  metrics.responseTimes.push(time);
-  if (metrics.responseTimes.length > 1000) {
-    metrics.responseTimes.shift();
-  }
-  
-  // Update average
-  const sum = metrics.responseTimes.reduce((a, b) => a + b, 0);
-  metrics.avgResponseTime = sum / metrics.responseTimes.length;
-  
-  // Update max
-  metrics.maxResponseTime = Math.max(metrics.maxResponseTime, time);
-  
-  // Update p95
-  metrics.p95ResponseTime = calculatePercentile(metrics.responseTimes, 95);
 }
 
 /**
  * Performance monitoring middleware
+ * @param options Options for performance monitoring
+ * @returns Express middleware
  */
-export const performanceMonitor = () => {
-  return (req: Request, res: Response, next: NextFunction) => {
-    // Record start time
-    const startTime = performance.now();
-    
-    // Increment request counters
-    metrics.requestsTotal++;
-    requestCounter++;
-    
-    // Store original end method
-    const originalEnd = res.end;
-    
-    // Override end method to capture timing
-    res.end = function(this: Response, ...args: any[]) {
-      // Calculate response time
-      const responseTime = performance.now() - startTime;
-      
-      // Update metrics
-      updateResponseTimeMetrics(responseTime);
-      
-      // Update error rate
-      const isError = res.statusCode >= 400;
-      const errorWeight = isError ? 1 : 0;
-      const totalRequests = metrics.requestsTotal;
-      metrics.errorRate = ((metrics.errorRate * (totalRequests - 1)) + errorWeight) / totalRequests;
-      
-      // Add response time header
-      res.setHeader('X-Response-Time', `${responseTime.toFixed(2)}ms`);
-      
-      // Log request details
-      if (isError) {
-        logger.warn('Request completed with error', {
-          method: req.method,
-          url: req.url,
-          statusCode: res.statusCode,
-          responseTime,
-          userAgent: req.headers['user-agent']
-        });
-      } else if (responseTime > 1000) {
-        // Log slow requests
-        logger.info('Slow request detected', {
-          method: req.method,
-          url: req.url,
-          statusCode: res.statusCode,
-          responseTime,
-          threshold: 1000
-        });
-      }
-      
-      // Call original end method
-      return originalEnd.apply(this, args);
-    };
-    
-    next();
+export function performanceMiddleware(options: {
+  detailed?: boolean;
+  sampleRate?: number;
+  pathExclusions?: string[];
+} = {}) {
+  // Default options
+  const mergedOptions = {
+    detailed: process.env.NODE_ENV !== 'production', // Detailed metrics in non-production environments
+    sampleRate: 1.0, // Sample 100% of requests by default
+    pathExclusions: ['/health', '/metrics', '/favicon.ico'],
+    ...options,
   };
-};
-
-/**
- * Get current performance metrics
- * @returns Performance metrics
- */
-export function getPerformanceMetrics() {
-  // Calculate uptime
-  const uptime = Date.now() - metrics.startTime;
   
-  return {
-    ...metrics,
-    uptime,
-    uptimeFormatted: formatUptime(uptime),
-    timestamp: new Date().toISOString()
-  };
-}
-
-/**
- * Format uptime in a human-readable format
- * @param ms Uptime in milliseconds
- * @returns Formatted uptime string
- */
-function formatUptime(ms: number): string {
-  const seconds = Math.floor(ms / 1000);
-  const minutes = Math.floor(seconds / 60);
-  const hours = Math.floor(minutes / 60);
-  const days = Math.floor(hours / 24);
-  
-  if (days > 0) {
-    return `${days}d ${hours % 24}h ${minutes % 60}m`;
-  } else if (hours > 0) {
-    return `${hours}h ${minutes % 60}m ${seconds % 60}s`;
-  } else if (minutes > 0) {
-    return `${minutes}m ${seconds % 60}s`;
-  } else {
-    return `${seconds}s`;
-  }
-}
-
-/**
- * Web Vitals middleware for tracking frontend performance metrics
- */
-export const webVitalsCollector = () => {
   return (req: Request, res: Response, next: NextFunction) => {
-    // Skip non-web-vitals endpoints
-    if (req.path !== '/api/web-vitals') {
+    // Skip based on path exclusions
+    if (mergedOptions.pathExclusions.some(path => req.path.startsWith(path))) {
       return next();
     }
     
-    try {
-      const { name, value, id, page } = req.body;
-      
-      if (!name || value === undefined) {
-        return res.status(400).json({ error: 'Missing required fields' });
-      }
-      
-      // Log web vitals metric
-      logger.info('Web Vitals metric received', {
-        metric: name,
-        value,
-        id,
-        page: page || req.headers.referer,
-        userAgent: req.headers['user-agent']
-      });
-      
-      // Send success response
-      res.status(200).json({ success: true });
-    } catch (error) {
-      logger.error('Error processing Web Vitals metric', { error });
-      next(error);
+    // Sample based on rate
+    if (Math.random() > mergedOptions.sampleRate) {
+      return next();
     }
-  };
-};
-
-// Export web-vitals router handler
-export const webVitalsRouter = (req: Request, res: Response) => {
-  try {
-    if (req.method === 'GET') {
-      // Return metrics reporting script
-      res.setHeader('Content-Type', 'application/javascript');
-      res.send(`
-        // Web Vitals Reporter
-        import {getLCP, getFID, getCLS, getTTFB, getFCP} from 'https://unpkg.com/web-vitals@3/dist/web-vitals.attribution.js';
+    
+    // Generate request ID
+    const requestId = generateRequestId();
+    req.headers['x-request-id'] = requestId;
+    
+    // Set start time
+    const startTime = performance.now();
+    
+    // Attach metrics to the request for other middleware to use
+    const reqWithMetrics = req as Request & {
+      metrics?: {
+        databaseQueries: { count: number; duration: number };
+        aiCalls: { count: number; duration: number; tokens: number };
+      };
+    };
+    
+    reqWithMetrics.metrics = {
+      databaseQueries: { count: 0, duration: 0 },
+      aiCalls: { count: 0, duration: 0, tokens: 0 },
+    };
+    
+    // Track response
+    res.on('finish', () => {
+      // Calculate duration
+      const endTime = performance.now();
+      const duration = endTime - startTime;
+      
+      // Collect metrics
+      const metrics: PerformanceMetrics = {
+        requestId,
+        method: req.method,
+        path: req.path,
+        query: req.query,
+        statusCode: res.statusCode,
+        startTime,
+        endTime,
+        duration,
+        timestamp: new Date().toISOString(),
+        userAgent: req.headers['user-agent'],
+        referrer: req.headers.referer,
+        contentLength: parseInt(req.headers['content-length'] || '0', 10) || undefined,
+        bytesSent: parseInt(res.getHeader('content-length') as string || '0', 10) || undefined,
+        contentType: res.getHeader('content-type') as string,
+      };
+      
+      // Add detailed metrics if enabled
+      if (mergedOptions.detailed) {
+        metrics.cpu = getCpuUsage();
+        metrics.memory = getMemoryUsage();
+        metrics.system = getSystemMetrics();
         
-        function sendToAnalytics(metric) {
-          // Create beacon data
-          const body = JSON.stringify({
-            name: metric.name,
-            value: metric.value,
-            id: metric.id,
-            page: window.location.pathname,
-            ...metric.attribution
-          });
-          
-          // Use navigator.sendBeacon if available
-          if (navigator.sendBeacon) {
-            navigator.sendBeacon('/api/web-vitals', body);
-          } else {
-            // Fallback to fetch
-            fetch('/api/web-vitals', {
-              method: 'POST',
-              body,
-              headers: { 'Content-Type': 'application/json' },
-              keepalive: true
-            });
-          }
-          
-          // Log to console in development
-          if (process.env.NODE_ENV !== 'production') {
-            console.log('Web Vitals', metric);
-          }
+        // Add database and AI metrics if available
+        if (reqWithMetrics.metrics) {
+          metrics.databaseQueries = reqWithMetrics.metrics.databaseQueries;
+          metrics.aiCalls = reqWithMetrics.metrics.aiCalls;
         }
-        
-        // Report all web vitals
-        getCLS(sendToAnalytics);
-        getFID(sendToAnalytics);
-        getLCP(sendToAnalytics);
-        getTTFB(sendToAnalytics);
-        getFCP(sendToAnalytics);
-      `);
-    } else {
-      // POST method - collect metrics
-      const { name, value, id, page } = req.body;
-      
-      if (!name || value === undefined) {
-        return res.status(400).json({ error: 'Missing required fields' });
       }
       
-      // Log web vitals metric
-      logger.info('Web Vitals metric received', {
-        metric: name,
-        value,
-        id,
-        page: page || req.headers.referer,
-        userAgent: req.headers['user-agent']
-      });
-      
-      // Send success response
-      res.status(200).json({ success: true });
-    }
-  } catch (error) {
-    logger.error('Error processing Web Vitals request', { error });
-    res.status(500).json({ error: 'Internal server error' });
+      // Store metrics
+      storeMetrics(metrics);
+    });
+    
+    next();
+  };
+}
+
+/**
+ * Get recent performance metrics
+ * @param limit Maximum number of metrics to return
+ * @returns Array of performance metrics
+ */
+export function getRecentMetrics(limit: number = 100): PerformanceMetrics[] {
+  return metricsCache.slice(-limit);
+}
+
+/**
+ * Get performance statistics
+ * @param timeframe Timeframe in milliseconds (default: last hour)
+ * @returns Performance statistics
+ */
+export function getPerformanceStats(timeframe: number = 60 * 60 * 1000): {
+  requestCount: number;
+  averageResponseTime: number;
+  maxResponseTime: number;
+  minResponseTime: number;
+  p95ResponseTime: number;
+  errorRate: number;
+  tps: number;
+  cpuUsage?: number;
+  memoryUsage?: number;
+} {
+  // Calculate cutoff time
+  const cutoffTime = Date.now() - timeframe;
+  
+  // Filter metrics by timeframe
+  const recentMetrics = metricsCache.filter(
+    metric => new Date(metric.timestamp).getTime() > cutoffTime
+  );
+  
+  if (recentMetrics.length === 0) {
+    return {
+      requestCount: 0,
+      averageResponseTime: 0,
+      maxResponseTime: 0,
+      minResponseTime: 0,
+      p95ResponseTime: 0,
+      errorRate: 0,
+      tps: 0,
+    };
   }
-};
+  
+  // Calculate statistics
+  const durations = recentMetrics.map(metric => metric.duration);
+  durations.sort((a, b) => a - b);
+  
+  const requestCount = recentMetrics.length;
+  const totalDuration = durations.reduce((sum, duration) => sum + duration, 0);
+  const averageResponseTime = totalDuration / requestCount;
+  const maxResponseTime = durations[durations.length - 1];
+  const minResponseTime = durations[0];
+  
+  // Calculate 95th percentile
+  const p95Index = Math.ceil(durations.length * 0.95) - 1;
+  const p95ResponseTime = durations[p95Index];
+  
+  // Calculate error rate (responses with status code >= 400)
+  const errorCount = recentMetrics.filter(metric => metric.statusCode >= 400).length;
+  const errorRate = (errorCount / requestCount) * 100;
+  
+  // Calculate transactions per second
+  const tps = requestCount / (timeframe / 1000);
+  
+  // Calculate CPU and memory usage if available
+  let cpuUsage: number | undefined;
+  let memoryUsage: number | undefined;
+  
+  const metricsWithCpu = recentMetrics.filter(metric => metric.cpu);
+  if (metricsWithCpu.length > 0) {
+    cpuUsage = metricsWithCpu.reduce((sum, metric) => sum + (metric.cpu?.percentage || 0), 0) / metricsWithCpu.length;
+  }
+  
+  const metricsWithMemory = recentMetrics.filter(metric => metric.memory);
+  if (metricsWithMemory.length > 0) {
+    memoryUsage = metricsWithMemory.reduce((sum, metric) => sum + (metric.memory?.usage || 0), 0) / metricsWithMemory.length;
+  }
+  
+  return {
+    requestCount,
+    averageResponseTime,
+    maxResponseTime,
+    minResponseTime,
+    p95ResponseTime,
+    errorRate,
+    tps,
+    cpuUsage,
+    memoryUsage,
+  };
+}
+
+/**
+ * Performance metrics route handler
+ * @param req Express request
+ * @param res Express response
+ */
+export function performanceMetricsHandler(req: Request, res: Response): void {
+  // Get query parameters
+  const limit = parseInt(req.query.limit as string || '100', 10);
+  const timeframe = parseInt(req.query.timeframe as string || '3600000', 10); // Default: 1 hour
+  
+  // Check if detailed metrics are requested
+  const detailed = req.query.detailed === 'true';
+  
+  if (detailed) {
+    // Return recent metrics if detailed view requested
+    res.json({
+      metrics: getRecentMetrics(limit),
+      stats: getPerformanceStats(timeframe),
+    });
+  } else {
+    // Return only stats
+    res.json(getPerformanceStats(timeframe));
+  }
+}
+
+/**
+ * Track database query performance
+ * @param req Express request
+ * @param duration Query duration in milliseconds
+ */
+export function trackDatabaseQuery(req: Request, duration: number): void {
+  const reqWithMetrics = req as Request & {
+    metrics?: {
+      databaseQueries: { count: number; duration: number };
+    };
+  };
+  
+  if (reqWithMetrics.metrics?.databaseQueries) {
+    reqWithMetrics.metrics.databaseQueries.count++;
+    reqWithMetrics.metrics.databaseQueries.duration += duration;
+  }
+}
+
+/**
+ * Track AI API call performance
+ * @param req Express request
+ * @param duration Call duration in milliseconds
+ * @param tokens Number of tokens used
+ */
+export function trackAiApiCall(req: Request, duration: number, tokens: number = 0): void {
+  const reqWithMetrics = req as Request & {
+    metrics?: {
+      aiCalls: { count: number; duration: number; tokens: number };
+    };
+  };
+  
+  if (reqWithMetrics.metrics?.aiCalls) {
+    reqWithMetrics.metrics.aiCalls.count++;
+    reqWithMetrics.metrics.aiCalls.duration += duration;
+    reqWithMetrics.metrics.aiCalls.tokens += tokens;
+  }
+}
+
+// Register metrics endpoint if enabled
+if (config.getConfig().monitoring.enabled) {
+  logger.info('Performance monitoring initialized with metrics endpoint /api/performance/metrics');
+}
