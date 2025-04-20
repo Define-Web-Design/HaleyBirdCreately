@@ -1,3 +1,4 @@
+
 #!/bin/bash
 
 # Enhanced Deployment Script with fail-safe mechanisms
@@ -53,7 +54,6 @@ npm run build || {
     echo "⚠️ Build reported errors but may still work. Continuing..."
   fi
 }
-
 
 echo "✅ Build successful!"
 

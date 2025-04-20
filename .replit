@@ -36,7 +36,7 @@ localPort = 24678
 externalPort = 3000
 
 [workflows]
-runButton = "Unified Deployment"
+runButton = "Robust Deployment"
 
 [[workflows.workflow]]
 name = "Build and Start Production"
@@ -368,3 +368,104 @@ args = "echo \"Running TypeScript type check...\""
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npx tsc --noEmit"
+
+[[workflows.workflow]]
+name = "Robust Deployment"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "#!/bin/bash"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Set environment variables"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "export NODE_ENV=production"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "export PORT=3000"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"📦 Starting robust deployment process...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Clean build artifacts if they exist"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "if [ -d \"dist\" ]; then"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "  echo \"🧹 Cleaning previous build...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "  rm -rf dist"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "fi"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Install dependencies"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"📚 Installing dependencies...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm install --include=dev"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Build the application"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"🔨 Building application...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run build"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Start the server"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"🚀 Starting server...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "NODE_ENV=production PORT=3000 node dist/index.js"
