@@ -1,60 +1,115 @@
 {
+  "version": "1.0.0",
+  "defaultWorkflow": "development",
+  "defaultNodeEnv": "development",
+  "fallbackEnabled": true,
+  "fallbackPort": 3000,
   "workflows": [
     {
-      "name": "Development Mode",
-      "description": "Starts the application in development mode with live reloading",
-      "command": "npm run dev",
-      "env": {
-        "NODE_ENV": "development",
-        "PORT": "3000"
-      }
+      "name": "development",
+      "description": "Run the application in development mode with live reloading",
+      "command": "NODE_ENV=development npm run dev",
+      "dependencies": ["typescript", "tsx", "express"],
+      "requiredFiles": ["server/index.ts", "package.json"]
     },
     {
-      "name": "Production Build",
-      "description": "Builds and starts the application in production mode",
-      "command": "npm run build && NODE_ENV=production node dist/index.js",
-      "env": {
-        "NODE_ENV": "production",
-        "PORT": "3000"
-      }
+      "name": "production",
+      "description": "Build and run the application in production mode",
+      "command": "NODE_ENV=production npm run build && NODE_ENV=production node dist/server/index.js",
+      "dependencies": ["typescript", "express"],
+      "requiredFiles": ["server/index.ts", "package.json"]
     },
     {
-      "name": "Deploy Application",
-      "description": "Builds and deploys the application for production use",
-      "command": "npm run build && NODE_ENV=production node dist/index.js",
-      "env": {
-        "NODE_ENV": "production",
-        "PORT": "3000"
-      }
+      "name": "deploy",
+      "description": "Build and deploy the application",
+      "command": "NODE_ENV=production npm run build && NODE_ENV=production node dist/server/index.js",
+      "dependencies": ["typescript", "express"],
+      "requiredFiles": ["server/index.ts", "package.json"]
     },
     {
-      "name": "Database Management",
-      "description": "Manages database schema updates and migrations",
+      "name": "database",
+      "description": "Update database schema",
       "command": "npm run db:push",
-      "env": {
-        "NODE_ENV": "development"
-      }
+      "dependencies": ["drizzle-kit"],
+      "requiredFiles": ["drizzle.config.ts", "shared/schema.ts"]
+    },
+    {
+      "name": "test",
+      "description": "Run tests",
+      "command": "npm test",
+      "dependencies": ["typescript", "vitest"],
+      "requiredFiles": ["package.json"]
+    },
+    {
+      "name": "lint",
+      "description": "Run linting",
+      "command": "npm run lint",
+      "dependencies": ["typescript", "eslint"],
+      "requiredFiles": ["package.json", "eslint.config.js"]
+    },
+    {
+      "name": "format",
+      "description": "Format code",
+      "command": "npm run format",
+      "dependencies": ["typescript", "prettier"],
+      "requiredFiles": ["package.json"]
+    },
+    {
+      "name": "fallback",
+      "description": "Run the fallback server (simple static file server)",
+      "command": "node simple-server.cjs",
+      "dependencies": [],
+      "requiredFiles": ["simple-server.cjs"]
+    },
+    {
+      "name": "snippet-server",
+      "description": "Run the code snippet server",
+      "command": "node server.js",
+      "dependencies": ["express"],
+      "requiredFiles": ["server.js"]
+    },
+    {
+      "name": "discord-bot",
+      "description": "Run the Discord bot",
+      "command": "node discord_bot.js",
+      "dependencies": ["discord.js"],
+      "requiredFiles": ["discord_bot.js"]
     }
   ],
-  "defaultWorkflow": "Development Mode",
-  "dependencies": {
-    "required": [
-      "typescript",
-      "express",
-      "drizzle-orm",
-      "drizzle-zod",
-      "zod"
-    ],
-    "development": [
-      "tsx",
-      "vite",
-      "drizzle-kit"
-    ]
-  },
-  "environment": {
-    "defaults": {
-      "PORT": "3000",
-      "NODE_ENV": "development"
+  "environments": {
+    "development": {
+      "port": 3000,
+      "host": "0.0.0.0",
+      "logging": "verbose",
+      "fallbackEnabled": true
+    },
+    "production": {
+      "port": 3000,
+      "host": "0.0.0.0",
+      "logging": "error",
+      "fallbackEnabled": true
+    },
+    "test": {
+      "port": 3001,
+      "host": "localhost",
+      "logging": "silent",
+      "fallbackEnabled": false
     }
+  },
+  "dependencies": {
+    "required": ["node", "npm"],
+    "optional": ["jq"]
+  },
+  "fallbacks": {
+    "dependencyInstallCommands": [
+      "npm install",
+      "npm install --legacy-peer-deps",
+      "npm install --no-optional"
+    ],
+    "buildCommands": [
+      "npm run build",
+      "npx tsc",
+      "npx esbuild server/index.ts --bundle --platform=node --outfile=dist/server/index.js"
+    ]
   }
 }
