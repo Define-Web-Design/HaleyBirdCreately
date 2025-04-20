@@ -10,6 +10,7 @@
     "db:push": "drizzle-kit push"
   },
   "dependencies": {
+    "@googleapis/docs": "^3.3.3",
     "@neondatabase/serverless": "^0.10.4",
     "@tailwindcss/typography": "^0.5.16",
     "@typescript-eslint/eslint-plugin": "^8.30.1",

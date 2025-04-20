@@ -1,9 +1,8 @@
 import express from 'express';
-import jwt from 'jsonwebtoken';
-import { z } from 'zod';
-import storage from './storage';
+import authRoutes from './routes/auth';
 import snippetRoutes from './routes/snippet-routes';
-import { spawn } from 'child_process'; // Added for process monitoring
+import healthRoutes from './routes/health';
+import googleDocsRoutes from './routes/google-docs';
 
 const router = express.Router();
 
@@ -170,6 +169,9 @@ router.get('/auth/me', async (req, res) => {
 });
 
 // Use snippet routes
-router.use('/api/snippets', snippetRoutes); // Modified to add snippet routes
+router.use('/api/snippets', snippetRoutes);
+router.use('/auth', authRoutes);
+router.use('/health', healthRoutes);
+router.use('/google-docs', googleDocsRoutes);
 
 export default router;
