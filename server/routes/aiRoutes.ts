@@ -7,7 +7,7 @@
 
 import express, { Request, Response } from 'express';
 import { AIService } from '../ai/aiService';
-import { initAdapters } from '../ai/initAdapters';
+import { initializeAdapters } from '../ai/initAdapters';
 import { logger } from '../utils/logger';
 import { performanceMiddleware } from '../middleware/performance';
 
@@ -23,7 +23,7 @@ router.use(performanceMiddleware({
 }));
 
 // Initialize AI service with configured adapters
-const adapterRegistry = initAdapters();
+const adapterRegistry = await initializeAdapters();
 const aiService = new AIService(adapterRegistry);
 
 /**
