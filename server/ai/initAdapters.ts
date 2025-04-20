@@ -5,7 +5,7 @@
  * It automatically detects available API keys and registers adapters with appropriate configurations.
  */
 
-import { adapterRegistry } from './adapterRegistry';
+import { adapterRegistry } from './adapters/adapterRegistry';
 import { OpenAIAdapter } from './adapters/openaiAdapter';
 import { AnthropicAdapter } from './adapters/anthropicAdapter';
 import { PerplexityAdapter } from './adapters/perplexityAdapter';
