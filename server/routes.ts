@@ -158,6 +158,8 @@ router.get('/auth/me', async (req, res) => {
   }
 
   try {
+    // Get the storage instance
+    const storage = global.storage;
     const user = await storage.getUserById(req.user.id);
 
     if (!user) {

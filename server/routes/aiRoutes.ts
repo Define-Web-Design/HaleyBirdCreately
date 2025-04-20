@@ -1,97 +1,50 @@
 /**
  * AI Service API Routes
  * 
- * This module defines Express routes for AI service operations,
- * providing REST endpoints for text generation, chat, image generation, etc.
+ * This module provides API endpoints for interacting with integrated AI services
+ * using the adapter pattern and automatic fallback strategies.
  */
 
 import express, { Request, Response } from 'express';
 import { AIService } from '../ai/aiService';
+import { initAdapters } from '../ai/initAdapters';
 import { logger } from '../utils/logger';
 import { performanceMiddleware } from '../middleware/performance';
-import { initializeAdapters } from '../ai/initAdapters';
 
 // Create router
 const router = express.Router();
 
-// Add performance monitoring middleware
-router.use(performanceMiddleware({ trackAiCalls: true }));
+// Apply performance middleware with AI-specific tracking
+router.use(performanceMiddleware({
+  detailed: process.env.NODE_ENV !== 'production',
+  sampleRate: 1.0, // Track all AI requests
+  pathExclusions: [], // Track all paths in this router
+  trackAiCalls: true // Enable AI-specific metric tracking
+}));
 
-// Initialize AI adapters
-let adaptersInitialized = false;
-async function ensureAdaptersInitialized() {
-  if (!adaptersInitialized) {
-    adaptersInitialized = await initializeAdapters();
-    if (!adaptersInitialized) {
-      logger.warn('Failed to initialize AI adapters');
-    }
-  }
-  return adaptersInitialized;
-}
+// Initialize AI service with configured adapters
+const adapterRegistry = initAdapters();
+const aiService = new AIService(adapterRegistry);
 
 /**
  * GET /api/ai/status
- * Get status of all AI providers
+ * Get status of all AI adapters
  */
-router.get('/status', async (req: Request, res: Response) => {
+router.get('/status', (req: Request, res: Response) => {
   try {
-    await ensureAdaptersInitialized();
-    const status = AIService.getProviderStatus();
+    const status = aiService.getStatus();
     res.json(status);
   } catch (error) {
-    logger.error('Error getting AI provider status', { 
-      error: error instanceof Error ? error.message : String(error) 
+    logger.error('Error getting AI status', {
+      error: error instanceof Error ? error.message : String(error)
     });
-    res.status(500).json({ 
-      error: 'Failed to get AI provider status',
-      message: error instanceof Error ? error.message : String(error)
-    });
-  }
-});
-
-/**
- * GET /api/ai/metrics
- * Get performance metrics for all AI providers
- */
-router.get('/metrics', async (req: Request, res: Response) => {
-  try {
-    await ensureAdaptersInitialized();
-    const metrics = AIService.getProviderMetrics();
-    res.json(metrics);
-  } catch (error) {
-    logger.error('Error getting AI provider metrics', { 
-      error: error instanceof Error ? error.message : String(error) 
-    });
-    res.status(500).json({ 
-      error: 'Failed to get AI provider metrics',
-      message: error instanceof Error ? error.message : String(error)
-    });
-  }
-});
-
-/**
- * POST /api/ai/reset-metrics
- * Reset performance metrics for all AI providers
- */
-router.post('/reset-metrics', async (req: Request, res: Response) => {
-  try {
-    await ensureAdaptersInitialized();
-    AIService.resetAllMetrics();
-    res.json({ success: true });
-  } catch (error) {
-    logger.error('Error resetting AI provider metrics', { 
-      error: error instanceof Error ? error.message : String(error) 
-    });
-    res.status(500).json({ 
-      error: 'Failed to reset AI provider metrics',
-      message: error instanceof Error ? error.message : String(error)
-    });
+    res.status(500).json({ error: 'Failed to get AI status' });
   }
 });
 
 /**
  * POST /api/ai/generate-text
- * Generate text with the best available AI provider
+ * Generate text using AI services
  */
 router.post('/generate-text', async (req: Request, res: Response) => {
   try {
@@ -101,25 +54,20 @@ router.post('/generate-text', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Prompt is required' });
     }
     
-    await ensureAdaptersInitialized();
-    
-    const text = await AIService.generateText(prompt, options);
-    
-    res.json({ text });
+    const result = await aiService.generateText(prompt, options);
+    res.json(result);
   } catch (error) {
-    logger.error('Error generating text', { 
-      error: error instanceof Error ? error.message : String(error) 
+    logger.error('Error generating text', {
+      error: error instanceof Error ? error.message : String(error),
+      prompt: req.body.prompt?.substring(0, 100)
     });
-    res.status(500).json({ 
-      error: 'Failed to generate text',
-      message: error instanceof Error ? error.message : String(error)
-    });
+    res.status(500).json({ error: 'Failed to generate text' });
   }
 });
 
 /**
  * POST /api/ai/generate-json
- * Generate JSON data with the best available AI provider
+ * Generate structured JSON data using AI services
  */
 router.post('/generate-json', async (req: Request, res: Response) => {
   try {
@@ -129,25 +77,20 @@ router.post('/generate-json', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Prompt is required' });
     }
     
-    await ensureAdaptersInitialized();
-    
-    const data = await AIService.generateJson(prompt, options);
-    
-    res.json({ data });
+    const result = await aiService.generateJson(prompt, options);
+    res.json(result);
   } catch (error) {
-    logger.error('Error generating JSON', { 
-      error: error instanceof Error ? error.message : String(error) 
+    logger.error('Error generating JSON', {
+      error: error instanceof Error ? error.message : String(error),
+      prompt: req.body.prompt?.substring(0, 100)
     });
-    res.status(500).json({ 
-      error: 'Failed to generate JSON',
-      message: error instanceof Error ? error.message : String(error)
-    });
+    res.status(500).json({ error: 'Failed to generate JSON' });
   }
 });
 
 /**
  * POST /api/ai/chat
- * Get chat completion with the best available AI provider
+ * Generate chat completions using AI services
  */
 router.post('/chat', async (req: Request, res: Response) => {
   try {
@@ -157,25 +100,19 @@ router.post('/chat', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Valid messages array is required' });
     }
     
-    await ensureAdaptersInitialized();
-    
-    const response = await AIService.chatCompletion(messages, options);
-    
-    res.json({ response });
+    const result = await aiService.chatCompletion(messages, options);
+    res.json(result);
   } catch (error) {
-    logger.error('Error getting chat completion', { 
-      error: error instanceof Error ? error.message : String(error) 
+    logger.error('Error generating chat completion', {
+      error: error instanceof Error ? error.message : String(error)
     });
-    res.status(500).json({ 
-      error: 'Failed to get chat completion',
-      message: error instanceof Error ? error.message : String(error)
-    });
+    res.status(500).json({ error: 'Failed to generate chat completion' });
   }
 });
 
 /**
  * POST /api/ai/generate-image
- * Generate image with the best available AI provider
+ * Generate an image from text prompt using AI services
  */
 router.post('/generate-image', async (req: Request, res: Response) => {
   try {
@@ -185,62 +122,54 @@ router.post('/generate-image', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Prompt is required' });
     }
     
-    await ensureAdaptersInitialized();
-    
-    const imageData = await AIService.generateImage({
-      prompt,
-      ...options
-    });
-    
-    res.json({ imageData });
+    const result = await aiService.generateImage(prompt, options);
+    res.json(result);
   } catch (error) {
-    logger.error('Error generating image', { 
-      error: error instanceof Error ? error.message : String(error) 
+    logger.error('Error generating image', {
+      error: error instanceof Error ? error.message : String(error),
+      prompt: req.body.prompt?.substring(0, 100)
     });
-    res.status(500).json({ 
-      error: 'Failed to generate image',
-      message: error instanceof Error ? error.message : String(error)
-    });
+    res.status(500).json({ error: 'Failed to generate image' });
   }
 });
 
 /**
  * POST /api/ai/analyze-image
- * Analyze image with the best available AI provider
+ * Analyze an image using AI services
  */
 router.post('/analyze-image', async (req: Request, res: Response) => {
   try {
-    const { base64Image, prompt, options = {} } = req.body;
+    const { imageUrl, base64Image, prompt, options = {} } = req.body;
     
-    if (!base64Image) {
-      return res.status(400).json({ error: 'Base64 image data is required' });
+    if (!imageUrl && !base64Image) {
+      return res.status(400).json({ error: 'Either imageUrl or base64Image is required' });
     }
     
     if (!prompt) {
       return res.status(400).json({ error: 'Prompt is required' });
     }
     
-    await ensureAdaptersInitialized();
+    const result = await aiService.analyzeImage({
+      imageUrl,
+      base64Image,
+      prompt,
+      ...options
+    });
     
-    const analysis = await AIService.analyzeImage(base64Image, prompt, options);
-    
-    res.json({ analysis });
+    res.json(result);
   } catch (error) {
-    logger.error('Error analyzing image', { 
-      error: error instanceof Error ? error.message : String(error) 
+    logger.error('Error analyzing image', {
+      error: error instanceof Error ? error.message : String(error)
     });
-    res.status(500).json({ 
-      error: 'Failed to analyze image',
-      message: error instanceof Error ? error.message : String(error)
-    });
+    res.status(500).json({ error: 'Failed to analyze image' });
   }
 });
 
 /**
- * POST /api/ai/embeddings
- * Get embeddings for text with the best available AI provider
+ * POST /api/ai/embed
+ * Generate embeddings for text using AI services
  */
-router.post('/embeddings', async (req: Request, res: Response) => {
+router.post('/embed', async (req: Request, res: Response) => {
   try {
     const { text, options = {} } = req.body;
     
@@ -248,19 +177,13 @@ router.post('/embeddings', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Text is required' });
     }
     
-    await ensureAdaptersInitialized();
-    
-    const embeddings = await AIService.getEmbeddings(text, options);
-    
-    res.json({ embeddings });
+    const result = await aiService.generateEmbedding(text, options);
+    res.json(result);
   } catch (error) {
-    logger.error('Error getting embeddings', { 
-      error: error instanceof Error ? error.message : String(error) 
+    logger.error('Error generating embedding', {
+      error: error instanceof Error ? error.message : String(error)
     });
-    res.status(500).json({ 
-      error: 'Failed to get embeddings',
-      message: error instanceof Error ? error.message : String(error)
-    });
+    res.status(500).json({ error: 'Failed to generate embedding' });
   }
 });
 
