@@ -18,6 +18,9 @@ import {
 } from './aiTypes';
 import { logger } from '../utils/logger';
 import { createSimpleFallbackStrategy, createPriorityBasedFallbackStrategy, createCapabilityBasedFallbackStrategy } from './adapters/fallbackStrategies';
+import { AIAdapterRegistry } from './adapters/adapterRegistry';
+
+const adapterRegistry = AIAdapterRegistry.getInstance();
 
 // Function to get the best adapter based on metrics
 function getBestAdapter(registry: AIAdapterRegistry): AIAdapter {
