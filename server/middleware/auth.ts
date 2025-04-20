@@ -69,7 +69,7 @@ export const authenticate = (options?: { bypassAuth?: boolean }) => {
             id: 1,
             email: 'dev@example.com',
             username: 'devuser',
-            displayName: 'Development User', 
+            displayName: 'Development User',
             role: 'admin',
             avatar: null,
             createdAt: new Date().toISOString()
@@ -101,64 +101,24 @@ export const authenticate = (options?: { bypassAuth?: boolean }) => {
       return next();
     }
 
+    // JWT Authentication (replaced with edited code's functionality)
+    const token = req.header('x-auth-token');
+    if (!token) {
+      return res.status(401).json({ msg: 'No token, authorization denied' });
+    }
     try {
-      // Get the token from the Authorization header
-      const authHeader = req.headers.authorization;
-      if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ 
-          success: false, 
-          message: 'Authentication required' 
-        });
-      }
-
-      const token = authHeader.split(' ')[1];
-
-      // Verify the token
-      const decoded = jwt.verify(token, config.jwt.secret) as {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || config.jwt.secret) as {
         id: string | number;
         email?: string;
         username?: string;
         role?: string;
       };
-
-      // Add the user info to the request
-      req.user = {
-        id: decoded.id,
-        email: decoded.email,
-        username: decoded.username,
-        role: decoded.role
-      };
-
-      // If we need to validate the user exists in storage
-      try {
-        const storage = ServiceRegistry.getInstance().getService<StorageInterface>('storage');
-        if (storage) {
-          const user = await storage.getUserById(String(decoded.id)); // Convert to string for compatibility
-          if (!user) {
-            return res.status(401).json({ 
-              success: false,
-              message: 'User not found' 
-            });
-          }
-        }
-      } catch (error) {
-        console.error('User validation error:', error);
-        // Continue anyway for development purposes
-      }
-
+      req.user = decoded;
       next();
-    } catch (error) {
-      console.error('Authentication error:', error);
-      return res.status(401).json({ 
-        success: false,
-        message: 'Invalid or expired token'
-      });
+    } catch (err) {
+      res.status(401).json({ msg: 'Token is not valid' });
     }
   };
-};
-
-export const auth = (req: any, res: any, next: any) => {
-  return authenticate()(req, res, next);
 };
 
 /**
@@ -170,10 +130,23 @@ export const requireAdmin = (
   next: NextFunction
 ) => {
   if (!req.user || req.user.role !== 'admin') {
-    return res.status(403).json({ 
+    return res.status(403).json({
       success: false,
-      message: 'Admin access required' 
+      message: 'Admin access required'
     });
   }
   next();
 };
+
+// Added for backward compatibility as per edited code
+export const checkRole = (role: string) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    if ((req as any).user && (req as any).user.role === role) {
+      next();
+    } else {
+      res.status(403).json({ msg: 'Access denied: insufficient permissions' });
+    }
+  };
+};
+
+export default { authenticate, requireAdmin, checkRole };
