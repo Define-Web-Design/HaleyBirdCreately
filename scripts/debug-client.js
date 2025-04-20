@@ -1,436 +1,548 @@
 
 /**
- * Client Debugging Utility
+ * Client-Side Debugging Tool
  * 
- * This script injects debugging code into the client build
- * to help identify frontend issues.
+ * This script provides enhanced debugging capabilities for client-side applications,
+ * including component rendering performance analysis, lazy loading diagnostics,
+ * and front-end optimization recommendations.
  */
 
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
 
-// Path to the main client index file
-const indexPath = path.join(__dirname, '../client/src/index.tsx');
-const debugIndexPath = path.join(__dirname, '../client/src/index.debug.tsx');
-
-console.log('Setting up client debugging...');
-
-// Check if the file exists
-if (!fs.existsSync(indexPath)) {
-  console.error(`Error: ${indexPath} not found`);
-  process.exit(1);
-}
-
-// Read the original file
-const content = fs.readFileSync(indexPath, 'utf8');
-
-// Create debug version with extra logging
-const debugContent = `// Debug version - automatically generated
-import { createRoot } from 'react-dom/client';
-import App from './App';
-import './index.css';
-
-// Setup global error handler
-window.onerror = function(message, source, lineno, colno, error) {
-  console.error('Global error caught:', { message, source, lineno, colno, error });
-  
-  // Log to server if in production
-  if (process.env.NODE_ENV === 'production') {
-    try {
-      fetch('/api/logs/client-error', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          error: message,
-          source,
-          lineno,
-          colno,
-          stack: error?.stack,
-          url: window.location.href,
-          userAgent: navigator.userAgent
-        })
-      }).catch(e => console.error('Failed to report error:', e));
-    } catch (e) {
-      console.error('Failed to send error to server:', e);
-    }
-  }
-  
-  return false; // Let the default handler run
-};
-
-// Setup promise rejection handler
-window.addEventListener('unhandledrejection', function(event) {
-  console.error('Unhandled promise rejection:', event.reason);
-});
-
-// Enable React strict mode for additional checks
-const StrictApp = () => (
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
-
-// Add performance monitoring
-const reportWebVitals = ({ name, delta, id, entries }) => {
-  console.log('Web Vitals:', { name, delta, id });
-  
-  // Send to server
-  try {
-    fetch('/api/web-vitals', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, value: delta, id })
-    }).catch(e => console.error('Failed to report web vital:', e));
-  } catch (e) {
-    console.error('Failed to send web vital to server:', e);
-  }
-};
-
-// Debug component rendering
-class DebugObserver extends React.Component {
-  componentDidMount() {
-    console.log('App mounted');
-  }
-  
-  componentDidUpdate() {
-    console.log('App updated');
-  }
-  
-  render() {
-    return this.props.children;
-  }
-}
-
-const container = document.getElementById('root');
-const root = createRoot(container);
-
-root.render(
-  <DebugObserver>
-    <StrictApp />
-  </DebugObserver>
-);
-
-// Import web-vitals
-import('web-vitals').then(({ getCLS, getFID, getFCP, getLCP, getTTFB }) => {
-  getCLS(reportWebVitals);
-  getFID(reportWebVitals);
-  getFCP(reportWebVitals);
-  getLCP(reportWebVitals);
-  getTTFB(reportWebVitals);
-});
-
-console.log('Debug mode enabled - React v' + React.version);
-`;
-
-// Write the debug version
-fs.writeFileSync(debugIndexPath, debugContent);
-
-console.log(`Debug client version created at ${debugIndexPath}`);
-console.log('To use the debug version:');
-console.log('1. Rename index.tsx to index.original.tsx');
-console.log('2. Rename index.debug.tsx to index.tsx');
-console.log('3. Restart your development server');
-console.log('4. Check the console for detailed logging');
-/**
- * Client Debug Utility
- * 
- * This script provides component-level performance debugging and analysis
- * for React components.
- */
-
-const fs = require('fs');
-const path = require('path');
-const { performance } = require('perf_hooks');
-
-// Define paths to scan for components
-const COMPONENT_PATHS = [
-  path.resolve(__dirname, '../client/src/components')
+// Configuration constants
+const MIN_RENDER_TIME_MS = 16; // ~60fps threshold
+const COMPONENT_DIRS = [
+  './client/src/components',
+  './client/src/pages'
 ];
 
-// Performance thresholds
-const PERFORMANCE_THRESHOLDS = {
-  renderTime: 16, // milliseconds (target 60fps)
-  loadTime: 300,  // milliseconds
-  bundleSize: 50  // KB
-};
-
-// Component tracking data
-const componentStats = new Map();
-
-/**
- * Scan codebase for React components
- */
-function scanForComponents() {
-  const components = [];
+// Generate performance debugging JavaScript to inject
+const PERFORMANCE_DEBUG_SCRIPT = `
+// Component Performance Monitoring
+if (!window.__PERFORMANCE_MONITOR) {
+  console.log('[Performance Monitor] Initializing component performance tracking');
   
-  function scanDir(dirPath) {
-    const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+  window.__PERFORMANCE_MONITOR = {
+    renders: {},
+    slowComponents: {},
+    lazyLoadTiming: {},
+    resourceTiming: {}
+  };
+  
+  // Override React's development mode measurement functions
+  if (typeof React !== 'undefined' && typeof React.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED !== 'undefined') {
+    const ReactDOM = window.ReactDOM || {};
+    const OriginalFunctions = {
+      render: ReactDOM.render,
+      hydrate: ReactDOM.hydrate
+    };
     
-    for (const entry of entries) {
-      const fullPath = path.join(dirPath, entry.name);
+    // Monkey patch React's render methods to measure performance
+    if (ReactDOM.render) {
+      ReactDOM.render = function() {
+        console.log('[Performance Monitor] Measuring initial render');
+        const start = performance.now();
+        const result = OriginalFunctions.render.apply(this, arguments);
+        const duration = performance.now() - start;
+        console.log('[Performance Monitor] Initial render took ' + duration.toFixed(2) + 'ms');
+        return result;
+      };
+    }
+    
+    // Track component render times using the profiler if available
+    if (typeof React.Profiler !== 'undefined') {
+      window.__ORIGINAL_CREATEELEMENT = React.createElement;
       
-      if (entry.isDirectory()) {
-        scanDir(fullPath);
-      } else if (
-        entry.isFile() && 
-        (entry.name.endsWith('.tsx') || entry.name.endsWith('.jsx'))
-      ) {
-        // Skip test files and type definitions
-        if (entry.name.includes('.test.') || entry.name.includes('.spec.') || entry.name.includes('.d.ts')) {
-          continue;
+      React.createElement = function(type, props, ...children) {
+        if (typeof type === 'function' && type.name) {
+          const wrappedProps = { ...props };
+          
+          // Only instrument component functions, not DOM elements
+          return React.createElement(
+            React.Profiler,
+            {
+              id: type.name,
+              onRender: (id, phase, actualDuration) => {
+                if (!window.__PERFORMANCE_MONITOR.renders[id]) {
+                  window.__PERFORMANCE_MONITOR.renders[id] = [];
+                }
+                
+                window.__PERFORMANCE_MONITOR.renders[id].push({
+                  duration: actualDuration,
+                  timestamp: Date.now()
+                });
+                
+                // Track slow components
+                if (actualDuration > ${MIN_RENDER_TIME_MS}) {
+                  if (!window.__PERFORMANCE_MONITOR.slowComponents[id]) {
+                    window.__PERFORMANCE_MONITOR.slowComponents[id] = {
+                      count: 0,
+                      totalDuration: 0,
+                      maxDuration: 0
+                    };
+                  }
+                  
+                  window.__PERFORMANCE_MONITOR.slowComponents[id].count++;
+                  window.__PERFORMANCE_MONITOR.slowComponents[id].totalDuration += actualDuration;
+                  
+                  if (actualDuration > window.__PERFORMANCE_MONITOR.slowComponents[id].maxDuration) {
+                    window.__PERFORMANCE_MONITOR.slowComponents[id].maxDuration = actualDuration;
+                  }
+                  
+                  console.warn(
+                    \`[Performance Monitor] Slow render detected: \${id} took \${actualDuration.toFixed(2)}ms\`
+                  );
+                }
+              }
+            },
+            React.__ORIGINAL_CREATEELEMENT(type, wrappedProps, ...children)
+          );
         }
         
-        try {
-          const content = fs.readFileSync(fullPath, 'utf8');
-          const componentName = extractComponentName(content, entry.name);
-          
-          if (componentName) {
-            components.push({
-              name: componentName,
-              path: fullPath,
-              relativePath: path.relative(process.cwd(), fullPath)
-            });
+        return window.__ORIGINAL_CREATEELEMENT.apply(null, [type, props, ...children]);
+      };
+    }
+  
+    // Monitor lazy loading performance
+    const originalLazy = React.lazy;
+    if (originalLazy) {
+      React.lazy = function(loader) {
+        const componentPromise = loader();
+        const componentName = loader.name || 'UnnamedLazyComponent';
+        
+        const wrappedPromise = componentPromise.then(result => {
+          const startTime = window.__PERFORMANCE_MONITOR.lazyLoadTiming[componentName]?.startTime || 0;
+          if (startTime) {
+            const loadTime = performance.now() - startTime;
+            
+            window.__PERFORMANCE_MONITOR.lazyLoadTiming[componentName] = {
+              ...window.__PERFORMANCE_MONITOR.lazyLoadTiming[componentName],
+              endTime: performance.now(),
+              loadTime,
+              loaded: true
+            };
+            
+            console.log(
+              \`[Performance Monitor] Lazy component loaded: \${componentName} in \${loadTime.toFixed(2)}ms\`
+            );
           }
-        } catch (error) {
-          console.warn(`Error reading file ${fullPath}:`, error.message);
-        }
-      }
-    }
-  }
-  
-  // Scan all component directories
-  for (const componentPath of COMPONENT_PATHS) {
-    scanDir(componentPath);
-  }
-  
-  return components;
-}
-
-/**
- * Extract component name from file content
- */
-function extractComponentName(content, fileName) {
-  // Try to extract component name from various patterns
-  
-  // Pattern: export default function ComponentName() 
-  const functionMatch = content.match(/export\s+default\s+function\s+([A-Za-z0-9_]+)/);
-  if (functionMatch) return functionMatch[1];
-  
-  // Pattern: const ComponentName = () => 
-  const constMatch = content.match(/const\s+([A-Za-z0-9_]+)\s*=\s*\([^)]*\)\s*=>/);
-  if (constMatch) return constMatch[1];
-  
-  // Pattern: class ComponentName extends React.Component
-  const classMatch = content.match(/class\s+([A-Za-z0-9_]+)\s+extends\s+React\.Component/);
-  if (classMatch) return classMatch[1];
-  
-  // Fallback: use file name without extension
-  return path.basename(fileName, path.extname(fileName));
-}
-
-/**
- * Analyze component code for potential issues
- */
-function analyzeComponentCode(componentInfo) {
-  const content = fs.readFileSync(componentInfo.path, 'utf8');
-  const issues = [];
-  
-  // Check for potentially inefficient patterns
-  if (content.includes('useState(') && !content.includes('useCallback(') && 
-      content.includes('=>') && content.includes('set')) {
-    issues.push('Missing useCallback for handler with state updates');
-  }
-  
-  if (content.includes('useEffect(') && !content.match(/useEffect\([^,]+,\s*\[[^\]]*\]\)/)) {
-    issues.push('useEffect without dependency array');
-  }
-  
-  if ((content.match(/new /g) || []).length > 3) {
-    issues.push('Multiple object instantiations in render');
-  }
-  
-  if (content.includes('map(') && !content.includes('key=')) {
-    issues.push('Array mapping without key prop');
-  }
-  
-  return issues;
-}
-
-/**
- * Check if a component is lazy loaded
- */
-function isLazyLoaded(componentInfo) {
-  // Look for imports of this component in client code
-  const clientSrcPath = path.resolve(__dirname, '../client/src');
-  const componentName = componentInfo.name;
-  let isLazy = false;
-  
-  function scanForLazyImport(dirPath) {
-    const entries = fs.readdirSync(dirPath, { withFileTypes: true });
-    
-    for (const entry of entries) {
-      if (entry.isDirectory()) {
-        scanForLazyImport(path.join(dirPath, entry.name));
-      } else if (entry.isFile() && 
-                (entry.name.endsWith('.tsx') || 
-                 entry.name.endsWith('.jsx') ||
-                 entry.name.endsWith('.ts'))) {
-        try {
-          const content = fs.readFileSync(path.join(dirPath, entry.name), 'utf8');
           
-          // Look for React.lazy or lazy imports
-          if (content.includes(`lazy(`) && content.includes(componentName)) {
-            isLazy = true;
-            return;
-          }
-        } catch (error) {
-          // Skip file read errors
-        }
-      }
+          return result;
+        });
+        
+        window.__PERFORMANCE_MONITOR.lazyLoadTiming[componentName] = {
+          startTime: performance.now(),
+          loaded: false
+        };
+        
+        return originalLazy(() => wrappedPromise);
+      };
     }
   }
   
-  scanForLazyImport(clientSrcPath);
-  return isLazy;
-}
-
-/**
- * Generate optimization suggestions for a component
- */
-function generateOptimizationSuggestions(componentInfo, issues) {
-  const suggestions = [];
-  
-  // Check if component is lazy loaded
-  const isLazy = isLazyLoaded(componentInfo);
-  if (!isLazy && path.basename(path.dirname(componentInfo.path)) !== 'common') {
-    suggestions.push('Consider lazy loading this component');
-  }
-  
-  // Add suggestions based on detected issues
-  for (const issue of issues) {
-    switch (issue) {
-      case 'Missing useCallback for handler with state updates':
-        suggestions.push('Use useCallback for event handlers that update state');
-        break;
-      case 'useEffect without dependency array':
-        suggestions.push('Add dependency array to useEffect to prevent unnecessary rerenders');
-        break;
-      case 'Multiple object instantiations in render':
-        suggestions.push('Move object instantiations outside the component or memoize them');
-        break;
-      case 'Array mapping without key prop':
-        suggestions.push('Add unique key prop to items in mapped arrays');
-        break;
-    }
-  }
-  
-  // Check file size and suggest code splitting
-  try {
-    const stats = fs.statSync(componentInfo.path);
-    const sizeKB = stats.size / 1024;
-    
-    if (sizeKB > PERFORMANCE_THRESHOLDS.bundleSize) {
-      suggestions.push(`Large component (${sizeKB.toFixed(1)}KB). Consider splitting functionality`);
-    }
-  } catch (error) {
-    // Skip file stat errors
-  }
-  
-  return suggestions;
-}
-
-/**
- * Run the component debugger
- */
-function debugClient() {
-  console.log('Starting client component debugger...');
-  
-  // Scan for components
-  const components = scanForComponents();
-  console.log(`Found ${components.length} components`);
-  
-  // Analyze each component
-  const results = [];
-  
-  for (const component of components) {
-    try {
-      const issues = analyzeComponentCode(component);
-      const suggestions = generateOptimizationSuggestions(component, issues);
-      const renderPerfData = componentStats.get(component.name);
+  // Resource timing measurement
+  const originalFetch = window.fetch;
+  if (originalFetch) {
+    window.fetch = function(...args) {
+      const url = args[0]?.url || args[0];
+      const startTime = performance.now();
       
-      results.push({
-        name: component.name,
-        path: component.relativePath,
-        issues: issues.length > 0 ? issues : null,
-        suggestions: suggestions.length > 0 ? suggestions : null,
-        isLazy: isLazyLoaded(component),
-        performanceData: renderPerfData || null
+      return originalFetch.apply(this, args)
+        .then(response => {
+          const duration = performance.now() - startTime;
+          
+          if (!window.__PERFORMANCE_MONITOR.resourceTiming[url]) {
+            window.__PERFORMANCE_MONITOR.resourceTiming[url] = [];
+          }
+          
+          window.__PERFORMANCE_MONITOR.resourceTiming[url].push({
+            duration,
+            timestamp: Date.now(),
+            status: response.status
+          });
+          
+          if (duration > 500) {
+            console.warn(\`[Performance Monitor] Slow fetch: \${url} took \${duration.toFixed(2)}ms\`);
+          }
+          
+          return response;
+        })
+        .catch(error => {
+          const duration = performance.now() - startTime;
+          
+          if (!window.__PERFORMANCE_MONITOR.resourceTiming[url]) {
+            window.__PERFORMANCE_MONITOR.resourceTiming[url] = [];
+          }
+          
+          window.__PERFORMANCE_MONITOR.resourceTiming[url].push({
+            duration,
+            timestamp: Date.now(),
+            error: error.message
+          });
+          
+          throw error;
+        });
+    };
+  }
+  
+  // Image loading performance
+  const imageLoadTimes = {};
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('img').forEach(img => {
+      const src = img.getAttribute('src');
+      if (src) {
+        imageLoadTimes[src] = performance.now();
+        
+        img.addEventListener('load', () => {
+          const startTime = imageLoadTimes[src];
+          if (startTime) {
+            const loadTime = performance.now() - startTime;
+            
+            if (!window.__PERFORMANCE_MONITOR.resourceTiming[src]) {
+              window.__PERFORMANCE_MONITOR.resourceTiming[src] = [];
+            }
+            
+            window.__PERFORMANCE_MONITOR.resourceTiming[src].push({
+              duration: loadTime,
+              timestamp: Date.now(),
+              type: 'img'
+            });
+            
+            if (loadTime > 1000) {
+              console.warn(\`[Performance Monitor] Slow image load: \${src} took \${loadTime.toFixed(2)}ms\`);
+            }
+          }
+        });
+      }
+    });
+  });
+  
+  // Add performance report command to console
+  window.getPerformanceReport = function() {
+    console.log('=== Performance Report ===');
+    
+    // Slow components report
+    const slowComponentsArray = Object.entries(window.__PERFORMANCE_MONITOR.slowComponents)
+      .map(([name, data]) => ({
+        name,
+        count: data.count,
+        avgDuration: data.totalDuration / data.count,
+        maxDuration: data.maxDuration
+      }))
+      .sort((a, b) => b.avgDuration - a.avgDuration);
+    
+    console.log('Top 10 Slowest Components:');
+    console.table(slowComponentsArray.slice(0, 10));
+    
+    // Lazy loaded components report
+    const lazyComponentsArray = Object.entries(window.__PERFORMANCE_MONITOR.lazyLoadTiming)
+      .map(([name, data]) => ({
+        name,
+        loadTime: data.loadTime || 'Not loaded yet',
+        loaded: data.loaded ? 'Yes' : 'No'
+      }))
+      .sort((a, b) => {
+        const aTime = typeof a.loadTime === 'number' ? a.loadTime : Infinity;
+        const bTime = typeof b.loadTime === 'number' ? b.loadTime : Infinity;
+        return bTime - aTime;
       });
+    
+    console.log('Lazy Loaded Components:');
+    console.table(lazyComponentsArray);
+    
+    // Slow resource requests
+    const slowResourcesArray = Object.entries(window.__PERFORMANCE_MONITOR.resourceTiming)
+      .flatMap(([url, timings]) => 
+        timings.map(timing => ({
+          url: url.length > 50 ? url.substring(0, 47) + '...' : url,
+          duration: timing.duration,
+          status: timing.status || 'N/A',
+          type: timing.type || 'fetch'
+        }))
+      )
+      .filter(resource => resource.duration > 300)
+      .sort((a, b) => b.duration - a.duration);
+    
+    console.log('Slow Resource Requests (>300ms):');
+    console.table(slowResourcesArray.slice(0, 15));
+    
+    // Calculate total render time across components
+    const totalRenderTime = Object.values(window.__PERFORMANCE_MONITOR.slowComponents)
+      .reduce((sum, component) => sum + component.totalDuration, 0);
+    
+    console.log(\`Total slow render time: \${totalRenderTime.toFixed(2)}ms\`);
+    
+    // Return the full data for potential export
+    return {
+      slowComponents: slowComponentsArray,
+      lazyComponents: lazyComponentsArray,
+      slowResources: slowResourcesArray,
+      totalRenderTime
+    };
+  };
+  
+  console.log('[Performance Monitor] Performance monitoring enabled. Use window.getPerformanceReport() to see results');
+}
+`;
+
+/**
+ * Generate instrumentation script to inject into HTML files
+ */
+function generateInstrumentationScript() {
+  return `
+<script>
+${PERFORMANCE_DEBUG_SCRIPT}
+</script>
+  `.trim();
+}
+
+/**
+ * Find React components that might benefit from optimization
+ */
+function findOptimizationCandidates() {
+  const candidates = [];
+  
+  // Find all React component files
+  for (const componentDir of COMPONENT_DIRS) {
+    if (!fs.existsSync(componentDir)) {
+      continue;
+    }
+    
+    const findComponentsCommand = `find "${componentDir}" -type f -name "*.tsx" -o -name "*.jsx"`;
+    const componentFiles = execSync(findComponentsCommand, { encoding: 'utf8' })
+      .split('\n')
+      .filter(Boolean);
+    
+    // Analyze each component file
+    for (const filePath of componentFiles) {
+      try {
+        const content = fs.readFileSync(filePath, 'utf8');
+        const componentName = path.basename(filePath).replace(/\.[jt]sx$/, '');
+        
+        // Look for optimization opportunities
+        const hasUseEffect = content.includes('useEffect(');
+        const hasUseState = content.includes('useState(');
+        const hasComplexJSX = (content.match(/<[A-Z][^>]*>/g) || []).length > 10;
+        const hasNestedLoops = content.includes('.map(') && 
+          (content.includes('.filter(') || content.includes('.forEach(') || 
+           content.includes('.map(') && content.lastIndexOf('.map(') !== content.indexOf('.map('));
+        const hasManyProps = (content.match(/props\./g) || []).length > 10;
+        const hasInlineStyles = content.includes('style={');
+        const hasInlineEventHandlers = content.includes('onClick={') || content.includes('onChange={');
+        
+        // Check for React.memo usage
+        const usesMemo = content.includes('React.memo') || content.includes('memo(');
+        
+        // Check for useMemo/useCallback usage
+        const hasUseMemo = content.includes('useMemo(');
+        const hasUseCallback = content.includes('useCallback(');
+        
+        // Scoring system for optimization candidates
+        let score = 0;
+        const optimizationReasons = [];
+        
+        if (hasComplexJSX) {
+          score += 3;
+          optimizationReasons.push('Complex JSX structure');
+        }
+        
+        if (hasNestedLoops) {
+          score += 5;
+          optimizationReasons.push('Nested array operations');
+        }
+        
+        if (hasManyProps) {
+          score += 2;
+          optimizationReasons.push('Many prop accesses');
+        }
+        
+        if (hasUseEffect && hasUseState) {
+          score += 2;
+          optimizationReasons.push('Stateful with side effects');
+        }
+        
+        if (hasInlineStyles) {
+          score += 1;
+          optimizationReasons.push('Inline styles');
+        }
+        
+        if (hasInlineEventHandlers && !hasUseCallback) {
+          score += 2;
+          optimizationReasons.push('Non-memoized event handlers');
+        }
+        
+        // Reduce score if already optimized
+        if (usesMemo) {
+          score -= 3;
+        }
+        
+        if (hasUseMemo && hasUseCallback) {
+          score -= 2;
+        }
+        
+        // Only include high-scoring candidates
+        if (score >= 3) {
+          candidates.push({
+            componentName,
+            filePath,
+            score,
+            optimizationReasons,
+            isAlreadyMemoized: usesMemo,
+            usesPerformanceHooks: hasUseMemo || hasUseCallback
+          });
+        }
+      } catch (error) {
+        console.error(`Error analyzing component ${filePath}:`, error);
+      }
+    }
+  }
+  
+  // Sort by score (highest first)
+  return candidates.sort((a, b) => b.score - a.score);
+}
+
+/**
+ * Inject performance monitoring into HTML files
+ */
+function injectPerformanceMonitoring() {
+  const htmlFiles = [
+    './client/index.html',
+    './public/index.html',
+    './dist/client/index.html'
+  ].filter(fs.existsSync);
+  
+  if (htmlFiles.length === 0) {
+    console.warn('⚠️ No HTML files found for instrumentation');
+    return [];
+  }
+  
+  const injectedFiles = [];
+  const instrumentationScript = generateInstrumentationScript();
+  
+  for (const htmlFile of htmlFiles) {
+    try {
+      // Create backup
+      const backupFile = `${htmlFile}.bak`;
+      fs.copyFileSync(htmlFile, backupFile);
+      
+      // Read file
+      let content = fs.readFileSync(htmlFile, 'utf8');
+      
+      // Check if already instrumented
+      if (content.includes('[Performance Monitor]')) {
+        console.log(`📝 File already instrumented: ${htmlFile}`);
+        continue;
+      }
+      
+      // Inject before closing head tag
+      if (content.includes('</head>')) {
+        content = content.replace('</head>', `${instrumentationScript}\n</head>`);
+      } else {
+        // Inject before closing body if no head
+        content = content.replace('</body>', `${instrumentationScript}\n</body>`);
+      }
+      
+      // Write updated content
+      fs.writeFileSync(htmlFile, content, 'utf8');
+      
+      console.log(`📝 Instrumented file: ${htmlFile}`);
+      injectedFiles.push(htmlFile);
     } catch (error) {
-      console.error(`Error analyzing component ${component.name}:`, error);
+      console.error(`Error instrumenting ${htmlFile}:`, error);
     }
   }
   
-  // Sort results by name
-  results.sort((a, b) => a.name.localeCompare(b.name));
+  return injectedFiles;
+}
+
+/**
+ * Run client debugging setup
+ */
+function setupClientDebugging() {
+  console.log('🔍 Setting up client-side performance debugging...');
   
-  // Output results
-  console.log('\nComponent Analysis Results:');
-  console.log('==========================\n');
-  
-  for (const result of results) {
-    console.log(`Component: ${result.name}`);
-    console.log(`Path: ${result.path}`);
-    console.log(`Lazy Loaded: ${result.isLazy ? 'Yes' : 'No'}`);
+  try {
+    // Find components to optimize
+    console.log('🔎 Analyzing components for optimization opportunities...');
+    const optimizationCandidates = findOptimizationCandidates();
     
-    if (result.issues) {
-      console.log('Issues:');
-      for (const issue of result.issues) {
-        console.log(`  - ${issue}`);
-      }
+    // Inject performance monitoring
+    console.log('📊 Injecting performance monitoring...');
+    const injectedFiles = injectPerformanceMonitoring();
+    
+    // Generate report
+    const report = {
+      timestamp: new Date().toISOString(),
+      optimizationCandidates: optimizationCandidates.slice(0, 15), // Top 15 candidates
+      instrumentedFiles: injectedFiles,
+      instructions: [
+        'Load the application in your browser',
+        'Use it normally to gather performance data',
+        'Open browser console and run window.getPerformanceReport() to see results',
+        'Examine "Top 10 Slowest Components" to identify optimization targets'
+      ]
+    };
+    
+    // Save report
+    const reportDir = path.resolve(process.cwd(), 'logs');
+    if (!fs.existsSync(reportDir)) {
+      fs.mkdirSync(reportDir, { recursive: true });
     }
     
-    if (result.suggestions) {
-      console.log('Optimization Suggestions:');
-      for (const suggestion of result.suggestions) {
-        console.log(`  - ${suggestion}`);
-      }
+    const reportPath = path.resolve(reportDir, 'client-optimization.json');
+    fs.writeFileSync(reportPath, JSON.stringify(report, null, 2));
+    
+    // Display results
+    console.log('\n📊 Client Debugging Setup Complete');
+    console.log('\nOptimization Candidates:');
+    
+    optimizationCandidates.slice(0, 5).forEach((candidate, index) => {
+      console.log(`${index + 1}. ${candidate.componentName} (Score: ${candidate.score})`);
+      console.log(`   - Reasons: ${candidate.optimizationReasons.join(', ')}`);
+      console.log(`   - Path: ${candidate.filePath}`);
+    });
+    
+    if (injectedFiles.length > 0) {
+      console.log('\nPerformance monitoring injected into:');
+      injectedFiles.forEach(file => console.log(`- ${file}`));
+      
+      console.log('\n📝 Instructions:');
+      console.log('1. Load the application in your browser');
+      console.log('2. Use it normally to gather performance data');
+      console.log('3. Open browser console and run window.getPerformanceReport() to see results');
+    } else {
+      console.log('\n⚠️ No files were instrumented for performance monitoring');
     }
     
-    if (result.performanceData) {
-      console.log('Performance:');
-      console.log(`  Avg Render Time: ${result.performanceData.avgRenderTime.toFixed(2)}ms`);
-      console.log(`  Max Render Time: ${result.performanceData.maxRenderTime.toFixed(2)}ms`);
-      console.log(`  Render Count: ${result.performanceData.renderCount}`);
-    }
+    console.log(`\n📄 Full report saved to: ${reportPath}`);
     
-    console.log('');
+    return report;
+  } catch (error) {
+    console.error('❌ Error setting up client debugging:', error);
+    return {
+      status: 'error',
+      message: error.message
+    };
   }
-  
-  console.log('Summary:');
-  console.log(`Total components: ${results.length}`);
-  console.log(`Components with issues: ${results.filter(r => r.issues).length}`);
-  console.log(`Lazy loaded components: ${results.filter(r => r.isLazy).length}`);
-  
-  return {
-    timestamp: new Date().toISOString(),
-    componentCount: results.length,
-    componentsWithIssues: results.filter(r => r.issues).length,
-    lazyLoadedComponents: results.filter(r => r.isLazy).length,
-    results
+}
+
+// Run directly or export for use in other modules
+if (require.main === module) {
+  setupClientDebugging()
+    .then(() => {
+      console.log('\n✅ Client debugging setup complete');
+      process.exit(0);
+    })
+    .catch(error => {
+      console.error('❌ Error running client debugging setup:', error);
+      process.exit(1);
+    });
+} else {
+  module.exports = {
+    setupClientDebugging,
+    findOptimizationCandidates,
+    injectPerformanceMonitoring
   };
 }
-
-// Run the debugger if called directly
-if (require.main === module) {
-  const results = debugClient();
-  
-  // Save results to file
-  const outputPath = path.resolve(__dirname, '../logs/component-analysis.json');
-  fs.mkdirSync(path.dirname(outputPath), { recursive: true });
-  fs.writeFileSync(outputPath, JSON.stringify(results, null, 2));
-  
-  console.log(`Results saved to ${outputPath}`);
-}
-
-module.exports = { debugClient };
