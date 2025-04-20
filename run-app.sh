@@ -188,7 +188,10 @@ run_workflow() {
   eval "$workflow_cmd" || {
     log "${RED}Workflow failed, attempting fallback...${NC}"
     # Fallback handling
-    if [ -f "simple-server.js" ]; then
+    if [ -f "simple-server.cjs" ]; then
+      log "${YELLOW}Starting simple-server.cjs as fallback...${NC}"
+      $NODE simple-server.cjs
+    elif [ -f "simple-server.js" ]; then
       log "${YELLOW}Starting simple-server.js as fallback...${NC}"
       $NODE simple-server.js
     elif [ -f "index.js" ]; then

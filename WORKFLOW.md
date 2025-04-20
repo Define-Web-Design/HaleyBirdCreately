@@ -36,8 +36,10 @@ The system provides four main workflows:
 
 3. **Deploy Application**: Builds and deploys the application for production use
    ```
-   ./run-workflow.sh "Deploy Application"  # or ./run-workflow.sh 3
+   ./deploy.sh  # or ./run-workflow.sh "Deploy Application"
    ```
+   
+   > **Note**: The `deploy.sh` script has been enhanced with robust fallback mechanisms to handle build failures and ensure successful deployment even in challenging environments.
 
 4. **Database Management**: Manages database schema updates and migrations
    ```
@@ -95,10 +97,28 @@ To add a new workflow:
 
 ## Fallback Mechanisms
 
-The workflow system includes fallback mechanisms:
+The workflow system includes robust fallback mechanisms:
 
-- If a workflow fails, it attempts to start a simple server
-- If `jq` is not available, it falls back to basic parsing
-- If dependencies are missing, it attempts to install them
+- If a workflow fails, it attempts to start a simple server (`simple-server.cjs`)
+- If the build process fails, it tries alternative build methods
+- If dependencies are missing, it attempts multiple installation methods
+- If `jq` is not available, it falls back to basic parsing with grep/sed
+
+These fallback mechanisms were specifically designed to handle the following scenarios:
+
+1. **Build failures**: The system attempts alternative build paths when the standard build fails
+2. **Dependency issues**: Multiple fallback methods for dependency installation
+3. **Module format incompatibilities**: CommonJS fallback server handles ES module issues
+4. **Server startup failures**: Graceful degradation to a minimal functionality server
 
 This ensures the application remains as robust as possible, even in challenging environments.
+
+### Fallback Server
+
+If the main application fails to start, the system automatically launches a fallback server (`simple-server.cjs`) that provides:
+
+- Basic static file serving
+- Simple API status endpoint
+- Informative error page with diagnostic information
+
+This allows for minimal functionality and error reporting even when the main application cannot start properly.
