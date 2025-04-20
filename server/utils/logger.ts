@@ -330,3 +330,202 @@ export const log = {
   websocket: logWebSocketActivity,
   createContext: createContextLogger
 };
+/**
+ * Unified Logging System
+ * 
+ * This module provides consistent logging across the application with
+ * configurable outputs and log levels.
+ */
+
+import fs from 'fs';
+import path from 'path';
+import { getLoggingConfig } from '../../config/globalConfig';
+
+// Define log levels and their numeric values
+const LOG_LEVELS = {
+  error: 0,
+  warn: 1,
+  info: 2,
+  debug: 3
+};
+
+type LogLevel = keyof typeof LOG_LEVELS;
+
+// Base logger interface
+interface Logger {
+  error(message: string, meta?: any): void;
+  warn(message: string, meta?: any): void;
+  info(message: string, meta?: any): void;
+  debug(message: string, meta?: any): void;
+}
+
+// Console logger implementation
+class ConsoleLogger implements Logger {
+  private level: LogLevel;
+  
+  constructor(level: LogLevel = 'info') {
+    this.level = level;
+  }
+  
+  private shouldLog(level: LogLevel): boolean {
+    return LOG_LEVELS[level] <= LOG_LEVELS[this.level];
+  }
+  
+  private formatMeta(meta: any): string {
+    if (!meta) return '';
+    
+    if (meta instanceof Error) {
+      return `\n${meta.stack || meta.message}`;
+    }
+    
+    try {
+      return `\n${JSON.stringify(meta, null, 2)}`;
+    } catch (err) {
+      return `\n[Unserializable Object]`;
+    }
+  }
+  
+  error(message: string, meta?: any): void {
+    if (this.shouldLog('error')) {
+      console.error(`[ERROR] ${message}${meta ? this.formatMeta(meta) : ''}`);
+    }
+  }
+  
+  warn(message: string, meta?: any): void {
+    if (this.shouldLog('warn')) {
+      console.warn(`[WARN] ${message}${meta ? this.formatMeta(meta) : ''}`);
+    }
+  }
+  
+  info(message: string, meta?: any): void {
+    if (this.shouldLog('info')) {
+      console.info(`[INFO] ${message}${meta ? this.formatMeta(meta) : ''}`);
+    }
+  }
+  
+  debug(message: string, meta?: any): void {
+    if (this.shouldLog('debug')) {
+      console.debug(`[DEBUG] ${message}${meta ? this.formatMeta(meta) : ''}`);
+    }
+  }
+}
+
+// File logger implementation
+class FileLogger implements Logger {
+  private level: LogLevel;
+  private logFilePath: string;
+  
+  constructor(level: LogLevel = 'info', logFilePath?: string) {
+    this.level = level;
+    this.logFilePath = logFilePath || path.join(process.cwd(), 'logs', 'app.log');
+    
+    // Ensure log directory exists
+    const logDir = path.dirname(this.logFilePath);
+    if (!fs.existsSync(logDir)) {
+      fs.mkdirSync(logDir, { recursive: true });
+    }
+  }
+  
+  private shouldLog(level: LogLevel): boolean {
+    return LOG_LEVELS[level] <= LOG_LEVELS[this.level];
+  }
+  
+  private formatMessage(level: string, message: string, meta?: any): string {
+    const timestamp = new Date().toISOString();
+    const metaStr = meta ? this.formatMeta(meta) : '';
+    return `[${timestamp}] [${level}] ${message}${metaStr}\n`;
+  }
+  
+  private formatMeta(meta: any): string {
+    if (!meta) return '';
+    
+    if (meta instanceof Error) {
+      return `\n${meta.stack || meta.message}`;
+    }
+    
+    try {
+      return `\n${JSON.stringify(meta, null, 2)}`;
+    } catch (err) {
+      return `\n[Unserializable Object]`;
+    }
+  }
+  
+  private appendToLog(message: string): void {
+    try {
+      fs.appendFileSync(this.logFilePath, message);
+    } catch (err) {
+      console.error(`Error writing to log file: ${err}`);
+    }
+  }
+  
+  error(message: string, meta?: any): void {
+    if (this.shouldLog('error')) {
+      this.appendToLog(this.formatMessage('ERROR', message, meta));
+    }
+  }
+  
+  warn(message: string, meta?: any): void {
+    if (this.shouldLog('warn')) {
+      this.appendToLog(this.formatMessage('WARN', message, meta));
+    }
+  }
+  
+  info(message: string, meta?: any): void {
+    if (this.shouldLog('info')) {
+      this.appendToLog(this.formatMessage('INFO', message, meta));
+    }
+  }
+  
+  debug(message: string, meta?: any): void {
+    if (this.shouldLog('debug')) {
+      this.appendToLog(this.formatMessage('DEBUG', message, meta));
+    }
+  }
+}
+
+// Multi-logger that can output to multiple destinations
+class MultiLogger implements Logger {
+  private loggers: Logger[] = [];
+  
+  constructor(loggers: Logger[]) {
+    this.loggers = loggers;
+  }
+  
+  error(message: string, meta?: any): void {
+    this.loggers.forEach(logger => logger.error(message, meta));
+  }
+  
+  warn(message: string, meta?: any): void {
+    this.loggers.forEach(logger => logger.warn(message, meta));
+  }
+  
+  info(message: string, meta?: any): void {
+    this.loggers.forEach(logger => logger.info(message, meta));
+  }
+  
+  debug(message: string, meta?: any): void {
+    this.loggers.forEach(logger => logger.debug(message, meta));
+  }
+}
+
+// Create the application logger
+function createLogger(): Logger {
+  const config = getLoggingConfig();
+  const loggers: Logger[] = [];
+  
+  if (config.outputs.includes('console')) {
+    loggers.push(new ConsoleLogger(config.level));
+  }
+  
+  if (config.outputs.includes('file')) {
+    loggers.push(new FileLogger(config.level, config.logFilePath));
+  }
+  
+  return new MultiLogger(loggers);
+}
+
+// Export the singleton logger instance
+export const logger = createLogger();
+
+// Export default logger
+export default logger;

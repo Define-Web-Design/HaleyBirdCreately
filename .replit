@@ -30,7 +30,7 @@ localPort = 3000
 externalPort = 80
 
 [workflows]
-runButton = "Creately Dev"
+runButton = "Development"
 
 [[workflows.workflow]]
 name = "Build and Start Production"
@@ -87,3 +87,25 @@ args = "#!/bin/bash"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "./master-workflow.sh \"Production Build\""
+
+[[workflows.workflow]]
+name = "Production"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run build"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "NODE_ENV=production PORT=3000 node dist/server/index.js"
+
+[[workflows.workflow]]
+name = "Development"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
