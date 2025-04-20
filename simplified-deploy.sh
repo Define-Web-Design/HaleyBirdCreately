@@ -1,17 +1,19 @@
 
 #!/bin/bash
 
-echo "Starting minimal deployment process..."
+# Display banner
+echo "====================================="
+echo "   Simplified Deployment Script"
+echo "====================================="
 
-# Ensure we're using the local Node.js binaries
-export PATH="./node_bin:$PATH"
+# Ensure script exits if any command fails
+set -e
 
-# Essential steps only
-echo "1. Installing production dependencies..."
-npm install --production --no-optional
+echo "1. Installing dependencies (including dev dependencies)..."
+npm install --include=dev
 
-echo "2. Building the application..."
-npm run build
+echo "2. Building for production..."
+NODE_ENV=production npm run build
 
-echo "3. Starting in production mode..."
+echo "3. Starting production server..."
 NODE_ENV=production node dist/index.js

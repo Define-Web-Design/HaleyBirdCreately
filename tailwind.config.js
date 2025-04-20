@@ -5,18 +5,6 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        apple: {
-          blue: "#007AFF",
-          indigo: "#5856D6",
-          purple: "#AF52DE",
-          pink: "#FF2D55",
-          red: "#FF3B30",
-          orange: "#FF9500",
-          yellow: "#FFCC00",
-          green: "#34C759",
-          teal: "#5AC8FA",
-          gray: "#8E8E93"
-        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -72,5 +60,5 @@ module.exports = {
       },
     },
   },
-  plugins: [require("tailwindcss-animate"), require("@tailwindcss/typography")],
+  plugins: [require("@tailwindcss/typography"), require("tailwindcss-animate")],
 }

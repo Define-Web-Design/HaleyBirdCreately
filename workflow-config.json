@@ -22,8 +22,8 @@
     {
       "name": "deploy",
       "description": "Build and deploy the application",
-      "command": "NODE_ENV=production npm run build && NODE_ENV=production node dist/server/index.js",
-      "dependencies": ["typescript", "express"],
+      "command": "npm install --include=dev && NODE_ENV=production npm run build && NODE_ENV=production node dist/server/index.js",
+      "dependencies": ["typescript", "express", "tailwindcss", "postcss", "autoprefixer"],
       "requiredFiles": ["server/index.ts", "package.json"]
     },
     {
@@ -42,38 +42,10 @@
     },
     {
       "name": "lint",
-      "description": "Run linting",
+      "description": "Lint and format code",
       "command": "npm run lint",
-      "dependencies": ["typescript", "eslint"],
-      "requiredFiles": ["package.json", "eslint.config.js"]
-    },
-    {
-      "name": "format",
-      "description": "Format code",
-      "command": "npm run format",
-      "dependencies": ["typescript", "prettier"],
+      "dependencies": ["eslint"],
       "requiredFiles": ["package.json"]
-    },
-    {
-      "name": "fallback",
-      "description": "Run the fallback server (simple static file server)",
-      "command": "node simple-server.cjs",
-      "dependencies": [],
-      "requiredFiles": ["simple-server.cjs"]
-    },
-    {
-      "name": "snippet-server",
-      "description": "Run the code snippet server",
-      "command": "node server.js",
-      "dependencies": ["express"],
-      "requiredFiles": ["server.js"]
-    },
-    {
-      "name": "discord-bot",
-      "description": "Run the Discord bot",
-      "command": "node discord_bot.js",
-      "dependencies": ["discord.js"],
-      "requiredFiles": ["discord_bot.js"]
     }
   ],
   "environments": {
