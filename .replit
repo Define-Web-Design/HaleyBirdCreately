@@ -35,7 +35,7 @@ localPort = 24678
 externalPort = 3000
 
 [workflows]
-runButton = "Simple Dev Server"
+runButton = "Optimal Deployment"
 
 [[workflows.workflow]]
 name = "Build and Start Production"
@@ -191,3 +191,37 @@ args = "#!/bin/bash"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "./simplified-deploy.sh"
+
+[[workflows.workflow]]
+name = "Development Server"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm install"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
+
+[[workflows.workflow]]
+name = "Optimal Deployment"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "#!/bin/bash"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm install"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run build"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "NODE_ENV=production PORT=3000 node dist/index.js"

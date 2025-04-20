@@ -1,19 +1,37 @@
 
 #!/bin/bash
 
-# Display banner
-echo "====================================="
-echo "   Simplified Deployment Script"
-echo "====================================="
+# Enhanced deployment script with fallback mechanisms
+echo "📦 Starting deployment process..."
 
-# Ensure script exits if any command fails
-set -e
+# Environment setup
+export NODE_ENV=production
+export PORT=3000
 
-echo "1. Installing dependencies (including dev dependencies)..."
-npm install --include=dev
+# Clean build artifacts if they exist
+if [ -d "dist" ]; then
+  echo "🧹 Cleaning previous build..."
+  rm -rf dist
+fi
 
-echo "2. Building for production..."
-NODE_ENV=production npm run build
+# Install dependencies with fallback mechanisms
+echo "📚 Installing dependencies..."
+npm install --include=dev || npm install || (echo "⚠️ Standard install failed, trying basic install..." && npm i --no-optional)
 
-echo "3. Starting production server..."
-NODE_ENV=production node dist/index.js
+# Build the application with fallback
+echo "🔨 Building application..."
+npm run build || (echo "⚠️ Build failed, attempting alternative build..." && npx vite build)
+
+# Verify build succeeded
+if [ ! -d "dist" ]; then
+  echo "❌ Build failed! Deploying fallback server..."
+  # Start fallback server if build fails
+  NODE_ENV=production node simple-server.cjs
+  exit 1
+fi
+
+echo "✅ Build successful!"
+
+# Start the server
+echo "🚀 Starting server..."
+NODE_ENV=production PORT=3000 node dist/index.js

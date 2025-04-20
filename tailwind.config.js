@@ -5,6 +5,7 @@ module.exports = {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
     "./client/src/**/*.{js,ts,jsx,tsx}",
+    "./client/index.html"
   ],
   darkMode: "class",
   theme: {
