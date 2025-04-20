@@ -3,7 +3,7 @@ import express from 'express';
 import { Request, Response } from 'express';
 import * as dotenv from 'dotenv';
 import { ServiceRegistry } from '../services/serviceRegistry';
-import { storage } from '../storage';
+import storage from '../storage';
 
 dotenv.config();
 
