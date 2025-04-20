@@ -13,6 +13,7 @@ channel = "stable-23_11"
 PORT = "3000"
 NODE_ENV = "development"
 REPLIT_DISABLE_PACKAGE_LAYER = "1"
+REPLIT_KEEP_PACKAGE_DEV_DEPENDENCIES = "1"
 
 [languages]
 [languages.javascript]
@@ -23,7 +24,7 @@ start = "typescript-language-server --stdio"
 [deployment]
 run = ["sh", "-c", "NODE_ENV=production node dist/index.js"]
 deploymentTarget = "gce"
-build = ["sh", "-c", "npm run build"]
+build = ["sh", "-c", "npm install --include=dev && npm run build"]
 
 [[ports]]
 localPort = 3000
