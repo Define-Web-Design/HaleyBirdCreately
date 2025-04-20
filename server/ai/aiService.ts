@@ -17,7 +17,7 @@ import {
   AIImageAnalysisOptions
 } from './aiTypes';
 import { logger } from '../utils/logger';
-import { createSimpleFallbackStrategy, SimpleFallbackStrategy } from './fallbackStrategies';
+import { createSimpleFallbackStrategy, createPriorityBasedFallbackStrategy, createCapabilityBasedFallbackStrategy } from './adapters/fallbackStrategies';
 
 // Function to get the best adapter based on metrics
 function getBestAdapter(registry: AIAdapterRegistry): AIAdapter {
@@ -25,7 +25,7 @@ function getBestAdapter(registry: AIAdapterRegistry): AIAdapter {
   if (adapters.length === 0) {
     throw new Error('No AI adapters available');
   }
-  
+
   // Default to the first adapter
   return adapters[0];
 }
@@ -35,17 +35,17 @@ function getBestAdapter(registry: AIAdapterRegistry): AIAdapter {
  */
 export class AIService {
   private fallbackStrategy: AIFallbackStrategy;
-  
+
   constructor(
     private registry: AIAdapterRegistry,
     fallbackStrategy?: AIFallbackStrategy
   ) {
     // Create a default fallback strategy if none provided
     this.fallbackStrategy = fallbackStrategy || new SimpleFallbackStrategy(registry);
-    
+
     logger.info('AI Service initialized with fallback strategy');
   }
-  
+
   /**
    * Get status information for all AI adapters
    */
@@ -55,7 +55,7 @@ export class AIService {
     available: string[] 
   } {
     const providers: Record<string, any> = {};
-    
+
     // Get status from each adapter
     this.registry.getAll().forEach(adapter => {
       providers[adapter.provider] = {
@@ -63,14 +63,14 @@ export class AIService {
         metrics: adapter.getMetrics()
       };
     });
-    
+
     return {
       providers,
       default: this.registry.getDefaultProvider(),
       available: this.registry.getAvailableProviders()
     };
   }
-  
+
   /**
    * Generate text from a prompt
    */
@@ -79,13 +79,13 @@ export class AIService {
     options?: AIRequestOptions
   ): Promise<AIResponse<string>> {
     logger.debug('Generating text', { promptLength: prompt.length, options });
-    
+
     return this.fallbackStrategy.execute(
       adapter => adapter.generateText(prompt, options),
       options
     );
   }
-  
+
   /**
    * Generate structured JSON from a prompt
    */
@@ -94,19 +94,19 @@ export class AIService {
     options?: AIRequestOptions
   ): Promise<AIResponse<T>> {
     logger.debug('Generating JSON', { promptLength: prompt.length, options });
-    
+
     // Ensure JSON mode is enabled
     const jsonOptions = { 
       ...options,
       jsonMode: true 
     };
-    
+
     return this.fallbackStrategy.execute(
       adapter => adapter.generateJson(prompt, jsonOptions),
       jsonOptions
     ) as Promise<AIResponse<T>>;
   }
-  
+
   /**
    * Generate chat completion from messages
    */
@@ -118,13 +118,13 @@ export class AIService {
       messageCount: messages.length, 
       options 
     });
-    
+
     return this.fallbackStrategy.execute(
       adapter => adapter.chatCompletion(messages, options),
       options
     );
   }
-  
+
   /**
    * Generate an image from a text prompt
    */
@@ -133,7 +133,7 @@ export class AIService {
     options?: AIImageGenerationOptions
   ): Promise<AIResponse<string>> {
     logger.debug('Generating image', { promptLength: prompt.length, options });
-    
+
     return this.fallbackStrategy.execute(
       async adapter => {
         if (!adapter.generateImage) {
@@ -144,7 +144,7 @@ export class AIService {
       options
     );
   }
-  
+
   /**
    * Analyze an image with a text prompt
    */
@@ -156,7 +156,7 @@ export class AIService {
       hasBase64: !!options.base64Image,
       promptLength: options.prompt.length
     });
-    
+
     return this.fallbackStrategy.execute(
       async adapter => {
         if (!adapter.analyzeImage) {
@@ -167,7 +167,7 @@ export class AIService {
       options
     );
   }
-  
+
   /**
    * Generate embeddings for text
    */
@@ -176,13 +176,13 @@ export class AIService {
     options?: AIRequestOptions
   ): Promise<AIResponse<number[]>> {
     logger.debug('Generating embedding', { textLength: text.length, options });
-    
+
     return this.fallbackStrategy.execute(
       adapter => adapter.generateEmbedding(text, options),
       options
     );
   }
-  
+
   /**
    * Set the fallback strategy
    */
@@ -190,7 +190,7 @@ export class AIService {
     this.fallbackStrategy = strategy;
     logger.info('Fallback strategy updated');
   }
-  
+
   /**
    * Get the current fallback strategy
    */
