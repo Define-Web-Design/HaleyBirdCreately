@@ -1,7 +1,9 @@
 
 #!/bin/bash
 
-# Enhanced deployment script with fallback mechanisms
+# Enhanced Deployment Script
+set -e
+
 echo "📦 Starting deployment process..."
 
 # Environment setup
@@ -14,18 +16,37 @@ if [ -d "dist" ]; then
   rm -rf dist
 fi
 
-# Install dependencies with fallback mechanisms
+# Create a log directory if it doesn't exist
+mkdir -p logs
+
+# Install dependencies with proper error handling
 echo "📚 Installing dependencies..."
-npm install --include=dev || npm install || (echo "⚠️ Standard install failed, trying basic install..." && npm i --no-optional)
+npm install --include=dev || {
+  echo "⚠️ Standard install failed, trying without optional dependencies..."
+  npm install --no-optional || {
+    echo "❌ All installation attempts failed!"
+    exit 1
+  }
+}
 
-# Build the application with fallback
+# Build the application
 echo "🔨 Building application..."
-npm run build || (echo "⚠️ Build failed, attempting alternative build..." && npx vite build)
+npm run build || {
+  echo "⚠️ Build failed! Checking for issues..."
+  
+  # Check if the build directory exists despite the error
+  if [ ! -d "dist" ]; then
+    echo "❌ Build directory not created. Deploying fallback server..."
+    NODE_ENV=production node simple-server.cjs
+    exit 1
+  else
+    echo "⚠️ Build reported errors but may still work. Continuing..."
+  fi
+}
 
-# Verify build succeeded
+# Verify build output
 if [ ! -d "dist" ]; then
-  echo "❌ Build failed! Deploying fallback server..."
-  # Start fallback server if build fails
+  echo "❌ Build failed! No dist directory found. Deploying fallback server..."
   NODE_ENV=production node simple-server.cjs
   exit 1
 fi

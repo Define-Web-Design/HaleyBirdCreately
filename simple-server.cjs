@@ -1,3 +1,102 @@
+
+// Fallback server for emergency use
+// This runs when the main application fails to build or start
+
+const express = require('express');
+const path = require('path');
+const fs = require('fs');
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Basic logging middleware
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  next();
+});
+
+// Serve static files if they exist
+if (fs.existsSync(path.join(__dirname, 'public'))) {
+  app.use(express.static(path.join(__dirname, 'public')));
+}
+
+// API route for health checks
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'fallback',
+    message: 'Running in fallback mode due to build failure',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Fallback route
+app.get('*', (req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Service Under Maintenance</title>
+      <style>
+        body {
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+          display: flex;
+          height: 100vh;
+          margin: 0;
+          padding: 20px;
+          box-sizing: border-box;
+          justify-content: center;
+          align-items: center;
+          background-color: #f7f9fc;
+          color: #333;
+        }
+        .container {
+          max-width: 600px;
+          padding: 40px;
+          background: white;
+          border-radius: 12px;
+          box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+          text-align: center;
+        }
+        h1 {
+          margin-top: 0;
+          color: #2563eb;
+        }
+        p {
+          font-size: 16px;
+          line-height: 1.6;
+        }
+        .emoji {
+          font-size: 64px;
+          margin-bottom: 20px;
+        }
+        .footer {
+          margin-top: 30px;
+          font-size: 14px;
+          color: #64748b;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="emoji">🛠️</div>
+        <h1>We'll be back soon!</h1>
+        <p>Sorry for the inconvenience. We're performing some maintenance at the moment. We'll be back up and running shortly.</p>
+        <p>If you need immediate assistance, please contact support.</p>
+        <div class="footer">© ${new Date().getFullYear()} Creately</div>
+      </div>
+    </body>
+    </html>
+  `);
+});
+
+// Start the server
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`⚠️ FALLBACK SERVER running on http://0.0.0.0:${PORT}`);
+  console.log('This is a minimal emergency server running due to build failure');
+});
+
 /**
  * Enhanced Fallback Server with Improved Error Handling
  * 

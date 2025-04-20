@@ -35,7 +35,7 @@ localPort = 24678
 externalPort = 3000
 
 [workflows]
-runButton = "Optimal Deployment"
+runButton = "Production Deployment"
 
 [[workflows.workflow]]
 name = "Build and Start Production"
@@ -177,7 +177,23 @@ args = "#!/bin/bash"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "./simplified-deploy.sh"
+args = "export NODE_ENV=production"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "export PORT=3000"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm install --include=dev"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run build"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "NODE_ENV=production PORT=3000 node dist/index.js"
 
 [[workflows.workflow]]
 name = "Production Deployment"
