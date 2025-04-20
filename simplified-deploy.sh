@@ -59,4 +59,4 @@ echo "✅ Build successful!"
 
 # Start the server
 echo "🚀 Starting server..."
-NODE_ENV=production PORT=3000 node dist/index.jstion PORT=3000 node dist/index.js
+NODE_ENV=production PORT=3000 node dist/index.js
