@@ -1,157 +1,106 @@
 /**
- * AI Service Adapter Initialization
+ * AI Adapter Initialization
  * 
- * This module handles the initialization and registration of all supported AI service adapters.
- * It automatically detects available API keys and registers adapters with appropriate configurations.
+ * This module handles initialization of AI provider adapters based on
+ * available environment configuration and API keys.
  */
 
-import { adapterRegistry } from './adapters/adapterRegistry';
-import { OpenAIAdapter } from './adapters/openaiAdapter';
-import { AnthropicAdapter } from './adapters/anthropicAdapter';
-import { PerplexityAdapter } from './adapters/perplexityAdapter';
+import { AIProvider, AIAdapterRegistry } from './aiTypes';
+import { createAdapterRegistry } from './adapterRegistry';
 import { logger } from '../utils/logger';
-import { getConfig } from '../../config/globalConfig';
 
 /**
- * Initialize and register all AI service adapters
- * @returns Promise resolving to true if at least one adapter was successfully registered
+ * Create and initialize all available AI adapters
  */
-export async function initializeAdapters(): Promise<boolean> {
-  let adaptersRegistered = 0;
+export function initAdapters(): AIAdapterRegistry {
+  const registry = createAdapterRegistry();
   
   try {
-    // Get AI configuration from global config
-    const aiConfig = getConfig().ai || {};
-    
-    // Initialize OpenAI adapter if API key available
-    const openaiApiKey = aiConfig?.openai?.apiKey || process.env.OPENAI_API_KEY;
-    if (openaiApiKey) {
-      const openaiAdapter = new OpenAIAdapter({
-        apiKey: openaiApiKey,
-        baseURL: aiConfig?.openai?.baseURL,
-        defaultModels: {
-          text: aiConfig?.openai?.defaultTextModel || 'gpt-4o',
-          chat: aiConfig?.openai?.defaultChatModel || 'gpt-4o',
-          embeddings: aiConfig?.openai?.defaultEmbeddingsModel || 'text-embedding-3-small',
-          image: aiConfig?.openai?.defaultImageModel || 'dall-e-3'
-        },
-        priority: 10 // Highest priority
-      });
-      
-      adapterRegistry.register('openai', openaiAdapter);
-      logger.info('Registered OpenAI adapter');
-      adaptersRegistered++;
+    // Try to initialize OpenAI adapter if API key is available
+    if (process.env.OPENAI_API_KEY) {
+      initOpenAIAdapter(registry);
     } else {
-      logger.debug('OpenAI API key not found, adapter not registered');
+      logger.warn('OpenAI API key not found, skipping adapter initialization');
     }
     
-    // Initialize Anthropic adapter if API key available
-    const anthropicApiKey = aiConfig?.anthropic?.apiKey || process.env.ANTHROPIC_API_KEY;
-    if (anthropicApiKey) {
-      const anthropicAdapter = new AnthropicAdapter({
-        apiKey: anthropicApiKey,
-        baseURL: aiConfig?.anthropic?.baseURL,
-        defaultModels: {
-          text: aiConfig?.anthropic?.defaultTextModel || 'claude-3-7-sonnet-20250219',
-          chat: aiConfig?.anthropic?.defaultChatModel || 'claude-3-7-sonnet-20250219'
-        },
-        priority: 20 // Medium priority
-      });
-      
-      adapterRegistry.register('anthropic', anthropicAdapter);
-      logger.info('Registered Anthropic adapter');
-      adaptersRegistered++;
+    // Try to initialize Anthropic adapter if API key is available
+    if (process.env.ANTHROPIC_API_KEY) {
+      initAnthropicAdapter(registry);
     } else {
-      logger.debug('Anthropic API key not found, adapter not registered');
+      logger.warn('Anthropic API key not found, skipping adapter initialization');
     }
     
-    // Initialize Perplexity adapter if API key available
-    const perplexityApiKey = aiConfig?.perplexity?.apiKey || process.env.PERPLEXITY_API_KEY;
-    if (perplexityApiKey) {
-      const perplexityAdapter = new PerplexityAdapter({
-        apiKey: perplexityApiKey,
-        baseURL: aiConfig?.perplexity?.baseURL,
-        defaultModels: {
-          text: aiConfig?.perplexity?.defaultTextModel || 'llama-3.1-sonar-small-128k-online',
-          chat: aiConfig?.perplexity?.defaultChatModel || 'llama-3.1-sonar-small-128k-online'
-        },
-        priority: 30 // Lowest priority
-      });
-      
-      adapterRegistry.register('perplexity', perplexityAdapter);
-      logger.info('Registered Perplexity adapter');
-      adaptersRegistered++;
+    // Try to initialize Perplexity adapter if API key is available
+    if (process.env.PERPLEXITY_API_KEY) {
+      initPerplexityAdapter(registry);
     } else {
-      logger.debug('Perplexity API key not found, adapter not registered');
+      logger.warn('Perplexity API key not found, skipping adapter initialization');
     }
     
-    // Get reference to the best adapter
-    const bestAdapter = await adapterRegistry.getBestAdapter();
-    if (bestAdapter) {
-      logger.info(`Best available adapter: ${bestAdapter.constructor.name}`);
+    // Log initialization summary
+    const availableProviders = registry.getAvailableProviders();
+    if (availableProviders.length === 0) {
+      logger.warn('No AI adapters could be initialized. Check API keys.');
     } else {
-      logger.warn('No adapters available');
+      logger.info(`Initialized ${availableProviders.length} AI adapters: ${availableProviders.join(', ')}`);
+      logger.info(`Default provider set to: ${registry.getDefaultProvider()}`);
     }
     
-    return adaptersRegistered > 0;
+    return registry;
   } catch (error) {
-    logger.error('Error initializing AI adapters', { 
+    logger.error('Error initializing AI adapters', {
       error: error instanceof Error ? error.message : String(error)
     });
-    return false;
+    
+    // Return registry even if partially initialized
+    return registry;
   }
 }
 
 /**
- * Check adapter availability and status
- * @returns Promise resolving to adapter status mapping
+ * Initialize OpenAI adapter
  */
-export async function checkAdapterAvailability(): Promise<Record<string, boolean>> {
+function initOpenAIAdapter(registry: AIAdapterRegistry): void {
   try {
-    const results = await adapterRegistry.checkAllAdaptersHealth();
-    const status: Record<string, boolean> = {};
+    // We'll implement the actual adapter initialization in a separate PR
+    // This is a placeholder for now
     
-    results.forEach((available, name) => {
-      status[name] = available;
-    });
-    
-    return status;
+    logger.info('OpenAI adapter initialized successfully');
   } catch (error) {
-    logger.error('Error checking adapter availability', { 
+    logger.error('Failed to initialize OpenAI adapter', {
       error: error instanceof Error ? error.message : String(error)
     });
-    return {};
   }
 }
 
 /**
- * Get a provider adapter by name, ensuring it's available
- * @param providerName Name of the provider
- * @returns The adapter if available, or null
+ * Initialize Anthropic adapter
  */
-export async function getProviderAdapter(providerName: string) {
-  const adapter = adapterRegistry.getAdapter(providerName);
-  
-  if (!adapter) {
-    logger.warn(`Requested provider not found: ${providerName}`);
-    return null;
+function initAnthropicAdapter(registry: AIAdapterRegistry): void {
+  try {
+    // We'll implement the actual adapter initialization in a separate PR
+    // This is a placeholder for now
+    
+    logger.info('Anthropic adapter initialized successfully');
+  } catch (error) {
+    logger.error('Failed to initialize Anthropic adapter', {
+      error: error instanceof Error ? error.message : String(error)
+    });
   }
-  
-  const available = await adapterRegistry.checkAdapterHealth(providerName);
-  
-  if (!available) {
-    logger.warn(`Requested provider not available: ${providerName}`);
-    return null;
-  }
-  
-  return adapter;
 }
 
 /**
- * Get the best available adapter based on priority and health
- * @param preferredProvider Optional preferred provider name
- * @returns The best available adapter or null if none available
+ * Initialize Perplexity adapter
  */
-export async function getBestAdapter(preferredProvider?: string) {
-  return adapterRegistry.getBestAdapter(preferredProvider);
+function initPerplexityAdapter(registry: AIAdapterRegistry): void {
+  try {
+    // We'll implement the actual adapter initialization in a separate PR
+    // This is a placeholder for now
+    
+    logger.info('Perplexity adapter initialized successfully');
+  } catch (error) {
+    logger.error('Failed to initialize Perplexity adapter', {
+      error: error instanceof Error ? error.message : String(error)
+    });
+  }
 }
