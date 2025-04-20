@@ -183,7 +183,7 @@ router.get('/auth/me', async (req, res) => {
 // Use snippet routes
 router.use('/api/snippets', snippetRoutes);
 router.use('/auth', authRoutes);
-router.use('/api/health', healthRoutes); // Added health route
+router.use('/api/health', healthRoutes); // Added health check route
 router.use('/google-docs', googleDocsRoutes);
 router.use('/api/service-health', serviceHealthRoutes);
 router.use('/api/ai', aiRoutes);

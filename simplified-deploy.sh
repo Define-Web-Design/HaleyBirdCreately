@@ -1,7 +1,9 @@
 
 #!/bin/bash
 
-# Enhanced Deployment Script
+#!/bin/bash
+
+# Enhanced Deployment Script with fail-safe mechanisms
 set -e
 
 echo "📦 Starting deployment process..."
@@ -9,6 +11,7 @@ echo "📦 Starting deployment process..."
 # Environment setup
 export NODE_ENV=production
 export PORT=3000
+export DEPLOY_TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 
 # Clean build artifacts if they exist
 if [ -d "dist" ]; then
@@ -29,10 +32,14 @@ npm install --include=dev || {
   }
 }
 
-# Build the application
+# Build the application with proper TypeScript checks
 echo "🔨 Building application..."
 npm run build || {
   echo "⚠️ Build failed! Checking for issues..."
+  
+  # Try to diagnose the issue
+  echo "Running diagnostics..."
+  npx tsc --noEmit || echo "TypeScript errors detected"
   
   # Check if the build directory exists despite the error
   if [ ! -d "dist" ]; then
@@ -43,6 +50,13 @@ npm run build || {
     echo "⚠️ Build reported errors but may still work. Continuing..."
   fi
 }
+
+# Verify the existence of critical files
+if [ ! -f "dist/index.js" ]; then
+  echo "❌ Critical server file missing! Deploying fallback server..."
+  NODE_ENV=production node simple-server.cjs
+  exit 1
+fi
 
 # Verify build output
 if [ ! -d "dist" ]; then

@@ -54,3 +54,22 @@ router.get('/', async (_req, res) => {
 });
 
 export default router;
+import { Router } from 'express';
+
+const router = Router();
+
+/**
+ * @route GET /api/health
+ * @desc Health check endpoint for deployment verification
+ * @access Public
+ */
+router.get('/', (req, res) => {
+  res.status(200).json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+    version: process.env.npm_package_version || '1.0.0'
+  });
+});
+
+export default router;
