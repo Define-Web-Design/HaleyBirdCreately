@@ -8,6 +8,7 @@ modules = ["nodejs-20", "postgresql-16"]
 
 [nix]
 channel = "stable-23_11"
+packages = ["fltk14"]
 
 [env]
 PORT = "3000"
