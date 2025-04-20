@@ -4,6 +4,10 @@ import snippetRoutes from './routes/snippet-routes';
 import healthRoutes from './routes/health';
 import googleDocsRoutes from './routes/google-docs';
 import serviceHealthRoutes from './routes/service-health';
+import aiRoutes from './routes/aiRoutes';
+import jwt from 'jsonwebtoken';
+import { z } from 'zod';
+import { storage } from './storage';
 
 const router = express.Router();
 
@@ -175,5 +179,6 @@ router.use('/auth', authRoutes);
 router.use('/health', healthRoutes);
 router.use('/google-docs', googleDocsRoutes);
 router.use('/api/service-health', serviceHealthRoutes);
+router.use('/api/ai', aiRoutes);
 
 export default router;
