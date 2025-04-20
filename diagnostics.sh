@@ -83,19 +83,29 @@ check_workflow_config() {
   if file_exists workflow-config.json; then
     echo -e "  ${GREEN}✓${NC} workflow-config.json exists"
     
-    # Check if it's valid JSON
+    # Check if it's valid JSON using Node.js as fallback if jq is not available
     if command_exists jq && jq empty workflow-config.json 2>/dev/null; then
-      echo -e "  ${GREEN}✓${NC} workflow-config.json is valid JSON"
+      echo -e "  ${GREEN}✓${NC} workflow-config.json is valid JSON (jq)"
       
       # Count workflows
-      if command_exists jq; then
-        WORKFLOW_COUNT=$(jq '.workflows | length' workflow-config.json)
+      WORKFLOW_COUNT=$(jq '.workflows | length' workflow-config.json)
+      echo -e "  ${GREEN}✓${NC} Found ${WORKFLOW_COUNT} workflows in configuration"
+    elif command_exists node; then
+      # Use Node.js as fallback to validate JSON
+      node -e "try { const config = JSON.parse(require('fs').readFileSync('workflow-config.json', 'utf-8')); console.log('valid:' + config.workflows.length); } catch(e) { console.error('invalid:' + e.message); }" > /tmp/json_check.txt
+      
+      if grep -q "^valid:" /tmp/json_check.txt; then
+        echo -e "  ${GREEN}✓${NC} workflow-config.json is valid JSON (node)"
+        WORKFLOW_COUNT=$(grep "^valid:" /tmp/json_check.txt | sed 's/valid://')
         echo -e "  ${GREEN}✓${NC} Found ${WORKFLOW_COUNT} workflows in configuration"
       else
-        echo -e "  ${YELLOW}!${NC} Can't count workflows (jq not available)"
+        ERROR_MSG=$(grep "^invalid:" /tmp/json_check.txt | sed 's/invalid://')
+        echo -e "  ${RED}✗${NC} workflow-config.json contains invalid JSON: ${ERROR_MSG}"
       fi
+      
+      rm -f /tmp/json_check.txt
     else
-      echo -e "  ${RED}✗${NC} workflow-config.json contains invalid JSON"
+      echo -e "  ${YELLOW}!${NC} Can't validate JSON (neither jq nor node available)"
     fi
   else
     echo -e "  ${RED}✗${NC} workflow-config.json does not exist"
