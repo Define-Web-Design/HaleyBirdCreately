@@ -1,203 +1,343 @@
+/**
+ * Simple Server Implementation
+ * 
+ * This is a lightweight implementation of the server for development
+ * and testing purposes.
+ */
 
+const express = require('express');
 const http = require('http');
-const fs = require('fs');
 const path = require('path');
+const fs = require('fs');
+const cors = require('cors');
 
-// Load environment variables if dotenv is available
-try {
-  require('dotenv').config();
-  console.log('Environment variables loaded from .env file');
-} catch (error) {
-  console.log('dotenv module not available, using process.env directly');
-}
+// Configuration
+const PORT = process.env.PORT || 3100;
+const publicDir = path.join(__dirname, 'public');
 
-// Port configuration
-const PORT = process.env.PORT || 3000;
+// Create Express app
+const app = express();
+const server = http.createServer(app);
 
-// MIME types for different file extensions
-const MIME_TYPES = {
-  '.html': 'text/html',
-  '.css': 'text/css',
-  '.js': 'text/javascript',
-  '.json': 'application/json',
-  '.png': 'image/png',
-  '.jpg': 'image/jpeg',
-  '.jpeg': 'image/jpeg',
-  '.gif': 'image/gif',
-  '.svg': 'image/svg+xml',
-  '.ico': 'image/x-icon',
-  '.txt': 'text/plain'
-};
+// Apply middleware
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// Create logs directory if it doesn't exist
-try {
-  const logsDir = path.join(process.cwd(), 'logs');
-  if (!fs.existsSync(logsDir)) {
-    fs.mkdirSync(logsDir, { recursive: true });
-  }
-
-  // Create PageSpeed logs directory
-  const pageSpeedLogsDir = path.join(logsDir, 'pagespeed');
-  if (!fs.existsSync(pageSpeedLogsDir)) {
-    fs.mkdirSync(pageSpeedLogsDir, { recursive: true });
-  }
-} catch (error) {
-  console.error('Error creating log directories:', error);
-}
-
-// Access logging middleware
-function logRequest(req, res) {
+// Enable logging
+function logRequest(req, res, next) {
   const timestamp = new Date().toISOString();
-  console.log(`${timestamp} - ${req.method} ${req.url}`);
-  
-  // Also log to file if possible
+  console.log(`[${timestamp}] ${req.method} ${req.url}`);
+  next();
+}
+
+app.use(logRequest);
+
+// Helper function to serve static files
+function serveFile(filePath, res) {
   try {
-    const logEntry = `${timestamp} - ${req.method} ${req.url}\n`;
-    fs.appendFileSync(path.join('logs', 'access.log'), logEntry);
+    if (fs.existsSync(filePath)) {
+      // Determine content type based on file extension
+      const ext = path.extname(filePath).toLowerCase();
+      const contentType = {
+        '.html': 'text/html',
+        '.js': 'text/javascript',
+        '.css': 'text/css',
+        '.json': 'application/json',
+        '.png': 'image/png',
+        '.jpg': 'image/jpeg',
+        '.gif': 'image/gif',
+        '.svg': 'image/svg+xml'
+      }[ext] || 'text/plain';
+      
+      // Read and serve the file
+      const data = fs.readFileSync(filePath);
+      res.setHeader('Content-Type', contentType);
+      res.end(data);
+      return true;
+    }
+    return false;
   } catch (error) {
-    // Silent fail for log writing
+    console.error('Error serving file:', error.message);
+    res.statusCode = 500;
+    res.end('Internal server error');
+    return true;
   }
 }
 
-// Create HTTP server
-const server = http.createServer((req, res) => {
-  logRequest(req, res);
+// Function to handle API requests
+function handleApiRequest(req, res) {
+  const apiPath = req.url.substring('/api/'.length);
   
-  // Set CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  
-  // Handle preflight requests
-  if (req.method === 'OPTIONS') {
-    res.writeHead(204);
-    res.end();
-    return;
+  // Simple API endpoints
+  if (apiPath === 'status') {
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify({
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      version: '1.0.0'
+    }));
+    return true;
   }
   
+  // Mock AI service endpoints
+  if (apiPath.startsWith('ai/')) {
+    const aiEndpoint = apiPath.substring('ai/'.length);
+    
+    if (aiEndpoint === 'status') {
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({
+        available: true,
+        providers: ['mock-provider'],
+        default: 'mock-provider'
+      }));
+      return true;
+    }
+    
+    // Handle POST requests to AI endpoints
+    if (req.method === 'POST') {
+      let body = '';
+      
+      req.on('data', chunk => {
+        body += chunk.toString();
+      });
+      
+      req.on('end', () => {
+        let data;
+        try {
+          data = JSON.parse(body);
+        } catch (error) {
+          res.statusCode = 400;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ error: 'Invalid JSON' }));
+          return;
+        }
+        
+        // Generate mock responses for different AI endpoints
+        let response;
+        
+        if (aiEndpoint === 'generate-text') {
+          response = {
+            content: `Mock response for: ${data.prompt || 'No prompt provided'}`,
+            provider: 'mock-provider',
+            model: 'mock-model',
+            usage: {
+              promptTokens: 10,
+              completionTokens: 20,
+              totalTokens: 30
+            }
+          };
+        } else if (aiEndpoint === 'generate-json') {
+          response = {
+            json: {
+              result: "Mock JSON response",
+              items: [1, 2, 3],
+              success: true
+            },
+            provider: 'mock-provider',
+            model: 'mock-model'
+          };
+        } else if (aiEndpoint === 'chat') {
+          response = {
+            message: {
+              role: 'assistant',
+              content: `Mock chat response to: ${data.messages ? data.messages.map(m => m.content).join(', ') : 'No messages provided'}`
+            },
+            provider: 'mock-provider',
+            model: 'mock-model'
+          };
+        } else {
+          response = {
+            error: 'Unknown AI endpoint'
+          };
+        }
+        
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify(response));
+      });
+      
+      return true;
+    }
+  }
+  
+  return false;
+}
+
+// Create public directory if it doesn't exist
+if (!fs.existsSync(publicDir)) {
+  fs.mkdirSync(publicDir, { recursive: true });
+  
+  // Create a basic index.html if it doesn't exist
+  const indexPath = path.join(publicDir, 'index.html');
+  if (!fs.existsSync(indexPath)) {
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Simple Server</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              max-width: 800px;
+              margin: 0 auto;
+              padding: 20px;
+              line-height: 1.6;
+            }
+            h1 { color: #2c3e50; }
+            .status { color: #27ae60; font-weight: bold; }
+            .endpoints { margin-top: 20px; }
+            code {
+              background: #f8f8f8;
+              padding: 2px 4px;
+              border-radius: 3px;
+              font-family: monospace;
+            }
+          </style>
+        </head>
+        <body>
+          <h1>Simple Server Running</h1>
+          <p>Status: <span class="status">Online</span></p>
+          
+          <div class="endpoints">
+            <h2>Available Endpoints:</h2>
+            <ul>
+              <li><code>GET /api/status</code> - Server status</li>
+              <li><code>GET /api/ai/status</code> - AI service status</li>
+              <li><code>POST /api/ai/generate-text</code> - Generate text</li>
+              <li><code>POST /api/ai/generate-json</code> - Generate JSON</li>
+              <li><code>POST /api/ai/chat</code> - Chat completion</li>
+            </ul>
+          </div>
+          
+          <div id="testArea">
+            <h2>Test Area</h2>
+            <button id="testStatusBtn">Test Status</button>
+            <button id="testTextBtn">Test Text Generation</button>
+            <button id="testChatBtn">Test Chat Completion</button>
+            <pre id="result" style="background: #f8f8f8; padding: 10px; margin-top: 10px; border-radius: 5px;"></pre>
+          </div>
+          
+          <script>
+            // Simple test functions
+            async function testStatus() {
+              try {
+                const response = await fetch('/api/status');
+                const data = await response.json();
+                document.getElementById('result').textContent = JSON.stringify(data, null, 2);
+              } catch (error) {
+                document.getElementById('result').textContent = 'Error: ' + error.message;
+              }
+            }
+            
+            async function testTextGeneration() {
+              try {
+                const response = await fetch('/api/ai/generate-text', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({
+                    prompt: 'Hello, world!'
+                  })
+                });
+                const data = await response.json();
+                document.getElementById('result').textContent = JSON.stringify(data, null, 2);
+              } catch (error) {
+                document.getElementById('result').textContent = 'Error: ' + error.message;
+              }
+            }
+            
+            async function testChatCompletion() {
+              try {
+                const response = await fetch('/api/ai/chat', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({
+                    messages: [
+                      { role: 'system', content: 'You are a helpful assistant.' },
+                      { role: 'user', content: 'Hello, how are you?' }
+                    ]
+                  })
+                });
+                const data = await response.json();
+                document.getElementById('result').textContent = JSON.stringify(data, null, 2);
+              } catch (error) {
+                document.getElementById('result').textContent = 'Error: ' + error.message;
+              }
+            }
+            
+            // Add event listeners
+            document.getElementById('testStatusBtn').addEventListener('click', testStatus);
+            document.getElementById('testTextBtn').addEventListener('click', testTextGeneration);
+            document.getElementById('testChatBtn').addEventListener('click', testChatCompletion);
+          </script>
+        </body>
+      </html>
+    `;
+    fs.writeFileSync(indexPath, htmlContent);
+    console.log(`Created ${indexPath}`);
+  }
+}
+
+// Handle all requests
+app.use((req, res) => {
   // Handle API requests
   if (req.url.startsWith('/api/')) {
-    return handleApiRequest(req, res);
-  }
-  
-  // Serve static files
-  let filePath = 'public' + req.url;
-  
-  // Default to index.html for root requests
-  if (filePath === 'public/') {
-    filePath = 'public/index.html';
-  }
-  
-  // Check if file exists
-  fs.access(filePath, fs.constants.F_OK, (err) => {
-    if (err) {
-      // Fallback to index.html for client-side routing
-      if (!path.extname(filePath)) {
-        filePath = 'public/index.html';
-        serveFile(filePath, res);
-      } else {
-        res.writeHead(404);
-        res.end('404 Not Found');
-      }
+    if (handleApiRequest(req, res)) {
       return;
     }
     
-    serveFile(filePath, res);
-  });
+    // If API endpoint not found
+    res.statusCode = 404;
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify({ error: 'API endpoint not found' }));
+    return;
+  }
+  
+  // Handle static file requests
+  let filePath = path.join(publicDir, req.url === '/' ? 'index.html' : req.url);
+  
+  // Remove query parameters
+  filePath = filePath.split('?')[0];
+  
+  if (serveFile(filePath, res)) {
+    return;
+  }
+  
+  // Try to serve index.html for any other routes (SPA support)
+  const indexPath = path.join(publicDir, 'index.html');
+  if (serveFile(indexPath, res)) {
+    return;
+  }
+  
+  // If all else fails, return 404
+  res.statusCode = 404;
+  res.end('Not found');
 });
 
-// Function to serve a file
-function serveFile(filePath, res) {
-  const extname = path.extname(filePath);
-  const contentType = MIME_TYPES[extname] || 'application/octet-stream';
-  
-  fs.readFile(filePath, (err, content) => {
-    if (err) {
-      if (err.code === 'ENOENT') {
-        res.writeHead(404);
-        res.end('404 Not Found');
-      } else {
-        res.writeHead(500);
-        res.end(`Server Error: ${err.code}`);
-      }
-      return;
-    }
-    
-    res.writeHead(200, { 'Content-Type': contentType });
-    res.end(content, 'utf-8');
-  });
-}
-
-// Handle API requests
-function handleApiRequest(req, res) {
-  res.setHeader('Content-Type', 'application/json');
-  
-  if (req.url === '/api/health' || req.url === '/api/status') {
-    res.writeHead(200);
-    res.end(JSON.stringify({ 
-      status: 'ok', 
-      timestamp: new Date().toISOString(),
-      version: '1.0.0',
-      mode: 'simple-server'
-    }));
-    return;
-  }
-  
-  if (req.url === '/api/info') {
-    const response = {
-      message: 'Creately API Info',
-      timestamp: new Date().toISOString(),
-      status: 'SUCCESS',
-      database: process.env.DATABASE_URL ? 'Available (PostgreSQL)' : 'Not configured',
-      apiKeys: {
-        openai: process.env.OPENAI_API_KEY ? 'Available' : 'Missing',
-        pagespeed: process.env.PAGESPEED_INSIGHTS_API_KEY ? 'Available' : 'Missing'
-      }
-    };
-    
-    res.writeHead(200);
-    res.end(JSON.stringify(response, null, 2));
-    return;
-  }
-  
-  // Handle other API routes
-  res.writeHead(501);
-  res.end(JSON.stringify({ error: 'Not implemented' }));
-}
-
-// Start server
+// Start the server
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`
-   ______                __       __          
-  / ____/_______  ____ _/ /____  / /_  __     
- / /   / ___/ _ \\/ __ \`/ __/ _ \\/ / / / /   
-/ /___/ /  /  __/ /_/ / /_/  __/ / /_/ /      
-\\____/_/   \\___/\\__,_/\\__/\\___/_/\\__, /       
-                                 /____/        
-  
-  Code Snippet Server - Simple Mode
-  Server running at http://0.0.0.0:${PORT}
-  Environment: ${process.env.NODE_ENV || 'development'}
-  `);
+  console.log(`Simple server running on http://localhost:${PORT}`);
 });
 
 // Handle graceful shutdown
-process.on('SIGINT', () => {
-  console.log('Server shutting down...');
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received, shutting down gracefully');
   server.close(() => {
-    console.log('Server closed');
+    console.log('HTTP server closed');
     process.exit(0);
   });
 });
 
-// Handle uncaught exceptions
-process.on('uncaughtException', (err) => {
-  console.error('Uncaught exception:', err);
-  // Log the error
-  try {
-    const logEntry = `${new Date().toISOString()} - UNCAUGHT EXCEPTION: ${err.stack || err}\n`;
-    fs.appendFileSync(path.join('logs', 'error.log'), logEntry);
-  } catch (logError) {
-    // Silent fail for log writing
-  }
+process.on('SIGINT', () => {
+  console.log('SIGINT received, shutting down gracefully');
+  server.close(() => {
+    console.log('HTTP server closed');
+    process.exit(0);
+  });
 });
+
+module.exports = { app, server };
