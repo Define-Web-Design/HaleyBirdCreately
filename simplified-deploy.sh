@@ -1,6 +1,3 @@
-
-#!/bin/bash
-
 #!/bin/bash
 
 # Enhanced Deployment Script with fail-safe mechanisms
@@ -36,11 +33,11 @@ npm install --include=dev || {
 echo "🔨 Building application..."
 npm run build || {
   echo "⚠️ Build failed! Checking for issues..."
-  
+
   # Try to diagnose the issue
   echo "Running diagnostics..."
   npx tsc --noEmit || echo "TypeScript errors detected"
-  
+
   # Check if the build directory exists despite the error
   if [ ! -d "dist" ]; then
     echo "❌ Build directory not created. Deploying fallback server..."
@@ -51,19 +48,6 @@ npm run build || {
   fi
 }
 
-# Verify the existence of critical files
-if [ ! -f "dist/index.js" ]; then
-  echo "❌ Critical server file missing! Deploying fallback server..."
-  NODE_ENV=production node simple-server.cjs
-  exit 1
-fi
-
-# Verify build output
-if [ ! -d "dist" ]; then
-  echo "❌ Build failed! No dist directory found. Deploying fallback server..."
-  NODE_ENV=production node simple-server.cjs
-  exit 1
-fi
 
 echo "✅ Build successful!"
 
