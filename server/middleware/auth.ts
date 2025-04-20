@@ -44,14 +44,14 @@ export const authenticate = (options?: { bypassAuth?: boolean }) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     // Only bypass auth if explicitly configured or development mode is active
     const bypassAuth = options?.bypassAuth || process.env.BYPASS_AUTH === 'true' || process.env.NODE_ENV !== 'production';
-    
+
     if (bypassAuth) {
       console.log('Authentication bypassed due to explicit configuration');
-      
+
       // Check if the request has a dev-mock-token in the authorization header
       const authHeader = req.headers.authorization;
       const isDevelopmentToken = authHeader && authHeader.includes('dev-mock-token');
-      
+
       // Set mock user for testing
       req.user = {
         id: 1,
@@ -60,7 +60,7 @@ export const authenticate = (options?: { bypassAuth?: boolean }) => {
         displayName: 'Development User',
         role: 'admin'
       };
-      
+
       // For the /api/auth/me endpoint specifically, return more detailed user object
       if (req.path === '/me') {
         res.json({
@@ -77,22 +77,22 @@ export const authenticate = (options?: { bypassAuth?: boolean }) => {
         });
         return; // Stop execution here
       }
-      
+
       return next();
     }
-    
+
     // Check for Replit authentication headers
     const replitUserId = req.headers['x-replit-user-id'];
     const replitUserName = req.headers['x-replit-user-name'];
     const replitUserRoles = req.headers['x-replit-user-roles'];
-    
+
     if (replitUserId) {
       // If Replit authentication headers are present, use them
       // Extract single values from potentially array-typed headers
       const userId = String(Array.isArray(replitUserId) ? replitUserId[0] : replitUserId);
       const userName = String(Array.isArray(replitUserName) ? replitUserName[0] : replitUserName || 'replit-user');
       const userRole = String(Array.isArray(replitUserRoles) ? replitUserRoles[0] : replitUserRoles || 'user');
-      
+
       req.user = {
         id: userId,
         username: userName,
@@ -100,7 +100,7 @@ export const authenticate = (options?: { bypassAuth?: boolean }) => {
       };
       return next();
     }
-    
+
     try {
       // Get the token from the Authorization header
       const authHeader = req.headers.authorization;
@@ -155,6 +155,10 @@ export const authenticate = (options?: { bypassAuth?: boolean }) => {
       });
     }
   };
+};
+
+export const auth = (req: any, res: any, next: any) => {
+  return authenticate()(req, res, next);
 };
 
 /**
