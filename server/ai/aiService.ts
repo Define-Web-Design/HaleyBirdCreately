@@ -2,32 +2,54 @@
 import { AIServiceAdapter, AIRequestOptions, AIResponse } from './adapters/baseAdapter';
 import { MistralAdapter } from './adapters/mistralAdapter';
 import { OpenAIAdapter } from './adapters/openaiAdapter';
+import { AIAdapterRegistry, adapterRegistry } from './adapters/adapterRegistry';
 import { ServiceRegistry } from '../services/registry';
+import { Logger } from '../utils/logger';
 
 /**
  * Unified AI Service that automatically handles provider selection and fallback
+ * with enhanced telemetry and diagnostics
  */
 export class AIService {
-  private adapters: AIServiceAdapter[] = [];
+  private registry: AIAdapterRegistry;
+  private logger: Logger;
   private serviceHealth: {
     lastCheck: Date;
     healthy: boolean;
     message?: string;
+    metrics?: {
+      totalRequests: number;
+      successRate: number;
+      averageLatency: number;
+      providerUsage: Record<string, number>;
+    }
   } = {
     lastCheck: new Date(),
-    healthy: false
+    healthy: false,
+    metrics: {
+      totalRequests: 0,
+      successRate: 0,
+      averageLatency: 0,
+      providerUsage: {}
+    }
   };
   
   constructor() {
-    // Initialize adapters - order determines fallback priority
-    this.adapters = [
-      new MistralAdapter(), // Primary
-      new OpenAIAdapter()   // Secondary/fallback
-    ];
+    // Use the singleton adapter registry
+    this.registry = adapterRegistry;
+    this.logger = new Logger('AIService');
+    
+    // Initialize adapters
+    const mistralAdapter = new MistralAdapter();
+    const openaiAdapter = new OpenAIAdapter();
+    
+    // Register adapters with priority
+    this.registry.registerAdapter('mistral', mistralAdapter, 1); // Primary
+    this.registry.registerAdapter('openai', openaiAdapter, 2);   // Secondary/fallback
     
     // Register self in the service registry
-    const registry = ServiceRegistry.getInstance();
-    registry.registerService('ai', this);
+    const serviceRegistry = ServiceRegistry.getInstance();
+    serviceRegistry.registerService('ai', this);
     
     // Set up periodic health checks
     this.checkHealth();
@@ -35,87 +57,122 @@ export class AIService {
   }
   
   /**
-   * Generate text using the best available AI provider
+   * Generate text using the best available AI provider with enhanced telemetry
    */
   async generateText(prompt: string, options: AIRequestOptions = {}): Promise<AIResponse<string>> {
-    // Sort adapters by priority and availability
-    const sortedAdapters = this.getSortedAdapters();
+    const startTime = Date.now();
+    this.serviceHealth.metrics!.totalRequests++;
     
-    if (sortedAdapters.length === 0) {
+    // Get all available adapters sorted by priority
+    const adapters = this.registry.getAvailableAdapters();
+    
+    if (adapters.length === 0) {
+      this.logger.error('No AI providers are available');
       throw new Error('No AI providers are available');
     }
     
     // Try each adapter in priority order
     let lastError: Error | null = null;
+    let attempts = 0;
     
-    for (const adapter of sortedAdapters) {
+    for (const adapter of adapters) {
+      attempts++;
       try {
+        const adapterStartTime = Date.now();
         const result = await adapter.generateText(prompt, options);
+        
+        // Track metrics
+        const adapterName = adapter.getStatus().name;
+        this.serviceHealth.metrics!.providerUsage[adapterName] = 
+          (this.serviceHealth.metrics!.providerUsage[adapterName] || 0) + 1;
+          
+        // Log success with provider info and latency
+        this.logger.info(`AI request succeeded with ${adapterName} in ${Date.now() - adapterStartTime}ms`);
+        
+        // Update overall metrics
+        this.updateSuccessMetrics(startTime);
+        
         return result;
       } catch (error) {
-        console.warn(`AI provider ${adapter.getStatus().name} failed, trying next provider`, error);
+        const adapterName = adapter.getStatus().name;
+        this.logger.warn(`AI provider ${adapterName} failed, trying next provider`, error);
         lastError = error;
       }
     }
     
-    // If we get here, all providers failed
+    // All providers failed
+    this.updateFailureMetrics();
     throw lastError || new Error('All AI providers failed');
   }
   
   /**
-   * Generate JSON using the best available AI provider
+   * Generate JSON using the best available AI provider with enhanced telemetry
    */
   async generateJson<T>(prompt: string, options: AIRequestOptions = {}): Promise<AIResponse<T>> {
-    // Sort adapters by priority and availability
-    const sortedAdapters = this.getSortedAdapters();
+    const startTime = Date.now();
+    this.serviceHealth.metrics!.totalRequests++;
     
-    if (sortedAdapters.length === 0) {
+    // Get all available adapters sorted by priority
+    const adapters = this.registry.getAvailableAdapters();
+    
+    if (adapters.length === 0) {
+      this.logger.error('No AI providers are available');
       throw new Error('No AI providers are available');
     }
     
     // Try each adapter in priority order
     let lastError: Error | null = null;
     
-    for (const adapter of sortedAdapters) {
+    for (const adapter of adapters) {
       try {
+        const adapterStartTime = Date.now();
         const result = await adapter.generateJson<T>(prompt, options);
+        
+        // Track metrics
+        const adapterName = adapter.getStatus().name;
+        this.serviceHealth.metrics!.providerUsage[adapterName] = 
+          (this.serviceHealth.metrics!.providerUsage[adapterName] || 0) + 1;
+          
+        // Log success with provider info and latency
+        this.logger.info(`AI JSON request succeeded with ${adapterName} in ${Date.now() - adapterStartTime}ms`);
+        
+        // Update overall metrics
+        this.updateSuccessMetrics(startTime);
+        
         return result;
       } catch (error) {
-        console.warn(`AI provider ${adapter.getStatus().name} failed, trying next provider`, error);
+        const adapterName = adapter.getStatus().name;
+        this.logger.warn(`AI provider ${adapterName} JSON generation failed, trying next provider`, error);
         lastError = error;
       }
     }
     
-    // If we get here, all providers failed
-    throw lastError || new Error('All AI providers failed');
+    // All providers failed
+    this.updateFailureMetrics();
+    throw lastError || new Error('All AI providers failed to generate JSON');
   }
   
   /**
    * Check the health of all AI providers
    */
   async checkHealth(): Promise<void> {
-    let healthyAdapters = 0;
-    
-    for (const adapter of this.adapters) {
-      const isAvailable = await adapter.testConnection();
-      if (isAvailable) {
-        healthyAdapters++;
-      }
-    }
+    const results = await this.registry.checkAllAdaptersHealth();
+    const healthyCount = Array.from(results.values()).filter(healthy => healthy).length;
     
     this.serviceHealth = {
+      ...this.serviceHealth,
       lastCheck: new Date(),
-      healthy: healthyAdapters > 0,
-      message: healthyAdapters > 0 
-        ? `${healthyAdapters} AI providers available` 
+      healthy: healthyCount > 0,
+      message: healthyCount > 0 
+        ? `${healthyCount} AI providers available` 
         : 'No AI providers available'
     };
     
-    console.log(`AI service health: ${this.serviceHealth.healthy ? 'Healthy' : 'Unhealthy'} - ${this.serviceHealth.message}`);
+    this.logger.info(`AI service health: ${this.serviceHealth.healthy ? 'Healthy' : 'Unhealthy'} - ${this.serviceHealth.message}`);
   }
   
   /**
-   * Get the health status of the AI service
+   * Get the health status of the AI service with detailed metrics
    */
   getServiceHealth() {
     return this.serviceHealth;
@@ -125,16 +182,42 @@ export class AIService {
    * Get detailed status of all AI providers
    */
   getProviderStatus() {
-    return this.adapters.map(adapter => adapter.getStatus());
+    return this.registry.getAvailableAdapters().map(adapter => adapter.getStatus());
   }
   
   /**
-   * Helper to sort adapters by priority and availability
+   * Register a new adapter at runtime
    */
-  private getSortedAdapters(): AIServiceAdapter[] {
-    return [...this.adapters]
-      .filter(adapter => adapter.getStatus().available)
-      .sort((a, b) => a.getStatus().priority - b.getStatus().priority);
+  registerAdapter(key: string, adapter: AIServiceAdapter, priority: number): void {
+    this.registry.registerAdapter(key, adapter, priority);
+    this.logger.info(`New AI adapter registered: ${key} with priority ${priority}`);
+  }
+  
+  /**
+   * Update metrics after successful request
+   */
+  private updateSuccessMetrics(startTime: number): void {
+    const latency = Date.now() - startTime;
+    const metrics = this.serviceHealth.metrics!;
+    
+    // Update success rate
+    const successfulRequests = Object.values(metrics.providerUsage)
+      .reduce((sum, count) => sum + count, 0);
+    metrics.successRate = (successfulRequests / metrics.totalRequests) * 100;
+    
+    // Update latency (weighted average)
+    metrics.averageLatency = 
+      ((metrics.averageLatency * (successfulRequests - 1)) + latency) / successfulRequests;
+  }
+  
+  /**
+   * Update metrics after failed request
+   */
+  private updateFailureMetrics(): void {
+    const metrics = this.serviceHealth.metrics!;
+    const successfulRequests = Object.values(metrics.providerUsage)
+      .reduce((sum, count) => sum + count, 0);
+    metrics.successRate = (successfulRequests / metrics.totalRequests) * 100;
   }
 }
 

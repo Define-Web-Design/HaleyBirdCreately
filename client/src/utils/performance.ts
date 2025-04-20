@@ -1,165 +1,381 @@
 
 /**
- * Performance monitoring utilities
+ * Performance Monitoring Utilities
+ * 
+ * Provides comprehensive tools for measuring and tracking client-side
+ * performance metrics including component rendering, lazy loading,
+ * and interaction responsiveness.
  */
 
-// Map to store performance metrics
-const metrics = new Map<string, {
-  start?: number;
-  end?: number;
-  duration?: number;
-  count: number;
-  total: number;
+// Performance mark categories
+export enum PerformanceCategory {
+  NAVIGATION = 'navigation',
+  COMPONENT = 'component',
+  LAZY_LOAD = 'lazy-load',
+  INTERACTION = 'interaction',
+  API = 'api',
+  RESOURCE = 'resource'
+}
+
+// Performance measurement interface
+interface PerformanceMeasurement {
+  name: string;
+  duration: number;
+  category: PerformanceCategory;
+  timestamp: number;
+  metadata?: Record<string, any>;
+}
+
+// Component render timings cache
+const componentRenderTimings: Map<string, number[]> = new Map();
+const lazyLoadTimings: Map<string, number[]> = new Map();
+const interactionTimings: Map<string, number[]> = new Map();
+const apiCallTimings: Map<string, number[]> = new Map();
+
+// Enhanced measurements log with categorization
+const measurements: PerformanceMeasurement[] = [];
+
+/**
+ * Start timing a performance measurement
+ */
+export function startMeasure(name: string, category: PerformanceCategory): void {
+  const markName = `${category}:${name}:start`;
+  performance.mark(markName);
+}
+
+/**
+ * End timing a performance measurement and record it
+ */
+export function endMeasure(name: string, category: PerformanceCategory, metadata?: Record<string, any>): number {
+  const startMark = `${category}:${name}:start`;
+  const endMark = `${category}:${name}:end`;
+  
+  performance.mark(endMark);
+  
+  try {
+    const measureName = `${category}:${name}`;
+    performance.measure(measureName, startMark, endMark);
+    
+    const entries = performance.getEntriesByName(measureName, 'measure');
+    if (entries.length > 0) {
+      const duration = entries[0].duration;
+      
+      // Record the measurement
+      measurements.push({
+        name,
+        duration,
+        category,
+        timestamp: Date.now(),
+        metadata
+      });
+      
+      // Update specific timing maps based on category
+      switch (category) {
+        case PerformanceCategory.COMPONENT:
+          updateTimingMap(componentRenderTimings, name, duration);
+          break;
+        case PerformanceCategory.LAZY_LOAD:
+          updateTimingMap(lazyLoadTimings, name, duration);
+          break;
+        case PerformanceCategory.INTERACTION:
+          updateTimingMap(interactionTimings, name, duration);
+          break;
+        case PerformanceCategory.API:
+          updateTimingMap(apiCallTimings, name, duration);
+          break;
+      }
+      
+      // Clean up
+      performance.clearMarks(startMark);
+      performance.clearMarks(endMark);
+      performance.clearMeasures(measureName);
+      
+      return duration;
+    }
+  } catch (error) {
+    console.error(`Error measuring performance for ${name}:`, error);
+  }
+  
+  return 0;
+}
+
+/**
+ * Measure component render time with React hooks integration
+ */
+export function measureComponentRender(componentName: string, callback?: (duration: number) => void): [() => void, () => void] {
+  let startTime = 0;
+  
+  const start = () => {
+    startTime = performance.now();
+    startMeasure(componentName, PerformanceCategory.COMPONENT);
+  };
+  
+  const end = () => {
+    if (startTime > 0) {
+      const duration = endMeasure(componentName, PerformanceCategory.COMPONENT);
+      if (callback) callback(duration);
+    }
+  };
+  
+  return [start, end];
+}
+
+/**
+ * Measure lazy loading performance
+ */
+export function measureLazyLoad(componentName: string): Promise<number> {
+  const startTime = performance.now();
+  startMeasure(componentName, PerformanceCategory.LAZY_LOAD);
+  
+  return new Promise(resolve => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const duration = endMeasure(componentName, PerformanceCategory.LAZY_LOAD, {
+          timestamp: startTime
+        });
+        resolve(duration);
+      });
+    });
+  });
+}
+
+/**
+ * Measure user interaction response time
+ */
+export function measureInteraction(interactionName: string, callback: () => Promise<any> | any): Promise<any> {
+  startMeasure(interactionName, PerformanceCategory.INTERACTION);
+  
+  const result = callback();
+  
+  if (result instanceof Promise) {
+    return result.finally(() => {
+      endMeasure(interactionName, PerformanceCategory.INTERACTION);
+    });
+  } else {
+    endMeasure(interactionName, PerformanceCategory.INTERACTION);
+    return Promise.resolve(result);
+  }
+}
+
+/**
+ * Measure API call performance
+ */
+export function measureApiCall<T>(
+  apiName: string, 
+  apiCall: () => Promise<T>,
+  metadata?: Record<string, any>
+): Promise<T> {
+  startMeasure(apiName, PerformanceCategory.API);
+  
+  return apiCall()
+    .then(result => {
+      endMeasure(apiName, PerformanceCategory.API, metadata);
+      return result;
+    })
+    .catch(error => {
+      endMeasure(apiName, PerformanceCategory.API, {
+        ...metadata,
+        error: error.message
+      });
+      throw error;
+    });
+}
+
+/**
+ * Record FPS measurements for animations and scrolling
+ */
+export function measureFPS(durationMs = 1000): Promise<number> {
+  return new Promise(resolve => {
+    let frameCount = 0;
+    let startTime = performance.now();
+    
+    function countFrame() {
+      frameCount++;
+      const elapsed = performance.now() - startTime;
+      
+      if (elapsed < durationMs) {
+        requestAnimationFrame(countFrame);
+      } else {
+        const fps = (frameCount / elapsed) * 1000;
+        resolve(fps);
+      }
+    }
+    
+    requestAnimationFrame(countFrame);
+  });
+}
+
+/**
+ * Get performance statistics for a specific category
+ */
+export function getPerformanceStats(category: PerformanceCategory): {
+  average: number;
+  median: number;
+  p95: number;
   min: number;
   max: number;
-}>();
-
-/**
- * Start timing a specific operation
- */
-export function startTiming(metricName: string): void {
-  const start = performance.now();
+  count: number;
+} {
+  let timingsMap: Map<string, number[]>;
   
-  if (!metrics.has(metricName)) {
-    metrics.set(metricName, {
-      count: 0,
-      total: 0,
-      min: Infinity,
-      max: 0
-    });
+  switch (category) {
+    case PerformanceCategory.COMPONENT:
+      timingsMap = componentRenderTimings;
+      break;
+    case PerformanceCategory.LAZY_LOAD:
+      timingsMap = lazyLoadTimings;
+      break;
+    case PerformanceCategory.INTERACTION:
+      timingsMap = interactionTimings;
+      break;
+    case PerformanceCategory.API:
+      timingsMap = apiCallTimings;
+      break;
+    default:
+      timingsMap = new Map();
   }
   
-  const metric = metrics.get(metricName)!;
-  metric.start = start;
-}
-
-/**
- * End timing for an operation and record metrics
- */
-export function endTiming(metricName: string): number | undefined {
-  const end = performance.now();
-  const metric = metrics.get(metricName);
+  // Flatten all timings
+  const allTimings = Array.from(timingsMap.values()).flat();
   
-  if (!metric || metric.start === undefined) {
-    console.warn(`No timing started for metric: ${metricName}`);
-    return undefined;
+  if (allTimings.length === 0) {
+    return {
+      average: 0,
+      median: 0,
+      p95: 0,
+      min: 0,
+      max: 0,
+      count: 0
+    };
   }
   
-  const duration = end - metric.start;
-  metric.end = end;
-  metric.duration = duration;
-  metric.count++;
-  metric.total += duration;
-  metric.min = Math.min(metric.min, duration);
-  metric.max = Math.max(metric.max, duration);
+  // Sort for percentile calculations
+  allTimings.sort((a, b) => a - b);
   
-  return duration;
-}
-
-/**
- * Measure the performance of a function
- */
-export function measurePerformance<T extends (...args: any[]) => any>(
-  fn: T, 
-  metricName: string
-): (...args: Parameters<T>) => ReturnType<T> {
-  return (...args: Parameters<T>): ReturnType<T> => {
-    startTiming(metricName);
-    const result = fn(...args);
-    
-    // Handle both synchronous and Promise-returning functions
-    if (result instanceof Promise) {
-      return result
-        .then(value => {
-          endTiming(metricName);
-          return value;
-        })
-        .catch(error => {
-          endTiming(metricName);
-          throw error;
-        }) as ReturnType<T>;
-    } else {
-      endTiming(metricName);
-      return result;
-    }
+  return {
+    average: allTimings.reduce((sum, val) => sum + val, 0) / allTimings.length,
+    median: allTimings[Math.floor(allTimings.length / 2)],
+    p95: allTimings[Math.floor(allTimings.length * 0.95)],
+    min: allTimings[0],
+    max: allTimings[allTimings.length - 1],
+    count: allTimings.length
   };
 }
 
 /**
- * Get all recorded performance metrics
+ * Get detailed performance metrics for components
  */
-export function getPerformanceMetrics() {
-  const result: Record<string, { 
-    count: number; 
-    avgDuration: number; 
-    min: number; 
-    max: number; 
-    total: number;
-  }> = {};
+export function getComponentMetrics(): Record<string, {
+  average: number;
+  median: number;
+  count: number;
+  recent: number;
+}> {
+  const metrics: Record<string, any> = {};
   
-  metrics.forEach((metric, name) => {
-    result[name] = {
-      count: metric.count,
-      avgDuration: metric.count > 0 ? metric.total / metric.count : 0,
-      min: metric.min === Infinity ? 0 : metric.min,
-      max: metric.max,
-      total: metric.total
+  componentRenderTimings.forEach((timings, componentName) => {
+    if (timings.length === 0) return;
+    
+    // Sort timings
+    const sortedTimings = [...timings].sort((a, b) => a - b);
+    
+    metrics[componentName] = {
+      average: timings.reduce((sum, val) => sum + val, 0) / timings.length,
+      median: sortedTimings[Math.floor(sortedTimings.length / 2)],
+      count: timings.length,
+      recent: timings[timings.length - 1]
     };
   });
   
-  return result;
+  return metrics;
 }
 
 /**
- * Clear all performance metrics
+ * Get lazy loading performance metrics
  */
-export function clearPerformanceMetrics() {
-  metrics.clear();
-}
-
-/**
- * Report all metrics to console
- */
-export function reportPerformanceMetrics() {
-  console.group('Performance Metrics');
+export function getLazyLoadingMetrics(): Record<string, {
+  average: number;
+  median: number;
+  count: number;
+  recent: number;
+}> {
+  const metrics: Record<string, any> = {};
   
-  const allMetrics = getPerformanceMetrics();
-  Object.entries(allMetrics).forEach(([name, data]) => {
-    console.log(
-      `${name}: ${data.count} calls, avg: ${data.avgDuration.toFixed(2)}ms, ` +
-      `min: ${data.min.toFixed(2)}ms, max: ${data.max.toFixed(2)}ms, total: ${data.total.toFixed(2)}ms`
-    );
+  lazyLoadTimings.forEach((timings, componentName) => {
+    if (timings.length === 0) return;
+    
+    // Sort timings
+    const sortedTimings = [...timings].sort((a, b) => a - b);
+    
+    metrics[componentName] = {
+      average: timings.reduce((sum, val) => sum + val, 0) / timings.length,
+      median: sortedTimings[Math.floor(sortedTimings.length / 2)],
+      count: timings.length,
+      recent: timings[timings.length - 1]
+    };
   });
   
-  console.groupEnd();
+  return metrics;
 }
 
-// Add component rendering performance monitoring
-if (typeof window !== 'undefined') {
-  // Set up PerformanceObserver to monitor long tasks
-  if ('PerformanceObserver' in window) {
-    try {
-      const observer = new PerformanceObserver((list) => {
-        list.getEntries().forEach((entry) => {
-          if (entry.duration > 50) { // 50ms is considered a long task
-            console.warn(`Long task detected: ${entry.duration.toFixed(2)}ms`, entry);
-          }
-        });
-      });
-      
-      observer.observe({ entryTypes: ['longtask'] });
-    } catch (e) {
-      console.error('PerformanceObserver for longtask not supported', e);
-    }
+/**
+ * Export performance data for analysis
+ */
+export function exportPerformanceData(): {
+  measurements: PerformanceMeasurement[];
+  componentMetrics: Record<string, any>;
+  lazyLoadMetrics: Record<string, any>;
+  interactionMetrics: Record<string, any>;
+  apiMetrics: Record<string, any>;
+  timestamp: number;
+} {
+  return {
+    measurements,
+    componentMetrics: getComponentMetrics(),
+    lazyLoadMetrics: getLazyLoadingMetrics(),
+    interactionMetrics: calculateMetricsFromMap(interactionTimings),
+    apiMetrics: calculateMetricsFromMap(apiCallTimings),
+    timestamp: Date.now()
+  };
+}
+
+/**
+ * Helper function to update timing maps
+ */
+function updateTimingMap(map: Map<string, number[]>, key: string, value: number): void {
+  const existing = map.get(key) || [];
+  existing.push(value);
+  
+  // Keep only the last 100 measurements to avoid memory issues
+  if (existing.length > 100) {
+    existing.shift();
   }
+  
+  map.set(key, existing);
 }
 
-// Export React-specific performance utilities
-export const componentPerformance = {
-  startRender: (componentName: string) => startTiming(`render_${componentName}`),
-  endRender: (componentName: string) => endTiming(`render_${componentName}`),
-  startEffect: (componentName: string, effectName: string) => 
-    startTiming(`effect_${componentName}_${effectName}`),
-  endEffect: (componentName: string, effectName: string) => 
-    endTiming(`effect_${componentName}_${effectName}`)
-};
+/**
+ * Calculate metrics from a timing map
+ */
+function calculateMetricsFromMap(map: Map<string, number[]>): Record<string, any> {
+  const metrics: Record<string, any> = {};
+  
+  map.forEach((timings, name) => {
+    if (timings.length === 0) return;
+    
+    // Sort timings
+    const sortedTimings = [...timings].sort((a, b) => a - b);
+    
+    metrics[name] = {
+      average: timings.reduce((sum, val) => sum + val, 0) / timings.length,
+      median: sortedTimings[Math.floor(sortedTimings.length / 2)],
+      p95: sortedTimings[Math.floor(sortedTimings.length * 0.95)],
+      min: sortedTimings[0],
+      max: sortedTimings[sortedTimings.length - 1],
+      count: timings.length,
+      recent: timings[timings.length - 1]
+    };
+  });
+  
+  return metrics;
+}
