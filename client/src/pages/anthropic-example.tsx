@@ -1,0 +1,33 @@
+
+import React from 'react';
+import { Helmet } from 'react-helmet';
+import AnthropicExample from '@/components/features/AnthropicExample';
+import { PageHeader } from '@/components/ui/page-header';
+
+export default function AnthropicExamplePage() {
+  return (
+    <div className="container py-8">
+      <Helmet>
+        <title>Anthropic Claude Integration | Creately</title>
+      </Helmet>
+      
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold mb-2">Anthropic Claude Integration</h1>
+        <p className="text-muted-foreground">
+          Explore Claude's capabilities with these interactive examples.
+        </p>
+      </div>
+      
+      <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+        <h2 className="text-lg font-medium mb-2 text-yellow-800 dark:text-yellow-300">Important Note</h2>
+        <p>
+          To use these examples, you need to add your Anthropic API key to the environment variables.
+          Create a <code className="px-1 py-0.5 bg-muted rounded text-sm">.env.local</code> file in the client directory and add:
+          <code className="block px-3 py-2 mt-2 bg-muted rounded text-sm">VITE_ANTHROPIC_API_KEY=your_api_key_here</code>
+        </p>
+      </div>
+      
+      <AnthropicExample />
+    </div>
+  );
+}
