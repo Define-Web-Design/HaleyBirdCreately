@@ -1,358 +1,437 @@
 /**
- * AI Provider Benchmarking Script
+ * AI Service Benchmarking Script
  * 
- * This script runs a standardized set of tests against all configured AI providers
- * to benchmark their performance, response quality, and reliability.
- * 
- * Usage:
- *   node scripts/benchmark-ai.js [--detailed] [--providers=openai,anthropic,perplexity]
+ * This script runs benchmarks against different AI providers to compare
+ * performance, quality, and reliability.
  */
 
+// Import required modules
+require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
-const { performance } = require('perf_hooks');
-const axios = require('axios');
-const { program } = require('commander');
+const { AIService } = require('../dist/server/ai/aiService');
+const { initAdapters } = require('../dist/server/ai/initAdapters');
+const { createSimpleFallbackStrategy } = require('../dist/server/ai/fallbackStrategies');
 
-// Parse command line options
-program
-  .option('-d, --detailed', 'Run detailed benchmarks (more tests, slower)')
-  .option('-p, --providers <list>', 'Comma-separated list of providers to test')
-  .option('-o, --output <file>', 'Output file for results (defaults to benchmark-results.json)')
-  .option('-r, --repeat <number>', 'Number of times to repeat each test', parseInt, 3)
-  .option('-q, --quiet', 'Suppress console output')
-  .parse();
-
-const options = program.opts();
-
-// Set provider list from options or default
-const providers = options.providers 
-  ? options.providers.split(',') 
-  : ['openai', 'anthropic', 'perplexity'];
-
-// Configure test prompts for benchmarking
-const BENCHMARK_PROMPTS = {
-  // Text generation benchmarks
-  text: [
-    {
-      name: 'creative_writing',
-      prompt: 'Write a short story about a robot discovering emotions for the first time.'
-    },
-    {
-      name: 'factual_explanation',
-      prompt: 'Explain how photosynthesis works in simple terms.'
-    },
-    {
-      name: 'code_generation',
-      prompt: 'Write a JavaScript function that checks if a string is a palindrome.'
-    }
+// Benchmark configuration
+const BENCHMARK_CONFIG = {
+  // Number of iterations for each test
+  iterations: 5,
+  
+  // Timeout for each request in ms
+  timeout: 30000,
+  
+  // Test cases for text generation
+  textPrompts: [
+    'Explain quantum computing in simple terms.',
+    'Write a short poem about technology.',
+    'What are the key differences between REST and GraphQL?',
+    'Describe the process of photosynthesis.',
+    'List five strategies for effective time management.'
   ],
   
-  // JSON generation benchmarks
-  json: [
-    {
-      name: 'product_catalog',
-      prompt: 'Generate a JSON array of 5 fictional products with fields for id, name, price, and category.'
-    },
-    {
-      name: 'user_profiles',
-      prompt: 'Create JSON data for 3 user profiles with name, age, email, and a list of interests.'
-    }
+  // Test cases for JSON generation
+  jsonPrompts: [
+    'Generate a JSON structure for a blog post with title, author, date, content, and tags.',
+    'Create a JSON representation of a product catalog item with name, price, description, and categories.',
+    'Build a JSON schema for a user profile with personal details, preferences, and privacy settings.',
+    'Design a JSON structure for a recipe with ingredients, instructions, and nutritional information.',
+    'Create a JSON format for a calendar event with time, location, attendees, and reminders.'
   ],
   
-  // Chat completion benchmarks
-  chat: [
-    {
-      name: 'customer_support',
-      messages: [
-        { role: 'system', content: 'You are a helpful customer support agent.' },
-        { role: 'user', content: 'I ordered a product 5 days ago but it hasn\'t arrived yet. My order number is ABC123.' },
-        { role: 'assistant', content: 'I apologize for the delay with your order ABC123. Let me check the status for you. Could you please confirm the shipping address?' },
-        { role: 'user', content: 'My address is 123 Main St, New York, NY 10001.' }
-      ]
-    },
-    {
-      name: 'reasoning',
-      messages: [
-        { role: 'system', content: 'You are a helpful problem-solving assistant.' },
-        { role: 'user', content: 'I need to put 10 gallons of water into a swimming pool using only a 3-gallon bucket and a 5-gallon bucket. How can I do this?' }
-      ]
-    }
-  ],
-  
-  // Additional detailed tests
-  detailed: {
-    text: [
-      {
-        name: 'complex_reasoning',
-        prompt: 'Explain the prisoner\'s dilemma and how it applies to climate change negotiations between countries.'
-      },
-      {
-        name: 'multilingual',
-        prompt: 'Translate the following to French, Spanish, and German: "The quick brown fox jumps over the lazy dog."'
-      }
+  // Test cases for chat completion
+  chatPrompts: [
+    [
+      { role: 'system', content: 'You are a helpful assistant.' },
+      { role: 'user', content: 'What is the capital of France?' }
     ],
-    json: [
-      {
-        name: 'complex_schema',
-        prompt: 'Generate a JSON representation of a library database with books, authors, and borrowing records. Include at least 3 books with different authors and borrowing status.'
-      }
+    [
+      { role: 'system', content: 'You are a helpful assistant.' },
+      { role: 'user', content: 'How does a car engine work?' }
     ],
-    chat: [
-      {
-        name: 'multi_turn_reasoning',
-        messages: [
-          { role: 'system', content: 'You are a math tutor helping a student.' },
-          { role: 'user', content: 'I need help solving this problem: If f(x) = 2x + 3 and g(x) = x^2, what is f(g(2))?' },
-          { role: 'assistant', content: 'To find f(g(2)), we first calculate g(2), then apply f to that result. g(2) = 2^2 = 4. Now we calculate f(4) = 2(4) + 3 = 8 + 3 = 11.' },
-          { role: 'user', content: 'Great! Now what if we calculate g(f(2))?' }
-        ]
-      }
+    [
+      { role: 'system', content: 'You are a helpful assistant.' },
+      { role: 'user', content: 'Can you explain the concept of machine learning?' }
     ]
-  }
+  ],
+  
+  // AI providers to benchmark
+  providers: [
+    'openai',
+    'anthropic',
+    'perplexity'
+  ]
 };
 
-// Set up API client
-const apiClient = axios.create({
-  baseURL: 'http://localhost:3000', // Adjust to your server URL
-  timeout: 30000 // 30 seconds timeout
-});
+// Results storage
+const results = {
+  text: {},
+  json: {},
+  chat: {},
+  summary: {}
+};
 
 /**
- * Run the benchmark
+ * Run text generation benchmark
  */
-async function runBenchmark() {
-  console.log('Starting AI Provider Benchmark');
-  console.log(`Testing providers: ${providers.join(', ')}`);
-  console.log(`Repeating each test ${options.repeat} times`);
+async function runTextBenchmark(aiService, provider) {
+  console.log(`\nRunning text generation benchmark for ${provider}...`);
   
-  const results = {
-    timestamp: new Date().toISOString(),
-    config: {
-      providers,
-      detailed: options.detailed,
-      repeat: options.repeat
-    },
-    results: {}
+  const providerResults = {
+    latency: [],
+    tokenCounts: [],
+    errors: 0
   };
   
-  // Initialize result structure
-  for (const provider of providers) {
-    results.results[provider] = {
-      text: {},
-      json: {},
-      chat: {}
-    };
-  }
-  
-  // Test text generation
-  for (const test of BENCHMARK_PROMPTS.text) {
-    await runTest('text', test, results);
-  }
-  
-  // Test JSON generation
-  for (const test of BENCHMARK_PROMPTS.json) {
-    await runTest('json', test, results);
-  }
-  
-  // Test chat completion
-  for (const test of BENCHMARK_PROMPTS.chat) {
-    await runTest('chat', test, results);
-  }
-  
-  // Run detailed tests if requested
-  if (options.detailed) {
-    console.log('\nRunning detailed benchmarks...');
-    
-    for (const test of BENCHMARK_PROMPTS.detailed.text) {
-      await runTest('text', test, results);
-    }
-    
-    for (const test of BENCHMARK_PROMPTS.detailed.json) {
-      await runTest('json', test, results);
-    }
-    
-    for (const test of BENCHMARK_PROMPTS.detailed.chat) {
-      await runTest('chat', test, results);
-    }
-  }
-  
-  // Calculate aggregate metrics
-  calculateAggregateMetrics(results);
-  
-  // Save results
-  const outputFile = options.output || 'benchmark-results.json';
-  fs.writeFileSync(
-    path.join(process.cwd(), outputFile),
-    JSON.stringify(results, null, 2)
-  );
-  
-  console.log(`\nBenchmark complete! Results saved to ${outputFile}`);
-  
-  // Print summary
-  console.log('\n=== Benchmark Summary ===');
-  for (const provider of providers) {
-    const aggregate = results.aggregateMetrics[provider];
-    console.log(`\n${provider.toUpperCase()}:`);
-    console.log(`  Average latency: ${aggregate.averageLatency.toFixed(2)}ms`);
-    console.log(`  Success rate: ${(aggregate.successRate * 100).toFixed(1)}%`);
-    console.log(`  Average token ratio: ${aggregate.averageTokenRatio.toFixed(2)}`);
-  }
-}
-
-/**
- * Run a specific test case
- */
-async function runTest(testType, test, results) {
-  if (!options.quiet) {
-    console.log(`\nRunning ${testType} test: ${test.name}`);
-  }
-  
-  for (const provider of providers) {
-    if (!options.quiet) {
-      process.stdout.write(`  Testing ${provider}... `);
-    }
-    
-    const testResults = [];
-    
-    // Run the test multiple times for more reliable results
-    for (let i = 0; i < options.repeat; i++) {
+  for (const prompt of BENCHMARK_CONFIG.textPrompts) {
+    for (let i = 0; i < BENCHMARK_CONFIG.iterations; i++) {
       try {
-        const startTime = performance.now();
-        let response;
+        console.log(`  Running prompt ${BENCHMARK_CONFIG.textPrompts.indexOf(prompt) + 1}, iteration ${i + 1}...`);
         
-        // Make the API call based on test type
-        switch (testType) {
-          case 'text':
-            response = await apiClient.post('/api/ai/generate-text', {
-              prompt: test.prompt,
-              options: { provider }
-            });
-            break;
-            
-          case 'json':
-            response = await apiClient.post('/api/ai/generate-json', {
-              prompt: test.prompt,
-              options: { provider }
-            });
-            break;
-            
-          case 'chat':
-            response = await apiClient.post('/api/ai/chat', {
-              messages: test.messages,
-              options: { provider }
-            });
-            break;
+        const startTime = Date.now();
+        const response = await aiService.generateText(prompt, {
+          provider,
+          maxTokens: 200
+        });
+        const endTime = Date.now();
+        
+        providerResults.latency.push(endTime - startTime);
+        
+        if (response.usage) {
+          providerResults.tokenCounts.push({
+            promptTokens: response.usage.promptTokens,
+            completionTokens: response.usage.completionTokens,
+            totalTokens: response.usage.totalTokens
+          });
         }
-        
-        const endTime = performance.now();
-        const latency = endTime - startTime;
-        
-        // Extract response data and token usage
-        const data = response.data;
-        const tokenInfo = data.usage || { promptTokens: 0, completionTokens: 0, totalTokens: 0 };
-        
-        testResults.push({
-          success: true,
-          latency,
-          tokenInfo,
-          responseLength: JSON.stringify(data).length
-        });
       } catch (error) {
-        testResults.push({
-          success: false,
-          error: error.message || 'Unknown error',
-          errorDetails: error.response?.data || {}
-        });
-      }
-    }
-    
-    // Calculate aggregate test results
-    const successfulTests = testResults.filter(r => r.success);
-    const avgLatency = successfulTests.length > 0
-      ? successfulTests.reduce((sum, r) => sum + r.latency, 0) / successfulTests.length
-      : 0;
-    
-    const result = {
-      successRate: successfulTests.length / testResults.length,
-      averageLatency: avgLatency,
-      results: testResults
-    };
-    
-    // Store results
-    results.results[provider][testType][test.name] = result;
-    
-    // Print result summary
-    if (!options.quiet) {
-      if (result.successRate === 1) {
-        console.log(`Success (avg: ${avgLatency.toFixed(0)}ms)`);
-      } else if (result.successRate === 0) {
-        console.log('Failed');
-      } else {
-        console.log(`Partial success (${(result.successRate * 100).toFixed(0)}%, avg: ${avgLatency.toFixed(0)}ms)`);
+        console.error(`    Error: ${error.message}`);
+        providerResults.errors++;
       }
     }
   }
+  
+  results.text[provider] = {
+    avgLatency: providerResults.latency.length > 0 
+      ? providerResults.latency.reduce((a, b) => a + b, 0) / providerResults.latency.length 
+      : null,
+    medianLatency: providerResults.latency.length > 0 
+      ? calculateMedian(providerResults.latency) 
+      : null,
+    maxLatency: providerResults.latency.length > 0 
+      ? Math.max(...providerResults.latency) 
+      : null,
+    minLatency: providerResults.latency.length > 0 
+      ? Math.min(...providerResults.latency) 
+      : null,
+    errorRate: providerResults.errors / (BENCHMARK_CONFIG.textPrompts.length * BENCHMARK_CONFIG.iterations),
+    avgTokenUsage: providerResults.tokenCounts.length > 0
+      ? {
+          promptTokens: providerResults.tokenCounts.reduce((a, b) => a + b.promptTokens, 0) / providerResults.tokenCounts.length,
+          completionTokens: providerResults.tokenCounts.reduce((a, b) => a + b.completionTokens, 0) / providerResults.tokenCounts.length,
+          totalTokens: providerResults.tokenCounts.reduce((a, b) => a + b.totalTokens, 0) / providerResults.tokenCounts.length
+        }
+      : null
+  };
+  
+  console.log(`  Results for ${provider}:`);
+  console.log(`    Avg Latency: ${results.text[provider].avgLatency?.toFixed(2)}ms`);
+  console.log(`    Error Rate: ${(results.text[provider].errorRate * 100).toFixed(2)}%`);
 }
 
 /**
- * Calculate aggregate metrics across all tests
+ * Run JSON generation benchmark
  */
-function calculateAggregateMetrics(results) {
-  const aggregateMetrics = {};
+async function runJsonBenchmark(aiService, provider) {
+  console.log(`\nRunning JSON generation benchmark for ${provider}...`);
   
-  for (const provider of providers) {
-    const providerResults = results.results[provider];
-    let totalLatency = 0;
-    let totalTests = 0;
-    let successfulTests = 0;
-    let totalTokenRatio = 0;
-    let tokenTests = 0;
-    
-    // Process each test category
-    for (const category of Object.keys(providerResults)) {
-      for (const testName of Object.keys(providerResults[category])) {
-        const test = providerResults[category][testName];
+  const providerResults = {
+    latency: [],
+    tokenCounts: [],
+    errors: 0,
+    validJson: 0
+  };
+  
+  for (const prompt of BENCHMARK_CONFIG.jsonPrompts) {
+    for (let i = 0; i < BENCHMARK_CONFIG.iterations; i++) {
+      try {
+        console.log(`  Running prompt ${BENCHMARK_CONFIG.jsonPrompts.indexOf(prompt) + 1}, iteration ${i + 1}...`);
         
-        // Count tests and successful tests
-        const testCount = test.results.length;
-        totalTests += testCount;
+        const startTime = Date.now();
+        const response = await aiService.generateJson(prompt, {
+          provider,
+          maxTokens: 500
+        });
+        const endTime = Date.now();
         
-        const testSuccessCount = test.results.filter(r => r.success).length;
-        successfulTests += testSuccessCount;
+        providerResults.latency.push(endTime - startTime);
         
-        // Sum latencies
-        if (test.averageLatency) {
-          totalLatency += test.averageLatency * testSuccessCount;
+        if (response.usage) {
+          providerResults.tokenCounts.push({
+            promptTokens: response.usage.promptTokens,
+            completionTokens: response.usage.completionTokens,
+            totalTokens: response.usage.totalTokens
+          });
         }
         
-        // Calculate token efficiency
-        for (const result of test.results) {
-          if (result.success && result.tokenInfo && result.tokenInfo.promptTokens > 0) {
-            const ratio = result.tokenInfo.completionTokens / result.tokenInfo.promptTokens;
-            totalTokenRatio += ratio;
-            tokenTests++;
-          }
+        // Check if output is valid JSON
+        if (response.result && typeof response.result === 'object') {
+          providerResults.validJson++;
         }
+      } catch (error) {
+        console.error(`    Error: ${error.message}`);
+        providerResults.errors++;
       }
     }
+  }
+  
+  results.json[provider] = {
+    avgLatency: providerResults.latency.length > 0 
+      ? providerResults.latency.reduce((a, b) => a + b, 0) / providerResults.latency.length 
+      : null,
+    medianLatency: providerResults.latency.length > 0 
+      ? calculateMedian(providerResults.latency) 
+      : null,
+    maxLatency: providerResults.latency.length > 0 
+      ? Math.max(...providerResults.latency) 
+      : null,
+    minLatency: providerResults.latency.length > 0 
+      ? Math.min(...providerResults.latency) 
+      : null,
+    errorRate: providerResults.errors / (BENCHMARK_CONFIG.jsonPrompts.length * BENCHMARK_CONFIG.iterations),
+    validJsonRate: providerResults.validJson / (BENCHMARK_CONFIG.jsonPrompts.length * BENCHMARK_CONFIG.iterations),
+    avgTokenUsage: providerResults.tokenCounts.length > 0
+      ? {
+          promptTokens: providerResults.tokenCounts.reduce((a, b) => a + b.promptTokens, 0) / providerResults.tokenCounts.length,
+          completionTokens: providerResults.tokenCounts.reduce((a, b) => a + b.completionTokens, 0) / providerResults.tokenCounts.length,
+          totalTokens: providerResults.tokenCounts.reduce((a, b) => a + b.totalTokens, 0) / providerResults.tokenCounts.length
+        }
+      : null
+  };
+  
+  console.log(`  Results for ${provider}:`);
+  console.log(`    Avg Latency: ${results.json[provider].avgLatency?.toFixed(2)}ms`);
+  console.log(`    Error Rate: ${(results.json[provider].errorRate * 100).toFixed(2)}%`);
+  console.log(`    Valid JSON Rate: ${(results.json[provider].validJsonRate * 100).toFixed(2)}%`);
+}
+
+/**
+ * Run chat completion benchmark
+ */
+async function runChatBenchmark(aiService, provider) {
+  console.log(`\nRunning chat completion benchmark for ${provider}...`);
+  
+  const providerResults = {
+    latency: [],
+    tokenCounts: [],
+    errors: 0
+  };
+  
+  for (const messages of BENCHMARK_CONFIG.chatPrompts) {
+    for (let i = 0; i < BENCHMARK_CONFIG.iterations; i++) {
+      try {
+        console.log(`  Running prompt ${BENCHMARK_CONFIG.chatPrompts.indexOf(messages) + 1}, iteration ${i + 1}...`);
+        
+        const startTime = Date.now();
+        const response = await aiService.chatCompletion(messages, {
+          provider,
+          maxTokens: 200
+        });
+        const endTime = Date.now();
+        
+        providerResults.latency.push(endTime - startTime);
+        
+        if (response.usage) {
+          providerResults.tokenCounts.push({
+            promptTokens: response.usage.promptTokens,
+            completionTokens: response.usage.completionTokens,
+            totalTokens: response.usage.totalTokens
+          });
+        }
+      } catch (error) {
+        console.error(`    Error: ${error.message}`);
+        providerResults.errors++;
+      }
+    }
+  }
+  
+  results.chat[provider] = {
+    avgLatency: providerResults.latency.length > 0 
+      ? providerResults.latency.reduce((a, b) => a + b, 0) / providerResults.latency.length 
+      : null,
+    medianLatency: providerResults.latency.length > 0 
+      ? calculateMedian(providerResults.latency) 
+      : null,
+    maxLatency: providerResults.latency.length > 0 
+      ? Math.max(...providerResults.latency) 
+      : null,
+    minLatency: providerResults.latency.length > 0 
+      ? Math.min(...providerResults.latency) 
+      : null,
+    errorRate: providerResults.errors / (BENCHMARK_CONFIG.chatPrompts.length * BENCHMARK_CONFIG.iterations),
+    avgTokenUsage: providerResults.tokenCounts.length > 0
+      ? {
+          promptTokens: providerResults.tokenCounts.reduce((a, b) => a + b.promptTokens, 0) / providerResults.tokenCounts.length,
+          completionTokens: providerResults.tokenCounts.reduce((a, b) => a + b.completionTokens, 0) / providerResults.tokenCounts.length,
+          totalTokens: providerResults.tokenCounts.reduce((a, b) => a + b.totalTokens, 0) / providerResults.tokenCounts.length
+        }
+      : null
+  };
+  
+  console.log(`  Results for ${provider}:`);
+  console.log(`    Avg Latency: ${results.chat[provider].avgLatency?.toFixed(2)}ms`);
+  console.log(`    Error Rate: ${(results.chat[provider].errorRate * 100).toFixed(2)}%`);
+}
+
+/**
+ * Calculate median of an array of numbers
+ */
+function calculateMedian(values) {
+  if (values.length === 0) return 0;
+  
+  const sorted = [...values].sort((a, b) => a - b);
+  const middle = Math.floor(sorted.length / 2);
+  
+  if (sorted.length % 2 === 0) {
+    return (sorted[middle - 1] + sorted[middle]) / 2;
+  }
+  
+  return sorted[middle];
+}
+
+/**
+ * Generate summary of benchmark results
+ */
+function generateSummary() {
+  const summary = {
+    textGeneration: {},
+    jsonGeneration: {},
+    chatCompletion: {},
+    overall: {}
+  };
+  
+  // Calculate average latency and error rate for each provider
+  for (const provider of BENCHMARK_CONFIG.providers) {
+    const textResults = results.text[provider];
+    const jsonResults = results.json[provider];
+    const chatResults = results.chat[provider];
     
-    // Calculate final metrics
-    aggregateMetrics[provider] = {
-      totalTests,
-      successfulTests,
-      successRate: totalTests > 0 ? successfulTests / totalTests : 0,
-      averageLatency: successfulTests > 0 ? totalLatency / successfulTests : 0,
-      averageTokenRatio: tokenTests > 0 ? totalTokenRatio / tokenTests : 0
+    if (textResults) {
+      summary.textGeneration[provider] = {
+        avgLatency: textResults.avgLatency,
+        errorRate: textResults.errorRate
+      };
+    }
+    
+    if (jsonResults) {
+      summary.jsonGeneration[provider] = {
+        avgLatency: jsonResults.avgLatency,
+        errorRate: jsonResults.errorRate,
+        validJsonRate: jsonResults.validJsonRate
+      };
+    }
+    
+    if (chatResults) {
+      summary.chatCompletion[provider] = {
+        avgLatency: chatResults.avgLatency,
+        errorRate: chatResults.errorRate
+      };
+    }
+    
+    // Calculate overall metrics
+    const avgLatencies = [];
+    const errorRates = [];
+    
+    if (textResults?.avgLatency) avgLatencies.push(textResults.avgLatency);
+    if (jsonResults?.avgLatency) avgLatencies.push(jsonResults.avgLatency);
+    if (chatResults?.avgLatency) avgLatencies.push(chatResults.avgLatency);
+    
+    if (textResults?.errorRate) errorRates.push(textResults.errorRate);
+    if (jsonResults?.errorRate) errorRates.push(jsonResults.errorRate);
+    if (chatResults?.errorRate) errorRates.push(chatResults.errorRate);
+    
+    summary.overall[provider] = {
+      avgLatency: avgLatencies.length > 0 ? avgLatencies.reduce((a, b) => a + b, 0) / avgLatencies.length : null,
+      errorRate: errorRates.length > 0 ? errorRates.reduce((a, b) => a + b, 0) / errorRates.length : null
     };
   }
   
-  // Add to results
-  results.aggregateMetrics = aggregateMetrics;
+  results.summary = summary;
+}
+
+/**
+ * Save benchmark results to file
+ */
+function saveResultsToFile(timestamp) {
+  const resultsDir = path.join(__dirname, '../logs/benchmarks');
+  
+  // Create logs directory if it doesn't exist
+  if (!fs.existsSync(resultsDir)) {
+    fs.mkdirSync(resultsDir, { recursive: true });
+  }
+  
+  const filePath = path.join(resultsDir, `ai-benchmark-${timestamp}.json`);
+  fs.writeFileSync(filePath, JSON.stringify(results, null, 2));
+  
+  console.log(`\nResults saved to ${filePath}`);
+}
+
+/**
+ * Main benchmark function
+ */
+async function runBenchmark() {
+  console.log('Starting AI service benchmark...');
+  console.log(`Configuration: ${BENCHMARK_CONFIG.iterations} iterations for each test case`);
+  
+  const timestamp = new Date().toISOString().replace(/:/g, '-').replace(/\..+/, '');
+  
+  try {
+    // Initialize AI service
+    const registry = initAdapters();
+    const aiService = new AIService(registry);
+    
+    // Run benchmarks for each provider
+    for (const provider of BENCHMARK_CONFIG.providers) {
+      // Skip providers that don't have API keys configured
+      const hasApiKey = process.env[`${provider.toUpperCase()}_API_KEY`];
+      if (!hasApiKey) {
+        console.log(`\nSkipping ${provider} (no API key found)`);
+        continue;
+      }
+      
+      console.log(`\n===== Testing ${provider} =====`);
+      
+      // Run text generation benchmark
+      await runTextBenchmark(aiService, provider);
+      
+      // Run JSON generation benchmark
+      await runJsonBenchmark(aiService, provider);
+      
+      // Run chat completion benchmark  
+      await runChatBenchmark(aiService, provider);
+    }
+    
+    // Generate summary
+    generateSummary();
+    
+    // Display summary
+    console.log('\n===== Benchmark Summary =====');
+    console.log(JSON.stringify(results.summary, null, 2));
+    
+    // Save results to file
+    saveResultsToFile(timestamp);
+    
+  } catch (error) {
+    console.error('Benchmark failed:', error);
+  }
 }
 
 // Run the benchmark
-runBenchmark().catch(error => {
-  console.error('Benchmark failed:', error);
-  process.exit(1);
-});
+if (require.main === module) {
+  runBenchmark().catch(console.error);
+}
+
+module.exports = {
+  runBenchmark,
+  BENCHMARK_CONFIG
+};
