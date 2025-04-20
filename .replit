@@ -24,7 +24,7 @@ start = "typescript-language-server --stdio"
 [deployment]
 run = ["sh", "-c", "NODE_ENV=production PORT=3000 node dist/index.js"]
 deploymentTarget = "gce"
-build = ["sh", "-c", "npm install --include=dev && npm run build"]
+build = ["sh", "-c", "npm install --include=dev && npx tsc --noEmit && npm run build"]
 
 [[ports]]
 localPort = 3000
@@ -265,12 +265,105 @@ args = "export DEPLOY_TIMESTAMP=$(date +%Y%m%d_%H%M%S)"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"📦 Starting deployment process...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Run TypeScript check"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"🔍 Checking TypeScript types...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npx tsc --noEmit || echo \"⚠️ TypeScript errors detected, but continuing...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Install dependencies"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"📚 Installing dependencies...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
 args = "npm install --include=dev"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npm run build"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Build application"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"🔨 Building application...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run build || {"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "  echo \"⚠️ Build failed! Deploying fallback server...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "  node simple-server.cjs"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "  exit 1"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "}"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "# Start application"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"🚀 Starting server...\""
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "NODE_ENV=production PORT=3000 node dist/index.js"
+
+[[workflows.workflow]]
+name = "TypeScript Check"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "#!/bin/bash"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"Running TypeScript type check...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npx tsc --noEmit"

@@ -16,6 +16,12 @@ if [ -d "dist" ]; then
   rm -rf dist
 fi
 
+# Run TypeScript validation
+echo "🔍 Validating TypeScript code..."
+npx tsc --noEmit || {
+  echo "⚠️ TypeScript errors detected, but continuing with build..."
+}
+
 # Create a log directory if it doesn't exist
 mkdir -p logs
 
@@ -53,4 +59,4 @@ echo "✅ Build successful!"
 
 # Start the server
 echo "🚀 Starting server..."
-NODE_ENV=production PORT=3000 node dist/index.js
+NODE_ENV=production PORT=3000 node dist/index.jstion PORT=3000 node dist/index.js
