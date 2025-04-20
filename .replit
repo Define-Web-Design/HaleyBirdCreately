@@ -165,3 +165,29 @@ args = "#!/bin/bash"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "./simplified-deploy.sh"
+
+[[workflows.workflow]]
+name = "Production Deployment"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "#!/bin/bash"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "./simplified-deploy.sh"
+
+[[workflows.workflow]]
+name = "Production Deployment"
+author = 40896524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "#!/bin/bash"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "./simplified-deploy.sh"
