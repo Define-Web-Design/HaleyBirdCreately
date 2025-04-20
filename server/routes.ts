@@ -5,9 +5,10 @@ import healthRoutes from './routes/health';
 import googleDocsRoutes from './routes/google-docs';
 import serviceHealthRoutes from './routes/service-health';
 import aiRoutes from './routes/aiRoutes';
+import performanceRoutes from './routes/performanceRoutes';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
-import { storage } from './storage';
+import { IStorage } from './storage';
 
 const router = express.Router();
 
@@ -70,6 +71,8 @@ router.post('/auth/register', async (req, res) => {
 
     const { username, email, password } = validationResult.data;
 
+    // Get the storage instance - we should use a proper import instead of the IStorage type
+    const storage = global.storage;
     const user = await storage.registerUser(username, email, password);
 
     // Create token
@@ -118,6 +121,8 @@ router.post('/auth/login', async (req, res) => {
 
     const { email, password } = validationResult.data;
 
+    // Get the storage instance
+    const storage = global.storage;
     const user = await storage.loginUser(email, password);
 
     if (!user) {
@@ -180,5 +185,6 @@ router.use('/health', healthRoutes);
 router.use('/google-docs', googleDocsRoutes);
 router.use('/api/service-health', serviceHealthRoutes);
 router.use('/api/ai', aiRoutes);
+router.use('/api/performance', performanceRoutes);
 
 export default router;
