@@ -1,7 +1,7 @@
 
 import express from 'express';
 import { google } from 'googleapis';
-import { auth } from '../middleware/auth';
+import { authenticate } from '../middleware/auth';
 
 const router = express.Router();
 
@@ -18,7 +18,7 @@ const createDocsClient = (req: any, res: any, next: any) => {
 };
 
 // Get a specific document
-router.get('/documents/:documentId', auth, createDocsClient, async (req: any, res: any) => {
+router.get('/documents/:documentId', authenticate(), createDocsClient, async (req: any, res: any) => {
   try {
     const response = await req.docsClient.documents.get({
       documentId: req.params.documentId
@@ -30,7 +30,7 @@ router.get('/documents/:documentId', auth, createDocsClient, async (req: any, re
 });
 
 // Create a new document
-router.post('/documents', auth, createDocsClient, async (req: any, res: any) => {
+router.post('/documents', authenticate(), createDocsClient, async (req: any, res: any) => {
   try {
     const { title } = req.body;
     if (!title) {
@@ -47,7 +47,7 @@ router.post('/documents', auth, createDocsClient, async (req: any, res: any) => 
 });
 
 // Update document content
-router.post('/documents/:documentId/content', auth, createDocsClient, async (req: any, res: any) => {
+router.post('/documents/:documentId/content', authenticate(), createDocsClient, async (req: any, res: any) => {
   try {
     const { documentId } = req.params;
     const { requests } = req.body;
