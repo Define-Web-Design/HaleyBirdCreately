@@ -22,7 +22,7 @@ pattern = "**/{*.js,*.jsx,*.ts,*.tsx}"
 start = "typescript-language-server --stdio"
 
 [deployment]
-run = ["sh", "-c", "NODE_ENV=production node dist/index.js"]
+run = ["sh", "-c", "NODE_ENV=production PORT=3000 node dist/index.js"]
 deploymentTarget = "gce"
 build = ["sh", "-c", "npm install --include=dev && npm run build"]
 
