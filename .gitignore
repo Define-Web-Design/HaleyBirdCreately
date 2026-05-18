@@ -8,3 +8,32 @@ attached_assets/
 .ccls-cache/
 .config/
 logs/
+
+# Environment files
+.env
+.env.local
+.env.production
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Replit specific
+.upm
+.cache
+.replit.backup
+replit.nix.backup
