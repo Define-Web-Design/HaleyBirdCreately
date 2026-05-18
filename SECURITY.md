@@ -1,63 +1,76 @@
-# Security Policy
+# Security Policy — Haley Bird Creately
+
+## System Overview
+
+**Haley Bird Creately** is a personalized creative technology implementation. This security policy defines the responsible disclosure process, security standards, and legal protections specific to this system.
+
+**Technology Stack:** JavaScript, Web Technologies
 
 ## Reporting a Vulnerability
 
 **DO NOT** open a public GitHub issue for security vulnerabilities.
 
-If you discover a security vulnerability in this repository, please report it responsibly using one of the following methods:
+If you discover a security vulnerability in Haley Bird Creately, report it exclusively through:
 
-1. **Email:** Send details to **heyhaleybird@gmail.com** with the subject line: `[SECURITY] <repository-name> — Vulnerability Report`
-2. **GitHub Private Vulnerability Reporting:** Use the "Report a vulnerability" button under the Security tab of this repository (if enabled).
+1. **Email:** Send details to **heyhaleybird@gmail.com** with the subject line: `[SECURITY] HaleyBirdCreately — Vulnerability Report`
+2. **GitHub Private Vulnerability Reporting:** Use the "Report a vulnerability" button under the Security tab (if enabled).
 
 ### What to Include
 
-- A clear description of the vulnerability
+- A clear description of the vulnerability and which component is affected
 - Steps to reproduce the issue
 - Affected versions or branches
-- Potential impact assessment
-- Any suggested fix (optional but appreciated)
+- Potential impact assessment specific to Haley Bird Creately's functionality
+- Any suggested remediation (optional but appreciated)
 
 ## Response Timeline
 
 | Action | Timeframe |
 |--------|-----------|
 | Acknowledgment of report | Within 48 hours |
-| Initial assessment | Within 5 business days |
-| Patch development | Within 30 days (critical), 90 days (non-critical) |
-| Public disclosure | After patch is released and deployed |
+| Initial assessment and triage | Within 5 business days |
+| Patch for critical issues | Within 30 days |
+| Patch for non-critical issues | Within 90 days |
+| Public disclosure | After patch + minimum 30 days post-deployment |
 
 ## Disclosure Policy
 
 - **Strict coordinated disclosure**: Do NOT publicly disclose any vulnerability until an official patch has been released and a minimum of 30 days has passed since the fix was deployed.
-- Premature disclosure may result in legal action.
+- Premature disclosure may result in legal action under applicable IP protection and computer fraud laws.
 - Credit will be given to reporters (unless anonymity is requested) once the fix is public.
 
-## Scope
+## Scope — Protected Components
 
-This security policy applies to:
+This security policy covers all components of Haley Bird Creately:
 
-- All code in this repository (all branches)
-- Any deployed instances or services derived from this codebase
-- CI/CD pipelines and GitHub Actions workflows
-- Dependencies managed within this repository
+| Component | Security Priority |
+|-----------|-------------------|
+| **Creative Workflow Engine** | CRITICAL |
+| **Personalized Design System** | CRITICAL |
+
+### Priority Vulnerability Categories
+
+The following vulnerability types are of particular concern for this system:
+
+- Cross-site scripting (XSS) and client-side injection
 
 ### Out of Scope
 
-- Third-party services not maintained by this project
-- Social engineering attacks against maintainers
-- Vulnerabilities in upstream dependencies (report those to the respective maintainer)
+- Vulnerabilities in third-party services or upstream dependencies (report to respective maintainers)
+- Social engineering attacks against the maintainer
 - Denial of service attacks against hosted infrastructure
+- Issues in forked or mirrored copies not maintained by this project
 
 ## Supported Versions
 
-Only the latest release and the `main` (or `master`) branch receive security updates. Older versions are not supported.
+Only the latest release and the default branch (`main` or `master`) receive security updates. Older versions are not supported.
 
 ## Security Standards
 
 This project enforces the following security practices:
 
 1. **No secrets in code**: API keys, tokens, passwords, and credentials must NEVER be committed to the repository.
-2. **Dependency management**: Dependencies are regularly audited for known vulnerabilities.
+2. **Dependency auditing**: Dependencies are regularly reviewed for known vulnerabilities.
 3. **Least privilege**: All automations, workflows, and integrations operate with minimum required permissions.
 4. **Branch protection**: The default branch requires pull request reviews before merging.
 5. **Signed commits**: Contributors are encouraged to sign commits with GPG keys.
@@ -68,11 +81,12 @@ This project enforces the following security practices:
 The following actions are strictly prohibited and may result in legal action:
 
 - Unauthorized access to systems, accounts, or data
-- Exploiting vulnerabilities beyond what is necessary to demonstrate the issue
+- Exploiting vulnerabilities beyond minimal proof-of-concept demonstration
 - Exfiltration, modification, or destruction of data
+- Reverse engineering of proprietary algorithms or trade secrets
 - Denial of service attacks
-- Social engineering or phishing attacks against maintainers or users
 - Automated vulnerability scanning without prior written consent
+- Social engineering or phishing attacks against maintainers or users
 
 ## Safe Harbor
 
@@ -82,18 +96,28 @@ We support responsible security research. If you comply with this policy:
 - We will work with you to understand and resolve the issue
 - We will publicly acknowledge your contribution (if desired)
 
-This safe harbor applies only if:
-- You report the vulnerability exclusively through the channels listed above
-- You do not exploit the vulnerability beyond proof-of-concept
+**Safe harbor applies ONLY if:**
+- You report exclusively through the channels listed above
+- You do not exploit the vulnerability beyond minimal proof-of-concept
+- You do not access, modify, or exfiltrate any actual user or system data
 - You do not violate any laws in the process
-- You allow reasonable time for the issue to be resolved before any disclosure
+- You allow reasonable time for resolution before any disclosure
 
-## Intellectual Property Notice
+## Intellectual Property & Legal Notice
 
-All code and intellectual property in this repository is owned by **Haley Ann Bird**. Unauthorized reproduction, distribution, or use of proprietary algorithms, architectures, or trade secrets discovered during security research is strictly prohibited.
+All code, architecture, algorithms, data schemas, and intellectual property in this repository is the exclusive property of **Haley Ann Bird**. This repository operates under a proprietary license — all rights reserved unless explicitly stated otherwise.
+
+The following are expressly protected as trade secrets and/or patent-pending IP:
+- Creative Workflow Engine
+- Personalized Design System
+
+Unauthorized reproduction, distribution, reverse engineering, decompilation, or commercial use of any proprietary component discovered during security research is strictly prohibited and will be prosecuted to the fullest extent of applicable law.
+
+Personalized creative technology — design patterns are proprietary.
 
 ---
 
 **Last updated:** 2026-05-18
 **Policy version:** 1.0
+**System:** Haley Bird Creately
 **Maintainer:** Haley Ann Bird (heyhaleybird@gmail.com)
