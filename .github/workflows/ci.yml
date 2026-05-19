@@ -27,10 +27,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Note: `cache: npm` is intentionally omitted because actions/setup-node
+      # requires a lockfile (package-lock.json) to compute its cache key and
+      # this repo does not commit one. Re-enable caching once a lockfile is added.
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
-          cache: npm
 
       # Use `npm install` rather than `npm ci` because this repo does not
       # commit a package-lock.json. Switch to `npm ci` once a lockfile is added.
