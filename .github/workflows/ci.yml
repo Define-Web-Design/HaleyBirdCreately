@@ -37,22 +37,20 @@ jobs:
       # Use `npm install` rather than `npm ci` because this repo does not
       # commit a package-lock.json. `--legacy-peer-deps` works around the
       # repo's mixed peer-dependency tree (e.g. bcrypt + bcryptjs, Tailwind v4
-      # + plugins still on v3 peers). `continue-on-error` lets subsequent
-      # steps run for visibility even if some optional installs fail.
-      # Switch to `npm ci` (without legacy-peer-deps / continue-on-error) once
-      # a lockfile is committed and peer-dep conflicts are resolved.
+      # + plugins still on v3 peers). Switch to `npm ci` (without
+      # legacy-peer-deps) once a lockfile is committed and peer-dep conflicts
+      # are resolved.
       - name: Install dependencies
-        continue-on-error: true
         run: npm install --no-audit --no-fund --legacy-peer-deps
 
       - name: Type check
-        # Allowed to fail: tsconfig.json enables noUnusedLocals / noUnusedParameters,
-        # and the repo has pre-existing violations that must be cleaned up separately.
+        # TODO: remove `continue-on-error` once pre-existing
+        # noUnusedLocals / noUnusedParameters violations are cleaned up.
         continue-on-error: true
         run: npm run check
 
       - name: Build
-        # Allowed to fail until the type errors above are cleaned up and the
-        # build is verified to run without real secrets in CI.
+        # TODO: remove `continue-on-error` once the type errors above are
+        # cleaned up and the build is verified to run without real secrets.
         continue-on-error: true
         run: npm run build
