@@ -51,8 +51,8 @@ export class PostgresStorage implements IStorage {
       if (!process.env.DATABASE_URL) {
         throw new Error('DATABASE_URL is not defined');
       }
-      const sql = neon(process.env.DATABASE_URL);
-      this.db = drizzle(sql, { schema });
+      const neonClient = neon(process.env.DATABASE_URL);
+      this.db = drizzle(neonClient, { schema });
       console.log('✅ Database connection initialized successfully');
     } catch (error) {
       console.error('❌ Error initializing database connection:', error);
